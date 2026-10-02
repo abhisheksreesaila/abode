@@ -1,3 +1,23 @@
+# First Mate ⚓
+
+**First Mate is my personal fork of [T3 Code](https://github.com/pingdotgg/t3code).** I use it every day to run my coding agents (Claude Code first, Codex later).
+
+I'm adding the things I missed from VS Code's agents window:
+- local voice dictation
+- colored workspaces in one sidebar
+- subagents you can see at a glance
+- panels that open and close like VS Code's
+
+There are a few fun extras on the way too.
+
+It's built for my own use, and I don't send changes upstream. If something here helps you, take it.
+
+**Huge thanks to Theo, Julius and the T3 Code team.** They built a fast, remote-ready, genuinely open agent GUI, and their README invites you to fork it and make the editor you want. All the hard parts are theirs. Licensed MIT, same as upstream; see [LICENSE](./LICENSE).
+
+---
+
+*The original T3 Code README follows.*
+
 # T3 Code
 
 T3 Code is an "agent harness control surface". It enables control of the agents on your machine with a best-in-class mobile app ([iOS](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824), [Android](https://play.google.com/store/apps/details?id=com.t3tools.t3code)), [web app](https://app.t3.codes) and [Electron-based desktop app](https://t3.codes).
