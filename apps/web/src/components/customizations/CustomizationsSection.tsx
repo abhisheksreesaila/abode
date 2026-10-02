@@ -88,15 +88,22 @@ export function CustomizationsSection() {
       className="flex max-h-[45%] min-h-0 shrink-0 flex-col border-t border-sidebar-border"
       data-testid="customizations-section"
     >
-      <button
-        type="button"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((current) => !current)}
-        className="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 px-3 text-left text-2xs font-medium tracking-wide text-muted-foreground uppercase hover:text-foreground"
-      >
-        <ChevronRightIcon className={cn("size-3.5 shrink-0", expanded && "rotate-90")} />
-        <span className="min-w-0 flex-1 truncate">Customizations · {scope.projectName}</span>
-      </button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((current) => !current)}
+              className="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 px-3 text-left text-2xs font-medium tracking-wide text-muted-foreground uppercase hover:text-foreground"
+            />
+          }
+        >
+          <ChevronRightIcon className={cn("size-3.5 shrink-0", expanded && "rotate-90")} />
+          <span className="min-w-0 flex-1 truncate">Customizations · {scope.projectName}</span>
+        </TooltipTrigger>
+        <TooltipPopup side="right">Edits apply to the main checkout</TooltipPopup>
+      </Tooltip>
       {expanded ? <CustomizationsBody scope={scope} /> : null}
     </section>
   );
@@ -162,21 +169,26 @@ function CustomizationsBody({ scope }: { readonly scope: CustomizationsScope }) 
           <Spinner size="sm" />
         </div>
       ) : null}
-      {failure !== null ? (
-        <div className="flex items-start gap-2 px-3 py-1.5 text-xs text-destructive">
-          <span className="min-w-0 flex-1">{describeCustomizationsError(failure)}</span>
-          <RefreshButton onRefresh={refresh} />
-        </div>
-      ) : null}
-      {groups?.map((group) => (
-        <GroupRows
-          key={group.kind}
-          group={group}
-          canOpen={scope.threadRef !== null}
-          onOpen={openItem}
-          onCreate={group.kind === "skill" || group.kind === "agent" ? createFirst : undefined}
-        />
-      ))}
+      <div className="flex items-start gap-2 px-3 py-0.5 text-xs">
+        <span className="min-w-0 flex-1 text-destructive">
+          {failure !== null ? describeCustomizationsError(failure) : null}
+        </span>
+        <RefreshButton onRefresh={refresh} />
+      </div>
+      {groups?.map((group) => {
+        const kind = group.kind;
+        return (
+          <GroupRows
+            key={kind}
+            group={group}
+            canOpen={scope.threadRef !== null}
+            onOpen={openItem}
+            onCreate={
+              kind === "skill" || kind === "agent" ? () => void createFirst(kind) : undefined
+            }
+          />
+        );
+      })}
     </div>
   );
 }
@@ -203,7 +215,7 @@ function GroupRows({
   readonly group: CustomizationGroup;
   readonly canOpen: boolean;
   readonly onOpen: (path: string) => void;
-  readonly onCreate: ((kind: NewCustomizationKind) => void) | undefined;
+  readonly onCreate: (() => void) | undefined;
 }) {
   const [open, setOpen] = useState(true);
   return (
@@ -222,10 +234,10 @@ function GroupRows({
         group.count === 0 ? (
           <div className="flex items-center gap-2 py-1 pr-3 pl-8 text-xs text-muted-foreground/80">
             <span>{group.emptyLabel}</span>
-            {onCreate && (group.kind === "skill" || group.kind === "agent") ? (
+            {onCreate ? (
               <button
                 type="button"
-                onClick={() => onCreate(group.kind as NewCustomizationKind)}
+                onClick={onCreate}
                 className="inline-flex cursor-pointer items-center gap-0.5 text-primary hover:underline"
               >
                 <PlusIcon className="size-3" />

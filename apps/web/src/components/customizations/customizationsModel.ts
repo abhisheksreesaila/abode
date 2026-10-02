@@ -94,21 +94,35 @@ export function describeCustomizationsError(error: unknown): string {
 }
 
 const HOME_CLAUDE_SEGMENT = /\/\.claude(?:\.json|\/)/;
-const CUSTOMIZATION_BASENAMES = new Set(["CLAUDE.md", "CLAUDE.local.md", ".mcp.json"]);
-
-/**
- * True for paths that should open through the customizations RPCs even when the
- * list has not been loaded this session (a restored side panel tab). The server
- * still enforces its own allowlist, so a false positive just shows an error.
- */
-export function looksLikeCustomizationPath(path: string): boolean {
-  const normalized = path.replaceAll("\\", "/");
-  const basename = normalized.slice(normalized.lastIndexOf("/") + 1);
-  return CUSTOMIZATION_BASENAMES.has(basename) || HOME_CLAUDE_SEGMENT.test(normalized);
-}
+const WORKSPACE_ROOT_FILES = new Set(["CLAUDE.md", "CLAUDE.local.md", ".mcp.json"]);
 
 function normalizeRoot(cwd: string): string {
   return cwd.replaceAll("\\", "/").replace(/\/+$/, "");
+}
+
+/**
+ * Whether a path opens in the customizations editor even when the list has not
+ * been loaded this session (a restored side panel tab). Workspace files are only
+ * the project root's `CLAUDE.md`, `CLAUDE.local.md`, `.mcp.json` and `.claude/`
+ * (never `.claude/worktrees/`); outside the project, only `~/.claude*` paths.
+ * `panelCwd` is the thread's own cwd: a worktree's files belong to the normal
+ * file panel. The server enforces its own allowlist regardless.
+ */
+export function isCustomizationPath(input: {
+  readonly path: string;
+  readonly projectRoot: string;
+  readonly panelCwd?: string;
+}): boolean {
+  const path = input.path.replaceAll("\\", "/");
+  const root = normalizeRoot(input.projectRoot);
+  if (root.length > 0 && path.startsWith(`${root}/`)) {
+    const rel = path.slice(root.length + 1);
+    if (WORKSPACE_ROOT_FILES.has(rel)) return true;
+    return rel.startsWith(".claude/") && !rel.startsWith(".claude/worktrees/");
+  }
+  const panelRoot = input.panelCwd === undefined ? "" : normalizeRoot(input.panelCwd);
+  if (panelRoot.length > 0 && path.startsWith(`${panelRoot}/`)) return false;
+  return HOME_CLAUDE_SEGMENT.test(path);
 }
 
 /** Workspace files show relative to the workspace; user files show as `~/.claude/...`. */

@@ -22,7 +22,8 @@ import { customizationsEnvironment } from "~/state/customizations";
 import { useAtomCommand } from "~/state/use-atom-command";
 
 import { FileMarkdownPreview } from "../files/FileMarkdownPreview";
-import { projectFileCacheKey, projectFileEditorCacheKey } from "../files/fileContentRevision";
+import { appAtomRegistry } from "~/rpc/atomRegistry";
+import { projectFileEditorCacheKey } from "../files/fileContentRevision";
 import { FileSaveCoordinator } from "../files/fileSaveCoordinator";
 import {
   FILE_LINK_REVEAL_UNSAFE_CSS,
@@ -124,7 +125,10 @@ export default function CustomizationFilePanel(props: {
         }
         return result;
       },
-      onConfirmed: () => setSave("saved"),
+      onConfirmed: () => {
+        setSave("saved");
+        appAtomRegistry.refresh(customizationsEnvironment.list({ environmentId, input: { cwd } }));
+      },
     });
     coordinatorRef.current = coordinator;
     return () => {
@@ -200,11 +204,8 @@ export default function CustomizationFilePanel(props: {
             />
           </ScrollArea>
         ) : locked ? (
-          <SourceFilePreview
-            name={path}
-            text={contents}
-            cacheKey={projectFileCacheKey("customizations", path, contents)}
-          />
+          // No cacheKey: ~/.claude.json holds secrets and must not sit in the highlighter cache.
+          <SourceFilePreview name={path} text={contents} />
         ) : (
           <EditableSurface
             environmentId={environmentId}

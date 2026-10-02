@@ -4,7 +4,7 @@ import { type ComponentProps, lazy } from "react";
 import { useProject, useThreadShell } from "~/state/entities";
 import { resolvePathLinkTarget } from "~/terminal-links";
 
-import { findKnownCustomization, looksLikeCustomizationPath } from "./customizationsModel";
+import { findKnownCustomization, isCustomizationPath } from "./customizationsModel";
 
 const FilePreviewPanel = lazy(() => import("../files/FilePreviewPanel"));
 const CustomizationFilePanel = lazy(() => import("./CustomizationFilePanel"));
@@ -25,7 +25,10 @@ export default function FilePreviewPanelRouter(props: FilePreviewPanelProps) {
   const projectCwd = project?.workspaceRoot ?? cwd;
   if (attachment === undefined && relativePath !== null && cwd.length > 0) {
     const absolutePath = resolvePathLinkTarget(relativePath, cwd);
-    if (findKnownCustomization(absolutePath) || looksLikeCustomizationPath(absolutePath)) {
+    if (
+      findKnownCustomization(absolutePath) ||
+      isCustomizationPath({ path: absolutePath, projectRoot: projectCwd, panelCwd: cwd })
+    ) {
       return (
         <CustomizationFilePanel
           key={`${props.environmentId}:${absolutePath}`}

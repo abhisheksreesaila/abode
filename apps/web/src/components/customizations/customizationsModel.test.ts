@@ -9,7 +9,7 @@ import {
   displayCustomizationPath,
   findKnownCustomization,
   groupCustomizations,
-  looksLikeCustomizationPath,
+  isCustomizationPath,
   newCustomizationTemplate,
   nextNewCustomization,
   rememberCustomizations,
@@ -91,11 +91,19 @@ describe("describeCustomizationsError", () => {
 });
 
 describe("paths", () => {
-  it("recognizes customization locations", () => {
-    expect(looksLikeCustomizationPath("/home/a/.claude.json")).toBe(true);
-    expect(looksLikeCustomizationPath("/home/a/.claude/agents/r.md")).toBe(true);
-    expect(looksLikeCustomizationPath("/w/CLAUDE.md")).toBe(true);
-    expect(looksLikeCustomizationPath("/w/src/index.ts")).toBe(false);
+  it("routes only real customization locations", () => {
+    const at = (path: string, panelCwd?: string) =>
+      isCustomizationPath({ path, projectRoot: "/w", ...(panelCwd ? { panelCwd } : {}) });
+    expect(at("/home/a/.claude.json")).toBe(true);
+    expect(at("/home/a/.claude/agents/r.md")).toBe(true);
+    expect(at("/w/CLAUDE.md")).toBe(true);
+    expect(at("/w/.mcp.json")).toBe(true);
+    expect(at("/w/.claude/skills/x/SKILL.md")).toBe(true);
+    expect(at("/w/src/index.ts")).toBe(false);
+    expect(at("/w/packages/x/CLAUDE.md")).toBe(false);
+    expect(at("/w/.claude/worktrees/t/CLAUDE.md")).toBe(false);
+    expect(at("/wt/CLAUDE.md", "/wt")).toBe(false);
+    expect(at("/wt/.claude/skills/x/SKILL.md", "/wt")).toBe(false);
   });
 
   it("displays workspace files relative and user files under ~", () => {
