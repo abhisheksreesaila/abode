@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -6,8 +6,10 @@ import { resolveStorage } from "../../lib/storage";
 import {
   EMPTY_WORKSPACE_COLOR_ASSIGNMENTS,
   ensureAssigned,
+  syncAssigned,
   parseWorkspaceColorMenuId,
   resetOverride,
+  sanitizePersistedAssignments,
   resolveWorkspaceColorIndex,
   setOverride,
   type WorkspaceColorAssignments,
@@ -17,6 +19,7 @@ export const WORKSPACE_COLOR_STORAGE_KEY = "abode:workspace-colors:v1";
 
 interface WorkspaceColorStoreState extends WorkspaceColorAssignments {
   ensureAssigned: (keys: ReadonlyArray<string>) => void;
+  syncProjects: (liveKeys: ReadonlyArray<string>) => void;
   setColor: (key: string, index: number) => void;
   resetColor: (key: string) => void;
 }
@@ -27,6 +30,7 @@ export const useWorkspaceColorStore = create<WorkspaceColorStoreState>()(
     (set) => ({
       ...EMPTY_WORKSPACE_COLOR_ASSIGNMENTS,
       ensureAssigned: (keys) => set((state) => ensureAssigned(state, keys)),
+      syncProjects: (liveKeys) => set((state) => syncAssigned(state, liveKeys)),
       setColor: (key, index) => set((state) => setOverride(state, key, index)),
       resetColor: (key) => set((state) => resetOverride(state, key)),
     }),
@@ -36,6 +40,10 @@ export const useWorkspaceColorStore = create<WorkspaceColorStoreState>()(
       storage: createJSONStorage(() =>
         resolveStorage(typeof window !== "undefined" ? window.localStorage : undefined),
       ),
+      merge: (persisted, current) => ({
+        ...current,
+        ...sanitizePersistedAssignments(persisted),
+      }),
       partialize: (state) => ({ assigned: state.assigned, overrides: state.overrides }),
     },
   ),
@@ -53,20 +61,20 @@ export function applyWorkspaceColorMenuChoice(projectKey: string, menuId: string
 
 /** Color slot index for a project key; re-renders only when that slot changes. */
 export function useWorkspaceColorIndex(projectKey: string | null | undefined): number | null {
-  const index = useWorkspaceColorStore((state) =>
+  return useWorkspaceColorStore((state) =>
     projectKey ? resolveWorkspaceColorIndex(state, projectKey) : null,
   );
-  useEffect(() => {
-    if (projectKey) useWorkspaceColorStore.getState().ensureAssigned([projectKey]);
-  }, [projectKey]);
-  return index;
 }
 
-/** Assign colors to every listed project in list order (first-seen order). */
+/**
+ * Called once by the sidebar with its project keys in project order. Runs in a
+ * layout effect so assignments land before the first paint; rows read colors
+ * through a per-key selector and never assign themselves.
+ */
 export function useEnsureWorkspaceColors(projectKeys: ReadonlyArray<string>): void {
   const signature = projectKeys.join("\u0000");
-  useEffect(() => {
-    useWorkspaceColorStore.getState().ensureAssigned(projectKeys);
+  useLayoutEffect(() => {
+    useWorkspaceColorStore.getState().syncProjects(projectKeys);
     // The signature stands in for the list identity.
   }, [signature]);
 }

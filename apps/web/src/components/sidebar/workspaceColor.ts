@@ -93,6 +93,25 @@ export function ensureAssigned(
   return assigned === null ? state : { ...state, assigned };
 }
 
+/**
+ * Reconcile with the live project list: drop automatic colors of projects
+ * that no longer exist (so their slots free up), then assign the new ones in
+ * list order. An empty list is treated as "not loaded yet" and changes nothing.
+ */
+export function syncAssigned(
+  state: WorkspaceColorAssignments,
+  liveKeys: ReadonlyArray<string>,
+): WorkspaceColorAssignments {
+  if (liveKeys.length === 0) return state;
+  const live = new Set(liveKeys);
+  const kept = Object.entries(state.assigned).filter(([key]) => live.has(key));
+  const pruned =
+    kept.length === Object.keys(state.assigned).length
+      ? state
+      : { ...state, assigned: Object.fromEntries(kept) };
+  return ensureAssigned(pruned, liveKeys);
+}
+
 export function setOverride(
   state: WorkspaceColorAssignments,
   key: string,
@@ -153,4 +172,23 @@ export function parseWorkspaceColorMenuId(id: string): number | "reset" | null {
   if (!id.startsWith(WORKSPACE_COLOR_MENU_PREFIX)) return null;
   const index = Number(id.slice(WORKSPACE_COLOR_MENU_PREFIX.length));
   return isValidIndex(index) ? index : null;
+}
+
+function sanitizeIndexMap(value: unknown): Record<string, number> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, number] => isValidIndex(entry[1])),
+  );
+}
+
+/** Drop anything malformed from stored data (null maps, bad indexes). */
+export function sanitizePersistedAssignments(persisted: unknown): WorkspaceColorAssignments {
+  const record =
+    typeof persisted === "object" && persisted !== null
+      ? (persisted as { assigned?: unknown; overrides?: unknown })
+      : {};
+  return {
+    assigned: sanitizeIndexMap(record.assigned),
+    overrides: sanitizeIndexMap(record.overrides),
+  };
 }

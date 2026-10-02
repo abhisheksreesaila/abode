@@ -17,6 +17,7 @@ import type {
   RuntimeSubagent,
 } from "@t3tools/client-runtime/state/subagentRuntime";
 import {
+  isActiveSubagentStatus,
   formatSubagentModelLabel,
   formatSubagentTokenCount,
 } from "@t3tools/client-runtime/state/subagentRuntime";
@@ -350,6 +351,11 @@ function PhaseSection({
 }) {
   const [open, setOpen] = useState(defaultOpen || phase.state === "running");
   const previousState = useRef(phase.state);
+  const focus = useContext(AgentFocusContext);
+  const holdsFocus = focus !== undefined && phase.members.some((m) => m.id === focus.agentId);
+  useEffect(() => {
+    if (holdsFocus) setOpen(true);
+  }, [holdsFocus, focus?.nonce]);
 
   useEffect(() => {
     if (previousState.current !== "running" && phase.state === "running") {
@@ -535,6 +541,12 @@ function WorkflowSection({
   threadId: ThreadId | null;
 }) {
   const [open, setOpen] = useState(() => workflowIsLive(group));
+  const focus = useContext(AgentFocusContext);
+  const holdsFocus =
+    focus !== undefined && workflowMembers(group).some((member) => member.id === focus.agentId);
+  useEffect(() => {
+    if (holdsFocus) setOpen(true);
+  }, [holdsFocus, focus?.nonce]);
   return open ? (
     <ExpandedWorkflowSection
       group={group}
@@ -563,6 +575,18 @@ export function AgentsPanel({
   const focusRequest = useAgentFocusStore((state) =>
     threadKey === null ? undefined : state.focusByThreadKey[threadKey],
   );
+  // A focus request lives only while its agent is still working: once it
+  // settles (or is not in the roster) the request is dropped.
+  const focusedAgentStillActive =
+    focusRequest !== undefined &&
+    [...model.workflows.flatMap(workflowMembers), ...model.directAgents].some(
+      (agent) => agent.id === focusRequest.agentId && isActiveSubagentStatus(agent.status),
+    );
+  useEffect(() => {
+    if (threadKey !== null && focusRequest !== undefined && !focusedAgentStillActive) {
+      useAgentFocusStore.getState().clearFocus(threadKey);
+    }
+  }, [focusRequest, focusedAgentStillActive, threadKey]);
   if (!model.hasAgents) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">

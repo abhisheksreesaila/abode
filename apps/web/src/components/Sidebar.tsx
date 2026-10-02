@@ -228,7 +228,7 @@ import {
 import { useThreadRunningTerminalIds } from "../state/terminalSessions";
 import { SidebarSubagentRows } from "./sidebar/SidebarSubagentRows";
 import { buildWorkspaceColorMenuItem } from "./sidebar/workspaceColor";
-import { useProjectWorkspaceColor, workspaceBarStyle } from "./sidebar/workspaceColorHooks";
+import { useWorkspaceColorStyle, workspaceBarStyle } from "./sidebar/workspaceColorHooks";
 import {
   applyWorkspaceColorMenuChoice,
   useEnsureWorkspaceColors,
@@ -1057,6 +1057,8 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
   environmentMachine: EnvironmentMachineKind;
   project: EnvironmentProject | null;
   projectDisplayName: string | null;
+  // Logical project key, resolved by the parent, that selects the workspace color.
+  workspaceKey: string | null;
   providerEntryByInstanceId: ReadonlyMap<string, ProviderInstanceEntry>;
   timestampFormat: TimestampFormat;
   onThreadClick: (event: ReactMouseEvent, threadRef: ScopedThreadRef) => void;
@@ -1109,7 +1111,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
   );
   const threadKey = scopedThreadKey(threadRef);
   const { leaseLiveStatus, rowRef } = useSidebarRowSubscriptionLease(props.isActive);
-  const workspaceColor = useProjectWorkspaceColor(props.project);
+  const workspaceColor = useWorkspaceColorStyle(props.workspaceKey);
   const isRegeneratingTitle = thread.titleRegeneration != null;
   const lastVisitedAt = useUiStateStore((state) => state.threadLastVisitedAtById[threadKey]);
   const isSelected = useThreadSelectionStore((state) => state.selectedThreadKeys.has(threadKey));
@@ -2441,6 +2443,18 @@ export default function Sidebar() {
         projectGroups.flatMap((group) =>
           group.memberProjects.map(
             (project) => [`${project.environmentId}:${project.id}`, group.displayName] as const,
+          ),
+        ),
+      ),
+    [projectGroups],
+  );
+
+  const workspaceKeyByProjectKey = useMemo(
+    () =>
+      new Map(
+        projectGroups.flatMap((group) =>
+          group.memberProjects.map(
+            (project) => [`${project.environmentId}:${project.id}`, group.projectKey] as const,
           ),
         ),
       ),
@@ -4956,6 +4970,11 @@ export default function Sidebar() {
                             }
                             projectDisplayName={
                               projectDisplayNameByKey.get(
+                                `${thread.environmentId}:${thread.projectId}`,
+                              ) ?? null
+                            }
+                            workspaceKey={
+                              workspaceKeyByProjectKey.get(
                                 `${thread.environmentId}:${thread.projectId}`,
                               ) ?? null
                             }

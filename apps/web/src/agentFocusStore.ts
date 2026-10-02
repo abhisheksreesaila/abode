@@ -14,10 +14,17 @@ export interface AgentFocusRequest {
 interface AgentFocusStoreState {
   readonly focusByThreadKey: Readonly<Record<string, AgentFocusRequest>>;
   focusAgent: (threadKey: string, agentId: string) => void;
+  clearFocus: (threadKey: string) => void;
 }
 
 export const useAgentFocusStore = create<AgentFocusStoreState>()((set) => ({
   focusByThreadKey: {},
+  clearFocus: (threadKey) =>
+    set((state) => {
+      if (!(threadKey in state.focusByThreadKey)) return state;
+      const { [threadKey]: _cleared, ...rest } = state.focusByThreadKey;
+      return { focusByThreadKey: rest };
+    }),
   focusAgent: (threadKey, agentId) =>
     set((state) => ({
       focusByThreadKey: {

@@ -76,4 +76,11 @@ describe("agent focus store", () => {
     expect(second?.agentId).toBe("a");
     expect(second!.nonce).toBeGreaterThan(first!.nonce);
   });
+
+  it("clears a consumed request", () => {
+    const store = useAgentFocusStore.getState();
+    store.focusAgent("t2", "a");
+    store.clearFocus("t2");
+    expect(useAgentFocusStore.getState().focusByThreadKey.t2).toBeUndefined();
+  });
 });

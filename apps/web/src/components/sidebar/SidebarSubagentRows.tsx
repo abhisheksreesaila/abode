@@ -10,7 +10,7 @@ import { useRightPanelStore } from "../../rightPanelStore";
 import { derivePhase } from "../../session-logic";
 import { useEnvironmentThread } from "../../state/threads";
 import type { SidebarThreadSummary } from "../../types";
-import { resolveSidebarThreadStatus } from "../Sidebar.logic";
+import { isElectron } from "../../env";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import {
   SIDEBAR_SUBAGENT_VISIBLE_LIMIT,
@@ -35,12 +35,11 @@ export const SidebarSubagentRows = memo(function SidebarSubagentRows(props: {
   readonly asListItem?: boolean | undefined;
 }) {
   const { thread, isActive } = props;
-  const mayHaveRunningAgents =
-    isActive ||
-    isThreadSessionRunning(thread.session) ||
-    resolveSidebarThreadStatus(thread) === "working" ||
-    resolveSidebarThreadStatus(thread) === "monitoring";
-  if (!mayHaveRunningAgents) return null;
+  // Only read a detail stream that is already mounted: the open thread, or on
+  // desktop a running thread (RunningThreadKeepAlive mounts only on Electron).
+  // On web, subagents therefore show only under the open thread.
+  const detailAlreadyMounted = isActive || (isElectron && isThreadSessionRunning(thread.session));
+  if (!detailAlreadyMounted) return null;
   return <RunningSubagentList {...props} />;
 });
 

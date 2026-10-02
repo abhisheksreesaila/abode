@@ -5,6 +5,8 @@ import {
   WORKSPACE_COLORS,
   buildWorkspaceColorMenuItem,
   ensureAssigned,
+  sanitizePersistedAssignments,
+  syncAssigned,
   hashWorkspaceColorIndex,
   nextAutoColorIndex,
   parseWorkspaceColorMenuId,
@@ -104,5 +106,29 @@ describe("workspace color store", () => {
     expect(applyWorkspaceColorMenuChoice("a", "workspace-color:reset")).toBe(true);
     expect(resolveWorkspaceColorIndex(store.getState(), "a")).toBe(0);
     expect(applyWorkspaceColorMenuChoice("a", "rename")).toBe(false);
+  });
+});
+
+describe("workspace color sync and sanitizing", () => {
+  it("frees the slots of removed projects so new ones reuse them", () => {
+    const first = syncAssigned(empty, ["a", "b", "c"]);
+    const next = syncAssigned(first, ["b", "c", "d"]);
+    expect(next.assigned).toEqual({ b: 1, c: 2, d: 0 });
+  });
+
+  it("ignores an empty live list (projects not loaded yet)", () => {
+    const first = syncAssigned(empty, ["a"]);
+    expect(syncAssigned(first, [])).toBe(first);
+  });
+
+  it("drops malformed stored data", () => {
+    expect(sanitizePersistedAssignments({ assigned: null, overrides: [1] })).toEqual({
+      assigned: {},
+      overrides: {},
+    });
+    expect(sanitizePersistedAssignments({ assigned: { a: 2, b: 99, c: "x" } }).assigned).toEqual({
+      a: 2,
+    });
+    expect(sanitizePersistedAssignments(undefined)).toEqual({ assigned: {}, overrides: {} });
   });
 });
