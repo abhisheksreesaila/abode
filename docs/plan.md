@@ -392,7 +392,8 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
 
 ### F-033: Each workspace has its own right drawer (changed files plus browser)
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
+- **Follow-ups:** keep the record's terminalOpen when a thread has no terminal sessions; confirm staged deletions appear in the Diff tab scope.
 - **What:**
   - Switching to a workspace restores that workspace's right drawer: open or closed, the active tab, and its own browser at that app's URL.
   - A Changes view lists the files changed in the workspace; click one to open it in the editor tab.
