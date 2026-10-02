@@ -233,7 +233,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-019: abode branding
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** replace the "T3 Code" wordmark and logo in the web app (sidebar header, splash/empty states, tab title, PWA manifest name) with an **abode** wordmark, with "ab" highlighted the way T3 highlights "T3". Keep "Huge thanks to T3" credit in About/Settings.
 - **Acceptance:**
   - [ ] No visible "T3 Code" branding in the web UI's chrome.
@@ -241,7 +241,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-020: Opaque chat surface
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** in the abode theme, the chat column gets an opaque surface distinct from the app background (no see-through glass), like VS Code's editor area.
 - **Acceptance:**
   - [ ] The chat area reads as its own panel in the abode theme. Other themes are unchanged.
