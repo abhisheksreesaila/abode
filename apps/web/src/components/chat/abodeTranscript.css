@@ -1,0 +1,168 @@
+/* Fluent transcript (F-029, docs/design/fluent.md "Thread"). Everything here is
+   scoped to the abode theme; other themes never see the avatar rows, the steps
+   list or the ask block (they render display:none). No animations. */
+
+[data-fluent="msg-head"],
+[data-fluent="steps"],
+[data-fluent="ask"] {
+  display: none;
+}
+
+html[data-theme-id="abode"] {
+  [data-fluent="msg-head"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 12.5px;
+  }
+
+  [data-fluent="avatar"] {
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    background: #2b2b2b;
+    color: #cccccc;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  [data-fluent="avatar"][data-agent] {
+    background: #ff9f0a;
+    color: #1f1f1f;
+  }
+
+  [data-fluent="msg-name"] {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  [data-fluent="msg-detail"] {
+    color: #9d9d9d;
+  }
+
+  /* User bubbles lose the right-aligned chat look; the avatar row carries identity. */
+  [data-timeline-row-kind="message"][data-message-role="user"] > .group {
+    align-items: stretch;
+  }
+
+  [data-timeline-row-kind="message"][data-message-role="user"] > .group > div {
+    max-width: 100%;
+  }
+
+  [data-fluent="steps"] {
+    display: block;
+    margin: 0;
+    padding: 0 0 0 32px;
+    list-style: none;
+  }
+
+  [data-fluent="step"] {
+    display: flex;
+    height: 22px;
+    align-items: center;
+    gap: 8px;
+    color: #9d9d9d;
+    font-size: 12.5px;
+  }
+
+  [data-fluent="step-mark"] {
+    width: 12px;
+    flex: none;
+    color: #4ec9b0;
+  }
+
+  [data-fluent="step"][data-status="unfinished"] [data-fluent="step-mark"] {
+    color: #9d9d9d;
+  }
+
+  [data-fluent="step"][data-status="failed"] [data-fluent="step-mark"] {
+    color: #f14c4c;
+  }
+
+  [data-fluent="step-more"] {
+    padding-left: 20px;
+    color: #6e6e6e;
+  }
+
+  [data-fluent="step-text"] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-fluent="step-text"] code {
+    font-family: Consolas, "Cascadia Code", "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: #cccccc;
+  }
+
+  [data-fluent="ask"] {
+    display: block;
+    margin-left: 32px;
+    padding: 10px 12px;
+    border-left: 2px solid #cca700;
+    background: rgb(204 167 0 / 0.14);
+  }
+
+  [data-fluent="ask-count"],
+  [data-fluent="ask-key"] {
+    color: #cca700;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-fluent="ask-key"] {
+    margin-right: 6px;
+    opacity: 0.8;
+  }
+
+  [data-fluent="ask-option"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 220px;
+  }
+
+  [data-fluent="ask-description"] {
+    color: #9d9d9d;
+    font-size: 11.5px;
+  }
+
+  [data-fluent="ask-actions"] {
+    align-items: flex-start;
+  }
+
+  [data-fluent="ask-text"] {
+    margin: 0 0 8px;
+    color: #cccccc;
+    font-size: 13px;
+  }
+
+  [data-fluent="ask-actions"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* The changed-files card as the diff block: line-hi border, 4px radius,
+     28px side-colored header. Existing expand and open-diff behavior stays. */
+  [data-changed-files-state="tree"] {
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    background: transparent;
+  }
+
+  [data-changed-files-state="tree"] > [data-changed-files-header] {
+    min-height: 28px;
+    padding-block: 0;
+    border-radius: 3px 3px 0 0;
+    background: #181818;
+    border-bottom: 1px solid #2b2b2b;
+  }
+}

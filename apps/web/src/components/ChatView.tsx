@@ -410,6 +410,8 @@ import {
 } from "./chat/ThreadErrorBanner";
 import type { ComposerBannerStackItem } from "./chat/ComposerBannerStack";
 import { ComposerSurface } from "./chat/ComposerSurface";
+import { useFluentTimelineProps } from "./chat/useFluentTimelineProps";
+import { useIsFluentTheme } from "./chat/fluentTheme";
 import {
   hasAvailableCompactionProvider,
   hasDismissedResumeCompaction,
@@ -8897,6 +8899,25 @@ export default function ChatView(props: ChatViewProps) {
     setActivePendingUserInputQuestionIndex,
   ]);
 
+  const isFluent = useIsFluentTheme();
+  const fluentTimelineProps = useFluentTimelineProps({
+    // The ask row (and its number keys) must go away with it while a thread switch only paints.
+    fluent: isFluent && !paintOnlyDisplayedTimeline,
+    dismissible: activePendingUserInput?.dismissible ?? false,
+    questionIndex: activePendingQuestionIndex,
+    questionCount: activePendingUserInput?.questions.length ?? 1,
+    onDismiss: (requestId) => void onDismissUserInput(requestId as ApprovalRequestId),
+    onPrevious: () => onPreviousActivePendingUserInputQuestion(),
+    modelSelection: activeThread?.modelSelection,
+    providerModels: activeProviderStatus?.models,
+    runtimeMode,
+    pendingRequestId: activePendingUserInput?.requestId ?? null,
+    activeQuestion: activePendingProgress?.activeQuestion,
+    responding: activePendingIsResponding,
+    onSelectOption: onSelectActivePendingUserInputOption,
+    onAdvance: onAdvanceActivePendingUserInput,
+  });
+
   const onPreviousActivePendingUserInputQuestion = useCallback(() => {
     if (!activePendingProgress) {
       return;
@@ -9987,6 +10008,12 @@ export default function ChatView(props: ChatViewProps) {
                   { context: { terminalFocus: false } },
                 )}
                 onRemoveQueuedMessage={onRemoveQueuedMessage}
+                fluent={isFluent}
+                messageIdentity={fluentTimelineProps.messageIdentity}
+                pendingAsk={paintOnlyDisplayedTimeline ? null : fluentTimelineProps.pendingAsk}
+                onAnswerPendingAsk={fluentTimelineProps.onAnswerPendingAsk}
+                onDismissPendingAsk={fluentTimelineProps.onDismissPendingAsk}
+                onPreviousPendingAsk={fluentTimelineProps.onPreviousPendingAsk}
               />
 
               {/* scroll to end pill — shown when user has scrolled away from the live edge */}

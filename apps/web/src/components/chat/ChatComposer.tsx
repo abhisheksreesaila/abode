@@ -952,6 +952,10 @@ import { Button } from "../ui/button";
 import { Select, SelectItem, SelectPopup, SelectValue } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { ComposerVoiceControl } from "../../voice/ComposerVoiceControl";
+import { fluentReplyPlaceholder } from "../../voice/composerPlaceholder";
+import { useIsFluentTheme } from "./fluentTheme";
+import { isInlineAskQuestion } from "./pendingAsk.logic";
+import { useVoiceSettings } from "../../voice/voiceSettings";
 import { toastManager } from "../ui/toast";
 import {
   FileIcon,
@@ -1406,6 +1410,7 @@ export interface ChatComposerProps {
       id: string;
       multiSelect?: boolean | undefined;
       allowCustomAnswer?: boolean | undefined;
+      options: ReadonlyArray<unknown>;
     } | null;
   } | null;
   activePendingResolvedAnswers: Record<string, unknown> | null;
@@ -2126,6 +2131,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   // ------------------------------------------------------------------
   // Context window
   // ------------------------------------------------------------------
+  const { settings: voiceSettings } = useVoiceSettings();
+  const isFluent = useIsFluentTheme();
+  const fluentPlaceholder = fluentReplyPlaceholder(voiceSettings, isFluent);
   const activeThreadModelDisplayName = useMemo(
     () => resolveContextWindowModelDisplayName(activeThreadModelSelection, modelOptionsByInstance),
     [activeThreadModelSelection, modelOptionsByInstance],
@@ -2586,6 +2594,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const composerSuggestionsVisible = composerMenuOpen && !isComposerApprovalState;
   const composerSuggestionListVisible = composerSuggestionsVisible && composerMenuItems.length > 0;
   const activePendingUserInput = pendingUserInputs[0] ?? null;
+  // One place to answer: in Fluent the inline ask block owns single-select questions.
+  const fluentAskOwnsQuestion =
+    isFluent &&
+    activePendingProgress?.activeQuestion != null &&
+    isInlineAskQuestion(activePendingProgress.activeQuestion);
   const isChoiceOnlyPendingQuestion =
     activePendingProgress?.activeQuestion?.allowCustomAnswer === false;
   const showComposerTopDrawer =
@@ -6377,7 +6390,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                       />
                     </ComposerBanner.Actions>
                   </ComposerBanner.Row>
-                ) : !isComposerCollapsedMobile && pendingUserInputs.length > 0 ? (
+                ) : !isComposerCollapsedMobile &&
+                  pendingUserInputs.length > 0 &&
+                  !fluentAskOwnsQuestion ? (
                   <ComposerPendingUserInputPanel
                     pendingUserInputs={pendingUserInputs}
                     respondingRequestIds={
@@ -7067,7 +7082,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                                 ? "Enable a provider in Settings to send a message"
                                 : phase === "disconnected"
                                   ? DISCONNECTED_COMPOSER_PLACEHOLDER
-                                  : "Ask anything, @tag files/folders, $use skills, or / for commands"
+                                  : (fluentPlaceholder ??
+                                    "Ask anything, @tag files/folders, $use skills, or / for commands")
                     }
                     disabled={
                       isConnecting ||
