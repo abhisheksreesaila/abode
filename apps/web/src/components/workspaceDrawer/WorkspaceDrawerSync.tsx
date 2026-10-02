@@ -67,7 +67,9 @@ export function WorkspaceDrawerSync(props: {
   const openPreview = useAtomCommand(previewEnvironment.open, { reportFailure: false });
   // Latest values for the restore effect, which must run only when the thread changes.
   const latest = useRef({ props, openPreview });
-  latest.current = { props, openPreview };
+  useEffect(() => {
+    latest.current = { props, openPreview };
+  });
   // The thread whose drawer has been reconciled with its workspace; recording waits for it.
   const syncedThreadKey = useRef<string | null>(null);
   const preview = useThreadPreviewState(threadRef);
@@ -78,6 +80,7 @@ export function WorkspaceDrawerSync(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const { threadRef } = latest.current.props;
     syncedThreadKey.current = null;
     const { configuredPreviewUrls } = latest.current.props;
     const record = useWorkspaceDrawerStore.getState().byWorkspaceKey[workspaceKey];
@@ -150,7 +153,6 @@ export function WorkspaceDrawerSync(props: {
       unsubscribeTerminal();
     };
     // The restore runs once per thread; changes are copied back by the effects below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadKey, workspaceKey]);
 
   useEffect(() => {
@@ -160,11 +162,11 @@ export function WorkspaceDrawerSync(props: {
       workspaceKey,
       recordFromThread(
         state.byWorkspaceKey[workspaceKey],
-        readThreadSnapshot(threadRef),
+        { ...readThreadSnapshot(latest.current.props.threadRef), browserUrl: previewUrl },
         Date.now(),
       ),
     );
-  }, [previewUrl, threadKey, threadRef, workspaceKey]);
+  }, [previewUrl, threadKey, workspaceKey]);
 
   return null;
 }
