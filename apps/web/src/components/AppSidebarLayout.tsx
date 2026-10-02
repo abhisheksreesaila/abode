@@ -31,6 +31,7 @@ import { resolveThreadRouteRef } from "../threadRoutes";
 import { cn, isMacPlatform } from "../lib/utils";
 import { primaryServerKeybindingsAtom } from "../state/server";
 import { useEnvironmentIdentificationMode, useLegacySidebarEnabled } from "../hooks/useSettings";
+import { useIsMobile } from "../hooks/useMediaQuery";
 import {
   PanelAnimationSuppressionProvider,
   usePanelAnimationSettings,
@@ -39,7 +40,10 @@ import {
 import LegacyThreadSidebar from "./LegacySidebar";
 import ThreadSidebar from "./Sidebar";
 import { SettingsSidebarNav } from "./settings/SettingsSidebarNav";
+import { ActivityBar } from "./sidebar/ActivityBar";
+import { ACTIVITY_BAR_WIDTH_PX } from "./sidebar/activityBar";
 import { SidebarChromeHeader } from "./sidebar/SidebarChrome";
+import { AppStatusBar } from "./statusBar/AppStatusBar";
 import { MainAppLocationTracker } from "./sidebar/mainAppLocation";
 import { useSidebarStageBackdropVariant } from "./SidebarStageBackdrop";
 import { useProjects } from "../state/entities";
@@ -71,15 +75,20 @@ function readViewportWidth(): number {
   return window.innerWidth;
 }
 
+/** Width left for sidebar plus chat once the activity bar (md and up) takes its 48px. */
+function readUsableViewportWidth(): number {
+  return window.innerWidth - (window.innerWidth >= 768 ? ACTIVITY_BAR_WIDTH_PX : 0);
+}
+
 function readInitialThreadSidebarWidth(): number {
   try {
     return resolveInitialThreadSidebarWidth(
       getLocalStorageItem(THREAD_SIDEBAR_WIDTH_STORAGE_KEY, Schema.Finite),
-      window.innerWidth,
+      readUsableViewportWidth(),
     );
   } catch (error) {
     console.error("Could not read persisted thread sidebar width.", error);
-    return resolveInitialThreadSidebarWidth(null, window.innerWidth);
+    return resolveInitialThreadSidebarWidth(null, readUsableViewportWidth());
   }
 }
 
@@ -138,7 +147,7 @@ function SidebarControl() {
     // the panel), so the trigger mirrors it: both clusters sit one extra pixel
     // off their edge and the titlebar reads symmetric.
     <div
-      className="pointer-events-none fixed left-[var(--workspace-controls-left)] top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center"
+      className="pointer-events-none fixed left-[var(--workspace-controls-left)] md:hidden top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center"
       data-sidebar-control=""
     >
       <Tooltip>
@@ -245,7 +254,11 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   // Subscribed rather than read once: the clamp must track live window size,
   // and a clamped drag ends with an unchanged width, which skips the re-render
   // that would otherwise refresh a render-time snapshot.
-  const viewportWidth = useSyncExternalStore(subscribeToViewportWidth, readViewportWidth);
+  const rawViewportWidth = useSyncExternalStore(subscribeToViewportWidth, readViewportWidth);
+  // The activity bar (F-028) sits left of the sidebar on desktop widths; phones keep the sheet.
+  const isPhone = useIsMobile();
+  const activityBarWidth = isPhone ? 0 : ACTIVITY_BAR_WIDTH_PX;
+  const viewportWidth = rawViewportWidth - activityBarWidth;
   const sidebarMaximumWidth = resolveThreadSidebarMaximumWidth(viewportWidth);
   const resetSidebarWidth = () => {
     try {
@@ -263,6 +276,10 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   });
   const sidebarProviderStyle = {
     "--sidebar-width": `${sidebarWidth}px`,
+    "--activity-bar-width": `${activityBarWidth}px`,
+    // macOS window controls overlay the top of the sidebar; headers start below them.
+    "--titlebar-reserve":
+      isMacosDesktop && !isWindowFullscreen ? "var(--workspace-topbar-height)" : "0px",
     "--panel-animation-duration": `${panelAnimationDurationMs}ms`,
     ...(isMacosDesktop && !isWindowFullscreen
       ? { "--workspace-controls-left": MACOS_TRAFFIC_LIGHTS_LEFT_INSET }
@@ -309,13 +326,14 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   return (
     <PanelAnimationSuppressionProvider value={panelAnimationsSuppressed}>
       <SidebarProvider
-        className="h-dvh! min-h-0!"
+        className="h-[calc(100dvh-var(--status-bar-height))]! min-h-0!"
         data-panel-animations={routePanelAnimationsActive ? "true" : "false"}
         open={sidebarOpen}
         onOpenChange={handleSidebarOpenChange}
         style={sidebarProviderStyle}
       >
         <ProjectProjectionRetention />
+        <ActivityBar reserveTitlebar={isMacosDesktop && !isWindowFullscreen} />
         <Sidebar
           side="left"
           collapsible="offcanvas"
@@ -327,7 +345,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
             minWidth: THREAD_SIDEBAR_MIN_WIDTH,
             shouldAcceptWidth: ({ currentWidth, nextWidth, wrapper }) =>
               nextWidth <= currentWidth ||
-              wrapper.clientWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
+              wrapper.clientWidth - activityBarWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
             storageKey: THREAD_SIDEBAR_WIDTH_STORAGE_KEY,
             onResize: setSidebarWidth,
           }}
@@ -348,6 +366,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
         <SidebarControl />
         <NavigationHistoryShortcuts />
         <MainAppLocationTracker />
+        <AppStatusBar />
       </SidebarProvider>
     </PanelAnimationSuppressionProvider>
   );

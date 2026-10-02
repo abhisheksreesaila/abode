@@ -52,7 +52,7 @@ describe("abode theme", () => {
     expect(hex(c.input)).toBe("#313131");
     expect(hex(c.border)).toBe("#2b2b2b");
     expect(hex(c.accent)).toBe("#0078d4");
-    expect(hex(c.sidebarRowActive)).toBe("#37373d");
+    expect(hex(c.sidebarRowActive)).toBe("#04395e");
   });
 
   it("keeps text readable on the surfaces it sits on", () => {

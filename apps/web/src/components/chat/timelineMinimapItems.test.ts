@@ -22,6 +22,8 @@ function rows(
     createdAt: message.createdAt,
     message,
     durationStart: message.createdAt,
+    showHead: false,
+    showHeadDetail: false,
     showAssistantMeta: false,
     showAssistantCopyButton: false,
     assistantCopyStreaming: false,

@@ -297,7 +297,8 @@ function Sidebar({
             "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) md:flex",
             "[[data-panel-animations=true]_&]:transition-[left,right,width] [[data-panel-animations=true]_&]:[transition-duration:var(--panel-animation-duration)] [[data-panel-animations=true]_&]:ease-out",
             side === "left"
-              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+              ? // --activity-bar-width (abode F-028) is the rail the layout shell puts left of the sidebar.
+                "left-[var(--activity-bar-width,0px)] group-data-[collapsible=offcanvas]:left-[calc((var(--sidebar-width)+var(--activity-bar-width,0px))*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
             // Adjust the padding for floating and inset variants.
             variant === "floating" || variant === "inset"
@@ -672,6 +673,9 @@ const sidebarMenuButtonVariants = cva(
         icon: "size-8 justify-center rounded-[var(--control-radius)] p-0",
         lg: "h-12 rounded-lg p-2 text-sm group-data-[collapsible=icon]:p-0!",
         sm: "h-7 rounded-lg p-2 text-xs",
+        // One-line workspace row (abode F-028).
+        workspace:
+          "h-[22px] rounded-[var(--control-radius)] px-1.5 text-xs group-data-[collapsible=icon]:p-0!",
       },
       variant: {
         default: "font-medium text-sidebar-muted-foreground/80",
@@ -734,11 +738,20 @@ function SidebarMenuButton({
   );
 }
 
-function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
+function SidebarMenuSub({
+  className,
+  variant = "default",
+  ...props
+}: React.ComponentProps<"ul"> & {
+  /** `flush` is the Fluent thread list (abode F-028): no guide line, rows indented 32px. */
+  variant?: "default" | "flush";
+}) {
   return (
     <ul
       className={cn(
-        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-sidebar-border border-l px-2.5 py-0.5",
+        variant === "flush"
+          ? "mx-0 flex min-w-0 flex-col pl-[32px]"
+          : "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-sidebar-border border-l px-2.5 py-0.5",
         "group-data-[collapsible=icon]:hidden",
         className,
       )}

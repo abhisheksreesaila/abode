@@ -341,7 +341,7 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
 
 ### F-028: Activity bar, Fluent sidebar and palette
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - a 48px activity bar;
   - "Workspaces" with one-line rows and 22px thread rows with the selection style;
@@ -353,7 +353,7 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
 
 ### F-029: Fluent transcript
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** avatar rows, ✓/◐ step lists, an inline diff block style, and an amber ask block with action buttons, by restyling the existing timeline items.
 - **Acceptance:**
   - [ ] A real Claude turn renders like the mockup in Simple mode.
@@ -361,7 +361,7 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
 
 ### F-030: Drawers and status bar
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Bottom panel tabs (Terminal / Output, plus Problems only if a real source exists) with a ⌄ close.
   - Right drawer VS Code tabs with a › close.
