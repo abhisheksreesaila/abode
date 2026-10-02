@@ -1,5 +1,7 @@
 {
   "id": "/",
+  "name": "abode",
+  "short_name": "abode",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

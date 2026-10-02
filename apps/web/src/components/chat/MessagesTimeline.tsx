@@ -107,6 +107,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Root, RootContent } from "mdast";
 import { T3Wordmark } from "../T3Wordmark";
+import { ABODE_NAME } from "../../brand";
 import {
   BotIcon,
   BrainIcon,
@@ -2431,7 +2432,7 @@ function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "mess
   return (
     <>
       <div className="relative min-w-0 px-1 py-0.5">
-        <MessageAuthorHeading>T3 Code</MessageAuthorHeading>
+        <MessageAuthorHeading>{ABODE_NAME}</MessageAuthorHeading>
         {!row.message.streaming && ctx.onQuoteAssistantMessage && ctx.threadRef ? (
           <div className="absolute end-1 top-0 opacity-0 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover/assistant:opacity-100">
             <AskAboutMessageButton
