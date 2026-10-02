@@ -4,6 +4,7 @@ import {
   type MessageId,
   type ScopedThreadRef,
 } from "@t3tools/contracts";
+import { WHOLE_MESSAGE_CITATION_END } from "@t3tools/shared/assistantCitations";
 import { createAssistantTextSelector } from "./assistantTextSelection";
 
 export type AssistantMessageQuote =
@@ -31,7 +32,8 @@ export function buildAssistantMessageQuote(input: {
       ...input.threadRef,
       messageId: input.messageId,
       ...selector,
-      whole: true,
+      // Wire-compatible whole-message marker; see isWholeMessageCitation.
+      ...(selector.text.length > 1 ? { start: 0, end: WHOLE_MESSAGE_CITATION_END } : {}),
     },
   };
 }

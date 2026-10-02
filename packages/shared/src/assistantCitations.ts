@@ -47,7 +47,6 @@ export function formatAssistantCitationHref(citation: AssistantCitation): string
     suffix: citation.suffix,
   });
   if (citation.comment !== undefined) query.set("comment", citation.comment);
-  if (citation.whole) query.set("whole", "1");
   return `${CITATION_HREF_PREFIX}${path}?${query}`;
 }
 
@@ -71,10 +70,8 @@ export function parseAssistantCitationHref(href: string): AssistantCitation | nu
     }
     const requiredKeys = ["text", "start", "end", "prefix", "suffix"];
     const comment = url.searchParams.get("comment");
-    const whole = url.searchParams.get("whole") === "1";
     if (
-      url.searchParams.size !==
-        requiredKeys.length + (comment === null ? 0 : 1) + (whole ? 1 : 0) ||
+      url.searchParams.size !== requiredKeys.length + (comment === null ? 0 : 1) ||
       requiredKeys.some((key) => url.searchParams.getAll(key).length !== 1)
     ) {
       return null;
@@ -94,7 +91,6 @@ export function parseAssistantCitationHref(href: string): AssistantCitation | nu
         prefix: url.searchParams.get("prefix"),
         suffix: url.searchParams.get("suffix"),
         ...(comment === null ? {} : { comment }),
-        ...(whole ? { whole: true } : {}),
       }),
     );
   } catch {
@@ -123,8 +119,29 @@ export function collectAssistantCitations(text: string) {
 }
 
 /**
+ * A quote of a whole message is stored in the existing wire format as
+ * start 0, end 1 with text longer than one character. The schema requires
+ * end > start, and a real selection's end - start is its whitespace-normalized
+ * length, which is at least 2 for any non-blank text longer than one
+ * character, so the two never collide.
+ */
+export const WHOLE_MESSAGE_CITATION_END = 1;
+
+export function isWholeMessageCitation(
+  citation: Pick<AssistantCitation, "text" | "start" | "end">,
+): boolean {
+  return (
+    citation.start === 0 &&
+    citation.end === WHOLE_MESSAGE_CITATION_END &&
+    citation.text.length > 1 &&
+    citation.text.trim() !== ""
+  );
+}
+
+/**
  * Drops the common Markdown syntax from a whole-message quote so previews read
- * as prose. Display only; the saved quote keeps the original text.
+ * as prose. Display only; the saved quote keeps the original text. Avoids
+ * regex lookbehind, which Hermes lacks.
  */
 export function stripBasicMarkdown(text: string): string {
   return text
@@ -134,15 +151,15 @@ export function stripBasicMarkdown(text: string): string {
     .replace(/^\s*[-*+]\s+/gm, "")
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/(\*\*|__)(.+?)\1/g, "$2")
-    .replace(/(?<![\w*])[*_]([^*_\n]+)[*_](?![\w*])/g, "$1")
+    .replace(/(^|[^\w*])[*_]([^*_\n]+)[*_](?![\w*])/gm, "$1$2")
     .replace(/~~(.+?)~~/g, "$1")
     .replace(/`([^`]+)`/g, "$1")
     .trim();
 }
 
-/** What a quote shows in titles and chips. */
+/** What a quote shows in titles, chips and native text. */
 export function assistantCitationDisplayText(citation: AssistantCitation): string {
-  return citation.whole ? stripBasicMarkdown(citation.text) : citation.text;
+  return isWholeMessageCitation(citation) ? stripBasicMarkdown(citation.text) : citation.text;
 }
 
 /** Titles and previews include the selected text and user comment without Markdown escaping. */
@@ -198,7 +215,7 @@ export function renderAssistantCitationsAsText(prompt: string): string {
   let text = "";
   let cursor = 0;
   for (const match of matches) {
-    const quote = escapeMarkdownText(match.citation.text);
+    const quote = escapeMarkdownText(assistantCitationDisplayText(match.citation));
     text += `${prompt.slice(cursor, match.start)}\n\n> Assistant quote:\n${quote
       .split("\n")
       .map((line) => `> ${line}`)

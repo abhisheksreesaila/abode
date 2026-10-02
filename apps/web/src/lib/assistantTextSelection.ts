@@ -1,4 +1,5 @@
 import { ASSISTANT_CITATION_CONTEXT_LENGTH, type AssistantCitation } from "@t3tools/contracts";
+import { isWholeMessageCitation } from "@t3tools/shared/assistantCitations";
 
 export type AssistantTextSelector = {
   readonly text: string;
@@ -262,11 +263,11 @@ function rawTextOffset(text: string, normalizedOffset: number): number {
 /** Resolves against the current DOM without changing the user's selection. */
 export function resolveAssistantCitationRange(
   root: HTMLElement,
-  selector: AssistantTextSelector & { whole?: boolean | undefined },
+  selector: AssistantTextSelector,
 ): Range | null {
   if (excludedAncestor(root) !== null) return null;
   const stream = readAssistantText(root);
-  if (selector.whole) {
+  if (isWholeMessageCitation(selector)) {
     // A whole-message quote carries markdown, so match the message, not its text.
     const first = stream.chunks[0];
     const last = stream.chunks.at(-1);

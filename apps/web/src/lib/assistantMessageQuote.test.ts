@@ -6,6 +6,7 @@ import {
 } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
+import { isWholeMessageCitation } from "@t3tools/shared/assistantCitations";
 import { buildAssistantMessageQuote } from "./assistantMessageQuote";
 
 const base = {
@@ -20,7 +21,10 @@ describe("buildAssistantMessageQuote", () => {
       ok: true,
       citation: { messageId: "m1", text: "Fixed the\nretry queue.", start: 0, prefix: "" },
     });
-    if (result.ok) expect(result.citation.end).toBe("Fixed the retry queue.".length);
+    if (result.ok) {
+      expect(result.citation.end).toBe(1);
+      expect(isWholeMessageCitation(result.citation)).toBe(true);
+    }
   });
 
   it("refuses a message over the citation limit", () => {

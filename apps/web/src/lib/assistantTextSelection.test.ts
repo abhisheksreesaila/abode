@@ -588,7 +588,7 @@ describe("resolveAssistantCitationRange for whole-message quotes", () => {
       new SelectionNode("P").append(textNode("Fixed retry in queue.ts.")),
       new SelectionNode("P").append(textNode("Next step.")),
     );
-  // Raw markdown never matches the rendered text, which is why a flag is needed.
+  // Raw markdown never matches the rendered text, which is why whole quotes are marked (end 1).
   const markdown = "Fixed **retry** in `queue.ts`.\n\nNext step.";
   const quote = { text: markdown, start: 0, end: markdown.length, prefix: "", suffix: "" };
 
@@ -599,7 +599,8 @@ describe("resolveAssistantCitationRange for whole-message quotes", () => {
   it("resolves the whole rendered message when flagged", () => {
     const range = resolveAssistantCitationRange(rendered() as unknown as HTMLElement, {
       ...quote,
-      whole: true,
+      start: 0,
+      end: 1,
     }) as unknown as {
       startContainer: SelectionNode;
       endContainer: SelectionNode;
