@@ -307,7 +307,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-026: Project welcome
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** a new thread in a project greets you with:
   - a vibrant title: an emoji, "What should we build in <Project>?", and the project name in a gradient;
   - the README tagline;
@@ -320,7 +320,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-027: Composer chips with meaning
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** subtle semantic tints:
   - Full access: coral with ⚠;
   - Auto-accept edits: amber;
