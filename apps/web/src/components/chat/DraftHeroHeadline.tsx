@@ -7,6 +7,7 @@ import { primaryServerKeybindingsAtom } from "~/state/server";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { InlineButton } from "../ui/button";
 import { useDraftProjectPicker } from "./DraftProjectPicker";
+import { ProjectWelcome } from "./ProjectWelcome";
 
 interface DraftHeroHeadlineProps {
   readonly draftId: DraftId | null;
@@ -28,6 +29,7 @@ export function DraftHeroHeadline({
     scratchWorkspaceRoot,
     shouldShowProjectMenu,
     startScratch,
+    activeProject,
     activeProjectDisplayName,
   } = picker;
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
@@ -87,22 +89,34 @@ export function DraftHeroHeadline({
       </Tooltip>
     ) : null;
 
+  const plainHeadline = (
+    <h1
+      aria-label={headingLabel}
+      className="w-full text-center font-normal text-2xl text-foreground tracking-tight sm:text-3xl"
+    >
+      {isScratchDraft ? (
+        <>What should we work on?</>
+      ) : hasResolvedProject ? (
+        <>What should we build in {projectSelector}?</>
+      ) : canChooseProject ? (
+        <>{projectSelector} to start</>
+      ) : (
+        <>Add a project to start</>
+      )}
+    </h1>
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center">
-      <h1
-        aria-label={headingLabel}
-        className="w-full text-center font-normal text-2xl text-foreground tracking-tight sm:text-3xl"
-      >
-        {isScratchDraft ? (
-          <>What should we work on?</>
-        ) : hasResolvedProject ? (
-          <>What should we build in {projectSelector}?</>
-        ) : canChooseProject ? (
-          <>{projectSelector} to start</>
-        ) : (
-          <>Add a project to start</>
-        )}
-      </h1>
+      {hasResolvedProject && !isScratchDraft && activeProject ? (
+        <ProjectWelcome
+          draftId={draftId}
+          project={{ ...activeProject, title: activeProjectDisplayName ?? activeProject.title }}
+          fallback={plainHeadline}
+        />
+      ) : (
+        plainHeadline
+      )}
       {/* Reserved whenever threads can skip a project, so the heading does not
           move. Holds the "start without a project" link. */}
       {scratchWorkspaceRoot === null ? null : (
