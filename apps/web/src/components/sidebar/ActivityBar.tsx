@@ -102,6 +102,13 @@ export const ActivityBar = memo(function ActivityBar({
         "sticky top-0 hidden h-dvh shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar md:flex",
       )}
     >
+      {reserveTitlebar ? (
+        <div
+          aria-hidden
+          className="drag-region absolute inset-x-0 top-0"
+          style={{ height: "var(--workspace-topbar-height)" }}
+        />
+      ) : null}
       <div className="flex flex-col">
         <Link
           to="/"
