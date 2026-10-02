@@ -936,6 +936,7 @@ function ComposerCommandMenuLayer(props: { anchor: HTMLElement | null; children:
 import { Button } from "../ui/button";
 import { Select, SelectItem, SelectPopup, SelectValue } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { ComposerVoiceControl } from "../../voice/ComposerVoiceControl";
 import { toastManager } from "../ui/toast";
 import {
   FileIcon,
@@ -7005,6 +7006,17 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   }
                   className="flex shrink-0 flex-nowrap items-center justify-end gap-2"
                 >
+                  <ComposerVoiceControl
+                    disabled={
+                      isConnecting ||
+                      isComposerApprovalState ||
+                      pendingUserInputs.length > 0 ||
+                      projectSelectionRequired
+                    }
+                    onTranscript={(text) =>
+                      insertComposerText(text, "cursor", { ensureLeadingBoundary: true })
+                    }
+                  />
                   {showComposerAttachAction ? (
                     <>
                       <input

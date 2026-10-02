@@ -554,6 +554,42 @@
         "licenseId": "MIT",
         "copyrights": ["Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)"]
       }
+    },
+    {
+      "license": "MIT",
+      "name": "onnxruntime-node",
+      "generatedNotice": {
+        "licenseId": "MIT",
+        "copyrights": ["Copyright (c) Microsoft Corporation"]
+      }
+    },
+    {
+      "license": "MIT",
+      "name": "onnxruntime-common",
+      "generatedNotice": {
+        "licenseId": "MIT",
+        "copyrights": ["Copyright (c) Microsoft Corporation"]
+      }
+    },
+    {
+      "license": "MIT",
+      "name": "onnxruntime-web",
+      "generatedNotice": {
+        "licenseId": "MIT",
+        "copyrights": ["Copyright (c) Microsoft Corporation"]
+      }
+    },
+    {
+      "name": "guid-typescript",
+      "generatedNotice": {
+        "licenseId": "ISC"
+      }
+    },
+    {
+      "name": "@img/sharp-libvips-linux-x64",
+      "generatedNotice": {
+        "licenseId": "LGPL-3.0-or-later"
+      }
     }
   ]
 }
