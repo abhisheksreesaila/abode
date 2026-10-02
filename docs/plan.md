@@ -388,6 +388,34 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
   - [ ] The user can stop it at any time.
   - [ ] Any contract change is add-only.
 
+## Phase 2f: Abhishek's core loop (2026-10-02)
+
+### F-033: Each workspace has its own right drawer (changed files plus browser)
+
+- **Status:** doing
+- **What:**
+  - Switching to a workspace restores that workspace's right drawer: open or closed, the active tab, and its own browser at that app's URL.
+  - A Changes view lists the files changed in the workspace; click one to open it in the editor tab.
+  - Each workspace keeps its own browser session and URL (auto-detected from the workspace's dev server if T3 already does that, otherwise the last URL used there).
+- **Acceptance:**
+  - [ ] Switching between two workspaces swaps the files and the browser.
+  - [ ] Both drawers can be closed, and the closed state is remembered per workspace.
+
+### F-034: Delight and fonts
+
+- **Status:** doing
+- **What:**
+  - Fonts: Inter (UI) and JetBrains Mono (code), bundled and OFL-licensed, so they're the same on every platform and work offline.
+  - Whimsy, every piece one-shot and never looping, respecting reduced-motion, with Settings → Appearance → "Little delights" to turn it off:
+    - a ☕ in the status bar at 3pm with a one-time steam puff;
+    - a time-of-day greeting on the project welcome;
+    - a small sparkle when an autonomous run ends with done;
+    - "ship it 🚢" on Fridays.
+- **Acceptance:**
+  - [ ] Nothing animates continuously.
+  - [ ] The toggle turns all of it off.
+  - [ ] The fonts load with no network.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
