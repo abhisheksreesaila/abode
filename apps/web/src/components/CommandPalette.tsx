@@ -60,6 +60,7 @@ import {
   MonitorIcon,
   MoonIcon,
   PaletteIcon,
+  PencilIcon,
   RotateCcwIcon,
   SettingsIcon,
   SquarePenIcon,
@@ -127,6 +128,7 @@ import {
 import { onOpenCommandPalette } from "../commandPaletteBus";
 import { requestPanelToggle } from "../panelToggleBus";
 import { PANEL_TOGGLE_PALETTE_ENTRIES } from "./panelTogglePaletteEntries";
+import { requestEditLastMessage } from "./chat/editLastMessage";
 import { isPreviewFocused } from "../lib/previewFocus";
 import { isTerminalFocused } from "../lib/terminalFocus";
 import {
@@ -2035,6 +2037,19 @@ function OpenCommandPaletteDialog(props: {
       },
     })),
   );
+
+  if (activeThread != null) {
+    actionItems.push({
+      kind: "action",
+      value: "action:edit-last-message",
+      searchTerms: ["edit", "last message", "prompt", "rewind", "re-run", "resend", "undo"],
+      title: "Edit last message",
+      icon: <PencilIcon className={ITEM_ICON_CLASS} />,
+      run: async () => {
+        requestEditLastMessage();
+      },
+    });
+  }
 
   actionItems.push({
     kind: "action",

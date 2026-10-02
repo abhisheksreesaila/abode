@@ -123,11 +123,11 @@ import {
   Minimize2Icon,
   MousePointerClickIcon,
   PaintbrushIcon,
+  PencilIcon,
   SearchIcon,
   SmartphoneIcon,
   SquarePenIcon,
   TerminalIcon,
-  Undo2Icon,
   WrenchIcon,
   XIcon,
   ZapIcon,
@@ -174,6 +174,8 @@ import {
   type AssistantCitationRequest,
   type AssistantCitationTarget,
 } from "./AssistantCitationSource";
+import { AskAboutMessageButton } from "./AskAboutMessageButton";
+import { findLastEditableMessage, onEditLastMessageRequest } from "./editLastMessage";
 import { useAssistantCitationTarget, type CitationHistoryPage } from "./useAssistantCitationTarget";
 import {
   computeStableMessagesTimelineRows,
@@ -281,6 +283,9 @@ interface TimelineRowSharedState {
   skills: ReadonlyArray<Pick<ServerProviderSkill, "name" | "displayName">>;
   activeThreadEnvironmentId: EnvironmentId;
   onRevertToTurnCount: (targetTurnCount: number, messageId: MessageId) => void;
+  onCiteAssistantText:
+    | ((citation: AssistantCitation, sourceAnchor: AssistantCitationSourceAnchor) => boolean)
+    | undefined;
   onUseArtifactTemplate: (template: CodexArtifactTemplate) => void;
   onRunShellCommand: ((command: string) => void) | undefined;
   onImageExpand: (preview: ExpandedImagePreview) => void;
@@ -1150,6 +1155,18 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     };
   }, [timelineViewportElement, rows.length, reportContentOverflow, chatWidth]);
 
+  // "Edit last message" from the command palette.
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  useEffect(
+    () =>
+      onEditLastMessageRequest(() => {
+        const target = findLastEditableMessage(rowsRef.current);
+        if (target) onRevertToTurnCount(target.turnCount, target.messageId);
+      }),
+    [onRevertToTurnCount],
+  );
+
   const sharedState = useMemo<TimelineRowSharedState>(
     () => ({
       citationRequest: readyCitationRequest,
@@ -1164,6 +1181,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       skills,
       activeThreadEnvironmentId,
       onRevertToTurnCount,
+      onCiteAssistantText,
       onUseArtifactTemplate,
       onRunShellCommand,
       onImageExpand,
@@ -1200,6 +1218,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       skills,
       activeThreadEnvironmentId,
       onRevertToTurnCount,
+      onCiteAssistantText,
       onUseArtifactTemplate,
       onRunShellCommand,
       onImageExpand,
@@ -2320,9 +2339,10 @@ function RevertUserMessageButton({
           />
         }
       >
-        <Undo2Icon className="size-3" />
+        <PencilIcon className="size-3" />
+        Edit
       </TooltipTrigger>
-      <TooltipPopup side="top">Edit from here</TooltipPopup>
+      <TooltipPopup side="top">Edit and re-run from here</TooltipPopup>
     </Tooltip>
   );
 }
@@ -2484,6 +2504,13 @@ function AssistantMessageMeta({
         showCopyButton={showCopyButton}
         streaming={copyStreaming}
       />
+      {!message.streaming && ctx.onCiteAssistantText && ctx.threadRef ? (
+        <AskAboutMessageButton
+          messageId={message.id}
+          threadRef={ctx.threadRef}
+          onCite={ctx.onCiteAssistantText}
+        />
+      ) : null}
       {!message.streaming && (
         <Tooltip>
           <TooltipTrigger render={<p className="text-muted-foreground text-xs tabular-nums" />}>
