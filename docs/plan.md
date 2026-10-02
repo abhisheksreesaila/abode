@@ -7,9 +7,42 @@ Commit after each passing slice: "F-00N: <what changed>". A ticket is done only 
 Brief: docs/brief.md. Rule: server/contract changes are add-only.
 -->
 
+## Phase 0: remote before the LA trip (deadline 2026-10-02)
+
+Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), then F-004 (design, reviewed from the phone). The rest of phase 2 is built from LA.
+
+### M-001: abode runs as an always-on host
+
+- **Status:** todo
+- **What:**
+  - A pinned build of abode, in its own checkout separate from the working copy, runs as a systemd user service.
+  - Its own home is `~/.abode`, seeded with a `VACUUM INTO` snapshot of `~/.t3/userdata`. The installed T3 data is never touched.
+  - It's reachable over Tailscale HTTPS.
+  - One update command builds a commit, restarts the service and health-checks it, and **automatically rolls back** to the previous build if the check fails. There's no backup host (Abhishek's choice), so a bad update must never leave it down.
+- **Acceptance:**
+  - [ ] The service survives a reboot and logout (lingering is on), and restarts itself if it crashes.
+  - [ ] Agents editing and restarting the dev working copy don't affect the host.
+  - [ ] Updating to a deliberately broken commit rolls back by itself, and the host stays reachable.
+  - [ ] Every agent can run the update command from a thread, so changes can ship from the phone.
+
+### M-002: Pair the phone (needs Abhishek, about 20 minutes)
+
+- **Status:** todo
+- **Depends on:** M-001
+- **What:** the steps only Abhishek can do:
+  - install Tailscale on the laptop (sudo) and sign in;
+  - install Tailscale and the T3 Code app on the phone, signed in to the same account;
+  - set the lid and idle behavior so the laptop doesn't suspend while plugged in;
+  - pair the phone with abode.
+    Walked through with the `wizard` skill.
+- **Acceptance:**
+  - [ ] On cellular, with Wi-Fi off, the phone opens abode, starts a Claude thread in a project, and sees it finish.
+  - [ ] With the lid closed and plugged in, the laptop stays reachable for 30 minutes.
+
 ## Phase 1: voice
 
 ### F-001: Voice spike, deciding whether in-app speech is good enough
+
 - **Status:** todo
 - **What:**
   - Throwaway prototype: Whisper (base.en or small.en) and Moonshine via transformers.js, running in the desktop app's renderer on this laptop. Use WebGPU if it's available, otherwise WASM.
@@ -21,6 +54,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] Recommend a model. Or, if nothing gets under about 2 seconds for a 10-second clip with usable accuracy, recommend falling back to whisper.cpp, and Abhishek decides.
 
 ### F-002: Dictate into the composer
+
 - **Status:** todo
 - **Depends on:** F-001
 - **What:** a mic button in the composer, plus a hold-to-talk key. The speech is transcribed locally and inserted at the cursor; nothing is sent until Abhishek presses Enter. Works in desktop and web.
@@ -33,6 +67,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] Unit tests cover the recording state machine (idle → recording → transcribing → idle, and cancel/error).
 
 ### F-003: Voice settings
+
 - **Status:** todo
 - **Depends on:** F-002
 - **What:** a Voice section in Settings with: on/off, the hold-to-talk key (rebindable through the existing keybindings), and the downloaded model's size with a Delete button.
@@ -44,6 +79,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
 ## Phase 2: VS Code polish
 
 ### F-004: Design the main window
+
 - **Status:** todo
 - **What:** artboards made with the `designer` skill, in VS Code Dark Modern structure with workspace accent colors, covering:
   - the colored workspace tree with threads and nested subagents;
@@ -52,10 +88,11 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - the bottom-left customizations list;
   - the side panel with its Editor and Browser tabs, open and closed.
 - **Acceptance:**
-  - [ ] Abhishek approves the artboards.
+  - [ ] Abhishek approves the artboards. (Pre-approved on 2026-10-01: "as long as you're close to VS Code in terms of design, I approve it." Review happens in the morning.)
   - [ ] A short handoff is written for F-005 to F-011.
 
 ### F-005: abode theme
+
 - **Status:** todo
 - **Depends on:** F-004
 - **What:** a VS Code Dark Modern–style palette and density, added as a new built-in theme in its own file and registered with a small hook. Selectable in Settings → Appearance and set as the default.
@@ -65,6 +102,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] Contrast checks pass.
 
 ### F-006: Workspace colors
+
 - **Status:** todo
 - **Depends on:** F-005
 - **What:** each project gets an accent color assigned automatically from a palette, editable from the project's context menu. The color shows on the project row, its threads and the chat header. It's stored on the client only.
@@ -75,6 +113,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] Projects stay collapsible and expandable.
 
 ### F-007: VS Code panel toggles
+
 - **Status:** todo
 - **Depends on:** F-005
 - **What:** title-bar toggle buttons for the sidebar, bottom terminal and side panel, with Ctrl+B, Ctrl+J and Ctrl+Alt+B (and their Cmd equivalents). The side panel is closed by default.
@@ -84,6 +123,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] The command palette has matching toggle commands.
 
 ### F-008: Subagents in the sidebar
+
 - **Status:** todo
 - **Depends on:** F-005
 - **What:** running subagents nest under their thread with a live status dot. Clicking one opens the existing Agents tab, focused on it. Finished subagents collapse away.
@@ -93,6 +133,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] No extra WebSocket traffic: it uses data the client already has.
 
 ### F-009: Workspace and harness pickers above the composer
+
 - **Status:** todo
 - **Depends on:** F-005
 - **What:** for a new thread, two compact dropdowns above the composer, one for the workspace and one for the harness (Claude, plus Codex when available). Reuse the existing environment and provider pickers where they exist.
@@ -101,6 +142,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] The same works from the command palette and the new-thread keybinding.
 
 ### F-010: Customizations service (server, add-only)
+
 - **Status:** todo
 - **What:** one new service with new RPC methods (it alters nothing existing):
   - It lists Claude **skills, agents, MCP servers and instructions** for a workspace. Each entry has a name, a file path and a scope: user (`~/.claude/…`, `~/.claude.json`) or workspace (`.claude/…`, `.mcp.json`, `CLAUDE.md`).
@@ -115,6 +157,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] Existing contracts are unchanged (the diff only adds).
 
 ### F-011: Customizations list and side-panel editing
+
 - **Status:** todo
 - **Depends on:** F-005, F-010
 - **What:** a bottom-left list of Skills, Agents, MCP servers and Instructions, grouped as User or Workspace. Clicking an item opens its file in the side panel's Editor tab, with a lock toggle (read-only on or off). Markdown also renders in the Browser tab.
@@ -125,6 +168,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] An empty state links to creating the first skill or agent.
 
 ### F-012: A week of daily use
+
 - **Status:** todo
 - **Depends on:** F-002 to F-011
 - **What:** run all Claude sessions in abode for a week, and note friction in `docs/lessons.md`.
