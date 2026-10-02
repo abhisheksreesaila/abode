@@ -1175,7 +1175,11 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
               />
             }
           >
-            <ComposerControlIcon icon={RuntimeModeIcon} size={size} />
+            <ComposerControlIcon
+              icon={RuntimeModeIcon}
+              size={size}
+              className={props.runtimeMode === "full-access" ? "text-current" : undefined}
+            />
             <SelectValue data-composer-control-label>{runtimeModeOption.label}</SelectValue>
           </TooltipTrigger>
           <SelectPopup alignItemWithTrigger={false} {...composerFloatingLayerProps}>

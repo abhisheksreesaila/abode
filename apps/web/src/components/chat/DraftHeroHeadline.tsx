@@ -112,7 +112,6 @@ export function DraftHeroHeadline({
         <ProjectWelcome
           draftId={draftId}
           project={{ ...activeProject, title: activeProjectDisplayName ?? activeProject.title }}
-          fallback={plainHeadline}
         />
       ) : (
         plainHeadline

@@ -1,12 +1,16 @@
-import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 
 import { useComposerDraftStore, type DraftId } from "~/composerDraftStore";
-import { useThreadShells } from "~/state/entities";
+import { useThreadShellsForProjectRefs } from "~/state/entities";
 import { useEnvironments } from "~/state/environments";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { useEnvironmentQuery } from "~/state/query";
+import { vcsEnvironment } from "~/state/vcs";
+import { useComposerHandleContext } from "../../composerHandleContext";
+import { resolveBranchToolbarValue, resolveEffectiveEnvMode } from "../BranchToolbar.logic";
 import { buildThreadRouteParams } from "../../threadRoutes";
 import { formatRelativeTimeLabel } from "../../timestampFormat";
 import { useProjectWorkspaceColor } from "../sidebar/workspaceColorHooks";
@@ -22,19 +26,6 @@ type ProjectWelcomeProject = Pick<
   EnvironmentProject,
   "environmentId" | "id" | "workspaceRoot" | "repositoryIdentity"
 > & { readonly title: string };
-
-/** Puts the caret at the end of the composer once a card has filled it in. */
-function focusComposerAtEnd() {
-  requestAnimationFrame(() => {
-    const editor = document.querySelector<HTMLElement>('[data-testid="composer-editor"]');
-    if (!editor) return;
-    editor.focus();
-    const selection = window.getSelection();
-    if (!selection) return;
-    selection.selectAllChildren(editor);
-    selection.collapseToEnd();
-  });
-}
 
 const MetaChip = ({ children, tooltip }: { children: ReactNode; tooltip?: string }) => {
   const chip = (
@@ -73,59 +64,69 @@ function StarterCard(props: {
 }
 
 /**
- * The welcome for a new thread in a project: README emoji and tagline, where
- * the thread will run, and four starter cards. Renders `fallback` (the plain
- * headline) until the README has been read, and when there is none.
+ * The welcome for a new thread in a project: emoji, title, where the thread
+ * will run, and four starter cards. It renders at once; the README only adds
+ * its emoji and tagline when it has been read, so a missing README or an
+ * offline host gives the same hero without them.
  */
 export function ProjectWelcome(props: {
   readonly draftId: DraftId | null;
   readonly project: ProjectWelcomeProject;
-  readonly fallback: ReactNode;
 }) {
   const { project, draftId } = props;
   const readme = useProjectReadmeWelcome(project);
   const color = useProjectWorkspaceColor(project);
   const navigate = useNavigate();
+  const composerHandle = useComposerHandleContext();
   const { environments } = useEnvironments();
-  const shells = useThreadShells();
-  const draftBranch = useComposerDraftStore((store) =>
-    draftId ? (store.getDraftSession(draftId)?.branch ?? null) : null,
+  const projectRefs = useMemo(
+    () => [scopeProjectRef(project.environmentId, project.id)],
+    [project.environmentId, project.id],
   );
+  const shells = useThreadShellsForProjectRefs(projectRefs);
+  const draft = useComposerDraftStore((store) => (draftId ? store.getDraftSession(draftId) : null));
   const setPrompt = useComposerDraftStore((store) => store.setPrompt);
 
-  const projectThreads = useMemo(
-    () =>
-      shells.filter(
-        (thread) =>
-          thread.environmentId === project.environmentId && thread.projectId === project.id,
-      ),
-    [project.environmentId, project.id, shells],
+  // The branch the composer's own branch picker would show: the checkout's
+  // current branch, or the draft's chosen one. Unknown means no chip.
+  const worktreePath = draft?.worktreePath ?? null;
+  const branchStatus = useEnvironmentQuery(
+    vcsEnvironment.status({
+      environmentId: project.environmentId,
+      input: { cwd: worktreePath ?? project.workspaceRoot },
+    }),
   );
-  const summary = useMemo(() => summarizeProjectThreads(projectThreads), [projectThreads]);
+  const branch = resolveBranchToolbarValue({
+    envMode: resolveEffectiveEnvMode({
+      activeWorktreePath: worktreePath,
+      hasServerThread: false,
+      draftThreadEnvMode: draft?.envMode,
+    }),
+    activeWorktreePath: worktreePath,
+    activeThreadBranch: draft?.branch ?? null,
+    currentGitBranch: branchStatus.data?.refName ?? null,
+  });
 
-  if (readme === null) return props.fallback;
+  const summary = useMemo(() => summarizeProjectThreads(shells), [shells]);
+  const latest = summary.latest;
 
   const environmentLabel =
     environments.find((environment) => environment.environmentId === project.environmentId)
       ?.label ?? null;
-  const branch = draftBranch ?? summary.latest?.branch ?? null;
   const prompts = buildStarterPrompts(project.title);
+  // A card never replaces what is already typed: it adds its line below.
   const fillComposer = (text: string) => {
     if (!draftId) return;
-    setPrompt(draftId, text);
-    focusComposerAtEnd();
+    const existing = useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
+    setPrompt(draftId, existing.trim() === "" ? text : `${existing.replace(/\s+$/, "")}\n${text}`);
+    requestAnimationFrame(() => composerHandle?.current?.focusAtEnd());
   };
-  const latest = summary.latest;
-  const projectNameStyle: CSSProperties | undefined = color
-    ? {
-        backgroundImage: `linear-gradient(90deg, ${color.color}, color-mix(in srgb, ${color.color} 55%, var(--chip-purple, #c586c0)))`,
-      }
-    : undefined;
+  const accent = color?.color ?? "var(--chip-blue)";
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-3 text-center">
-      <div aria-hidden="true" className="text-4xl leading-none">
-        {readme.emoji ?? pickProjectEmoji(project.title)}
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-2 text-center sm:gap-3">
+      <div aria-hidden="true" className="shorter:hidden text-4xl leading-none">
+        {readme?.emoji ?? pickProjectEmoji(project.title)}
       </div>
       <h1
         aria-label={`What should we build in ${project.title} today?`}
@@ -133,17 +134,21 @@ export function ProjectWelcome(props: {
       >
         What should we build in{" "}
         <span
-          className={color ? "bg-clip-text text-transparent" : undefined}
-          style={projectNameStyle}
+          className="bg-clip-text text-transparent"
+          style={{
+            backgroundImage: `linear-gradient(90deg, ${accent}, color-mix(in srgb, ${accent} 55%, var(--chip-purple)))`,
+          }}
         >
           {project.title}
         </span>{" "}
         today?
       </h1>
-      {readme.tagline ? (
-        <p className="max-w-[56ch] text-muted-foreground text-sm">{readme.tagline}</p>
+      {readme?.tagline ? (
+        <p className="shorter:hidden max-w-[56ch] text-muted-foreground text-sm">
+          {readme.tagline}
+        </p>
       ) : null}
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="shorter:hidden flex flex-wrap justify-center gap-2">
         <MetaChip tooltip={project.workspaceRoot}>
           📁 {shortenHomePath(project.workspaceRoot)}
         </MetaChip>
@@ -157,9 +162,9 @@ export function ProjectWelcome(props: {
               }`}
         </MetaChip>
       </div>
-      <div className="mt-1 grid w-full max-w-xl grid-cols-2 gap-2">
+      <div className="short:hidden mt-1 grid w-full max-w-xl grid-cols-2 gap-2">
         <StarterCard
-          accent="var(--chip-blue, #4fc1ff)"
+          accent="var(--chip-blue)"
           title="✨ Add a feature"
           hint="Describe it and I'll plan it first"
           onSelect={() => fillComposer(prompts.feature)}
@@ -171,13 +176,13 @@ export function ProjectWelcome(props: {
           onSelect={() => fillComposer(prompts.bug)}
         />
         <StarterCard
-          accent="var(--chip-safe, #89d185)"
+          accent="var(--chip-safe)"
           title="📖 Explain the code"
           hint={`A tour of how ${project.title} works`}
           onSelect={() => fillComposer(prompts.explain)}
         />
         <StarterCard
-          accent="var(--chip-purple, #c586c0)"
+          accent="var(--chip-purple)"
           title="🧭 Pick up where we left off"
           hint={
             latest

@@ -4,6 +4,9 @@
 @custom-variant light (&:not(.dark, .dark *));
 /* Window Controls Overlay: active when Electron exposes native titlebar control geometry. */
 @custom-variant wco (&:is(.wco, .wco *));
+/* Short windows: the welcome hero drops its cards first, then its extras. */
+@custom-variant short (@media (max-height: 40rem));
+@custom-variant shorter (@media (max-height: 30rem));
 
 /* On mobile, morph the expanded hero composer into the compact docked
    composer while it moves; the rest of the app remains visually stationary. */
@@ -2249,18 +2252,17 @@ code {
   --ws-8: #d7ba7d;
 }
 
-/* Composer chip tints (F-027, components/chat/chipTint.ts). --chip-<name> is
-   the hue used for fills and borders; --chip-<name>-fg is the text color, kept
-   dark enough on light themes and light enough on dark ones to pass 4.5:1 over
-   the tinted chip. Light values are the fallback for every theme; .dark
-   (which every dark theme, abode included, sets) swaps in the VS Code hues. */
+/* Composer chip tints (F-027, components/chat/chipTint.ts). Risk colors come
+   from the theme's own error, warning and success roles, so every theme
+   (abode included) keeps them readable; the --chip-<name>-fg text color is the
+   role's foreground. Branch and workspace hues are fixed per color scheme. */
 :root {
-  --chip-danger: #d12f2f;
-  --chip-danger-fg: #a31515;
-  --chip-caution: #b58900;
-  --chip-caution-fg: #7a5c00;
-  --chip-safe: #2e8b3d;
-  --chip-safe-fg: #1e6b2c;
+  --chip-danger: var(--error);
+  --chip-danger-fg: var(--error-foreground);
+  --chip-caution: var(--warning);
+  --chip-caution-fg: var(--warning-foreground);
+  --chip-safe: var(--success);
+  --chip-safe-fg: var(--success-foreground);
   --chip-purple: #a64ca0;
   --chip-purple-fg: #7d2f78;
   --chip-blue: #0a7fc2;
@@ -2269,21 +2271,15 @@ code {
   --chip-teal-fg: #0b6657;
   --chip-claude: #d97757;
   --chip-codex: #10a37f;
-}
 
-.dark {
-  --chip-danger: #f14c4c;
-  --chip-danger-fg: #ff8a8a;
-  --chip-caution: #cca700;
-  --chip-caution-fg: #e2c14a;
-  --chip-safe: #89d185;
-  --chip-safe-fg: #89d185;
-  --chip-purple: #c586c0;
-  --chip-purple-fg: #d9a6d5;
-  --chip-blue: #4fc1ff;
-  --chip-blue-fg: #8fd3ff;
-  --chip-teal: #4ec9b0;
-  --chip-teal-fg: #7fdcc8;
+  @variant dark {
+    --chip-purple: #c586c0;
+    --chip-purple-fg: #d9a6d5;
+    --chip-blue: #4fc1ff;
+    --chip-blue-fg: #8fd3ff;
+    --chip-teal: #4ec9b0;
+    --chip-teal-fg: #7fdcc8;
+  }
 }
 
 /* abode density: VS Code-like. Scoped to the theme id so every other theme

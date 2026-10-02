@@ -8,10 +8,14 @@ const TAGLINE_MAX_LENGTH = 140;
 // does not become the project's face.
 const EMOJI_SCAN_LENGTH = 1000;
 
-const EMOJI_PATTERN =
-  /\p{Extended_Pictographic}(?:️|[\u{1F3FB}-\u{1F3FF}]|‍\p{Extended_Pictographic}️?)*/gu;
-// Pictographic by Unicode, but plain text in a README.
-const NOT_EMOJI = new Set(["©", "®", "™"]);
+// Presentation emoji only: emoji by default, or a text symbol the author opted
+// into emoji with VS16. A bare "✔", "©" or "™" stays text. Built from a string so
+// the invisible VS16 and ZWJ characters stay visible as escapes.
+const EMOJI_PATTERN = new RegExp(
+  "(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic}\\uFE0F)" +
+    "(?:[\\u{1F3FB}-\\u{1F3FF}]|\\u200D(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic}\\uFE0F?))*",
+  "gu",
+);
 
 export interface ReadmeWelcome {
   readonly emoji: string | null;
@@ -30,7 +34,7 @@ export function trimTagline(text: string, max = TAGLINE_MAX_LENGTH): string {
 
 function stripInlineMarkdown(line: string): string {
   return line
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/!\[[^\]]*\](?:\([^)]*\)|\[[^\]]*\])/g, "")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1")
     .replace(/<[^>]+>/g, "")
@@ -43,10 +47,7 @@ function stripInlineMarkdown(line: string): string {
 }
 
 function firstEmoji(text: string): string | null {
-  for (const match of text.slice(0, EMOJI_SCAN_LENGTH).matchAll(EMOJI_PATTERN)) {
-    if (!NOT_EMOJI.has(match[0])) return match[0];
-  }
-  return null;
+  return text.slice(0, EMOJI_SCAN_LENGTH).match(EMOJI_PATTERN)?.[0] ?? null;
 }
 
 function isFence(line: string) {
@@ -62,7 +63,10 @@ function proseLines(markdown: string): string[] {
   const text = markdown
     .replace(/^﻿/, "")
     .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
+    .replace(/<!--[\s\S]*?-->/g, "")
+    // An HTML title becomes a markdown one on its own line, so
+    // <div align="center"><h1>Name</h1><p>Tagline</p></div> reads like "# Name".
+    .replace(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi, "\n# title\n");
   const lines: string[] = [];
   let inFence = false;
   for (const line of text.split(/\r?\n/)) {
@@ -89,9 +93,11 @@ function findTitleEnd(lines: readonly string[]): number {
 }
 
 function isBadgeOrHtmlOnly(line: string) {
+  // Reference definitions ("[ci]: https://…") belong to reference-style badges.
+  if (/^\s*\[[^\]]+\]:\s*\S+/.test(line)) return true;
   const stripped = line
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-    .replace(/\[\s*\]\([^)]*\)/g, "")
+    .replace(/!\[[^\]]*\](?:\([^)]*\)|\[[^\]]*\])/g, "")
+    .replace(/\[\s*\](?:\([^)]*\)|\[[^\]]*\])/g, "")
     .replace(/<[^>]*>/g, "")
     .replace(/[\s[\]()]/g, "");
   return stripped === "";

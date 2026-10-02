@@ -38,6 +38,30 @@ describe("parseReadmeWelcome tagline", () => {
     expect(parseReadmeWelcome(md).tagline).toBe("A bold tool with links and code.");
   });
 
+  it("reads an HTML title, alone or wrapped in a div", () => {
+    const alone = '<h1 align="center">Travel OS</h1>\n\n<p align="center">Plan trips.</p>';
+    expect(parseReadmeWelcome(alone).tagline).toBe("Plan trips.");
+    const wrapped =
+      '<div align="center">\n  <img src="logo.png">\n  <h1>Travel OS</h1>\n  <p><b>Plan trips</b> well.</p>\n</div>\n\n## Install';
+    expect(parseReadmeWelcome(wrapped).tagline).toBe("Plan trips well.");
+    expect(parseReadmeWelcome("<h1>Travel OS</h1><p>Plan trips.</p>").tagline).toBe("Plan trips.");
+  });
+
+  it("skips reference-style badges and their definitions", () => {
+    const md = [
+      "# Travel OS",
+      "",
+      "[![CI][ci-badge]][ci-link] ![npm][npm-badge]",
+      "",
+      "[ci-badge]: https://x/y.svg",
+      "[ci-link]: https://x",
+      "[npm-badge]: https://x/z.svg",
+      "",
+      "Plan trips.",
+    ].join("\n");
+    expect(parseReadmeWelcome(md).tagline).toBe("Plan trips.");
+  });
+
   it("understands a setext title", () => {
     expect(parseReadmeWelcome("Travel OS\n=========\n\nPlan trips.").tagline).toBe("Plan trips.");
   });
@@ -77,6 +101,12 @@ describe("parseReadmeWelcome emoji", () => {
 
   it("ignores copyright and trademark signs, digits and plain text", () => {
     expect(parseReadmeWelcome("# Acme™ © 2026 1").emoji).toBeNull();
+  });
+
+  it("accepts only presentation emoji: bare text symbols do not count", () => {
+    expect(parseReadmeWelcome("# Done ✔ ➡ ☑").emoji).toBeNull();
+    expect(parseReadmeWelcome("# Done ✔ ✔️").emoji).toBe("✔️");
+    expect(parseReadmeWelcome("# Ship ✅").emoji).toBe("✅");
   });
 
   it("is null when there is none", () => {
