@@ -4,6 +4,7 @@ import { MicIcon, SquareIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../components/ui/tooltip";
 import type { RecordingState } from "./recordingMachine";
+import { previewLabel } from "./previewText";
 import { voiceShortcutLabel } from "./shortcut";
 import { useVoiceDictation } from "./useVoiceDictation";
 import { useVoiceSettings } from "./voiceSettings";
@@ -69,8 +70,18 @@ export function ComposerVoiceControl({
   const status = describeVoiceStatus(state, elapsed);
   const busy = state.status === "transcribing";
   const label = recording ? "Stop dictation" : "Dictate";
+  const preview = state.status === "recording" ? previewLabel(state) : null;
   return (
-    <>
+    <div className="relative flex items-center gap-2">
+      {preview ? (
+        // Muted ghost of what has been heard so far; the real text lands on release.
+        <p
+          data-voice-interim="true"
+          className="pointer-events-none absolute right-0 bottom-full mb-2 w-72 max-w-[70vw] rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs italic text-muted-foreground shadow-sm"
+        >
+          {preview}
+        </p>
+      ) : null}
       {status ? (
         <span
           role={state.status === "error" ? "alert" : "status"}
@@ -103,6 +114,6 @@ export function ComposerVoiceControl({
           {label} (hold {voiceShortcutLabel(settings.shortcut)})
         </TooltipPopup>
       </Tooltip>
-    </>
+    </div>
   );
 }

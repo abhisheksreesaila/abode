@@ -1,6 +1,6 @@
 import type { WorkerRequest, WorkerResponse } from "./workerProtocol";
 
-interface PendingRequest {
+export interface PendingRequest {
   resolve: (text: string) => void;
   reject: (error: Error) => void;
   onProgress: (fraction: number) => void;
@@ -10,22 +10,29 @@ let worker: Worker | null = null;
 let nextId = 1;
 const pending = new Map<number, PendingRequest>();
 
+/**
+ * Routes one worker message. Progress is broadcast: the model download is attributed to
+ * whichever request triggered the load, but every waiting request wants to show it.
+ */
+export function routeWorkerMessage(requests: Map<number, PendingRequest>, message: WorkerResponse) {
+  if (message.type === "progress") {
+    for (const request of requests.values()) request.onProgress(message.fraction);
+    return;
+  }
+  const request = requests.get(message.id);
+  if (!request) return;
+  requests.delete(message.id);
+  if (message.type === "result") request.resolve(message.text);
+  else request.reject(new Error(message.message));
+}
+
 function ensureWorker(): Worker {
   if (worker) return worker;
   const created = new Worker(new URL("./transcribe.worker.ts", import.meta.url), {
     type: "module",
   });
   created.addEventListener("message", (event: MessageEvent<WorkerResponse>) => {
-    const message = event.data;
-    const request = pending.get(message.id);
-    if (!request) return;
-    if (message.type === "progress") {
-      request.onProgress(message.fraction);
-      return;
-    }
-    pending.delete(message.id);
-    if (message.type === "result") request.resolve(message.text);
-    else request.reject(new Error(message.message));
+    routeWorkerMessage(pending, event.data);
   });
   created.addEventListener("error", (event) => {
     failAll(new Error(event.message || "The speech worker crashed."));

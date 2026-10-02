@@ -70,3 +70,47 @@ describe("reduceRecording", () => {
     expect(reduceRecording(idleState, { type: "stop" }).state).toBe(idleState);
   });
 });
+
+describe("live preview", () => {
+  function hearing(text: string): RecordingState {
+    const recording = reduceRecording(idleState, { type: "start" }).state;
+    return reduceRecording(recording, { type: "interim", text }).state;
+  }
+
+  it("shows interim text only while recording and replaces it on each update", () => {
+    const next = reduceRecording(hearing("add a"), { type: "interim", text: "add a route" });
+    expect(next.state).toEqual({ status: "recording", interim: "add a route" });
+    expect(next.insert).toBeUndefined();
+    expect(reduceRecording(idleState, { type: "interim", text: "x" }).state).toEqual(idleState);
+  });
+
+  it("drops the preview on release; only the final transcript is inserted", () => {
+    const transcribing = reduceRecording(hearing("add a roo"), { type: "stop" });
+    expect(transcribing.state).toEqual({ status: "transcribing", downloadProgress: null });
+    const done = reduceRecording(transcribing.state, { type: "transcribed", text: "Add a route" });
+    expect(done.insert).toBe("Add a route");
+    expect(done.state).toEqual(idleState);
+  });
+
+  it("cancel clears the preview and discards the audio", () => {
+    const cancelled = reduceRecording(hearing("add a roo"), { type: "cancel" });
+    expect(cancelled.state).toEqual(idleState);
+    expect(cancelled.discardAudio).toBe(true);
+  });
+
+  it("tracks model download progress while recording, until words arrive", () => {
+    const recording = reduceRecording(idleState, { type: "start" }).state;
+    const downloading = reduceRecording(recording, { type: "progress", fraction: 0.43 }).state;
+    expect(downloading).toEqual({ status: "recording", downloadProgress: 0.43 });
+    const heard = reduceRecording(downloading, { type: "interim", text: "hi" }).state;
+    expect(heard).toEqual({ status: "recording", interim: "hi" });
+    expect(reduceRecording(heard, { type: "progress", fraction: 0.9 }).state).toBe(heard);
+  });
+
+  it("a late interim after release is ignored", () => {
+    expect(reduceRecording(transcribingState(), { type: "interim", text: "late" }).state).toEqual({
+      status: "transcribing",
+      downloadProgress: null,
+    });
+  });
+});
