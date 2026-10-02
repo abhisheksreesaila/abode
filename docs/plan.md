@@ -278,7 +278,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-024: Compact workspace list (option B)
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Each workspace header is one compact block:
     - a ▾/▸ chevron;
@@ -294,13 +294,13 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-025: Colorful sidebar footer (list style)
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** footer rows, each with its own colored icon tile:
-  - Pull requests (green, open count);
+  - Pull requests (green);
   - Claude usage (amber, "5h 42% used · resets 3:40pm" plus a meter, replacing F-015's line);
   - Customizations (pink, count);
-  - Phone and remote (coral, paired count);
-  - Settings (blue).
+  - Phone and remote (coral);
+  - Settings (blue). Open-PR count, paired count and the ⌘, hint are deferred follow-ups.
 - **Acceptance:**
   - [ ] All five are reachable and colored as in the mockup.
   - [ ] Nothing is lost from the old footer.
