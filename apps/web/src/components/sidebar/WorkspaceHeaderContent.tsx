@@ -10,6 +10,7 @@ const PILL_VARIANT = {
   "needs-you": "warning",
   failed: "error",
   running: "info",
+  done: "success",
 } as const satisfies Record<WorkspacePillKind, string>;
 
 /**

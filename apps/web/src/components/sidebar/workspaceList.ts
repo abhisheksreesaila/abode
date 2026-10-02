@@ -42,7 +42,7 @@ export function formatWorkspaceLocation(input: {
   return machine ? `${machine} · ${path}` : path;
 }
 
-export type WorkspacePillKind = "needs-you" | "failed" | "running";
+export type WorkspacePillKind = "needs-you" | "failed" | "running" | "done";
 
 export interface WorkspacePill {
   readonly kind: WorkspacePillKind;
@@ -56,7 +56,8 @@ export interface WorkspacePill {
 export interface WorkspaceThreadState {
   /** Label of the thread's status pill (`Working`, `Awaiting Input`, ...), if any. */
   readonly statusLabel: string | null;
-  readonly sessionStatus: string | null | undefined;
+  /** The thread errored and has not been visited since (same unseen rule as completions). */
+  readonly failedUnseen: boolean;
 }
 
 const NEEDS_YOU_LABELS = new Set(["Pending Approval", "Awaiting Input", "Plan Ready"]);
@@ -65,27 +66,35 @@ const RUNNING_LABELS = new Set(["Working", "Connecting"]);
 function describeBucket(kind: WorkspacePillKind, count: number): string {
   if (kind === "running") return `${count} running`;
   if (kind === "needs-you") return `${count} needs you`;
+  if (kind === "done") return "done";
   return count === 1 ? "failed" : `${count} failed`;
 }
 
 /**
  * The one pill a workspace header shows, so it fits a narrow sidebar and stays
- * visible collapsed. Attention outranks failure, which outranks running.
+ * visible collapsed. Attention outranks failure, which outranks running; unseen completions come last.
  */
 export function resolveWorkspacePill(
   threads: readonly WorkspaceThreadState[],
 ): WorkspacePill | null {
-  const counts: Record<WorkspacePillKind, number> = { "needs-you": 0, failed: 0, running: 0 };
+  const counts: Record<WorkspacePillKind, number> = {
+    "needs-you": 0,
+    failed: 0,
+    running: 0,
+    done: 0,
+  };
   for (const thread of threads) {
     if (thread.statusLabel !== null && NEEDS_YOU_LABELS.has(thread.statusLabel)) {
       counts["needs-you"] += 1;
     } else if (thread.statusLabel !== null && RUNNING_LABELS.has(thread.statusLabel)) {
       counts.running += 1;
-    } else if (thread.sessionStatus === "error") {
+    } else if (thread.failedUnseen) {
       counts.failed += 1;
+    } else if (thread.statusLabel === "Completed") {
+      counts.done += 1;
     }
   }
-  const order: WorkspacePillKind[] = ["needs-you", "failed", "running"];
+  const order: WorkspacePillKind[] = ["needs-you", "failed", "running", "done"];
   const top = order.find((kind) => counts[kind] > 0);
   if (top === undefined) return null;
   return {
@@ -101,9 +110,44 @@ export function resolveWorkspacePill(
 
 export const LATEST_THREAD_COUNT = 2;
 
+export interface ThreadListWindow<T> {
+  readonly shown: readonly T[];
+  readonly olderCount: number;
+  /** "+N older" is offered: collapsed and something is hidden. */
+  readonly showMore: boolean;
+  /** "Show less" is offered: expanded and there is more than the latest two. */
+  readonly showLess: boolean;
+}
+
 /**
- * The threads a workspace shows by default: its latest two, plus the "+N older"
- * count. The active thread is never hidden behind "+N older".
+ * The threads a workspace lists: its latest two (plus the active thread, which is
+ * never hidden), or all of them once expanded. Rendering and the keyboard jump
+ * order both read this, so they cannot disagree.
+ */
+export function threadListWindow<T>(
+  threads: readonly T[],
+  options: {
+    readonly expanded: boolean;
+    readonly isActive?: (thread: T) => boolean;
+    readonly latest?: number;
+  },
+): ThreadListWindow<T> {
+  const latest = options.latest ?? LATEST_THREAD_COUNT;
+  const split = splitLatestThreads(threads, {
+    latest,
+    ...(options.isActive ? { isActive: options.isActive } : {}),
+  });
+  return {
+    shown: options.expanded ? threads : split.shown,
+    olderCount: split.olderCount,
+    showMore: !options.expanded && split.olderCount > 0,
+    showLess: options.expanded && threads.length > latest,
+  };
+}
+
+/**
+ * The latest two threads plus the "+N older" count. The active thread is never
+ * hidden behind "+N older".
  */
 export function splitLatestThreads<T>(
   threads: readonly T[],

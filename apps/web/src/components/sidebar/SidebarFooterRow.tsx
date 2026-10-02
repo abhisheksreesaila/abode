@@ -44,7 +44,7 @@ export function SidebarFooterRow({
       type="button"
       {...props}
       className={cn(
-        "flex w-full min-w-0 cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-start outline-hidden ring-ring hover:bg-sidebar-row-hover focus-visible:ring-2",
+        "flex w-full min-w-0 cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-start outline-hidden ring-ring hover:bg-sidebar-row-hover focus-visible:ring-2 disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent",
         className,
       )}
     >

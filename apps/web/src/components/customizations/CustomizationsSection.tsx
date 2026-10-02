@@ -117,7 +117,10 @@ export function CustomizationsSection() {
   );
 }
 
-/** Mounted only while expanded, so collapsed sidebars never fetch the list. */
+/**
+ * The expanded list. The footer's count reads the same cached query, so the list is
+ * already fetched (and kept fresh) whenever a workspace is active.
+ */
 function CustomizationsBody({ scope }: { readonly scope: CustomizationsScope }) {
   const atom = customizationsEnvironment.list({
     environmentId: scope.environmentId,

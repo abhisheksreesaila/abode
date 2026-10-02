@@ -94,6 +94,8 @@ export const SidebarFooterList = memo(function SidebarFooterList() {
         icon={<SparklesIcon />}
         title="Customizations"
         aria-expanded={customizationsExpanded}
+        disabled={!customizationsScope}
+        subtitle={customizationsScope ? undefined : "Open a thread"}
         end={customizationsScope ? <CustomizationsCount scope={customizationsScope} /> : null}
         onClick={() => setCustomizationsExpanded((current) => !current)}
       />

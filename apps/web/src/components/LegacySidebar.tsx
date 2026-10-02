@@ -66,10 +66,7 @@ import {
 } from "@t3tools/client-runtime/state/runtime";
 import { useNavigate, useParams, useRouter } from "@tanstack/react-router";
 import {
-  MAX_SIDEBAR_THREAD_PREVIEW_COUNT,
-  MIN_SIDEBAR_THREAD_PREVIEW_COUNT,
   type SidebarProjectSortOrder,
-  type SidebarThreadPreviewCount,
   type SidebarThreadSortOrder,
 } from "@t3tools/contracts/settings";
 import { isDesktopLocalConnectionTarget, isWslConnectionTarget } from "../connection/desktopLocal";
@@ -149,13 +146,6 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Menu, MenuGroup, MenuPopup, MenuRadioGroup, MenuRadioItem, MenuTrigger } from "./ui/menu";
-import {
-  NumberField,
-  NumberFieldDecrement,
-  NumberFieldGroup,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from "./ui/number-field";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "./ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 import {
@@ -189,6 +179,7 @@ import {
   sortProjectsForSidebar,
   useSidebarRowSubscriptionLease,
   useThreadJumpHintVisibility,
+  hasUnseenCompletion,
 } from "./Sidebar.logic";
 import { sortThreads } from "../lib/threadSort";
 import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrome";
@@ -202,7 +193,7 @@ import { WorkspaceHeaderContent } from "./sidebar/WorkspaceHeaderContent";
 import {
   formatWorkspaceLocation,
   resolveWorkspacePill,
-  splitLatestThreads,
+  threadListWindow,
 } from "./sidebar/workspaceList";
 import { buildWorkspaceColorMenuItem } from "./sidebar/workspaceColor";
 import {
@@ -252,11 +243,19 @@ function SidebarThreadDetailPrewarmer({ threadRef }: { readonly threadRef: Scope
   return null;
 }
 
-function clampSidebarThreadPreviewCount(value: number): SidebarThreadPreviewCount {
-  return Math.min(
-    MAX_SIDEBAR_THREAD_PREVIEW_COUNT,
-    Math.max(MIN_SIDEBAR_THREAD_PREVIEW_COUNT, value),
-  ) as SidebarThreadPreviewCount;
+/** The thread's latest turn errored and the thread has not been visited since. */
+function hasUnseenFailure(
+  thread: SidebarThreadSummary,
+  lastVisitedAtByThreadKey: ReadonlyMap<string, string | null>,
+): boolean {
+  if (thread.session?.status !== "error" && thread.latestTurn?.state !== "error") return false;
+  const lastVisitedAt = lastVisitedAtByThreadKey.get(
+    scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
+  );
+  return hasUnseenCompletion({
+    ...thread,
+    ...(lastVisitedAt !== null && lastVisitedAt !== undefined ? { lastVisitedAt } : {}),
+  });
 }
 
 function formatProjectMemberActionLabel(
@@ -963,13 +962,13 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
 interface SidebarProjectThreadListProps {
   projectKey: string;
   projectExpanded: boolean;
-  hasOverflowingThreads: boolean;
+  showMoreThreads: boolean;
+  showLessThreads: boolean;
   olderThreadCount: number;
   orderedProjectThreadKeys: readonly string[];
   renderedThreads: readonly SidebarThreadSummary[];
   showEmptyThreadState: boolean;
   shouldShowThreadPanel: boolean;
-  isThreadListExpanded: boolean;
   activeRouteThreadKey: string | null;
   openPullRequestsInRightPanel: boolean;
   threadJumpLabelByKey: ReadonlyMap<string, string>;
@@ -1019,13 +1018,13 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
   const {
     projectKey,
     projectExpanded,
-    hasOverflowingThreads,
+    showMoreThreads,
+    showLessThreads,
     olderThreadCount,
     orderedProjectThreadKeys,
     renderedThreads,
     showEmptyThreadState,
     shouldShowThreadPanel,
-    isThreadListExpanded,
     activeRouteThreadKey,
     openPullRequestsInRightPanel,
     threadJumpLabelByKey,
@@ -1116,7 +1115,7 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
           );
         })}
 
-      {projectExpanded && hasOverflowingThreads && !isThreadListExpanded && (
+      {projectExpanded && showMoreThreads && (
         <SidebarMenuSubItem className="w-full">
           <SidebarMenuSubButton
             render={showMoreButtonRender}
@@ -1132,7 +1131,7 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
           </SidebarMenuSubButton>
         </SidebarMenuSubItem>
       )}
-      {projectExpanded && hasOverflowingThreads && isThreadListExpanded && (
+      {projectExpanded && showLessThreads && (
         <SidebarMenuSubItem className="w-full">
           <SidebarMenuSubButton
             render={showLessButtonRender}
@@ -1365,7 +1364,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
     const workspacePill = resolveWorkspacePill(
       visibleProjectThreads.map((thread) => ({
         statusLabel: resolveProjectThreadStatus(thread)?.label ?? null,
-        sessionStatus: thread.session?.status,
+        failedUnseen: hasUnseenFailure(thread, lastVisitedAtByThreadKey),
       })),
     );
     return {
@@ -1390,26 +1389,24 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
   }, [activeRouteThreadKey, projectExpanded, visibleProjectThreads]);
 
   const {
-    hasOverflowingThreads,
+    showMoreThreads,
+    showLessThreads,
     olderThreadCount,
     renderedThreads,
     showEmptyThreadState,
     shouldShowThreadPanel,
   } = useMemo(() => {
     // Abode F-024: a workspace shows its two latest threads, "+N older" opens the rest.
-    const latest = splitLatestThreads(visibleProjectThreads, {
+    const listWindow = threadListWindow(visibleProjectThreads, {
+      expanded: isThreadListExpanded,
       isActive: (thread) =>
         scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)) === activeRouteThreadKey,
     });
-    const hasOverflowingThreads = latest.olderCount > 0 || visibleProjectThreads.length > 2;
-    const renderedThreads = pinnedCollapsedThread
-      ? [pinnedCollapsedThread]
-      : isThreadListExpanded
-        ? visibleProjectThreads
-        : latest.shown;
+    const renderedThreads = pinnedCollapsedThread ? [pinnedCollapsedThread] : listWindow.shown;
     return {
-      hasOverflowingThreads,
-      olderThreadCount: latest.olderCount,
+      showMoreThreads: listWindow.showMore,
+      showLessThreads: listWindow.showLess,
+      olderThreadCount: listWindow.olderCount,
       renderedThreads,
       showEmptyThreadState: projectExpanded && visibleProjectThreads.length === 0,
       shouldShowThreadPanel: projectExpanded || pinnedCollapsedThread !== null,
@@ -2418,13 +2415,13 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       <SidebarProjectThreadList
         projectKey={project.projectKey}
         projectExpanded={projectExpanded}
-        hasOverflowingThreads={hasOverflowingThreads}
+        showMoreThreads={showMoreThreads}
+        showLessThreads={showLessThreads}
         olderThreadCount={olderThreadCount}
         orderedProjectThreadKeys={orderedProjectThreadKeys}
         renderedThreads={renderedThreads}
         showEmptyThreadState={showEmptyThreadState}
         shouldShowThreadPanel={shouldShowThreadPanel}
-        isThreadListExpanded={isThreadListExpanded}
         activeRouteThreadKey={activeRouteThreadKey}
         openPullRequestsInRightPanel={openPullRequestsInRightPanel}
         threadJumpLabelByKey={threadJumpLabelByKey}
@@ -2660,32 +2657,14 @@ type SortableProjectHandleProps = Pick<
 function ProjectSortMenu({
   projectSortOrder,
   threadSortOrder,
-  threadPreviewCount,
   onProjectSortOrderChange,
   onThreadSortOrderChange,
-  onThreadPreviewCountChange,
 }: {
   projectSortOrder: SidebarProjectSortOrder;
   threadSortOrder: SidebarThreadSortOrder;
-  threadPreviewCount: SidebarThreadPreviewCount;
   onProjectSortOrderChange: (sortOrder: SidebarProjectSortOrder) => void;
   onThreadSortOrderChange: (sortOrder: SidebarThreadSortOrder) => void;
-  onThreadPreviewCountChange: (count: SidebarThreadPreviewCount) => void;
 }) {
-  const handleThreadPreviewCountChange = useCallback(
-    (nextValue: number | null) => {
-      if (nextValue === null) {
-        return;
-      }
-
-      const clampedValue = clampSidebarThreadPreviewCount(nextValue);
-      if (clampedValue !== threadPreviewCount) {
-        onThreadPreviewCountChange(clampedValue);
-      }
-    },
-    [onThreadPreviewCountChange, threadPreviewCount],
-  );
-
   return (
     <Menu>
       <Tooltip>
@@ -2734,41 +2713,6 @@ function ProjectSortMenu({
               </MenuRadioItem>
             ))}
           </MenuRadioGroup>
-        </MenuGroup>
-        <MenuGroup>
-          <div className="px-2 pt-2 pb-1 text-muted-foreground sm:text-xs font-medium">
-            Visible threads
-          </div>
-          <div className="px-2 py-1">
-            <NumberField
-              aria-label="Visible thread count"
-              className="w-28"
-              max={MAX_SIDEBAR_THREAD_PREVIEW_COUNT}
-              min={MIN_SIDEBAR_THREAD_PREVIEW_COUNT}
-              onValueChange={handleThreadPreviewCountChange}
-              size="sm"
-              step={1}
-              value={threadPreviewCount}
-            >
-              <NumberFieldGroup>
-                <NumberFieldDecrement
-                  aria-label="Decrease visible thread count"
-                  className="[&_svg]:size-3.5"
-                />
-                <NumberFieldInput
-                  aria-label="Visible thread count"
-                  inputMode="numeric"
-                  onKeyDownCapture={(event) => {
-                    event.stopPropagation();
-                  }}
-                />
-                <NumberFieldIncrement
-                  aria-label="Increase visible thread count"
-                  className="[&_svg]:size-3.5"
-                />
-              </NumberFieldGroup>
-            </NumberField>
-          </div>
         </MenuGroup>
       </MenuPopup>
     </Menu>
@@ -2821,7 +2765,6 @@ interface SidebarProjectsContentProps {
   handleDesktopUpdateButtonClick: () => void;
   projectSortOrder: SidebarProjectSortOrder;
   threadSortOrder: SidebarThreadSortOrder;
-  threadPreviewCount: SidebarThreadPreviewCount;
   updateSettings: ReturnType<typeof useUpdateClientSettings>;
   openAddProject: () => void;
   isManualProjectSorting: boolean;
@@ -2863,7 +2806,6 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
     handleDesktopUpdateButtonClick,
     projectSortOrder,
     threadSortOrder,
-    threadPreviewCount,
     updateSettings,
     openAddProject,
     isManualProjectSorting,
@@ -2902,12 +2844,6 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
   const handleThreadSortOrderChange = useCallback(
     (sortOrder: SidebarThreadSortOrder) => {
       updateSettings({ sidebarThreadSortOrder: sortOrder });
-    },
-    [updateSettings],
-  );
-  const handleThreadPreviewCountChange = useCallback(
-    (count: SidebarThreadPreviewCount) => {
-      updateSettings({ sidebarThreadPreviewCount: count });
     },
     [updateSettings],
   );
@@ -2963,10 +2899,8 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
             <ProjectSortMenu
               projectSortOrder={projectSortOrder}
               threadSortOrder={threadSortOrder}
-              threadPreviewCount={threadPreviewCount}
               onProjectSortOrderChange={handleProjectSortOrderChange}
               onThreadSortOrderChange={handleThreadSortOrderChange}
-              onThreadPreviewCountChange={handleThreadPreviewCountChange}
             />
             <Tooltip>
               <TooltipTrigger
@@ -3080,7 +3014,6 @@ export default function LegacySidebar() {
   const sidebarThreadSortOrder = useClientSettings((s) => s.sidebarThreadSortOrder);
   const sidebarProjectSortOrder = useClientSettings((s) => s.sidebarProjectSortOrder);
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
-  const sidebarThreadPreviewCount = useClientSettings((s) => s.sidebarThreadPreviewCount);
   const updateSettings = useUpdateClientSettings();
   const handleNewThread = useNewThreadHandler();
   const { archiveThread, deleteThread } = useThreadActions();
@@ -3418,12 +3351,11 @@ export default function LegacySidebar() {
           return [];
         }
         const isThreadListExpanded = expandedThreadListsByProject.has(project.projectKey);
-        const previewThreads = isThreadListExpanded
-          ? projectThreads
-          : splitLatestThreads(projectThreads, {
-              isActive: (thread) =>
-                scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)) === routeThreadKey,
-            }).shown;
+        const previewThreads = threadListWindow(projectThreads, {
+          expanded: isThreadListExpanded,
+          isActive: (thread) =>
+            scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)) === routeThreadKey,
+        }).shown;
         const renderedThreads = pinnedCollapsedThread ? [pinnedCollapsedThread] : previewThreads;
         return renderedThreads.map((thread) =>
           scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
@@ -3724,7 +3656,6 @@ export default function LegacySidebar() {
         handleDesktopUpdateButtonClick={handleDesktopUpdateButtonClick}
         projectSortOrder={sidebarProjectSortOrder}
         threadSortOrder={sidebarThreadSortOrder}
-        threadPreviewCount={sidebarThreadPreviewCount}
         updateSettings={updateSettings}
         openAddProject={openAddProjectCommandPalette}
         isManualProjectSorting={isManualProjectSorting}
