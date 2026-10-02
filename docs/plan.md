@@ -274,6 +274,67 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
   - [ ] Esc removes it.
   - [ ] The UI never blocks.
 
+## Phase 2d: visual pass (mockup https://claude.ai/artifact/WBU6qkLY4z9Mh2MHDykJW7, docs/design/visual-pass.html)
+
+### F-024: Compact workspace list (option B)
+
+- **Status:** doing
+- **What:**
+  - Each workspace header is one compact block:
+    - a ▾/▸ chevron;
+    - colored initials;
+    - the name;
+    - its location on a second line ("~/Projects/x", prefixed with the machine name when it isn't this laptop);
+    - a status pill on the right (running/waiting/failed) that stays visible when collapsed.
+  - Each workspace shows its two latest threads, plus "+N older", which expands the rest.
+- **Acceptance:**
+  - [ ] It takes noticeably less vertical space than today.
+  - [ ] Collapse and expand persist.
+  - [ ] The location is correct for local and remote environments.
+
+### F-025: Colorful sidebar footer (list style)
+
+- **Status:** doing
+- **What:** footer rows, each with its own colored icon tile:
+  - Pull requests (green, open count);
+  - Claude usage (amber, "5h 42% used · resets 3:40pm" plus a meter, replacing F-015's line);
+  - Customizations (pink, count);
+  - Phone and remote (coral, paired count);
+  - Settings (blue).
+- **Acceptance:**
+  - [ ] All five are reachable and colored as in the mockup.
+  - [ ] Nothing is lost from the old footer.
+
+### F-026: Project welcome
+
+- **Status:** doing
+- **What:** a new thread in a project greets you with:
+  - a vibrant title: an emoji, "What should we build in <Project>?", and the project name in a gradient;
+  - the README tagline;
+  - location, machine and branch chips;
+  - four emoji starter cards (add a feature, fix a bug, explain the code, pick up the last thread).
+- **Acceptance:**
+  - [ ] It reads the README via the existing file RPC, with no new server code.
+  - [ ] It falls back gracefully without a README.
+  - [ ] Starter cards prefill the composer.
+
+### F-027: Composer chips with meaning
+
+- **Status:** doing
+- **What:** subtle semantic tints:
+  - Full access: coral with ⚠;
+  - Auto-accept edits: amber;
+  - Ask first: green;
+  - main/master branch: purple;
+  - feature branch: blue;
+  - worktree: teal;
+  - provider: orange, as now;
+  - Send: blue.
+- **Acceptance:**
+  - [ ] Each mode and branch state shows its tint.
+  - [ ] It's done with variants, not className restyles.
+  - [ ] Contrast passes.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
