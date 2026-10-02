@@ -2235,3 +2235,28 @@ code {
 .composer-tiptap li[data-checked] > div > p {
   margin: 0;
 }
+
+/* Workspace accents (docs/design/main-window.md), assigned in order by F-006.
+   Theme-independent: VS Code syntax hues that read on every dark canvas. */
+:root {
+  --ws-1: #4fc1ff;
+  --ws-2: #c586c0;
+  --ws-3: #dcdcaa;
+  --ws-4: #4ec9b0;
+  --ws-5: #f48771;
+  --ws-6: #b5cea8;
+  --ws-7: #9cdcfe;
+  --ws-8: #d7ba7d;
+}
+
+/* abode density: VS Code-like. Scoped to the theme id so every other theme
+   keeps T3's global values. 13px UI is the 14px base scaled by 13/14, which
+   also tightens rem-based row padding; controls drop to a 4px radius. */
+html[data-theme-id="abode"] {
+  font-size: 92.857%;
+  --radius: 0.375rem;
+  --control-radius: 4px;
+  --sidebar-content-inset: 0.375rem;
+  --sidebar-control-gap: 0.25rem;
+  --sidebar-row-content-inset: 0.5rem;
+}
