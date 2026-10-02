@@ -229,6 +229,51 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
   - Codex instructions: `AGENTS.md`
   - Codex MCP: `[mcp_servers]` in `~/.codex/config.toml`
 
+## Phase 2c: Abhishek's first real-app feedback (2026-10-02)
+
+### F-019: abode branding
+
+- **Status:** doing
+- **What:** replace the "T3 Code" wordmark and logo in the web app (sidebar header, splash/empty states, tab title, PWA manifest name) with an **abode** wordmark, with "ab" highlighted the way T3 highlights "T3". Keep "Huge thanks to T3" credit in About/Settings.
+- **Acceptance:**
+  - [ ] No visible "T3 Code" branding in the web UI's chrome.
+  - [ ] The About section credits T3 Code.
+
+### F-020: Opaque chat surface
+
+- **Status:** doing
+- **What:** in the abode theme, the chat column gets an opaque surface distinct from the app background (no see-through glass), like VS Code's editor area.
+- **Acceptance:**
+  - [ ] The chat area reads as its own panel in the abode theme. Other themes are unchanged.
+
+### F-021: Show which agent is listening
+
+- **Status:** doing
+- **What:** like VS Code's agent mode, the composer shows the agent type the main session runs as, e.g. "Orchestrator · Opus 5.5", from Claude's `agent` setting or launch args. It's pickable from the workspace's Agent types. Default is the plain Claude Code agent.
+- **Acceptance:**
+  - [ ] Choosing "orchestrator" makes the next Claude session run as that agent.
+  - [ ] The label shows it.
+  - [ ] Any server or contract change is add-only.
+
+### F-022: Branch and worktree info inside the composer toolbar
+
+- **Status:** doing
+- **What:** remove the separate strip under the composer (branch, checkout, environment, worktree) and fold its controls into the composer's own footer next to the runtime-mode picker ("Full access"). No information is lost.
+- **Acceptance:**
+  - [ ] Every control from the strip is reachable from the composer footer.
+  - [ ] There's no second bar.
+  - [ ] It works at phone width.
+
+### F-023: Live voice transcription
+
+- **Status:** doing
+- **What:** while recording, show interim text in the composer (muted) as you speak, updated about every second. Release finalizes it.
+- **Acceptance:**
+  - [ ] Words appear while speaking.
+  - [ ] Final text replaces the interim text.
+  - [ ] Esc removes it.
+  - [ ] The UI never blocks.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
