@@ -103,7 +103,8 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-006: Workspace colors
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
+- **Note:** T3's default sidebar is a flat inbox. The colored workspace tree is the "Legacy sidebar" in Settings. Making it the default means changing an existing contract default, which needs Abhishek's OK.
 - **Depends on:** F-005
 - **What:** each project gets an accent color assigned automatically from a palette, editable from the project's context menu. The color shows on the project row, its threads and the chat header. It's stored on the client only.
 - **Acceptance:**
@@ -124,7 +125,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-008: Subagents in the sidebar
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **Depends on:** F-005
 - **What:** running subagents nest under their thread with a live status dot. Clicking one opens the existing Agents tab, focused on it. Finished subagents collapse away.
 - **Acceptance:**
