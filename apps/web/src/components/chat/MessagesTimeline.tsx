@@ -205,8 +205,8 @@ import {
   type TimelineLatestTurn,
   type WorkGroupScrollAnchor,
 } from "./MessagesTimeline.logic";
-import { filterTimelineEntriesForMode } from "./transcriptMode.logic";
-import { useTranscriptModeStore } from "./transcriptModeStore";
+import { simplifyRowsForMode } from "./transcriptMode.logic";
+import { toggleTranscriptMode, useTranscriptModeStore } from "./transcriptModeStore";
 import { TerminalContextInlineChip } from "./TerminalContextInlineChip";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { Spinner } from "../ui/spinner";
@@ -491,7 +491,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   agentPanelModel,
   onOpenAgents = NOOP_OPEN_AGENTS,
   listRef,
-  timelineEntries: allTimelineEntries,
+  timelineEntries,
   latestTurn,
   runningTurnId,
   turnDiffSummaries,
@@ -675,9 +675,12 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   const onToggleTurnFold = useCallback(
     (turnId: TurnId) => {
       suspendEndScrollMaintenanceForDisclosure(`turn-fold:${turnId}`);
+      // In Simple the summary row is a doorway to the full trace.
+      const openFromSimple = useTranscriptModeStore.getState().mode === "simple";
+      if (openFromSimple) toggleTranscriptMode();
       setExpandedTurnIds((existing) => {
         const next = new Set(existing);
-        if (next.has(turnId)) {
+        if (next.has(turnId) && !openFromSimple) {
           next.delete(turnId);
         } else {
           next.add(turnId);
@@ -772,13 +775,6 @@ export const MessagesTimeline = memo(function MessagesTimeline({
         : new Set(liveAgentTaskKey.length > 0 ? liveAgentTaskKey.split("\n") : []),
     [liveAgentTaskKey],
   );
-  // Simple/Detailed is a pure filter ahead of row derivation: one store
-  // subscription, no new props, and Detailed passes the entries through.
-  const transcriptMode = useTranscriptModeStore((store) => store.mode);
-  const timelineEntries = useMemo(
-    () => filterTimelineEntriesForMode(allTimelineEntries, transcriptMode),
-    [allTimelineEntries, transcriptMode],
-  );
   const rawRows = useMemo(() => {
     const previous = rowsProjectionRef.current;
     const projection = deriveMessagesTimelineRowsWithState(
@@ -819,7 +815,13 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     worktreeSetup,
     queuedMessages,
   ]);
-  const rows = useStableRows(rawRows, listIdentityKey);
+  // Simple/Detailed trims the derived rows (one store subscription, no new props).
+  const transcriptMode = useTranscriptModeStore((store) => store.mode);
+  const modeRows = useMemo(
+    () => simplifyRowsForMode(rawRows, timelineEntries, transcriptMode),
+    [rawRows, timelineEntries, transcriptMode],
+  );
+  const rows = useStableRows(modeRows, listIdentityKey);
   const minimapItems = useMemo(() => deriveTimelineMinimapItems(rows), [rows]);
   const restoreRowIndex =
     restoringThreadPosition && rememberedPosition?.atEnd === false
