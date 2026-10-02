@@ -53,7 +53,7 @@ describe("workspace color assignment", () => {
 
   it("overrides do not take part in automatic assignment", () => {
     const state = setOverride(ensureAssigned(empty, ["a"]), "a", 3);
-    expect(ensureAssigned(state, ["b"]).assigned.b).toBe(1);
+    expect(ensureAssigned(state, ["a", "b"]).assigned.b).toBe(1);
   });
 
   it("ignores out-of-range overrides", () => {
@@ -110,10 +110,12 @@ describe("workspace color store", () => {
 });
 
 describe("workspace color sync and sanitizing", () => {
-  it("frees the slots of removed projects so new ones reuse them", () => {
+  it("keeps stored colors across a partial list and counts only listed projects", () => {
     const first = syncAssigned(empty, ["a", "b", "c"]);
-    const next = syncAssigned(first, ["b", "c", "d"]);
-    expect(next.assigned).toEqual({ b: 1, c: 2, d: 0 });
+    const partial = syncAssigned(first, ["b", "c", "d"]);
+    expect(partial.assigned).toEqual({ a: 0, b: 1, c: 2, d: 0 });
+    const full = syncAssigned(partial, ["a", "b", "c", "d"]);
+    expect(full.assigned).toEqual(partial.assigned);
   });
 
   it("ignores an empty live list (projects not loaded yet)", () => {

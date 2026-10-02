@@ -61,14 +61,20 @@ export function hashWorkspaceColorIndex(key: string): number {
 }
 
 /**
- * The next automatic color: the least-used slot among the current automatic
- * assignments (lowest index on ties), so new projects stay distinct until all
- * eight are taken. Overrides do not count: "Reset color" must always be able
- * to return to the assigned slot.
+ * The next automatic color: the least-used slot among the automatic
+ * assignments of the currently listed projects (lowest index on ties), so new
+ * projects stay distinct until all eight are taken. Stored entries for
+ * projects not listed (a remote still loading) never move, but do not count.
+ * Overrides do not count: "Reset color" must always be able to return to the
+ * assigned slot.
  */
-export function nextAutoColorIndex(assigned: Readonly<Record<string, number>>): number {
+export function nextAutoColorIndex(
+  assigned: Readonly<Record<string, number>>,
+  liveKeys: ReadonlyArray<string> = Object.keys(assigned),
+): number {
   const counts = Array.from({ length: WORKSPACE_COLORS.length }, () => 0);
-  for (const index of Object.values(assigned)) {
+  for (const key of liveKeys) {
+    const index = assigned[key];
     if (isValidIndex(index)) counts[index]! += 1;
   }
   let best = 0;
@@ -88,28 +94,23 @@ export function ensureAssigned(
     const current = assigned ?? state.assigned;
     if (isValidIndex(current[key])) continue;
     assigned ??= { ...state.assigned };
-    assigned[key] = nextAutoColorIndex(assigned);
+    assigned[key] = nextAutoColorIndex(assigned, keys);
   }
   return assigned === null ? state : { ...state, assigned };
 }
 
 /**
- * Reconcile with the live project list: drop automatic colors of projects
- * that no longer exist (so their slots free up), then assign the new ones in
- * list order. An empty list is treated as "not loaded yet" and changes nothing.
+ * Reconcile with the listed projects: assign the unseen ones in list order.
+ * Stored colors are never dropped, because a partial list (a remote
+ * environment still loading or disconnected) must not shift anything. An empty
+ * list is treated as "not loaded yet".
  */
 export function syncAssigned(
   state: WorkspaceColorAssignments,
   liveKeys: ReadonlyArray<string>,
 ): WorkspaceColorAssignments {
   if (liveKeys.length === 0) return state;
-  const live = new Set(liveKeys);
-  const kept = Object.entries(state.assigned).filter(([key]) => live.has(key));
-  const pruned =
-    kept.length === Object.keys(state.assigned).length
-      ? state
-      : { ...state, assigned: Object.fromEntries(kept) };
-  return ensureAssigned(pruned, liveKeys);
+  return ensureAssigned(state, liveKeys);
 }
 
 export function setOverride(
