@@ -974,6 +974,8 @@ import {
   XIcon,
 } from "lucide-react";
 import { resolveRuntimeModeTint } from "./chipTint";
+import { DoneSparkle } from "../../delights/Delights";
+import { useAutonomousDoneSparkle } from "../../delights/useAutonomousDoneSparkle";
 import { resolveAutonomousChip } from "./autonomousChip.logic";
 import { proposedPlanTitle } from "../../proposedPlan";
 import { hasProviderSetup } from "./ProviderStatusBanner";
@@ -1117,6 +1119,8 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
   onRuntimeModeChange: (mode: RuntimeMode) => void;
   autonomous?: ThreadAutonomousState | null | undefined;
   onAutonomousChange?: ((enabled: boolean) => void) | undefined;
+  /** Changes when an autonomous run finishes, replaying the one-shot sparkle; 0 for none. */
+  doneSparkle?: number;
 }) {
   const size = props.size ?? "sm";
   const composerFloatingLayerProps = useComposerMenuProps();
@@ -1152,6 +1156,7 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
           <span data-composer-control-label className="sr-only sm:not-sr-only">
             {autonomousChip.label}
           </span>
+          {props.doneSparkle ? <DoneSparkle key={props.doneSparkle} /> : null}
         </TooltipTrigger>
         <TooltipPopup side="top">{autonomousChip.tooltip}</TooltipPopup>
       </Tooltip>
@@ -2179,6 +2184,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const activeThreadModelDisplayName = useMemo(
     () => resolveContextWindowModelDisplayName(activeThreadModelSelection, modelOptionsByInstance),
     [activeThreadModelSelection, modelOptionsByInstance],
+  );
+  const doneSparkle = useAutonomousDoneSparkle(
+    activeThreadId ? scopedThreadKey(scopeThreadRef(environmentId, activeThreadId)) : null,
+    autonomous,
   );
   usePublishStatusBarThreadInfo({
     threadKey: activeThreadId
@@ -5145,6 +5154,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           onRuntimeModeChange={handleRuntimeModeChange}
           autonomous={autonomous}
           onAutonomousChange={onAutonomousChange}
+          doneSparkle={doneSparkle}
         />
       ),
     },

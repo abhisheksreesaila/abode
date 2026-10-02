@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./delights/delights.css";
 
 @custom-variant dark (&:is(.dark, .dark *));
 @custom-variant light (&:not(.dark, .dark *));
@@ -2299,14 +2300,14 @@ html[data-theme-id="abode"] {
 }
 
 /* abode Fluent palette (docs/design/fluent.md): one blue, green for ok, 2px
-   corners and Segoe/Consolas. The branch chip is blue for every branch because
+   corners and Inter / JetBrains Mono. The branch chip is blue for every branch because
    resolveBranchTint returns the blue tint in this theme (components/chat/chipTint.ts).
    The doubled selector lifts specificity above the root dark-variant rules
    (:root:is(.dark ...)), which would otherwise win. */
 html[data-theme-id="abode"]:not([data-theme-id=""]),
 html.dark[data-theme-id="abode"] {
-  --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, Inter, sans-serif;
-  --font-mono: Consolas, "Cascadia Code", "JetBrains Mono", monospace;
+  --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Consolas, monospace;
   --success: #4ec9b0;
   --success-foreground: #4ec9b0;
   --chip-blue: #0078d4;

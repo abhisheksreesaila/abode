@@ -206,6 +206,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["transparent transparency solid menus dialogs composer"],
   },
   {
+    id: "little-delights",
+    title: "Little delights",
+    to: "/settings/appearance",
+    searchTerms: ["whimsy greetings coffee sparkle friday animations fun"],
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/appearance",

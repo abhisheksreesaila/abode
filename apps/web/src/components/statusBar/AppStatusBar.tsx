@@ -6,6 +6,7 @@ import { memo, useEffect, useMemo, useRef, type ComponentProps } from "react";
 
 import { openCommandPalette } from "../../commandPaletteBus";
 import { isModelPickerOpen } from "../../modelPickerVisibility";
+import { CoffeeStatus } from "../../delights/Delights";
 import { useNowMinute } from "../../hooks/useNowMinute";
 import { shortcutLabelForCommand } from "../../keybindings";
 import { cn } from "../../lib/utils";
@@ -149,6 +150,7 @@ export const AppStatusBar = memo(function AppStatusBar() {
         <span className={cn(ITEM_CLASS, "min-w-0 truncate")}>{projectHost}</span>
       ) : null}
       <ActivityCounts />
+      <CoffeeStatus />
       <span className="flex-1" />
       <StatusBarButton
         aria-label="Toggle terminal"
