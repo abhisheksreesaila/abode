@@ -18,6 +18,7 @@ import { primaryServerKeybindingsAtom } from "../../state/server";
 import { requestComposerControl, useStatusBarStore } from "../../statusBarStore";
 import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../../terminalUiStateStore";
 import { resolveThreadRouteRef } from "../../threadRoutes";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { pickClosestWindow } from "../sidebar/usageStatus";
 import {
   formatContextStatus,
@@ -37,9 +38,17 @@ const BUTTON_CLASS = cn(
 
 function StatusBarButton({
   className,
+  tooltip,
   ...props
-}: ComponentProps<"button"> & { readonly className?: string }) {
-  return <button type="button" className={cn(BUTTON_CLASS, className)} {...props} />;
+}: ComponentProps<"button"> & { readonly className?: string; readonly tooltip: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={<button type="button" className={cn(BUTTON_CLASS, className)} {...props} />}
+      />
+      <TooltipPopup side="top">{tooltip}</TooltipPopup>
+    </Tooltip>
+  );
 }
 
 const ActivityCounts = memo(function ActivityCounts() {
@@ -74,7 +83,7 @@ const UsageStatusButton = memo(function UsageStatusButton() {
   return (
     <StatusBarButton
       aria-label="Usage limits"
-      title="Usage limits"
+      tooltip="Usage limits"
       onClick={() => void navigate({ to: "/usage" })}
     >
       {label}
@@ -138,7 +147,7 @@ export const AppStatusBar = memo(function AppStatusBar() {
       {branch ? (
         <StatusBarButton
           aria-label={`Branch ${branch}`}
-          title="Change branch"
+          tooltip="Change branch"
           onClick={() => requestComposerControl("workspace")}
           style={{ color: "var(--chip-blue-fg)" }}
         >
@@ -155,7 +164,7 @@ export const AppStatusBar = memo(function AppStatusBar() {
         aria-label="Toggle terminal"
         aria-pressed={terminalOpen}
         disabled={threadRef === null}
-        title={`Toggle terminal${terminalShortcut ? ` (${terminalShortcut})` : ""}`}
+        tooltip={`Toggle terminal${terminalShortcut ? ` (${terminalShortcut})` : ""}`}
         className={cn(
           terminalOpen && "text-foreground",
           "disabled:cursor-default disabled:opacity-50",
@@ -168,7 +177,7 @@ export const AppStatusBar = memo(function AppStatusBar() {
         aria-label="Toggle side panel"
         aria-pressed={rightPanelOpen}
         disabled={threadRef === null}
-        title={`Toggle side panel${rightPanelShortcut ? ` (${rightPanelShortcut})` : ""}`}
+        tooltip={`Toggle side panel${rightPanelShortcut ? ` (${rightPanelShortcut})` : ""}`}
         className={cn(
           rightPanelOpen && "text-foreground",
           "disabled:cursor-default disabled:opacity-50",
@@ -180,7 +189,7 @@ export const AppStatusBar = memo(function AppStatusBar() {
       {info?.modelLabel ? (
         <StatusBarButton
           aria-label={`Model ${info.modelLabel}`}
-          title="Change model"
+          tooltip="Change model"
           className="text-info-foreground"
           onClick={() => requestComposerControl("model")}
         >
@@ -191,7 +200,7 @@ export const AppStatusBar = memo(function AppStatusBar() {
       <UsageStatusButton />
       <StatusBarButton
         aria-label="Open command palette"
-        title="Command palette"
+        tooltip="Command palette"
         onClick={() => openCommandPalette()}
       >
         {paletteShortcut}
