@@ -38,7 +38,7 @@ export const ABODE_DARK_THEME_COLORS: ThemeColors = {
   iconMuted: "#9d9d9d",
   error: "#f14c4c",
   errorForeground: "#f14c4c",
-  errorSurface: "#3a2022",
+  errorSurface: "#2b1618",
   warning: "#cca700",
   warningForeground: "#cca700",
   warningSurface: "#2e2a12",

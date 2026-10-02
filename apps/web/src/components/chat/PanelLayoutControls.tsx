@@ -1,6 +1,16 @@
-import { Maximize2Icon, Minimize2Icon, PanelBottomIcon, PanelRightIcon } from "lucide-react";
+import {
+  Maximize2Icon,
+  Minimize2Icon,
+  PanelBottomIcon,
+  PanelLeftIcon,
+  PanelRightIcon,
+} from "lucide-react";
+import { useAtomValue } from "@effect/atom-react";
 import { memo } from "react";
 
+import { shortcutLabelForCommand } from "../../keybindings";
+import { primaryServerKeybindingsAtom } from "../../state/server";
+import { useSidebar, useSidebarVisibility } from "../ui/sidebar";
 import { Toggle } from "../ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
@@ -17,6 +27,31 @@ interface PanelLayoutControlsProps {
   liveAgentCount: number;
   onToggleTerminal: () => void;
   onToggleRightPanel: () => void;
+}
+
+/** The sidebar toggle of the title-bar cluster (md and up); the same toggle as Ctrl+B. */
+function SidebarToggleControl() {
+  const keybindings = useAtomValue(primaryServerKeybindingsAtom);
+  const { toggleSidebar } = useSidebar();
+  const open = useSidebarVisibility();
+  const shortcut = shortcutLabelForCommand(keybindings, "sidebar.toggle");
+  return (
+    <Tooltip>
+      <TooltipTrigger render={<span className="hidden shrink-0 md:flex" />}>
+        <Toggle
+          className="shrink-0 [-webkit-app-region:no-drag]"
+          pressed={open}
+          onPressedChange={toggleSidebar}
+          aria-label="Toggle sidebar"
+          variant="ghost"
+          size="sm"
+        >
+          <PanelLeftIcon className="size-4" />
+        </Toggle>
+      </TooltipTrigger>
+      <TooltipPopup side="bottom">Toggle sidebar{shortcut ? ` (${shortcut})` : ""}</TooltipPopup>
+    </Tooltip>
+  );
 }
 
 export const PanelLayoutControls = memo(function PanelLayoutControls({
@@ -37,6 +72,7 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
       className="flex h-full shrink-0 items-center gap-1 [-webkit-app-region:no-drag]"
       data-panel-layout-controls
     >
+      <SidebarToggleControl />
       {showTerminalControl ? (
         <Tooltip>
           <TooltipTrigger render={<span className="flex shrink-0" />}>

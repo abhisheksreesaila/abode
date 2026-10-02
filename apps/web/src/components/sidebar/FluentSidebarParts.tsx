@@ -17,17 +17,26 @@ const SQUARE_TONE_CLASS: Record<ThreadSquareTone, string> = {
  */
 export function SidebarAgentsHeader({ children }: { readonly children?: ReactNode }) {
   return (
-    <div
-      className={cn(
-        "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5",
-        isElectron && "drag-region",
-      )}
-    >
-      <span className="text-3xs font-medium uppercase tracking-wide text-sidebar-muted-foreground">
-        Agents
-      </span>
-      <div className="flex items-center gap-0.5">{children}</div>
-    </div>
+    <>
+      {isElectron ? (
+        <div
+          aria-hidden
+          className="drag-region shrink-0"
+          style={{ height: "var(--titlebar-reserve, 0px)" }}
+        />
+      ) : null}
+      <div
+        className={cn(
+          "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5",
+          isElectron && "drag-region",
+        )}
+      >
+        <span className="text-3xs font-medium uppercase tracking-wide text-sidebar-muted-foreground">
+          Agents
+        </span>
+        <div className="flex items-center gap-0.5">{children}</div>
+      </div>
+    </>
   );
 }
 
