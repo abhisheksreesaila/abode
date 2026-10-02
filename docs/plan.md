@@ -410,7 +410,8 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
     - a ☕ in the status bar at 3pm with a one-time steam puff;
     - a time-of-day greeting on the project welcome;
     - a small sparkle when an autonomous run ends with done;
-    - "ship it 🚢" on Fridays.
+    - "ship it 🚢" on Friday afternoons (from 15:00);
+    - an "All done ✨" toast when an autonomous run finishes.
 - **Acceptance:**
   - [ ] Nothing animates continuously.
   - [ ] The toggle turns all of it off.
