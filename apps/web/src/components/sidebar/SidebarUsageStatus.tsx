@@ -2,6 +2,7 @@ import { useAtomValue } from "@effect/atom-react";
 import { collectLimitAccounts, type LimitAccount } from "@t3tools/shared/usageLimits";
 import { memo, useMemo } from "react";
 
+import { useNowMinute } from "../../hooks/useNowMinute";
 import { usePrimarySettings } from "../../hooks/useSettings";
 import { cn } from "../../lib/utils";
 import { environmentPresentations } from "../../state/presentation";
@@ -10,6 +11,7 @@ import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import {
   compactWindowLabel,
   formatResetAbsolute,
+  hasReset,
   pickClosestWindow,
   usageTone,
   windowRowLabel,
@@ -30,7 +32,8 @@ const TONE_BAR: Record<UsageTone, string> = {
 
 function accountTitle(account: LimitAccount): string {
   const driver = getDriverOption(account.driver)?.label ?? String(account.driver);
-  return account.plan ? `${driver} ${account.plan}` : driver;
+  const name = account.displayName ?? driver;
+  return account.plan ? `${name} ${account.plan}` : name;
 }
 
 /**
@@ -42,19 +45,16 @@ function accountTitle(account: LimitAccount): string {
 export const SidebarUsageStatus = memo(function SidebarUsageStatus() {
   const presentations = useAtomValue(environmentPresentations.presentationsAtom);
   const timestampFormat = usePrimarySettings((settings) => settings.timestampFormat);
-  const hour12 = timestampFormat === "locale" ? undefined : timestampFormat === "12-hour";
+  const nowMinute = useNowMinute();
+  const now = Date.parse(`${nowMinute}:00Z`);
   const accounts = useMemo(() => collectLimitAccounts(presentations), [presentations]);
-  const closest = useMemo(() => pickClosestWindow(accounts), [accounts]);
-  // Reset times are absolute, so `now` only decides "today" versus a weekday;
-  // it is taken when the limits change rather than on a clock.
-  // oxlint-disable-next-line react/purity, react/memo-dependencies
-  const now = useMemo(() => Date.now(), [accounts]);
+  const closest = useMemo(() => pickClosestWindow(accounts, now), [accounts, now]);
   if (!closest) return null;
 
   const { window } = closest;
   const percent = Math.round(window.usedPercent);
   const tone = usageTone(window.usedPercent);
-  const reset = window.resetsAt ? formatResetAbsolute(window.resetsAt, now, hour12) : null;
+  const reset = window.resetsAt ? formatResetAbsolute(window.resetsAt, now, timestampFormat) : null;
 
   return (
     <Popover>
@@ -71,7 +71,7 @@ export const SidebarUsageStatus = memo(function SidebarUsageStatus() {
         <span className="truncate">
           {accountTitle(closest.account)} ·{" "}
           <span className={cn("font-medium tabular-nums", TONE_TEXT[tone])}>
-            {compactWindowLabel(window)} {percent}%
+            {compactWindowLabel(window)} {percent}% used
           </span>
           {reset ? ` · resets ${reset}` : null}
         </span>
@@ -84,13 +84,13 @@ export const SidebarUsageStatus = memo(function SidebarUsageStatus() {
               {account.limits.windows.map((row) => {
                 const rowTone = usageTone(row.usedPercent);
                 const rowReset = row.resetsAt
-                  ? formatResetAbsolute(row.resetsAt, now, hour12)
+                  ? formatResetAbsolute(row.resetsAt, now, timestampFormat)
                   : null;
                 return (
                   <div key={row.id} className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-xs">
                     <span className="truncate text-muted-foreground">{windowRowLabel(row)}</span>
                     <span className={cn("font-medium tabular-nums", TONE_TEXT[rowTone])}>
-                      {Math.round(row.usedPercent)}%
+                      {Math.round(row.usedPercent)}% used
                     </span>
                     <span
                       role="progressbar"
@@ -107,6 +107,8 @@ export const SidebarUsageStatus = memo(function SidebarUsageStatus() {
                     </span>
                     {rowReset ? (
                       <small className="col-span-2 text-muted-foreground">resets {rowReset}</small>
+                    ) : hasReset(row.resetsAt, now) ? (
+                      <small className="col-span-2 text-muted-foreground">reset</small>
                     ) : null}
                   </div>
                 );

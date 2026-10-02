@@ -1,5 +1,16 @@
 import type { ServerProviderUsageWindow } from "@t3tools/contracts";
+import type { TimestampFormat } from "@t3tools/contracts/settings";
 import type { LimitAccount } from "@t3tools/shared/usageLimits";
+
+import { formatShortTimestamp } from "../../timestampFormat";
+
+/** Cursor's "Overall" window: shown in the popover, never the closest one. */
+const COMBINED_WINDOW_ID = "totalPercentUsed";
+
+/** True when a reset time is known and already behind us. */
+export function hasReset(isoDate: string | undefined, now: number): boolean {
+  return isoDate !== undefined && Date.parse(isoDate) <= now;
+}
 
 export const USAGE_WARN_PERCENT = 80;
 export const USAGE_CRITICAL_PERCENT = 95;
@@ -22,12 +33,17 @@ export interface StatusWindow {
  * sidebar item shows. Ties go to the window that resets sooner, because it is
  * the one the user will be unblocked by first.
  */
-export function pickClosestWindow(accounts: readonly LimitAccount[]): StatusWindow | null {
+export function pickClosestWindow(
+  accounts: readonly LimitAccount[],
+  now: number,
+): StatusWindow | null {
   let best: StatusWindow | null = null;
   const resetMs = (window: ServerProviderUsageWindow) =>
     window.resetsAt ? Date.parse(window.resetsAt) : Number.POSITIVE_INFINITY;
   for (const account of accounts) {
     for (const window of account.limits.windows) {
+      // Not a quota, or already reset and so stale until the next read.
+      if (window.id === COMBINED_WINDOW_ID || hasReset(window.resetsAt, now)) continue;
       if (
         best === null ||
         window.usedPercent > best.window.usedPercent ||
@@ -84,19 +100,15 @@ export function windowRowLabel(window: ServerProviderUsageWindow): string {
 export function formatResetAbsolute(
   isoDate: string,
   now: number,
-  hour12: boolean | undefined,
+  timestampFormat: TimestampFormat,
 ): string | null {
   const date = new Date(isoDate);
-  if (Number.isNaN(date.getTime())) return null;
-  const time = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    ...(hour12 === undefined ? {} : { hour12 }),
-  })
-    .formatToParts(date)
-    .map((part) => (part.type === "dayPeriod" ? part.value.toLowerCase() : part.value))
-    .join("")
-    .replace(/\s+(?=[ap]m$)/, "");
+  // A reset that has passed has no time worth showing; callers say "reset".
+  if (Number.isNaN(date.getTime()) || date.getTime() <= now) return null;
+  const time = formatShortTimestamp(isoDate, timestampFormat).replace(
+    /\s*([AP]M)$/i,
+    (_, period: string) => period.toLowerCase(),
+  );
   const startOf = (value: Date) =>
     new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
   const dayDiff = Math.round((startOf(date) - startOf(new Date(now))) / 86_400_000);
