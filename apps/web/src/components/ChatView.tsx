@@ -229,7 +229,11 @@ import {
   deriveAgentPanelModel,
   foldSubagentActivities,
 } from "@t3tools/client-runtime/state/subagentRuntime";
-import { BranchToolbar, type BranchToolbarHandle } from "./BranchToolbar";
+import {
+  BranchToolbar,
+  BranchToolbarOverflowItems,
+  type BranchToolbarHandle,
+} from "./BranchToolbar";
 import { resolveShortcutCommand, shortcutLabelForCommand } from "../keybindings";
 import { isEditableFocused } from "../lib/editableFocus";
 import ThreadTerminalDrawer from "./ThreadTerminalDrawer";
@@ -3746,14 +3750,10 @@ export default function ChatView(props: ChatViewProps) {
   // content-driven: Git/environment context or controls that actually fit.
   const mountComposerContextStrip = shouldShowComposerContextStrip({
     hasActiveProject: activeProject !== null,
-    isGitRepo,
-    showEnvironmentIndicator: showComposerEnvironmentIndicator,
     hostsRestingComposerControls: routeKind === "server",
   });
   const showComposerContextStrip = shouldShowComposerContextStrip({
     hasActiveProject: activeProject !== null,
-    isGitRepo,
-    showEnvironmentIndicator: showComposerEnvironmentIndicator,
     hostsRestingComposerControls: routeKind === "server" && restingComposerControlsVisible,
   });
   const terminalShortcutLabelOptions = useMemo(
@@ -9715,6 +9715,45 @@ export default function ChatView(props: ChatViewProps) {
     addFolders: (folders) => composerRef.current?.addDroppedFolders(folders),
   });
 
+  // The thread's workspace controls live in the composer footer: as chips, and
+  // as menu entries once the footer is too narrow to show them.
+  const branchToolbarProps = activeProject
+    ? {
+        forceNewWorktree: multipleModelSelections !== null,
+        environmentId: activeThread.environmentId,
+        threadId: activeThread.id,
+        showGitControls: isGitRepo,
+        ...(routeKind === "draft" && draftId ? { draftId } : {}),
+        onEnvModeChange,
+        startFromOrigin,
+        onStartFromOriginChange,
+        envMode,
+        ...(canOverrideServerThreadEnvMode
+          ? {
+              activeThreadBranchOverride: activeThreadBranch,
+              onActiveThreadBranchOverrideChange: setPendingServerThreadBranch,
+            }
+          : {}),
+        envLocked,
+        onComposerFocusRequest: scheduleComposerFocus,
+        ...(canCheckoutPullRequestIntoThread
+          ? { onCheckoutPullRequestRequest: openPullRequestDialog }
+          : {}),
+        ...(hasMultipleEnvironments ? { onEnvironmentChange } : {}),
+        autoEnvironmentLabel,
+        onAutoEnvironment:
+          draftId &&
+          !envLocked &&
+          hasMultipleEnvironments &&
+          loadBalancingSettings.loadBalancingEnabled
+            ? onAutoEnvironment
+            : undefined,
+        availableEnvironments: logicalProjectEnvironments,
+      }
+    : null;
+  const hasComposerContextControls =
+    branchToolbarProps !== null && (isGitRepo || showComposerEnvironmentIndicator);
+
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
       <Dialog
@@ -10089,9 +10128,21 @@ export default function ChatView(props: ChatViewProps) {
                               supportsPullRequests ? activeProjectRepository : null
                             }
                             restingControlsHost={restingComposerControlsHost}
-                            restingControlsHaveLeadingContext={
-                              isGitRepo || showComposerEnvironmentIndicator
-                            }
+                            {...(hasComposerContextControls
+                              ? {
+                                  contextControls: (
+                                    <BranchToolbar ref={branchToolbarRef} {...branchToolbarProps} />
+                                  ),
+                                  contextControlsMenu: (
+                                    <BranchToolbarOverflowItems
+                                      {...branchToolbarProps}
+                                      onOpenBranchPicker={() =>
+                                        branchToolbarRef.current?.openBranchPicker()
+                                      }
+                                    />
+                                  ),
+                                }
+                              : {})}
                             onRestingControlsVisibilityChange={setRestingComposerControlsVisible}
                             getTimelineScrollableNode={getTimelineScrollableNode}
                             isTimelineAtLogicalEnd={isTimelineAtLogicalEnd}
@@ -10142,43 +10193,22 @@ export default function ChatView(props: ChatViewProps) {
                         >
                           {mountComposerContextStrip && (
                             <div className="pointer-events-auto">
-                              <BranchToolbar
-                                forceNewWorktree={multipleModelSelections !== null}
-                                ref={branchToolbarRef}
-                                environmentId={activeThread.environmentId}
-                                threadId={activeThread.id}
-                                showGitControls={isGitRepo}
-                                {...(routeKind === "draft" && draftId ? { draftId } : {})}
-                                onEnvModeChange={onEnvModeChange}
-                                startFromOrigin={startFromOrigin}
-                                onStartFromOriginChange={onStartFromOriginChange}
-                                envMode={envMode}
-                                {...(canOverrideServerThreadEnvMode
-                                  ? {
-                                      activeThreadBranchOverride: activeThreadBranch,
-                                      onActiveThreadBranchOverrideChange:
-                                        setPendingServerThreadBranch,
-                                    }
-                                  : {})}
-                                envLocked={envLocked}
-                                onComposerFocusRequest={scheduleComposerFocus}
-                                {...(canCheckoutPullRequestIntoThread
-                                  ? { onCheckoutPullRequestRequest: openPullRequestDialog }
-                                  : {})}
-                                {...(hasMultipleEnvironments ? { onEnvironmentChange } : {})}
-                                autoEnvironmentLabel={autoEnvironmentLabel}
-                                onAutoEnvironment={
-                                  draftId &&
-                                  !envLocked &&
-                                  hasMultipleEnvironments &&
-                                  loadBalancingSettings.loadBalancingEnabled
-                                    ? onAutoEnvironment
-                                    : undefined
-                                }
-                                availableEnvironments={logicalProjectEnvironments}
-                                composerControlsHostRef={setRestingComposerControlsHost}
-                                contextStripVisible={showComposerContextStrip}
-                              />
+                              <ComposerSurface.ContextStrip
+                                className={cn(
+                                  "gap-1 text-xs font-normal text-muted-foreground/70",
+                                  // Hidden while the controls do not fit, but the host keeps a
+                                  // prospective width so they can return when the view grows.
+                                  !showComposerContextStrip &&
+                                    "pointer-events-none invisible absolute inset-x-0 top-full",
+                                )}
+                              >
+                                <div
+                                  ref={setRestingComposerControlsHost}
+                                  data-composer-context-control
+                                  data-chat-resting-composer-controls-host="true"
+                                  className="flex min-w-0 flex-1 items-center justify-start overflow-x-clip overflow-y-visible"
+                                />
+                              </ComposerSurface.ContextStrip>
                             </div>
                           )}
                         </div>

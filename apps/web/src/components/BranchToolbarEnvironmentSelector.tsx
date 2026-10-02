@@ -54,10 +54,7 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
   );
 
   // The static label carries the xs control's height (h-7 sm:h-6) as well as
-  // its padding: the composer context strip has no min-height of its own, and
-  // the glass seam joining it to the composer assumes a fixed strip height, so
-  // a shorter label would drag the seam out of line whenever this label is the
-  // only thing in the strip.
+  // its padding so it lines up with the picker chips beside it.
   if (envLocked || onEnvironmentChange === undefined) {
     return (
       <Tooltip>
@@ -70,14 +67,8 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
             kind={activeEnvironment?.machine ?? "server"}
             className="size-3 shrink-0"
           />
-          <span
-            data-composer-label
-            className="min-w-0 max-w-[240px] group-data-[compact]/composer-context:max-w-0"
-          >
-            <span
-              data-composer-label-motion
-              className="block w-full min-w-0 max-w-[240px] truncate transition-opacity duration-180 ease-drawer group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
-            >
+          <span data-composer-control-label className="min-w-0 max-w-40">
+            <span className="block w-full min-w-0 max-w-40 truncate">
               {activeEnvironment?.label ?? "Run on"}
             </span>
           </span>
@@ -117,14 +108,8 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
               className="size-3 shrink-0"
             />
           )}
-          <span
-            data-composer-label
-            className="min-w-0 max-w-[240px] group-data-[compact]/composer-context:max-w-0"
-          >
-            <span
-              data-composer-label-motion
-              className="block w-full min-w-0 max-w-[240px] truncate transition-opacity duration-180 ease-drawer group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
-            >
+          <span data-composer-control-label className="min-w-0 max-w-40">
+            <span className="block w-full min-w-0 max-w-40 truncate">
               <SelectValue />
             </span>
           </span>

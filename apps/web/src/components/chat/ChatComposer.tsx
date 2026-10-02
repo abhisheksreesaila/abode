@@ -1434,10 +1434,16 @@ export interface ChatComposerProps {
   gitCwd: string | null;
   /** The project's workspace root, where Claude's agents are listed from. */
   projectCwd?: string | null;
+  /**
+   * The thread's workspace chips (environment, workspace mode, branch) and the
+   * same controls as menu entries for when the footer is too narrow. Absent
+   * when the thread has none to show.
+   */
+  contextControls?: ReactNode;
+  contextControlsMenu?: ReactNode;
   pullRequestProjectId: ProjectId | null;
   pullRequestRepository: string | null;
   restingControlsHost: HTMLDivElement | null;
-  restingControlsHaveLeadingContext: boolean;
   onRestingControlsVisibilityChange: (visible: boolean) => void;
   getTimelineScrollableNode: () => HTMLElement | null;
   isTimelineAtLogicalEnd: () => boolean;
@@ -1560,10 +1566,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     terminalOpen,
     gitCwd,
     projectCwd = null,
+    contextControls,
+    contextControlsMenu,
     pullRequestProjectId,
     pullRequestRepository,
     restingControlsHost,
-    restingControlsHaveLeadingContext,
     onRestingControlsVisibilityChange,
     getTimelineScrollableNode,
     isTimelineAtLogicalEnd,
@@ -5005,6 +5012,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     ...(composerAgent ? ["agent"] : []),
     ...(providerTraitsPicker ? ["traits"] : []),
     "mode",
+    ...(contextControls ? ["context"] : []),
   ];
   const isRestingBlockHidden = (id: string) =>
     restingBlockIds.indexOf(id) >= restingBlockIds.length - restingHiddenBlockCount;
@@ -5058,6 +5066,19 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         />
       ),
     },
+    ...(contextControls
+      ? [
+          {
+            id: "context",
+            content: (
+              <>
+                <ComposerControlSeparator size={composerControlsInStrip ? "xs" : "sm"} />
+                {contextControls}
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
   const hiddenRestingBlockIds = restingBlockDefs
     .slice(restingBlockDefs.length - restingHiddenBlockCount)
@@ -5168,13 +5189,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     </ComposerControl>
   ) : (
     <>
-      {composerControlsInStrip && restingControlsHaveLeadingContext && !modelPickerInTopRow ? (
-        <ComposerControlSeparator
-          size="xs"
-          className="@max-[400px]/composer-surface:hidden"
-          data-resting-controls-separator="true"
-        />
-      ) : null}
       {modelPickerInTopRow ? null : providerModelPicker}
 
       <>
@@ -5222,6 +5236,14 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             }
             traitsMenuContent={
               hiddenRestingBlockIds.includes("traits") ? providerTraitsMenuContent : undefined
+            }
+            contextMenuContent={
+              contextControls && hiddenRestingBlockIds.includes("context")
+                ? contextControlsMenu
+                : undefined
+            }
+            showRuntimeMode={
+              hiddenRestingBlockIds.length === 0 || hiddenRestingBlockIds.includes("mode")
             }
             onToggleInteractionMode={toggleInteractionMode}
             onRuntimeModeChange={handleRuntimeModeChange}

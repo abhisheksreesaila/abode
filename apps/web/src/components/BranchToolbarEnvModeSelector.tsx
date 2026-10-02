@@ -71,14 +71,8 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
           ) : (
             <FolderIcon className="size-3 shrink-0" />
           )}
-          <span
-            data-composer-label
-            className="min-w-0 max-w-[240px] group-data-[compact]/composer-context:max-w-0"
-          >
-            <span
-              data-composer-label-motion
-              className="block w-full min-w-0 max-w-[240px] truncate transition-opacity duration-180 ease-drawer group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
-            >
+          <span data-composer-control-label className="min-w-0 max-w-40">
+            <span className="block w-full min-w-0 max-w-40 truncate">
               {resolveLockedWorkspaceLabel(activeWorktreePath, effectiveEnvMode)}
             </span>
           </span>
@@ -125,14 +119,8 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
           ) : (
             <FolderIcon className="size-3" />
           )}
-          <span
-            data-composer-label
-            className="min-w-0 max-w-[240px] group-data-[compact]/composer-context:max-w-0"
-          >
-            <span
-              data-composer-label-motion
-              className="block w-full min-w-0 max-w-[240px] truncate transition-opacity duration-180 ease-drawer group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
-            >
+          <span data-composer-control-label className="min-w-0 max-w-40">
+            <span className="block w-full min-w-0 max-w-40 truncate">
               <SelectValue />
             </span>
           </span>
