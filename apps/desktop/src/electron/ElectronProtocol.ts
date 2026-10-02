@@ -76,6 +76,9 @@ export function makeDesktopContentSecurityPolicy(input: DesktopProtocolRegistrat
     "'self'",
     "'unsafe-inline'",
     "'wasm-unsafe-eval'",
+    // Voice dictation: transformers.js caches the ONNX runtime script and loads it
+    // from a blob: URL inside its worker.
+    "blob:",
     ...(clerkOrigin ? [clerkOrigin] : []),
     "https://challenges.cloudflare.com",
   ];
