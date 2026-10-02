@@ -51,7 +51,7 @@ healthy() {
   local code
   for _ in $(seq 1 90); do
     if systemctl --user is-failed --quiet "$UNIT"; then return 1; fi
-    code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/" || true)"
+    code="$(curl -s --connect-timeout 2 --max-time 5 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/" || true)"
     if [[ "$code" == 200 ]]; then return 0; fi
     sleep 1
   done
