@@ -26,6 +26,12 @@ export function buildAssistantMessageQuote(input: {
   }
   return {
     ok: true,
-    citation: { version: 1, ...input.threadRef, messageId: input.messageId, ...selector },
+    citation: {
+      version: 1,
+      ...input.threadRef,
+      messageId: input.messageId,
+      ...selector,
+      whole: true,
+    },
   };
 }

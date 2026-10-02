@@ -47,6 +47,7 @@ export function formatAssistantCitationHref(citation: AssistantCitation): string
     suffix: citation.suffix,
   });
   if (citation.comment !== undefined) query.set("comment", citation.comment);
+  if (citation.whole) query.set("whole", "1");
   return `${CITATION_HREF_PREFIX}${path}?${query}`;
 }
 
@@ -70,8 +71,10 @@ export function parseAssistantCitationHref(href: string): AssistantCitation | nu
     }
     const requiredKeys = ["text", "start", "end", "prefix", "suffix"];
     const comment = url.searchParams.get("comment");
+    const whole = url.searchParams.get("whole") === "1";
     if (
-      url.searchParams.size !== requiredKeys.length + (comment === null ? 0 : 1) ||
+      url.searchParams.size !==
+        requiredKeys.length + (comment === null ? 0 : 1) + (whole ? 1 : 0) ||
       requiredKeys.some((key) => url.searchParams.getAll(key).length !== 1)
     ) {
       return null;
@@ -91,6 +94,7 @@ export function parseAssistantCitationHref(href: string): AssistantCitation | nu
         prefix: url.searchParams.get("prefix"),
         suffix: url.searchParams.get("suffix"),
         ...(comment === null ? {} : { comment }),
+        ...(whole ? { whole: true } : {}),
       }),
     );
   } catch {
@@ -118,14 +122,36 @@ export function collectAssistantCitations(text: string) {
   return citations;
 }
 
+/**
+ * Drops the common Markdown syntax from a whole-message quote so previews read
+ * as prose. Display only; the saved quote keeps the original text.
+ */
+export function stripBasicMarkdown(text: string): string {
+  return text
+    .replace(/```[^\n]*\n?([\s\S]*?)```/g, "$1")
+    .replace(/^ {0,3}#{1,6}\s+/gm, "")
+    .replace(/^ {0,3}>\s?/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(?<![\w*])[*_]([^*_\n]+)[*_](?![\w*])/g, "$1")
+    .replace(/~~(.+?)~~/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .trim();
+}
+
+/** What a quote shows in titles and chips. */
+export function assistantCitationDisplayText(citation: AssistantCitation): string {
+  return citation.whole ? stripBasicMarkdown(citation.text) : citation.text;
+}
+
 /** Titles and previews include the selected text and user comment without Markdown escaping. */
 export function assistantCitationsToPlainText(prompt: string): string {
   return prompt.replace(CITATION_LINK, (source: string, href: string) => {
     const citation = parseAssistantCitationHref(href);
     if (!citation) return source;
-    return citation.comment === undefined
-      ? citation.text
-      : `${citation.text}\nComment: ${citation.comment}`;
+    const quote = assistantCitationDisplayText(citation);
+    return citation.comment === undefined ? quote : `${quote}\nComment: ${citation.comment}`;
   });
 }
 

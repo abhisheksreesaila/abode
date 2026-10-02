@@ -16,6 +16,7 @@ import {
   parseAssistantCitationHref,
   renderAssistantCitationsAsText,
   serializeAssistantCitation,
+  stripBasicMarkdown,
   withAssistantCitationComment,
 } from "./assistantCitations.ts";
 
@@ -344,6 +345,37 @@ describe("assistant citation references", () => {
         "",
         "",
       ].join("\n"),
+    );
+  });
+});
+
+describe("whole-message quotes", () => {
+  const whole: AssistantCitation = {
+    ...citation,
+    text: "## Done\n\nFixed **retry** in `queue.ts` ([notes](http://x.y)).\n\n- item one",
+    whole: true,
+  };
+
+  it("keeps the whole flag through the href round trip", () => {
+    expect(parseAssistantCitationHref(formatAssistantCitationHref(whole))).toEqual(whole);
+    expect(
+      parseAssistantCitationHref(formatAssistantCitationHref(citation))?.whole,
+    ).toBeUndefined();
+  });
+
+  it("previews without raw markdown", () => {
+    expect(assistantCitationsToPlainText(serializeAssistantCitation(whole))).toBe(
+      "Done\n\nFixed retry in queue.ts (notes).\nitem one",
+    );
+  });
+
+  it("leaves selected-text quotes untouched", () => {
+    expect(assistantCitationsToPlainText(serializeAssistantCitation(citation))).toBe(citation.text);
+  });
+
+  it("strips fences, headings, emphasis and quotes", () => {
+    expect(stripBasicMarkdown("# T\n```ts\nconst a = 1;\n```\n> *note* __bold__ ~~x~~")).toBe(
+      "T\nconst a = 1;\n\nnote bold x",
     );
   });
 });

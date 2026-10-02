@@ -21,6 +21,8 @@ export const AssistantCitation = Schema.Struct({
   comment: Schema.optional(
     Schema.String.check(Schema.isMaxLength(ASSISTANT_CITATION_MAX_COMMENT_LENGTH)),
   ),
+  /** Quotes the whole message: start/end/prefix/suffix are not a rendered-text selector. */
+  whole: Schema.optional(Schema.Boolean),
   start: NonNegativeInt.check(Schema.isLessThanOrEqualTo(Number.MAX_SAFE_INTEGER)),
   end: NonNegativeInt.check(Schema.isLessThanOrEqualTo(Number.MAX_SAFE_INTEGER)),
   prefix: Schema.String.check(Schema.isMaxLength(ASSISTANT_CITATION_CONTEXT_LENGTH)),

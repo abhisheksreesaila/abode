@@ -15,6 +15,7 @@ import {
   captureAssistantTextSelection,
   createAssistantTextSelector,
   findAssistantCitationText,
+  resolveAssistantCitationRange,
 } from "./assistantTextSelection";
 
 function selector(
@@ -46,6 +47,25 @@ function roundTripSelector(selector: AssistantTextSelector) {
 class SelectionNode {
   parentElement: SelectionNode | null = null;
   childNodes: SelectionNode[] = [];
+  ownerDocument = {
+    createRange: () => ({
+      startContainer: undefined as unknown as SelectionNode,
+      startOffset: 0,
+      endContainer: undefined as unknown as SelectionNode,
+      endOffset: 0,
+      setStart(node: SelectionNode, offset: number) {
+        this.startContainer = node;
+        this.startOffset = offset;
+      },
+      setEnd(node: SelectionNode, offset: number) {
+        this.endContainer = node;
+        this.endOffset = offset;
+      },
+      get collapsed() {
+        return this.startContainer === this.endContainer && this.startOffset === this.endOffset;
+      },
+    }),
+  };
 
   constructor(
     readonly tagName: string,
@@ -559,5 +579,34 @@ describe("findAssistantCitationText", () => {
       start: 2,
       end: 7,
     });
+  });
+});
+
+describe("resolveAssistantCitationRange for whole-message quotes", () => {
+  const rendered = () =>
+    assistantSource(
+      new SelectionNode("P").append(textNode("Fixed retry in queue.ts.")),
+      new SelectionNode("P").append(textNode("Next step.")),
+    );
+  // Raw markdown never matches the rendered text, which is why a flag is needed.
+  const markdown = "Fixed **retry** in `queue.ts`.\n\nNext step.";
+  const quote = { text: markdown, start: 0, end: markdown.length, prefix: "", suffix: "" };
+
+  it("does not resolve markdown text as a selection", () => {
+    expect(resolveAssistantCitationRange(rendered() as unknown as HTMLElement, quote)).toBeNull();
+  });
+
+  it("resolves the whole rendered message when flagged", () => {
+    const range = resolveAssistantCitationRange(rendered() as unknown as HTMLElement, {
+      ...quote,
+      whole: true,
+    }) as unknown as {
+      startContainer: SelectionNode;
+      endContainer: SelectionNode;
+      endOffset: number;
+    };
+    expect(range.startContainer.data).toBe("Fixed retry in queue.ts.");
+    expect(range.endContainer.data).toBe("Next step.");
+    expect(range.endOffset).toBe("Next step.".length);
   });
 });
