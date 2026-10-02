@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getChosenAgent } from "./composerAgent";
 import { formatAgentDetail, resolveAgentName, type MessageIdentity } from "./messageAvatar.logic";
 import {
+  askOptionForKey,
   derivePendingAsk,
   pendingAskKey,
   shouldAdvanceAfterAnswer,
@@ -33,12 +34,17 @@ export function useFluentTimelineProps(input: {
   responding: boolean;
   /** The abode theme is active; otherwise there is no ask block. */
   fluent: boolean;
+  dismissible: boolean;
+  questionIndex: number;
+  questionCount: number;
+  onDismiss: (requestId: string) => void;
   onSelectOption: (questionId: string, optionValue: string) => void;
   onAdvance: () => void;
 }): {
   messageIdentity: MessageIdentity;
   pendingAsk: PendingAsk | null;
   onAnswerPendingAsk: (questionId: string, optionValue: string) => void;
+  onDismissPendingAsk: (requestId: string) => void;
 } {
   const { modelSelection, providerModels, runtimeMode, pendingRequestId, activeQuestion } = input;
   // Memoized on the derived strings, so a provider-list refresh that changes nothing visible
@@ -59,9 +65,21 @@ export function useFluentTimelineProps(input: {
   const pendingAsk = useMemo(
     () =>
       input.fluent && pendingRequestId
-        ? derivePendingAsk(pendingRequestId, activeQuestion, input.responding)
+        ? derivePendingAsk(pendingRequestId, activeQuestion, input.responding, {
+            dismissible: input.dismissible,
+            questionIndex: input.questionIndex,
+            questionCount: input.questionCount,
+          })
         : null,
-    [input.fluent, pendingRequestId, activeQuestion, input.responding],
+    [
+      input.fluent,
+      pendingRequestId,
+      activeQuestion,
+      input.responding,
+      input.dismissible,
+      input.questionIndex,
+      input.questionCount,
+    ],
   );
 
   const activeKey = pendingAskKey(pendingRequestId, activeQuestion?.id);
@@ -94,5 +112,31 @@ export function useFluentTimelineProps(input: {
     }, ADVANCE_DELAY_MS);
   }, []);
 
-  return { messageIdentity, pendingAsk, onAnswerPendingAsk };
+  // Number keys pick options, same rules as the composer panel's keys. Bound here, not in the
+  // virtualized row, so scrolling the block out of view does not drop them.
+  useEffect(() => {
+    if (!pendingAsk) return;
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target;
+      const typing =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement &&
+          target.closest('[contenteditable]:not([contenteditable="false"])') !== null);
+      const value = askOptionForKey(pendingAsk, event, typing);
+      if (value === null) return;
+      event.preventDefault();
+      onAnswerPendingAsk(pendingAsk.questionId, value);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [pendingAsk, onAnswerPendingAsk]);
+
+  const dismissRef = useRef(input.onDismiss);
+  useEffect(() => {
+    dismissRef.current = input.onDismiss;
+  });
+  const onDismissPendingAsk = useCallback((requestId: string) => dismissRef.current(requestId), []);
+
+  return { messageIdentity, pendingAsk, onAnswerPendingAsk, onDismissPendingAsk };
 }

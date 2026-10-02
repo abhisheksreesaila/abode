@@ -55,6 +55,7 @@ const DEFAULT_MESSAGE_IDENTITY: MessageIdentity = {
   agentName: DEFAULT_AGENT_NAME,
   agentDetail: null,
 };
+const NOOP_DISMISS_PENDING_ASK = (_requestId: string) => {};
 const NOOP_ANSWER_PENDING_ASK = (_questionId: string, _optionValue: string) => {};
 const NOOP_USE_ARTIFACT_TEMPLATE = () => {};
 const NOOP_OPEN_ATTACHMENT = (_attachment: ChatFileAttachment) => {};
@@ -323,6 +324,7 @@ interface TimelineRowSharedState {
   fluent: boolean;
   messageIdentity: MessageIdentity;
   onAnswerPendingAsk: (questionId: string, optionValue: string) => void;
+  onDismissPendingAsk: (requestId: string) => void;
 }
 
 interface TimelineRowActivityState {
@@ -498,6 +500,7 @@ interface MessagesTimelineProps {
   pendingAsk?: PendingAsk | null;
   /** Answers through the same path as the composer's pending-question panel. */
   onAnswerPendingAsk?: (questionId: string, optionValue: string) => void;
+  onDismissPendingAsk?: (requestId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -561,6 +564,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   messageIdentity = DEFAULT_MESSAGE_IDENTITY,
   pendingAsk = null,
   onAnswerPendingAsk = NOOP_ANSWER_PENDING_ASK,
+  onDismissPendingAsk = NOOP_DISMISS_PENDING_ASK,
 }: MessagesTimelineProps) {
   const listIdentityKey = displayThreadKey ?? routeThreadKey;
   const rememberedPosition = useMemo(
@@ -1262,6 +1266,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       fluent,
       messageIdentity,
       onAnswerPendingAsk,
+      onDismissPendingAsk,
     }),
     [
       readyCitationRequest,
@@ -1303,6 +1308,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       fluent,
       messageIdentity,
       onAnswerPendingAsk,
+      onDismissPendingAsk,
     ],
   );
   const backgroundWorktreeSetup =
@@ -1843,8 +1849,10 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
 });
 
 function PendingAskTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "pending-ask" }> }) {
-  const { onAnswerPendingAsk } = use(TimelineRowCtx);
-  return <PendingAskBlock ask={row.ask} onAnswer={onAnswerPendingAsk} />;
+  const { onAnswerPendingAsk, onDismissPendingAsk } = use(TimelineRowCtx);
+  return (
+    <PendingAskBlock ask={row.ask} onAnswer={onAnswerPendingAsk} onDismiss={onDismissPendingAsk} />
+  );
 }
 
 function WorktreeSetupTimelineRow({

@@ -70,13 +70,21 @@ export const TurnStepsList = memo(function TurnStepsList(props: {
 export const PendingAskBlock = memo(function PendingAskBlock(props: {
   ask: PendingAsk;
   onAnswer: (questionId: string, optionValue: string) => void;
+  onDismiss: (requestId: string) => void;
 }) {
-  const { ask, onAnswer } = props;
+  const { ask, onAnswer, onDismiss } = props;
   return (
     <div data-fluent="ask" role="group" aria-label={ask.header} data-pending-ask="">
-      <p data-fluent="ask-text">{ask.question}</p>
+      <p data-fluent="ask-text">
+        {ask.questionCount > 1 ? (
+          <span data-fluent="ask-count">
+            {ask.questionIndex + 1}/{ask.questionCount}{" "}
+          </span>
+        ) : null}
+        {ask.question}
+      </p>
       <div data-fluent="ask-actions">
-        {ask.options.map((option) => (
+        {ask.options.map((option, index) => (
           <Button
             key={option.value}
             size="compact"
@@ -84,9 +92,20 @@ export const PendingAskBlock = memo(function PendingAskBlock(props: {
             disabled={ask.responding}
             onClick={() => onAnswer(ask.questionId, option.value)}
           >
+            {index < 9 ? <span data-fluent="ask-key">{index + 1}</span> : null}
             {option.label}
           </Button>
         ))}
+        {ask.dismissible ? (
+          <Button
+            size="compact"
+            variant="ghost-muted"
+            disabled={ask.responding}
+            onClick={() => onDismiss(ask.requestId)}
+          >
+            Dismiss
+          </Button>
+        ) : null}
       </div>
     </div>
   );

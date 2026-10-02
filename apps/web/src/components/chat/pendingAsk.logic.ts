@@ -12,6 +12,10 @@ export interface PendingAsk {
     readonly primary: boolean;
   }>;
   readonly responding: boolean;
+  readonly dismissible: boolean;
+  /** Zero-based position and total, for the "n/m" counter when there is more than one question. */
+  readonly questionIndex: number;
+  readonly questionCount: number;
 }
 
 /**
@@ -29,6 +33,11 @@ export function derivePendingAsk(
   requestId: string,
   question: UserInputQuestion | null | undefined,
   responding: boolean,
+  meta: { dismissible: boolean; questionIndex: number; questionCount: number } = {
+    dismissible: false,
+    questionIndex: 0,
+    questionCount: 1,
+  },
 ): PendingAsk | null {
   if (!question || !isInlineAskQuestion(question)) return null;
   const recommended = question.options.findIndex((option) => /recommended/i.test(option.label));
@@ -44,6 +53,7 @@ export function derivePendingAsk(
       primary: index === primaryIndex,
     })),
     responding,
+    ...meta,
   };
 }
 
@@ -68,6 +78,9 @@ export function pendingAskEqual(a: PendingAsk, b: PendingAsk): boolean {
     a.requestId === b.requestId &&
     a.questionId === b.questionId &&
     a.responding === b.responding &&
+    a.dismissible === b.dismissible &&
+    a.questionIndex === b.questionIndex &&
+    a.questionCount === b.questionCount &&
     a.question === b.question &&
     a.options.length === b.options.length &&
     a.options.every(
@@ -75,4 +88,20 @@ export function pendingAskEqual(a: PendingAsk, b: PendingAsk): boolean {
         option.value === b.options[i]!.value && option.primary === b.options[i]!.primary,
     )
   );
+}
+
+/**
+ * The option a number key picks, by the composer panel's own rules: plain 1-9,
+ * not while typing in an input, textarea or contenteditable.
+ */
+export function askOptionForKey(
+  ask: PendingAsk,
+  event: { key: string; metaKey: boolean; ctrlKey: boolean; altKey: boolean },
+  typingTarget: boolean,
+): string | null {
+  if (ask.responding || typingTarget) return null;
+  if (event.metaKey || event.ctrlKey || event.altKey) return null;
+  const digit = Number.parseInt(event.key, 10);
+  if (Number.isNaN(digit) || digit < 1 || digit > 9) return null;
+  return ask.options[digit - 1]?.value ?? null;
 }
