@@ -4,6 +4,9 @@
 @custom-variant light (&:not(.dark, .dark *));
 /* Window Controls Overlay: active when Electron exposes native titlebar control geometry. */
 @custom-variant wco (&:is(.wco, .wco *));
+/* Short windows: the welcome hero drops its cards first, then its extras. */
+@custom-variant short (@media (max-height: 40rem));
+@custom-variant shorter (@media (max-height: 30rem));
 
 /* On mobile, morph the expanded hero composer into the compact docked
    composer while it moves; the rest of the app remains visually stationary. */
@@ -2256,6 +2259,43 @@ code {
   --icon-customizations: #c586c0;
   --icon-phone: #f48771;
   --icon-settings: #4fc1ff;
+}
+
+/* Composer chip tints (F-027, components/chat/chipTint.ts). Risk colors come
+   from the theme's own error, warning and success roles. The --chip-<name>-fg
+   text is the role's foreground pulled 40% toward --foreground, which keeps it
+   at 4.5:1 or better on the tinted fill in light and dark themes. Branch and workspace hues are fixed per color scheme. */
+:root {
+  --chip-danger: var(--error);
+  --chip-danger-fg: color-mix(in srgb, var(--error-foreground) 60%, var(--foreground));
+  --chip-caution: var(--warning);
+  --chip-caution-fg: color-mix(in srgb, var(--warning-foreground) 60%, var(--foreground));
+  --chip-safe: var(--success);
+  --chip-safe-fg: color-mix(in srgb, var(--success-foreground) 60%, var(--foreground));
+  --chip-purple: #a64ca0;
+  --chip-purple-fg: #7d2f78;
+  --chip-blue: #0a7fc2;
+  --chip-blue-fg: #05588a;
+  --chip-teal: #12907b;
+  --chip-teal-fg: #0b6657;
+  --chip-claude: #d97757;
+  --chip-codex: #10a37f;
+
+  @variant dark {
+    --chip-purple: #c586c0;
+    --chip-purple-fg: #d9a6d5;
+    --chip-blue: #4fc1ff;
+    --chip-blue-fg: #8fd3ff;
+    --chip-teal: #4ec9b0;
+    --chip-teal-fg: #7fdcc8;
+  }
+}
+
+/* abode's error role is coral, which sits next to the Claude orange. Full access
+   takes the mockup's red so risk never reads as a provider. */
+html[data-theme-id="abode"] {
+  --chip-danger: #f14c4c;
+  --chip-danger-fg: color-mix(in srgb, #ff8a8a 60%, var(--foreground));
 }
 
 /* abode density: VS Code-like. Scoped to the theme id so every other theme

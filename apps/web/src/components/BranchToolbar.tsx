@@ -31,6 +31,7 @@ import { BranchToolbarEnvironmentSelector } from "./BranchToolbarEnvironmentSele
 import { BranchToolbarEnvModeSelector } from "./BranchToolbarEnvModeSelector";
 import { PreviousWorktreeItemContent } from "./PreviousWorktreeItemContent";
 import { ComposerControl } from "./chat/ComposerControl";
+import { CHIP_TINT_CLASS_NAMES, resolveWorkspaceTint } from "./chat/chipTint";
 import {
   Menu,
   MenuGroup,
@@ -247,6 +248,9 @@ const MobileRunContextSelector = memo(function MobileRunContextSelector({
         ? resolveEnvModeLabel("worktree")
         : resolveCurrentWorkspaceLabel(activeWorktreePath);
   const isLocked = envLocked || envModeLocked;
+  const workspaceTint = resolveWorkspaceTint(
+    effectiveEnvMode === "worktree" || activeWorktreePath !== null,
+  );
   const workspaceIcon = (
     <Tooltip>
       <TooltipTrigger render={<span className="inline-flex shrink-0" />}>
@@ -292,7 +296,10 @@ const MobileRunContextSelector = memo(function MobileRunContextSelector({
   if (isLocked) {
     return (
       <span
-        className="inline-flex h-7 min-w-0 flex-initial items-center justify-start gap-1 rounded-md border border-transparent px-1.75 font-normal text-muted-foreground/70 text-xs sm:h-6"
+        className={cn(
+          "inline-flex h-7 min-w-0 flex-initial items-center justify-start gap-1 rounded-md border border-transparent px-1.75 font-normal text-muted-foreground/70 text-xs sm:h-6",
+          CHIP_TINT_CLASS_NAMES[workspaceTint],
+        )}
         data-composer-context-control
       >
         {triggerContent}
@@ -303,7 +310,7 @@ const MobileRunContextSelector = memo(function MobileRunContextSelector({
   return (
     <Menu>
       <MenuTrigger
-        render={<ComposerControl size="xs" />}
+        render={<ComposerControl size="xs" tint={workspaceTint} />}
         className="min-w-0 flex-initial justify-start"
         data-composer-context-control
         data-composer-shortcut={[

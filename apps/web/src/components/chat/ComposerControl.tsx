@@ -6,7 +6,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "~/lib/utils";
 import { Separator } from "../ui/separator";
-import { PROVIDER_TINT_CLASS_NAMES, type ProviderTint } from "./providerTint";
+import { CHIP_TINT_CLASS_NAMES, type ChipTint } from "./chipTint";
 
 export type ComposerControlSize = "sm" | "xs";
 
@@ -18,7 +18,7 @@ export type ComposerControlSize = "sm" | "xs";
 function composerControlClassName(
   size: ComposerControlSize,
   className?: string,
-  look?: { chip?: boolean | undefined; tint?: ProviderTint | undefined },
+  look?: { chip?: boolean | undefined; tint?: ChipTint | undefined },
 ) {
   return cn(
     "relative inline-flex shrink-0 cursor-pointer items-center justify-center whitespace-nowrap rounded-(--control-radius) border border-transparent text-base outline-none hover:bg-accent data-pressed:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-64 data-disabled:pointer-events-none data-disabled:opacity-64 pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 [&:active:not([aria-haspopup])]:scale-[0.97] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:-mx-0.5 [&_svg[data-composer-control-icon]]:mx-0",
@@ -27,7 +27,7 @@ function composerControlClassName(
       : "h-7 gap-1.5 px-2.5 font-medium text-secondary-label [&_svg:not([class*='text-'])]:text-muted-foreground hover:text-foreground sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
     "aria-pressed:bg-accent aria-pressed:text-accent-foreground aria-pressed:hover:bg-accent/80",
     look?.chip && "border-border/70 bg-input/40",
-    look?.tint && PROVIDER_TINT_CLASS_NAMES[look.tint],
+    look?.tint && CHIP_TINT_CLASS_NAMES[look.tint],
     className,
   );
 }
@@ -36,8 +36,8 @@ type ComposerControlProps = useRender.ComponentProps<"button"> & {
   size?: ComposerControlSize;
   /** Outlined, input-tinted look for the composer's picker row. */
   chip?: boolean | undefined;
-  /** Faint provider tint; implies nothing about `chip`, which it overrides when both are set. */
-  tint?: ProviderTint | undefined;
+  /** Semantic or provider tint (chipTint.ts); overrides `chip`'s colors when both are set. */
+  tint?: ChipTint | undefined;
 };
 
 export function ComposerControl({
@@ -124,13 +124,18 @@ export function ComposerSelectControl({
   className,
   children,
   size = "sm",
+  tint,
   ...props
 }: Omit<SelectPrimitive.Trigger.Props, "className"> & {
   className?: string | undefined;
   size?: ComposerControlSize;
+  tint?: ChipTint | undefined;
 }) {
   return (
-    <SelectPrimitive.Trigger className={composerControlClassName(size, className)} {...props}>
+    <SelectPrimitive.Trigger
+      className={composerControlClassName(size, className, { tint })}
+      {...props}
+    >
       {children}
       <SelectPrimitive.Icon>
         <ComposerControlChevron size={size} />

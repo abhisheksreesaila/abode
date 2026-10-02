@@ -15,10 +15,13 @@ import {
   SelectGroupLabel,
   SelectItem,
   SelectPopup,
-  SelectTrigger,
   SelectValue,
 } from "./ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
+
+import { ComposerSelectControl } from "./chat/ComposerControl";
+import { CHIP_TINT_CLASS_NAMES, resolveWorkspaceTint } from "./chat/chipTint";
+import { cn } from "~/lib/utils";
 
 const PREVIOUS_WORKTREE_SELECT_VALUE = "previous-worktree";
 
@@ -44,6 +47,9 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
   onUsePreviousWorktree,
 }: BranchToolbarEnvModeSelectorProps) {
   const composerFloatingLayerProps = useComposerMenuProps();
+  const workspaceTint = resolveWorkspaceTint(
+    effectiveEnvMode === "worktree" || activeWorktreePath !== null,
+  );
   const showPreviousWorktree = Boolean(previousWorktreeLabel && onUsePreviousWorktree);
   const envModeItems = useMemo(
     () => [
@@ -61,7 +67,10 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
       <Tooltip>
         <TooltipTrigger
           render={<span />}
-          className="inline-flex h-7 min-w-0 items-center gap-1 border border-transparent px-1.75 font-normal text-muted-foreground/70 text-xs sm:h-6"
+          className={cn(
+            "inline-flex h-7 min-w-0 items-center gap-1 rounded-md border border-transparent px-1.75 font-normal text-muted-foreground/70 text-xs sm:h-6",
+            CHIP_TINT_CLASS_NAMES[workspaceTint],
+          )}
           data-composer-context-control
         >
           {activeWorktreePath ? (
@@ -102,9 +111,9 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
       <Tooltip>
         <TooltipTrigger
           render={
-            <SelectTrigger
-              variant="ghost"
+            <ComposerSelectControl
               size="xs"
+              tint={workspaceTint}
               className="min-w-0 shrink"
               aria-label="Workspace"
               data-composer-shortcut="composer.workspace"

@@ -959,8 +959,10 @@ import {
   PencilRulerIcon,
   PlayIcon,
   ShieldIcon,
+  TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
+import { resolveRuntimeModeTint } from "./chipTint";
 import { proposedPlanTitle } from "../../proposedPlan";
 import { hasProviderSetup } from "./ProviderStatusBanner";
 import {
@@ -1106,7 +1108,9 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
   const composerFloatingLayerProps = useComposerMenuProps();
   const [open, setOpen] = useComposerMenuState(props.hidden);
   const runtimeModeOption = runtimeModeConfig[props.runtimeMode];
-  const RuntimeModeIcon = runtimeModeOption.icon;
+  // Full access wears a warning triangle so the risk reads without color.
+  const RuntimeModeIcon =
+    props.runtimeMode === "full-access" ? TriangleAlertIcon : runtimeModeOption.icon;
   const interactionModeTooltip =
     props.interactionMode === "plan"
       ? "Plan mode — click to return to normal build mode"
@@ -1167,10 +1171,15 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
                 data-composer-shortcut="composer.mode"
                 size={size}
                 aria-label="Runtime mode"
+                tint={resolveRuntimeModeTint(props.runtimeMode)}
               />
             }
           >
-            <ComposerControlIcon icon={RuntimeModeIcon} size={size} />
+            <ComposerControlIcon
+              icon={RuntimeModeIcon}
+              size={size}
+              className={props.runtimeMode === "full-access" ? "text-current" : undefined}
+            />
             <SelectValue data-composer-control-label>{runtimeModeOption.label}</SelectValue>
           </TooltipTrigger>
           <SelectPopup alignItemWithTrigger={false} {...composerFloatingLayerProps}>
