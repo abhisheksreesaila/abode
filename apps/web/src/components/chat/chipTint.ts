@@ -58,14 +58,14 @@ export const CHIP_TINT_CLASS_NAMES: Readonly<Record<ChipTint, string>> = {
   claude: `[--chip-dot:var(--chip-claude)] ${DOT}`,
   codex: `[--chip-dot:var(--chip-codex)] ${DOT}`,
   danger:
-    "font-semibold border-[color-mix(in_srgb,var(--chip-danger)_60%,transparent)] bg-[color-mix(in_srgb,var(--chip-danger)_16%,transparent)] text-(--chip-danger-fg) hover:bg-[color-mix(in_srgb,var(--chip-danger)_24%,transparent)] hover:text-(--chip-danger-fg)",
+    "font-semibold border-[color-mix(in_srgb,var(--chip-danger)_60%,transparent)] bg-[color-mix(in_srgb,var(--chip-danger)_16%,transparent)] text-(--chip-danger-fg) hover:bg-[color-mix(in_srgb,var(--chip-danger)_16%,transparent)] hover:text-(--chip-danger-fg) hover:border-[color-mix(in_srgb,var(--chip-danger)_85%,transparent)]",
   caution:
-    "border-[color-mix(in_srgb,var(--chip-caution)_45%,transparent)] bg-[color-mix(in_srgb,var(--chip-caution)_14%,transparent)] text-(--chip-caution-fg) hover:bg-[color-mix(in_srgb,var(--chip-caution)_20%,transparent)] hover:text-(--chip-caution-fg)",
-  safe: "border-[color-mix(in_srgb,var(--chip-safe)_35%,transparent)] bg-[color-mix(in_srgb,var(--chip-safe)_12%,transparent)] text-(--chip-safe-fg) hover:bg-[color-mix(in_srgb,var(--chip-safe)_18%,transparent)] hover:text-(--chip-safe-fg)",
+    "border-[color-mix(in_srgb,var(--chip-caution)_45%,transparent)] bg-[color-mix(in_srgb,var(--chip-caution)_14%,transparent)] text-(--chip-caution-fg) hover:bg-[color-mix(in_srgb,var(--chip-caution)_14%,transparent)] hover:text-(--chip-caution-fg) hover:border-[color-mix(in_srgb,var(--chip-caution)_70%,transparent)]",
+  safe: "border-[color-mix(in_srgb,var(--chip-safe)_35%,transparent)] bg-[color-mix(in_srgb,var(--chip-safe)_12%,transparent)] text-(--chip-safe-fg) hover:bg-[color-mix(in_srgb,var(--chip-safe)_12%,transparent)] hover:text-(--chip-safe-fg) hover:border-[color-mix(in_srgb,var(--chip-safe)_60%,transparent)]",
   "branch-main":
-    "border-[color-mix(in_srgb,var(--chip-purple)_40%,transparent)] bg-[color-mix(in_srgb,var(--chip-purple)_13%,transparent)] text-(--chip-purple-fg) hover:bg-[color-mix(in_srgb,var(--chip-purple)_19%,transparent)] hover:text-(--chip-purple-fg)",
+    "border-[color-mix(in_srgb,var(--chip-purple)_40%,transparent)] bg-[color-mix(in_srgb,var(--chip-purple)_13%,transparent)] text-(--chip-purple-fg) hover:bg-[color-mix(in_srgb,var(--chip-purple)_13%,transparent)] hover:text-(--chip-purple-fg) hover:border-[color-mix(in_srgb,var(--chip-purple)_65%,transparent)]",
   "branch-feature":
-    "border-[color-mix(in_srgb,var(--chip-blue)_38%,transparent)] bg-[color-mix(in_srgb,var(--chip-blue)_12%,transparent)] text-(--chip-blue-fg) hover:bg-[color-mix(in_srgb,var(--chip-blue)_18%,transparent)] hover:text-(--chip-blue-fg)",
+    "border-[color-mix(in_srgb,var(--chip-blue)_38%,transparent)] bg-[color-mix(in_srgb,var(--chip-blue)_12%,transparent)] text-(--chip-blue-fg) hover:bg-[color-mix(in_srgb,var(--chip-blue)_12%,transparent)] hover:text-(--chip-blue-fg) hover:border-[color-mix(in_srgb,var(--chip-blue)_63%,transparent)]",
   worktree:
-    "border-[color-mix(in_srgb,var(--chip-teal)_38%,transparent)] bg-[color-mix(in_srgb,var(--chip-teal)_12%,transparent)] text-(--chip-teal-fg) hover:bg-[color-mix(in_srgb,var(--chip-teal)_18%,transparent)] hover:text-(--chip-teal-fg)",
+    "border-[color-mix(in_srgb,var(--chip-teal)_38%,transparent)] bg-[color-mix(in_srgb,var(--chip-teal)_12%,transparent)] text-(--chip-teal-fg) hover:bg-[color-mix(in_srgb,var(--chip-teal)_12%,transparent)] hover:text-(--chip-teal-fg) hover:border-[color-mix(in_srgb,var(--chip-teal)_63%,transparent)]",
 };

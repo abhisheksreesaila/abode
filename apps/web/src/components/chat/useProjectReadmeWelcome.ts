@@ -29,9 +29,12 @@ export function useProjectReadmeWelcome(project: {
     () => (contents === null ? null : parseReadmeWelcome(contents)),
     [contents],
   );
+  // A read that fails or finds no README means the cached tagline is stale.
+  const readFailed = contents === null && query.error !== null;
   useEffect(() => {
     if (parsed !== null) parsedReadmeByProject.set(key, parsed);
-  }, [key, parsed]);
+    else if (readFailed) parsedReadmeByProject.delete(key);
+  }, [key, parsed, readFailed]);
 
-  return parsed ?? parsedReadmeByProject.get(key) ?? null;
+  return parsed ?? (readFailed ? null : (parsedReadmeByProject.get(key) ?? null));
 }
