@@ -22,7 +22,7 @@ export function createDownsampler(inputRate: number, outputRate = SPEECH_SAMPLE_
   const ratio = inputRate / outputRate;
   let carry = new Float32Array(0);
   let phase = 0;
-  return (input: Float32Array): Float32Array => {
+  const downsample = (input: Float32Array): Float32Array => {
     if (ratio === 1) return input.slice();
     const buffer = concat([carry, input], carry.length + input.length);
     const out: number[] = [];
@@ -40,6 +40,17 @@ export function createDownsampler(inputRate: number, outputRate = SPEECH_SAMPLE_
     phase = position - consumed;
     return Float32Array.from(out);
   };
+  /** Emits the average of whatever input is left, so the last word is not clipped. */
+  const flush = (): Float32Array => {
+    const rest = carry.subarray(Math.min(Math.floor(phase), carry.length));
+    carry = new Float32Array(0);
+    phase = 0;
+    if (rest.length === 0) return new Float32Array(0);
+    let sum = 0;
+    for (const value of rest) sum += value;
+    return Float32Array.of(sum / rest.length);
+  };
+  return Object.assign(downsample, { flush });
 }
 
 export interface PcmSnapshot {

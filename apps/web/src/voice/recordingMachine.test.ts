@@ -98,6 +98,15 @@ describe("live preview", () => {
     expect(cancelled.discardAudio).toBe(true);
   });
 
+  it("tracks model download progress while recording, until words arrive", () => {
+    const recording = reduceRecording(idleState, { type: "start" }).state;
+    const downloading = reduceRecording(recording, { type: "progress", fraction: 0.43 }).state;
+    expect(downloading).toEqual({ status: "recording", downloadProgress: 0.43 });
+    const heard = reduceRecording(downloading, { type: "interim", text: "hi" }).state;
+    expect(heard).toEqual({ status: "recording", interim: "hi" });
+    expect(reduceRecording(heard, { type: "progress", fraction: 0.9 }).state).toBe(heard);
+  });
+
   it("a late interim after release is ignored", () => {
     expect(reduceRecording(transcribingState(), { type: "interim", text: "late" }).state).toEqual({
       status: "transcribing",

@@ -10,6 +10,13 @@ describe("createDownsampler", () => {
     expect([...a, ...b]).toEqual([1, 2, 3]);
   });
 
+  it("flushes the leftover input so the last word is not clipped", () => {
+    const down = createDownsampler(48_000);
+    expect([...down(Float32Array.from([1, 1, 1, 4, 4]))]).toEqual([1]);
+    expect([...down.flush()]).toEqual([4]);
+    expect(down.flush().length).toBe(0);
+  });
+
   it("passes 16 kHz through unchanged", () => {
     const down = createDownsampler(16_000);
     expect([...down(Float32Array.from([0.5, -0.5]))]).toEqual([0.5, -0.5]);

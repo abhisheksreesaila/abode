@@ -5,7 +5,11 @@
  */
 export type RecordingState =
   | { status: "idle" }
-  | { status: "recording"; /** Muted live preview of the words heard so far. */ interim?: string }
+  | {
+      status: "recording";
+      /** Muted live preview of the words heard so far. */ interim?: string;
+      downloadProgress?: number;
+    }
   | { status: "transcribing"; downloadProgress: number | null }
   | { status: "error"; message: string };
 
@@ -49,6 +53,12 @@ export function reduceRecording(state: RecordingState, event: RecordingEvent): R
         ? { state: idleState, discardAudio: true }
         : { state };
     case "progress":
+      // The first interim job may be the one downloading the model, while still recording.
+      if (state.status === "recording") {
+        return {
+          state: state.interim ? state : { status: "recording", downloadProgress: event.fraction },
+        };
+      }
       return state.status === "transcribing"
         ? { state: { status: "transcribing", downloadProgress: event.fraction } }
         : { state };

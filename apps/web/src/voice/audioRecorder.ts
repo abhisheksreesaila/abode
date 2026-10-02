@@ -34,9 +34,14 @@ export function describeMicrophoneError(error: unknown): string {
 export async function startRecording(): Promise<ActiveRecording> {
   // Browsers hide mediaDevices on insecure origins (plain http that is not localhost).
   if (!navigator.mediaDevices?.getUserMedia) throw new InsecureContextError();
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  let context: AudioContext | null = null;
+  // Create and resume the context before the first await: Safari only allows that inside
+  // the user gesture, and awaiting getUserMedia (a permission prompt) ends the gesture.
+  // Capture is at the device rate and downsampled ourselves, since Firefox refuses to
+  // connect a MediaStream whose rate differs from the context's.
+  const context = new AudioContext();
+  void context.resume();
   let processor: ScriptProcessorNode | null = null;
+  let stream: MediaStream | null = null;
   let released = false;
   // Idempotent: every exit path (finish, discard, setup failure) frees the mic.
   const release = () => {
@@ -44,17 +49,17 @@ export async function startRecording(): Promise<ActiveRecording> {
     released = true;
     if (processor) processor.onaudioprocess = null;
     processor?.disconnect();
-    for (const track of stream.getTracks()) track.stop();
-    if (context) void context.close();
+    for (const track of stream?.getTracks() ?? []) track.stop();
+    void context.close();
   };
   const store = createPcmStore();
+  const downsample = createDownsampler(context.sampleRate);
   try {
-    // Capture raw PCM at the device rate and downsample ourselves: Firefox refuses to
-    // connect a MediaStream whose rate differs from the context's.
-    context = new AudioContext();
-    const downsample = createDownsampler(context.sampleRate);
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const source = context.createMediaStreamSource(stream);
-    processor = context.createScriptProcessor(4096, 1, 1);
+    // ScriptProcessor is a deliberate choice (no worklet file, no blob/CSP issues); it is
+    // deprecated, so move to an AudioWorklet later. A small buffer limits the unflushed tail.
+    processor = context.createScriptProcessor(2048, 1, 1);
     processor.onaudioprocess = (event) => {
       if (!released) store.push(downsample(event.inputBuffer.getChannelData(0)));
     };
@@ -64,7 +69,6 @@ export async function startRecording(): Promise<ActiveRecording> {
     source.connect(processor);
     processor.connect(mute);
     mute.connect(context.destination);
-    void context.resume();
   } catch (error) {
     release();
     throw error;
@@ -73,6 +77,7 @@ export async function startRecording(): Promise<ActiveRecording> {
     discard: release,
     finish: async () => {
       release();
+      store.push(downsample.flush());
       return store.all();
     },
     snapshot: (maxSamples, minSamples) =>

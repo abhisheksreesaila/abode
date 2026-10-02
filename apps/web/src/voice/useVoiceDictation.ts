@@ -135,7 +135,8 @@ export function useVoiceDictation(input: {
           stopInterimRef.current = startInterimLoop({
             intervalMs: INTERIM_INTERVAL_MS,
             snapshot: () => recorder.snapshot(INTERIM_WINDOW_SAMPLES, INTERIM_MIN_SAMPLES),
-            transcribe: (audio) => transcribe(audio, () => {}),
+            transcribe: (audio) =>
+              transcribe(audio, (fraction) => send({ type: "progress", fraction })),
             onText: (text) => send({ type: "interim", text }),
           });
         }
