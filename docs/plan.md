@@ -266,7 +266,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-023: Live voice transcription
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
 - **What:** while recording, show interim text in the composer (muted) as you speak, updated about every second. Release finalizes it.
 - **Acceptance:**
   - [ ] Words appear while speaking.
