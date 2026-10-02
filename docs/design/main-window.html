@@ -1,0 +1,1190 @@
+<title>abode main window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+/>
+<style>
+  /* Layout: VS Code agents window. Sidebar (workspaces + customizations) | chat | closable side panel; terminal drawer below chat. */
+  :root {
+    color-scheme: dark;
+    /* VS Code Dark Modern */
+    --bg: #1f1f1f; /* editor / chat */
+    --bg-side: #181818; /* sidebar, title bar, panels */
+    --bg-raised: #252526;
+    --bg-input: #313131;
+    --line: #2b2b2b;
+    --fg: #cccccc;
+    --fg-strong: #e7e7e7;
+    --muted: #9d9d9d;
+    --faint: #6e7681;
+    --accent: #0078d4;
+    --focus: #2488db;
+    --list-hover: #2a2d2e;
+    --list-active: #37373d;
+    --ok: #89d185;
+    --warn: #cca700;
+    --err: #f48771;
+    /* workspace accents (auto-assigned, editable) */
+    --ws-1: #4fc1ff;
+    --ws-2: #c586c0;
+    --ws-3: #dcdcaa;
+    --ws-4: #4ec9b0;
+    --ws-5: #f48771;
+    --ui: -apple-system, "Segoe UI", Ubuntu, "Noto Sans", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, monospace;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: #111214;
+    color: var(--fg);
+    font: 13px/1.45 var(--ui);
+    padding-block: 24px 48px;
+    padding-inline: 16px;
+  }
+  .page {
+    max-width: 1320px;
+    margin: 0 auto;
+    display: grid;
+    gap: 20px;
+  }
+  header.intro {
+    display: grid;
+    gap: 6px;
+    max-width: 72ch;
+  }
+  header.intro h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--fg-strong);
+    text-wrap: balance;
+  }
+  header.intro p {
+    margin: 0;
+    color: var(--muted);
+  }
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tabs button {
+    font: inherit;
+    color: var(--fg);
+    background: var(--bg-input);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .tabs button[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .tabs button:focus-visible,
+  .win button:focus-visible {
+    outline: 1px solid var(--focus);
+    outline-offset: 1px;
+  }
+  .frame {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #333;
+    box-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+  }
+
+  /* ---------- window ---------- */
+  .win {
+    width: 1280px;
+    height: 780px;
+    display: grid;
+    grid-template-rows: 34px 1fr 22px;
+    background: var(--bg);
+  }
+  .titlebar {
+    background: var(--bg-side);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px;
+  }
+  .titlebar .brand {
+    font-weight: 600;
+    color: var(--fg-strong);
+    letter-spacing: 0.02em;
+  }
+  .titlebar .search {
+    flex: 1;
+    max-width: 420px;
+    margin: 0 auto;
+    background: var(--bg-input);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--muted);
+    padding: 3px 10px;
+    text-align: center;
+    font-size: 12px;
+  }
+  .toggles {
+    display: flex;
+    gap: 2px;
+  }
+  .ico {
+    width: 26px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 4px;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .ico:hover {
+    background: var(--list-hover);
+    color: var(--fg);
+  }
+  .ico.on {
+    color: var(--fg-strong);
+  }
+  .ico svg {
+    width: 16px;
+    height: 16px;
+  }
+  .body {
+    display: grid;
+    grid-template-columns: 280px 1fr 440px;
+    min-height: 0;
+  }
+  .win.panel-closed .body {
+    grid-template-columns: 280px 1fr;
+  }
+  .win.panel-closed .side {
+    display: none;
+  }
+
+  /* sidebar */
+  .sidebar {
+    background: var(--bg-side);
+    border-right: 1px solid var(--line);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 0;
+  }
+  .sb-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px 6px 16px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .newbtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 10px 8px;
+    padding: 6px 10px;
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 4px;
+    font: inherit;
+    cursor: pointer;
+    justify-content: center;
+  }
+  .tree {
+    overflow: auto;
+    padding-bottom: 8px;
+  }
+  .ws {
+    display: grid;
+  }
+  .ws-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 8px;
+    cursor: pointer;
+    color: var(--fg-strong);
+    font-weight: 600;
+  }
+  .ws-row:hover {
+    background: var(--list-hover);
+  }
+  .chev {
+    width: 12px;
+    color: var(--muted);
+    font-size: 10px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+  }
+  .ws-row .count {
+    margin-left: auto;
+    color: var(--faint);
+    font-weight: 400;
+    font-size: 11px;
+  }
+  .thread {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 10px 3px 30px;
+    position: relative;
+    cursor: pointer;
+  }
+  .thread::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--wsc);
+    opacity: 0.55;
+  }
+  .thread:hover {
+    background: var(--list-hover);
+  }
+  .thread.active {
+    background: var(--list-active);
+    color: var(--fg-strong);
+  }
+  .thread .t {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .thread .meta {
+    color: var(--faint);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .status {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex: none;
+  }
+  .s-run {
+    background: var(--ws-4);
+    box-shadow: 0 0 0 3px rgb(78 201 176 / 0.18);
+  }
+  .s-wait {
+    background: var(--warn);
+  }
+  .s-done {
+    background: transparent;
+    border: 1px solid var(--faint);
+  }
+  .s-err {
+    background: var(--err);
+  }
+  .sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 10px 2px 48px;
+    color: var(--muted);
+    font-size: 12px;
+    position: relative;
+    cursor: pointer;
+  }
+  .sub::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--wsc);
+    opacity: 0.55;
+  }
+  .sub:hover {
+    background: var(--list-hover);
+    color: var(--fg);
+  }
+  .sub .glyph {
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  /* option B: color-forward */
+  .win.optB .ws-row {
+    background: color-mix(in srgb, var(--wsc) 14%, transparent);
+    border-left: 3px solid var(--wsc);
+    padding-left: 5px;
+  }
+  .win.optB .thread::before,
+  .win.optB .sub::before {
+    opacity: 0.9;
+  }
+  .win.optB .thread.active {
+    background: color-mix(in srgb, var(--wsc) 22%, var(--bg-side));
+  }
+
+  /* customizations */
+  .custom {
+    border-top: 1px solid var(--line);
+    padding: 4px 0 8px;
+  }
+  .custom .sb-head {
+    padding-top: 6px;
+  }
+  .citem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 16px;
+    cursor: pointer;
+  }
+  .citem:hover {
+    background: var(--list-hover);
+  }
+  .citem .n {
+    margin-left: auto;
+    color: var(--faint);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .citem.open {
+    color: var(--fg-strong);
+  }
+  .citem svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+  }
+  .cfile {
+    padding: 2px 16px 2px 38px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .cfile:hover {
+    background: var(--list-hover);
+    color: var(--fg);
+  }
+  .cfile.sel {
+    background: var(--list-active);
+    color: var(--fg-strong);
+  }
+  .scope {
+    margin-left: auto;
+    font-family: var(--ui);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* chat */
+  .chat {
+    display: grid;
+    grid-template-rows: 36px 1fr auto 28px;
+    min-width: 0;
+    min-height: 0;
+    border-right: 1px solid var(--line);
+  }
+  .chat-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11.5px;
+    background: color-mix(in srgb, var(--wsc) 16%, transparent);
+    color: var(--wsc);
+  }
+  .chat-head .title {
+    color: var(--fg-strong);
+    font-weight: 600;
+  }
+  .chat-head .branch {
+    margin-left: auto;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11.5px;
+  }
+  .log {
+    overflow: auto;
+    padding: 16px 24px;
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  .msg {
+    max-width: 72ch;
+  }
+  .msg.user {
+    justify-self: end;
+    background: var(--bg-input);
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: var(--fg-strong);
+  }
+  .msg p {
+    margin: 0 0 6px;
+  }
+  .tool {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 8px;
+    border-left: 2px solid var(--line);
+  }
+  .tool b {
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .tool .ok {
+    color: var(--ok);
+    margin-left: auto;
+  }
+  .spawn {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: grid;
+    gap: 4px;
+    max-width: 60ch;
+    background: var(--bg-side);
+  }
+  .spawn .row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+  }
+  .spawn .row .when {
+    margin-left: auto;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .composer {
+    margin: 0 16px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg-raised);
+    display: grid;
+  }
+  .composer:focus-within {
+    border-color: var(--focus);
+  }
+  .pickers {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px 0;
+    flex-wrap: wrap;
+  }
+  .pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .pick .caret {
+    color: var(--faint);
+    font-size: 9px;
+  }
+  .input {
+    padding: 10px 12px;
+    min-height: 56px;
+    color: var(--fg-strong);
+  }
+  .input .ghost {
+    color: var(--faint);
+  }
+  .input .live {
+    color: var(--muted);
+    font-style: italic;
+  }
+  .c-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 8px;
+  }
+  .c-foot .hint {
+    color: var(--faint);
+    font-size: 11px;
+    margin-left: 4px;
+  }
+  .c-foot .spacer {
+    flex: 1;
+  }
+  .mic {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    background: var(--bg-input);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .mic svg {
+    width: 14px;
+    height: 14px;
+  }
+  .mic.rec {
+    background: #c42b1c;
+    border-color: #c42b1c;
+    color: #fff;
+  }
+  .send {
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 4px;
+    padding: 5px 12px;
+    font: inherit;
+    cursor: pointer;
+  }
+  .rec-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--fg);
+  }
+  .rec-bar .rd {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c42b1c;
+  }
+  .rec-bar .t {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  .rec-bar .k {
+    margin-left: auto;
+    color: var(--faint);
+  }
+  kbd {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 0 4px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    color: var(--muted);
+    background: var(--bg-side);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 12px;
+    border-top: 1px solid var(--line);
+    background: var(--bg-side);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .term-bar span.on {
+    color: var(--fg-strong);
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 2px;
+  }
+
+  /* side panel */
+  .side {
+    background: var(--bg);
+    display: grid;
+    grid-template-rows: 35px 28px 1fr;
+    min-width: 0;
+    min-height: 0;
+  }
+  .ptabs {
+    display: flex;
+    background: var(--bg-side);
+    border-bottom: 1px solid var(--line);
+  }
+  .ptab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    border-right: 1px solid var(--line);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .ptab.on {
+    background: var(--bg);
+    color: var(--fg-strong);
+    border-top: 1px solid var(--accent);
+    margin-bottom: -1px;
+  }
+  .ptabs .end {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    padding-right: 4px;
+  }
+  .crumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    font-size: 12px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+  }
+  .crumbs .lock {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 8px;
+    color: var(--fg);
+    background: var(--bg-input);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11.5px;
+  }
+  .crumbs .lock[aria-pressed="true"] {
+    color: var(--warn);
+    border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+  }
+  .code {
+    overflow: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    padding: 8px 0;
+    counter-reset: ln;
+  }
+  .code div {
+    padding: 0 12px 0 0;
+    white-space: pre;
+    display: flex;
+  }
+  .code div::before {
+    counter-increment: ln;
+    content: counter(ln);
+    width: 40px;
+    flex: none;
+    text-align: right;
+    padding-right: 16px;
+    color: #6e7681;
+  }
+  .k1 {
+    color: #569cd6;
+  }
+  .k2 {
+    color: #ce9178;
+  }
+  .k3 {
+    color: #6a9955;
+  }
+  .k4 {
+    color: #4ec9b0;
+  }
+  .k5 {
+    color: #dcdcaa;
+  }
+
+  .status-bar {
+    background: var(--bg-side);
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .status-bar .remote {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 8px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin-left: -10px;
+  }
+  .status-bar .r {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+  }
+
+  /* notes */
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .note {
+    background: var(--bg-side);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    min-width: 0;
+  }
+  .note h2 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--fg-strong);
+    font-weight: 600;
+  }
+  .note ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--muted);
+    display: grid;
+    gap: 3px;
+  }
+  .states {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .st {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: var(--bg-raised);
+    font-size: 12px;
+  }
+  .bar {
+    width: 80px;
+    height: 4px;
+    background: var(--bg-input);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    width: 43%;
+    background: var(--accent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="page">
+  <header class="intro">
+    <h1>abode main window</h1>
+    <p>
+      F-004 mockup. It's VS Code's agents window: workspaces on the left, chat in the middle, and a
+      side panel you can close. Each workspace has its own color. Options A and B differ only in how
+      strongly the color shows. The buttons below also switch the side panel and the voice states.
+    </p>
+  </header>
+
+  <div class="tabs" role="group" aria-label="Mockup controls">
+    <button id="optA" aria-pressed="true">Option A · VS Code, colored dots</button>
+    <button id="optB" aria-pressed="false">Option B · color-forward</button>
+    <button id="panel" aria-pressed="true">Side panel open</button>
+    <button id="voice" aria-pressed="false">Show recording</button>
+  </div>
+
+  <div class="frame">
+    <div class="win" id="win">
+      <div class="titlebar">
+        <span class="brand">abode</span>
+        <div class="search">Search agents, workspaces, commands <kbd>Ctrl</kbd> <kbd>K</kbd></div>
+        <div class="toggles" aria-label="Layout">
+          <button class="ico on" title="Toggle sidebar (Ctrl+B)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+              <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
+              <rect x="2" y="3" width="4" height="10" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          <button class="ico" title="Toggle terminal (Ctrl+J)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+              <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
+              <line x1="2" y1="10" x2="14" y2="10" />
+            </svg>
+          </button>
+          <button class="ico on" id="panelIco" title="Toggle side panel (Ctrl+Alt+B)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+              <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
+              <rect x="10" y="3" width="4" height="10" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="body">
+        <!-- sidebar -->
+        <aside class="sidebar">
+          <div>
+            <div class="sb-head"><span>Agents</span><span>⋯</span></div>
+            <button class="newbtn">
+              ＋ New agent
+              <kbd
+                style="background: transparent; color: #fff; border-color: rgb(255 255 255 / 0.35)"
+                >Ctrl N</kbd
+              >
+            </button>
+          </div>
+          <div class="tree">
+            <div class="ws" style="--wsc: var(--ws-1)">
+              <div class="ws-row">
+                <span class="chev">▾</span
+                ><span class="dot" style="background: var(--wsc)"></span>finxplorer<span
+                  class="count"
+                  >3</span
+                >
+              </div>
+              <div class="thread active">
+                <span class="status s-run"></span><span class="t">Stability review fixes</span
+                ><span class="meta">2m</span>
+              </div>
+              <div class="sub">
+                <span class="status s-run"></span><span class="glyph">↳</span>Explore · find flaky
+                tests
+              </div>
+              <div class="sub">
+                <span class="status s-run"></span><span class="glyph">↳</span>developer · F-012
+                retry queue
+              </div>
+              <div class="thread">
+                <span class="status s-wait"></span><span class="t">Plaid webhook signature</span
+                ><span class="meta">needs you</span>
+              </div>
+              <div class="thread">
+                <span class="status s-done"></span><span class="t">Pricing page copy</span
+                ><span class="meta">1h</span>
+              </div>
+            </div>
+            <div class="ws" style="--wsc: var(--ws-2)">
+              <div class="ws-row">
+                <span class="chev">▾</span
+                ><span class="dot" style="background: var(--wsc)"></span>abode<span class="count"
+                  >2</span
+                >
+              </div>
+              <div class="thread">
+                <span class="status s-run"></span><span class="t">Voice dictation</span
+                ><span class="meta">8m</span>
+              </div>
+              <div class="thread">
+                <span class="status s-done"></span><span class="t">Customizations service</span
+                ><span class="meta">20m</span>
+              </div>
+            </div>
+            <div class="ws" style="--wsc: var(--ws-3)">
+              <div class="ws-row">
+                <span class="chev">▾</span
+                ><span class="dot" style="background: var(--wsc)"></span>mxstudio<span class="count"
+                  >1</span
+                >
+              </div>
+              <div class="thread">
+                <span class="status s-err"></span><span class="t">Nucleus plan rollout</span
+                ><span class="meta">failed</span>
+              </div>
+            </div>
+            <div class="ws" style="--wsc: var(--ws-4)">
+              <div class="ws-row">
+                <span class="chev">▸</span
+                ><span class="dot" style="background: var(--wsc)"></span>personalnote<span
+                  class="count"
+                  >4</span
+                >
+              </div>
+            </div>
+            <div class="ws" style="--wsc: var(--ws-5)">
+              <div class="ws-row">
+                <span class="chev">▸</span
+                ><span class="dot" style="background: var(--wsc)"></span>fh-saas<span class="count"
+                  >2</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="custom">
+            <div class="sb-head"><span>Customizations · finxplorer</span></div>
+            <div class="citem open">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                <path
+                  d="M8 1.5l1.8 4 4.2.4-3.2 2.8 1 4.1L8 10.7 4.2 12.8l1-4.1L2 5.9l4.2-.4z"
+                /></svg
+              >Skills<span class="n">12</span>
+            </div>
+            <div class="cfile sel">tdd/SKILL.md<span class="scope">user</span></div>
+            <div class="cfile">deploy/SKILL.md<span class="scope">workspace</span></div>
+            <div class="citem">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                <circle cx="8" cy="5.5" r="2.5" />
+                <path d="M3 14c.6-2.8 2.6-4.2 5-4.2s4.4 1.4 5 4.2" /></svg
+              >Agents<span class="n">3</span>
+            </div>
+            <div class="citem">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                <path d="M5 2v4M11 2v4M3.5 6h9v2.5a4.5 4.5 0 0 1-9 0zM8 13v2" /></svg
+              >MCP servers<span class="n">4</span>
+            </div>
+            <div class="citem">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                <path d="M3.5 1.5h6l3 3v10h-9z" />
+                <path d="M5.5 8h5M5.5 10.5h5" /></svg
+              >Instructions<span class="n">2</span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- chat -->
+        <section class="chat" style="--wsc: var(--ws-1)">
+          <div class="chat-head">
+            <span class="chip"
+              ><span class="dot" style="background: var(--wsc)"></span>finxplorer</span
+            >
+            <span class="title">Stability review fixes</span>
+            <span class="branch">⎇ abode/stability-fixes · worktree</span>
+          </div>
+          <div class="log">
+            <div class="msg user">
+              Go through the stability review findings, fix the flaky retry tests first, then the
+              queue backoff. Use subagents so it goes in parallel.
+            </div>
+            <div class="msg">
+              <p>Starting with the flaky tests. I'll split this into two parallel tasks.</p>
+            </div>
+            <div class="tool"><b>Read</b> docs/stability-review.md <span class="ok">✓</span></div>
+            <div class="tool">
+              <b>Grep</b> "retry" in tests/ · 14 matches <span class="ok">✓</span>
+            </div>
+            <div class="spawn">
+              <div class="row">
+                <span class="status s-run"></span>Explore · find flaky tests
+                <span class="when">running 1m 12s</span>
+              </div>
+              <div class="row">
+                <span class="status s-run"></span>developer · F-012 retry queue
+                <span class="when">running 48s</span>
+              </div>
+            </div>
+            <div class="tool">
+              <b>Edit</b> src/queue/backoff.ts +18 −6 <span class="ok">✓</span>
+            </div>
+          </div>
+          <div class="composer">
+            <div class="pickers">
+              <span class="pick"
+                ><span class="dot" style="background: var(--ws-1)"></span>finxplorer
+                <span class="caret">▼</span></span
+              >
+              <span class="pick">Claude · Opus 5.5 <span class="caret">▼</span></span>
+              <span class="pick">Worktree <span class="caret">▼</span></span>
+            </div>
+            <div class="input" id="input">
+              <span class="ghost"
+                >Ask, or hold <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> to talk</span
+              >
+            </div>
+            <div class="rec-bar" id="recbar" hidden>
+              <span class="rd"></span>Listening <span class="t">0:07</span
+              ><span class="k">Release to insert · <kbd>Esc</kbd> cancel</span>
+            </div>
+            <div class="c-foot">
+              <span class="pick">Auto-accept edits <span class="caret">▼</span></span>
+              <span class="hint">/ commands · $ skills · @ files</span>
+              <span class="spacer"></span>
+              <button class="mic" id="mic" title="Hold to talk (Ctrl+Shift+Space)">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" />
+                  <path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2" />
+                </svg>
+              </button>
+              <button class="send">Send</button>
+            </div>
+          </div>
+          <div class="term-bar">
+            <span class="on">Terminal</span><span>Output</span
+            ><span style="margin-left: auto">Ctrl J</span>
+          </div>
+        </section>
+
+        <!-- side panel -->
+        <section class="side">
+          <div class="ptabs">
+            <div class="ptab on">Editor</div>
+            <div class="ptab">Browser</div>
+            <div class="ptab">Diff</div>
+            <div class="ptab">Agents</div>
+            <div class="end">
+              <button class="ico" title="Close side panel (Ctrl+Alt+B)">✕</button>
+            </div>
+          </div>
+          <div class="crumbs">
+            ~/.claude/skills/tdd/SKILL.md
+            <button class="lock" id="lock" aria-pressed="true">🔒 Locked</button>
+          </div>
+          <div class="code">
+            <div><span class="k1">---</span></div>
+            <div><span class="k4">name</span>: <span class="k2">tdd</span></div>
+            <div>
+              <span class="k4">description</span>:
+              <span class="k2">Test-driven development. Use when the user</span>
+            </div>
+            <div><span class="k2"> wants to build features or fix bugs test-first.</span></div>
+            <div><span class="k1">---</span></div>
+            <div></div>
+            <div><span class="k5"># Test-driven development</span></div>
+            <div></div>
+            <div>Work in vertical slices: one failing test,</div>
+            <div>the simplest code that passes, then refactor.</div>
+            <div></div>
+            <div><span class="k5">## Loop</span></div>
+            <div><span class="k1">1.</span> Write one failing test for one behavior.</div>
+            <div><span class="k1">2.</span> Run it and watch it fail for the right reason.</div>
+            <div><span class="k1">3.</span> Make it pass with the smallest change.</div>
+            <div><span class="k1">4.</span> Refactor with the tests green.</div>
+            <div></div>
+            <div><span class="k3">&lt;!-- integration tests over mocks --&gt;</span></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="status-bar">
+        <span class="remote">⇄ tailnet · 1 phone</span>
+        <span>⎇ abode/stability-fixes</span>
+        <span>3 agents running · 1 needs you</span>
+        <span class="r"
+          ><span>Voice: whisper base.en · offline</span><span>Claude Max · 42% of 5h</span></span
+        >
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <h2>Voice states</h2>
+      <div class="states">
+        <span class="st"><span class="mic" style="width: 20px; height: 20px"></span>Idle</span>
+        <span class="st"
+          ><span class="mic rec" style="width: 20px; height: 20px"></span>Listening 0:07</span
+        >
+        <span class="st">Transcribing…</span>
+        <span class="st"
+          >Downloading voice model <span class="bar"><i></i></span> 43%</span
+        >
+        <span class="st" style="color: var(--err)"
+          >Microphone blocked. Allow it in system settings.</span
+        >
+      </div>
+    </div>
+    <div class="note">
+      <h2>Layout rules</h2>
+      <ul>
+        <li>
+          <kbd>Ctrl B</kbd> sidebar, <kbd>Ctrl J</kbd> terminal, <kbd>Ctrl Alt B</kbd> side panel.
+          The side panel starts closed.
+        </li>
+        <li>
+          A workspace color shows in three places: its tree row, its threads' guide line, and the
+          chat chip.
+        </li>
+        <li>
+          Subagents nest under their thread only while running. Clicking one opens the Agents tab.
+        </li>
+      </ul>
+    </div>
+    <div class="note">
+      <h2>Customizations</h2>
+      <ul>
+        <li>
+          Lists the selected workspace's Skills, Agents, MCP servers and Instructions, each marked
+          user-wide or workspace.
+        </li>
+        <li>
+          Clicking a file opens it in the Editor tab. Lock makes it read-only, and markdown renders
+          in the Browser tab.
+        </li>
+        <li>MCP entries show names only and never values.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  const win = document.getElementById("win");
+  const A = document.getElementById("optA"),
+    B = document.getElementById("optB");
+  const panel = document.getElementById("panel"),
+    voice = document.getElementById("voice");
+  const setOpt = (b) => {
+    win.classList.toggle("optB", b);
+    A.setAttribute("aria-pressed", String(!b));
+    B.setAttribute("aria-pressed", String(b));
+  };
+  A.onclick = () => setOpt(false);
+  B.onclick = () => setOpt(true);
+  const togglePanel = () => {
+    const open = win.classList.toggle("panel-closed");
+    panel.setAttribute("aria-pressed", String(!open));
+    panel.textContent = open ? "Side panel closed" : "Side panel open";
+    document.getElementById("panelIco").classList.toggle("on", !open);
+  };
+  panel.onclick = togglePanel;
+  document.getElementById("panelIco").onclick = togglePanel;
+  document.querySelector(".ptabs .ico").onclick = togglePanel;
+  voice.onclick = () => {
+    const on = voice.getAttribute("aria-pressed") !== "true";
+    voice.setAttribute("aria-pressed", String(on));
+    document.getElementById("mic").classList.toggle("rec", on);
+    document.getElementById("recbar").hidden = !on;
+    document.getElementById("input").innerHTML = on
+      ? '<span class="live">then the queue backoff, and ping me when the tests are green</span>'
+      : '<span class="ghost">Ask, or hold <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> to talk</span>';
+  };
+  const lock = document.getElementById("lock");
+  lock.onclick = () => {
+    const on = lock.getAttribute("aria-pressed") !== "true";
+    lock.setAttribute("aria-pressed", String(on));
+    lock.textContent = on ? "🔒 Locked" : "🔓 Editing";
+  };
+</script>
