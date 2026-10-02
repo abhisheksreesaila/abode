@@ -2260,3 +2260,20 @@ html[data-theme-id="abode"] {
   --sidebar-control-gap: 0.25rem;
   --sidebar-row-content-inset: 0.5rem;
 }
+
+/* abode chat surface: an opaque, VS Code editor-like panel (canvas #1f1f1f)
+   against the #181818 chrome. T3's glass is a translucent --background mix
+   with blur; here every glass consumer (composer, floating controls, menus)
+   resolves to its solid theme color, and the grain texture is dropped so the
+   panel is flat. The composer keeps its distinct raised color
+   (--app-theme-surface-raised, #252526). Other themes are untouched. */
+html[data-theme-id="abode"] {
+  --glass-opacity: 100%;
+  --glass-blur: 0px;
+  --glass-saturation: 1;
+  --surface-grain: none;
+}
+
+html[data-theme-id="abode"] [data-slot="sidebar-inset"] {
+  background-color: var(--app-theme-canvas);
+}
