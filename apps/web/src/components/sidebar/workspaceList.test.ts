@@ -59,7 +59,13 @@ describe("resolveWorkspacePill", () => {
     failedUnseen: failed,
   });
   it("is null when nothing is happening", () => {
-    expect(resolveWorkspacePill([t(null), t("Monitoring")])).toBeNull();
+    expect(resolveWorkspacePill([t(null), t(null)])).toBeNull();
+  });
+  it("counts Monitoring as running", () => {
+    expect(resolveWorkspacePill([t("Monitoring"), t("Working")])).toMatchObject({
+      kind: "running",
+      count: 2,
+    });
   });
   it("shows a done pill for unseen completions, below everything else", () => {
     expect(resolveWorkspacePill([t("Completed")])).toMatchObject({ kind: "done", label: "done" });
