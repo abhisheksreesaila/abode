@@ -248,7 +248,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-021: Show which agent is listening
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** like VS Code's agent mode, the composer shows the agent type the main session runs as, e.g. "Orchestrator · Opus 5.5", from Claude's `agent` setting or launch args. It's pickable from the workspace's Agent types. Default is the plain Claude Code agent.
 - **Acceptance:**
   - [ ] Choosing "orchestrator" makes the next Claude session run as that agent.
@@ -257,7 +257,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-022: Branch and worktree info inside the composer toolbar
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** remove the separate strip under the composer (branch, checkout, environment, worktree) and fold its controls into the composer's own footer next to the runtime-mode picker ("Full access"). No information is lost.
 - **Acceptance:**
   - [ ] Every control from the strip is reachable from the composer footer.
