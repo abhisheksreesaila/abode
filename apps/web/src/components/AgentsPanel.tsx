@@ -17,13 +17,16 @@ import type {
   RuntimeSubagent,
 } from "@t3tools/client-runtime/state/subagentRuntime";
 import {
+  isActiveSubagentStatus,
   formatSubagentModelLabel,
   formatSubagentTokenCount,
 } from "@t3tools/client-runtime/state/subagentRuntime";
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { Bot, Braces, Check, ChevronDown, ChevronRight, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
+import { useAgentFocusStore, type AgentFocusRequest } from "~/agentFocusStore";
 import { cn } from "~/lib/utils";
 import { orchestrationEnvironment } from "~/state/orchestration";
 import { ScrollArea } from "~/components/ui/scroll-area";
@@ -136,8 +139,27 @@ function agentActivityText(agent: RuntimeSubagent): string | null {
   );
 }
 
+/**
+ * Sidebar subagent rows ask the panel to bring one agent into view. The panel
+ * publishes that request here; the matching row highlights itself and scrolls
+ * into view, and a repeat click on the same agent scrolls again (nonce).
+ */
+const AgentFocusContext = createContext<AgentFocusRequest | undefined>(undefined);
+
+function useAgentFocusRef(agentId: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  const focus = useContext(AgentFocusContext);
+  const focused = focus?.agentId === agentId;
+  const nonce = focus?.nonce;
+  useEffect(() => {
+    if (focused) ref.current?.scrollIntoView({ block: "nearest" });
+  }, [focused, nonce]);
+  return { ref, focused };
+}
+
 /** Flat, non-interactive agent status line. No unfold. */
 function AgentRow({ agent }: { agent: RuntimeSubagent }) {
+  const { ref: focusRef, focused } = useAgentFocusRef(agent.id);
   const visuals = STATUS_VISUALS[agent.status];
   const statusLabel =
     agent.kind === "subagent_batch" && agent.status === "idle" ? "Idle" : visuals.label;
@@ -155,7 +177,12 @@ function AgentRow({ agent }: { agent: RuntimeSubagent }) {
   ].filter((value): value is string => value !== null);
 
   return (
-    <div className="grid h-[3.875rem] grid-cols-[0.375rem_minmax(0,1fr)_auto] grid-rows-[1.25rem_1.125rem_1rem] items-center gap-x-2 rounded-md px-1.5 py-1">
+    <div
+      ref={focusRef}
+      data-agent-id={agent.id}
+      data-focused={focused}
+      className="grid h-[3.875rem] grid-cols-[0.375rem_minmax(0,1fr)_auto] grid-rows-[1.25rem_1.125rem_1rem] items-center gap-x-2 rounded-md px-1.5 py-1 data-[focused=true]:bg-accent/50"
+    >
       <span className="col-start-1 row-start-1 flex items-center">
         <StatusDot status={agent.status} />
       </span>
@@ -324,6 +351,11 @@ function PhaseSection({
 }) {
   const [open, setOpen] = useState(defaultOpen || phase.state === "running");
   const previousState = useRef(phase.state);
+  const focus = useContext(AgentFocusContext);
+  const holdsFocus = focus !== undefined && phase.members.some((m) => m.id === focus.agentId);
+  useEffect(() => {
+    if (holdsFocus) setOpen(true);
+  }, [holdsFocus, focus?.nonce]);
 
   useEffect(() => {
     if (previousState.current !== "running" && phase.state === "running") {
@@ -509,6 +541,12 @@ function WorkflowSection({
   threadId: ThreadId | null;
 }) {
   const [open, setOpen] = useState(() => workflowIsLive(group));
+  const focus = useContext(AgentFocusContext);
+  const holdsFocus =
+    focus !== undefined && workflowMembers(group).some((member) => member.id === focus.agentId);
+  useEffect(() => {
+    if (holdsFocus) setOpen(true);
+  }, [holdsFocus, focus?.nonce]);
   return open ? (
     <ExpandedWorkflowSection
       group={group}
@@ -530,6 +568,25 @@ export function AgentsPanel({
   environmentId?: EnvironmentId | null;
   threadId?: ThreadId | null;
 }) {
+  const threadKey =
+    environmentId !== null && threadId !== null
+      ? scopedThreadKey(scopeThreadRef(environmentId, threadId))
+      : null;
+  const focusRequest = useAgentFocusStore((state) =>
+    threadKey === null ? undefined : state.focusByThreadKey[threadKey],
+  );
+  // A focus request lives only while its agent is still working: once it
+  // settles (or is not in the roster) the request is dropped.
+  const focusedAgentStillActive =
+    focusRequest !== undefined &&
+    [...model.workflows.flatMap(workflowMembers), ...model.directAgents].some(
+      (agent) => agent.id === focusRequest.agentId && isActiveSubagentStatus(agent.status),
+    );
+  useEffect(() => {
+    if (threadKey !== null && focusRequest !== undefined && !focusedAgentStillActive) {
+      useAgentFocusStore.getState().clearFocus(threadKey);
+    }
+  }, [focusRequest, focusedAgentStillActive, threadKey]);
   if (!model.hasAgents) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
@@ -544,41 +601,43 @@ export function AgentsPanel({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-2 p-2">
-          {model.workflows.map((group) => (
-            <WorkflowSection
-              key={group.workflow.id}
-              group={group}
-              environmentId={environmentId}
-              threadId={threadId}
-            />
-          ))}
-          {model.directAgents.length > 0 ? (
-            <section>
-              <div className="px-1.5 pt-1 text-3xs font-medium uppercase tracking-wider text-muted-foreground">
-                Direct spawns
-              </div>
-              {model.directAgents.map((agent) => (
-                <AgentRow key={agent.id} agent={agent} />
-              ))}
-            </section>
-          ) : null}
-        </div>
-      </ScrollArea>
-      <footer className="flex items-center justify-between border-t border-border/60 px-3 py-1.5 font-mono text-2xs text-muted-foreground">
-        <span className="flex items-center gap-2">
-          {model.runningCount + model.waitingCount > 0 ? (
-            <span className="text-info-foreground">
-              ● {model.runningCount + model.waitingCount} working
-            </span>
-          ) : null}
-          {model.idleCount > 0 ? <span>{model.idleCount} idle</span> : null}
-          {model.settledCount > 0 ? <span>{model.settledCount} settled</span> : null}
-        </span>
-        <span className="tabular-nums">Σ {formatSubagentTokenCount(model.totalTokens)} tok</span>
-      </footer>
-    </div>
+    <AgentFocusContext.Provider value={focusRequest}>
+      <div className="flex h-full min-h-0 flex-col">
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="flex flex-col gap-2 p-2">
+            {model.workflows.map((group) => (
+              <WorkflowSection
+                key={group.workflow.id}
+                group={group}
+                environmentId={environmentId}
+                threadId={threadId}
+              />
+            ))}
+            {model.directAgents.length > 0 ? (
+              <section>
+                <div className="px-1.5 pt-1 text-3xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Direct spawns
+                </div>
+                {model.directAgents.map((agent) => (
+                  <AgentRow key={agent.id} agent={agent} />
+                ))}
+              </section>
+            ) : null}
+          </div>
+        </ScrollArea>
+        <footer className="flex items-center justify-between border-t border-border/60 px-3 py-1.5 font-mono text-2xs text-muted-foreground">
+          <span className="flex items-center gap-2">
+            {model.runningCount + model.waitingCount > 0 ? (
+              <span className="text-info-foreground">
+                ● {model.runningCount + model.waitingCount} working
+              </span>
+            ) : null}
+            {model.idleCount > 0 ? <span>{model.idleCount} idle</span> : null}
+            {model.settledCount > 0 ? <span>{model.settledCount} settled</span> : null}
+          </span>
+          <span className="tabular-nums">Σ {formatSubagentTokenCount(model.totalTokens)} tok</span>
+        </footer>
+      </div>
+    </AgentFocusContext.Provider>
   );
 }
