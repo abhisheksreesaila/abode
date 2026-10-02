@@ -6,11 +6,8 @@ import type {
 } from "@t3tools/contracts";
 import {
   AUTONOMOUS_CONTINUE_PREFIX,
-  AUTONOMOUS_DONE_MARKER,
   endsWithAutonomousDoneMarker,
 } from "@t3tools/shared/autonomous";
-
-export { AUTONOMOUS_CONTINUE_PREFIX, AUTONOMOUS_DONE_MARKER };
 
 /** Sent as the user turn that keeps an autonomous thread going. */
 export const AUTONOMOUS_NUDGE =
