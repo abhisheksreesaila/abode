@@ -18,6 +18,7 @@ import {
   getTriggerDisplayModelName,
 } from "./providerIconUtils";
 import { shouldShowInstanceBadge, type ProviderInstanceEntry } from "../../providerInstances";
+import { resolveProviderTint } from "./providerTint";
 import {
   ComposerControl,
   ComposerControlChevron,
@@ -45,6 +46,8 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   instanceIndicatorBackground?: string;
   size?: ComposerControlSize;
   isComposerOwned?: boolean;
+  /** Outlined look for the composer's picker row. */
+  chip?: boolean;
   disabled?: boolean;
   terminalOpen?: boolean;
   open?: boolean;
@@ -91,6 +94,11 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   const triggerLabel = selectedModel
     ? `${getTriggerDisplayModelLabel(selectedModel)}${selectedModel.isUnavailable ? " (Unavailable)" : ""}`
     : triggerTitle;
+  // Only the composer's own picker is tinted, and only when one provider is selected.
+  const tint =
+    props.isComposerOwned && !props.selectedModels
+      ? resolveProviderTint(activeEntry?.driverKind)
+      : "none";
   const showInstanceBadge =
     activeEntry !== null && shouldShowInstanceBadge(activeEntry, props.instanceEntries);
 
@@ -206,6 +214,8 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
           <ComposerControl
             aria-label={props.triggerAriaLabel ?? allModelNames}
             size={size}
+            chip={props.chip}
+            tint={tint}
             data-chat-provider-model-picker="true"
             className={cn(
               "min-w-0 shrink justify-between whitespace-nowrap",

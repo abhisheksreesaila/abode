@@ -5015,6 +5015,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const providerModelPicker = (
     <ProviderModelPicker
       isComposerOwned
+      chip={modelPickerInTopRow}
       disabled={providerCatalogPending || isSendBusy}
       {...(routeKind === "draft" && supportsMultipleModels
         ? {
@@ -5069,7 +5070,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       size={composerControlsInStrip || modelPickerInTopRow ? "xs" : "sm"}
       triggerClassName={
         modelPickerInTopRow
-          ? "min-w-13 max-w-56 shrink border-border/70 bg-input/40 text-xs!"
+          ? "min-w-13 max-w-56 shrink text-xs!"
           : modelPickerMuted
             ? "min-w-13 shrink text-xs! @max-[640px]/composer-surface:[&_[data-chat-provider-model-picker-label]]:w-0 @max-[640px]/composer-surface:[&_[data-chat-provider-model-picker-label]]:flex-none"
             : "-ms-2.5 min-w-13"

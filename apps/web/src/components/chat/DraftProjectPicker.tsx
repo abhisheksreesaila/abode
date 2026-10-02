@@ -291,12 +291,7 @@ export function DraftProjectMenu({
             // mid-sentence and baffle screen-reader users.
             variant === "chip" ? (
               <MenuTrigger
-                render={
-                  <ComposerControl
-                    size="xs"
-                    className="max-w-56 min-w-0 gap-1.5 border-border/70 bg-input/40"
-                  />
-                }
+                render={<ComposerControl size="xs" chip className="max-w-56 min-w-0 gap-1.5" />}
                 data-draft-project-trigger=""
                 aria-label={ariaLabel}
               />
