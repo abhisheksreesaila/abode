@@ -17,6 +17,11 @@ import {
   shortcutLabelForCommand,
 } from "../keybindings";
 import { isEditableFocused } from "../lib/editableFocus";
+import {
+  onPanelToggleRequest,
+  readPersistedSidebarOpen,
+  writePersistedSidebarOpen,
+} from "../panelToggleBus";
 import { isPreviewFocused } from "../lib/previewFocus";
 import { isTerminalFocused } from "../lib/terminalFocus";
 import { isModelPickerOpen } from "../modelPickerVisibility";
@@ -125,6 +130,9 @@ function SidebarControl() {
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [keybindings, toggleSidebar, usagePageOpen]);
 
+  // Command palette "Toggle sidebar" runs the same toggle as the shortcut.
+  useEffect(() => onPanelToggleRequest("sidebar", toggleSidebar), [toggleSidebar]);
+
   return (
     // The right-side layout controls carry mr-px (border compensation inside
     // the panel), so the trigger mirrors it: both clusters sit one extra pixel
@@ -226,6 +234,13 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const routePanelAnimationsActive = panelAnimationsActive && !panelAnimationsSuppressed;
   const isOnSettings = pathname === "/settings" || pathname.startsWith("/settings/");
   const isMacosDesktop = isElectron && isMacPlatform(navigator.platform);
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    readPersistedSidebarOpen(typeof localStorage === "undefined" ? null : localStorage),
+  );
+  const handleSidebarOpenChange = (open: boolean) => {
+    setSidebarOpen(open);
+    writePersistedSidebarOpen(localStorage, open);
+  };
   const [sidebarWidth, setSidebarWidth] = useState(readInitialThreadSidebarWidth);
   // Subscribed rather than read once: the clamp must track live window size,
   // and a clamped drag ends with an unchanged width, which skips the re-render
@@ -296,7 +311,8 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
       <SidebarProvider
         className="h-dvh! min-h-0!"
         data-panel-animations={routePanelAnimationsActive ? "true" : "false"}
-        defaultOpen
+        open={sidebarOpen}
+        onOpenChange={handleSidebarOpenChange}
         style={sidebarProviderStyle}
       >
         <ProjectProjectionRetention />

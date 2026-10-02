@@ -124,6 +124,8 @@ import {
   resolveProjectPathForDispatch,
 } from "../lib/projectPaths";
 import { onOpenCommandPalette } from "../commandPaletteBus";
+import { requestPanelToggle } from "../panelToggleBus";
+import { PANEL_TOGGLE_PALETTE_ENTRIES } from "./panelTogglePaletteEntries";
 import { isPreviewFocused } from "../lib/previewFocus";
 import { isTerminalFocused } from "../lib/terminalFocus";
 import {
@@ -2015,6 +2017,22 @@ function OpenCommandPaletteDialog(props: {
       },
     });
   }
+
+  actionItems.push(
+    ...PANEL_TOGGLE_PALETTE_ENTRIES.filter(
+      (entry) => entry.target === "sidebar" || activeThread != null,
+    ).map((entry): CommandPaletteActionItem => ({
+      kind: "action",
+      value: `action:toggle-${entry.target}`,
+      searchTerms: entry.searchTerms,
+      title: entry.title,
+      icon: <entry.Icon className={ITEM_ICON_CLASS} />,
+      shortcutCommand: entry.shortcutCommand,
+      run: async () => {
+        requestPanelToggle(entry.target);
+      },
+    })),
+  );
 
   actionItems.push({
     kind: "action",
