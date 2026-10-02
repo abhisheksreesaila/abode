@@ -7,9 +7,9 @@ import { voiceShortcutLabel } from "./shortcut";
  */
 export function fluentReplyPlaceholder(
   voice: { enabled: boolean; shortcut: string },
-  themeId: string | undefined,
+  fluent: boolean,
 ): string | null {
-  if (themeId !== "abode") return null;
+  if (!fluent) return null;
   return voice.enabled
     ? `Reply, or hold ${voiceShortcutLabel(voice.shortcut)} to talk`
     : "Reply to the agent";

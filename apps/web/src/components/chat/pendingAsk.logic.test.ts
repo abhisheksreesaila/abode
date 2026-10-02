@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { UserInputQuestion } from "@t3tools/contracts";
-import { derivePendingAsk } from "./pendingAsk.logic";
+import { derivePendingAsk, pendingAskKey, shouldAdvanceAfterAnswer } from "./pendingAsk.logic";
+
+describe("advance guard", () => {
+  it("advances only while the answered question is still active", () => {
+    const answered = pendingAskKey("r1", "q1");
+    expect(shouldAdvanceAfterAnswer(answered, pendingAskKey("r1", "q1"))).toBe(true);
+    expect(shouldAdvanceAfterAnswer(answered, pendingAskKey("r1", "q2"))).toBe(false);
+    expect(shouldAdvanceAfterAnswer(answered, pendingAskKey("r2", "q1"))).toBe(false);
+    expect(shouldAdvanceAfterAnswer(answered, pendingAskKey(null, undefined))).toBe(false);
+    expect(shouldAdvanceAfterAnswer(null, null)).toBe(false);
+  });
+});
 
 const question = (patch: Partial<UserInputQuestion> = {}): UserInputQuestion =>
   ({

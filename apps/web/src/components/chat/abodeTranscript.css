@@ -76,8 +76,8 @@ html[data-theme-id="abode"] {
     color: #4ec9b0;
   }
 
-  [data-fluent="step"][data-status="running"] [data-fluent="step-mark"] {
-    color: #4cc2ff;
+  [data-fluent="step"][data-status="unfinished"] [data-fluent="step-mark"] {
+    color: #9d9d9d;
   }
 
   [data-fluent="step"][data-status="failed"] [data-fluent="step-mark"] {

@@ -29,7 +29,7 @@ export const MessageHead = memo(function MessageHead(props: {
   );
 });
 
-const STEP_MARK = { done: "✓", running: "◐", failed: "✕" } as const;
+const STEP_MARK = { done: "✓", unfinished: "•", failed: "✕" } as const;
 const MAX_VISIBLE_STEPS = 8;
 
 /** The Simple-mode turn summary: one 22px row per tool step. */
@@ -47,11 +47,13 @@ export const TurnStepsList = memo(function TurnStepsList(props: {
             {STEP_MARK[step.status]}
           </span>
           <span data-fluent="step-text">
-            {step.parts.map((part) =>
+            {step.parts.map((part, index) =>
               part.code ? (
-                <code key={`c:${part.text}`}>{part.text}</code>
+                // oxlint-disable-next-line react/no-array-index-key
+                <code key={index}>{part.text}</code>
               ) : (
-                <span key={`t:${part.text}`}>{part.text}</span>
+                // oxlint-disable-next-line react/no-array-index-key
+                <span key={index}>{part.text}</span>
               ),
             )}
           </span>

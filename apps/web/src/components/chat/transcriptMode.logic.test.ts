@@ -81,8 +81,13 @@ describe("simplifyRowsForMode", () => {
   });
 
   it("simple attaches the turn's tool entries as steps, in order", () => {
-    const fold = simplifyRowsForMode(rows, entries, "simple").find((r) => r.id === "fold");
+    const fold = simplifyRowsForMode(rows, entries, "simple", true).find((r) => r.id === "fold");
     expect(fold?.kind === "turn-fold" && fold.steps?.map((s) => s.id)).toEqual(["a", "b"]);
+  });
+
+  it("outside Fluent no steps are derived", () => {
+    const fold = simplifyRowsForMode(rows, entries, "simple").find((r) => r.id === "fold");
+    expect(fold?.kind === "turn-fold" && fold.steps).toBeFalsy();
   });
 
   it("detailed rows carry no steps", () => {

@@ -3,7 +3,7 @@ import type { WorkLogEntry } from "../../session-logic";
 /** One line of the compact steps list shown in Simple mode. */
 export interface TurnStep {
   readonly id: string;
-  readonly status: "done" | "running" | "failed";
+  readonly status: "done" | "unfinished" | "failed";
   /** Text split so inline code can render in the code font. */
   readonly parts: ReadonlyArray<{ readonly text: string; readonly code: boolean }>;
 }
@@ -33,19 +33,29 @@ export function stepFromWorkEntry(entry: WorkLogEntry, failed: boolean): TurnSte
   const label = (entry.toolTitle ?? entry.label).trim();
   const subject = entry.command?.trim() || entry.changedFiles?.[0]?.trim() || "";
   const text = subject && !label.includes(subject) ? `${label} \`${truncate(subject)}\`` : label;
+  // A settled fold never claims "running": an unfinished tool gets a neutral mark.
   const status = failed
     ? "failed"
     : entry.toolLifecycleStatus === "inProgress"
-      ? "running"
+      ? "unfinished"
       : "done";
   return { id: entry.id, status, parts: splitInlineCode(text) };
 }
+
+// Entries keep their identity across streaming ticks, so each step is built once.
+const stepByEntry = new WeakMap<WorkLogEntry, TurnStep>();
 
 export function deriveTurnSteps(
   entries: ReadonlyArray<WorkLogEntry>,
   isFailed: (entry: WorkLogEntry) => boolean,
 ): TurnStep[] {
-  return entries.map((entry) => stepFromWorkEntry(entry, isFailed(entry)));
+  return entries.map((entry) => {
+    const cached = stepByEntry.get(entry);
+    if (cached) return cached;
+    const step = stepFromWorkEntry(entry, isFailed(entry));
+    stepByEntry.set(entry, step);
+    return step;
+  });
 }
 
 export function turnStepsEqual(

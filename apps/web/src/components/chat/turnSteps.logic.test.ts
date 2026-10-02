@@ -36,9 +36,9 @@ describe("stepFromWorkEntry", () => {
     ]);
   });
 
-  it("marks in-progress as running and failures as failed", () => {
+  it("marks in-progress as unfinished (neutral) and failures as failed", () => {
     expect(stepFromWorkEntry(entry("a", { toolLifecycleStatus: "inProgress" }), false).status).toBe(
-      "running",
+      "unfinished",
     );
     expect(stepFromWorkEntry(entry("a"), true).status).toBe("failed");
   });
@@ -56,5 +56,20 @@ describe("deriveTurnSteps and equality", () => {
     expect(a.map((s) => s.id)).toEqual(["1", "2"]);
     expect(turnStepsEqual(a, b)).toBe(true);
     expect(turnStepsEqual(a, b.slice(1))).toBe(false);
+  });
+
+  it("detects status and text changes, and treats undefined pairs", () => {
+    const base = deriveTurnSteps([entry("1", { label: "A" })], () => false);
+    const failed = deriveTurnSteps([entry("1x", { label: "A" })], () => true);
+    const renamed = deriveTurnSteps([entry("1", { label: "B" })], () => false);
+    expect(turnStepsEqual(base, failed)).toBe(false);
+    expect(turnStepsEqual(base, renamed)).toBe(false);
+    expect(turnStepsEqual(undefined, undefined)).toBe(true);
+    expect(turnStepsEqual(base, undefined)).toBe(false);
+  });
+
+  it("builds each entry's step once", () => {
+    const e = entry("c");
+    expect(deriveTurnSteps([e], () => false)[0]).toBe(deriveTurnSteps([e], () => false)[0]);
   });
 });

@@ -3,7 +3,12 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { getChosenAgent } from "./composerAgent";
 import { formatAgentDetail, resolveAgentName, type MessageIdentity } from "./messageAvatar.logic";
-import { derivePendingAsk, type PendingAsk } from "./pendingAsk.logic";
+import {
+  derivePendingAsk,
+  pendingAskKey,
+  shouldAdvanceAfterAnswer,
+  type PendingAsk,
+} from "./pendingAsk.logic";
 import { getTriggerDisplayModelName } from "./providerIconUtils";
 import { runtimeModeConfig } from "./runtimeModeConfig";
 
@@ -26,6 +31,8 @@ export function useFluentTimelineProps(input: {
   pendingRequestId: string | null;
   activeQuestion: UserInputQuestion | null | undefined;
   responding: boolean;
+  /** The abode theme is active; otherwise there is no ask block. */
+  fluent: boolean;
   onSelectOption: (questionId: string, optionValue: string) => void;
   onAdvance: () => void;
 }): {
@@ -34,32 +41,41 @@ export function useFluentTimelineProps(input: {
   onAnswerPendingAsk: (questionId: string, optionValue: string) => void;
 } {
   const { modelSelection, providerModels, runtimeMode, pendingRequestId, activeQuestion } = input;
-  const messageIdentity = useMemo<MessageIdentity>(() => {
-    const model = modelSelection
-      ? providerModels?.find((candidate) => candidate.slug === modelSelection.model)
-      : undefined;
-    return {
-      agentName: resolveAgentName(getChosenAgent(modelSelection?.options)),
-      agentDetail: formatAgentDetail(
-        model ? getTriggerDisplayModelName(model) : modelSelection?.model,
-        runtimeModeConfig[runtimeMode].label.toLowerCase(),
-      ),
-    };
-  }, [modelSelection, providerModels, runtimeMode]);
+  // Memoized on the derived strings, so a provider-list refresh that changes nothing visible
+  // does not hand the timeline a new identity.
+  const model = modelSelection
+    ? providerModels?.find((candidate) => candidate.slug === modelSelection.model)
+    : undefined;
+  const agentName = resolveAgentName(getChosenAgent(modelSelection?.options));
+  const agentDetail = formatAgentDetail(
+    model ? getTriggerDisplayModelName(model) : modelSelection?.model,
+    runtimeModeConfig[runtimeMode].label.toLowerCase(),
+  );
+  const messageIdentity = useMemo<MessageIdentity>(
+    () => ({ agentName, agentDetail }),
+    [agentName, agentDetail],
+  );
 
   const pendingAsk = useMemo(
     () =>
-      pendingRequestId
+      input.fluent && pendingRequestId
         ? derivePendingAsk(pendingRequestId, activeQuestion, input.responding)
         : null,
-    [pendingRequestId, activeQuestion, input.responding],
+    [input.fluent, pendingRequestId, activeQuestion, input.responding],
   );
 
+  const activeKey = pendingAskKey(pendingRequestId, activeQuestion?.id);
+  const activeKeyRef = useRef(activeKey);
   const selectRef = useRef(input.onSelectOption);
   const advanceRef = useRef(input.onAdvance);
   useEffect(() => {
     selectRef.current = input.onSelectOption;
     advanceRef.current = input.onAdvance;
+    activeKeyRef.current = activeKey;
+  });
+  const pendingRequestIdRef = useRef(pendingRequestId);
+  useEffect(() => {
+    pendingRequestIdRef.current = pendingRequestId;
   });
   const timerRef = useRef<number | null>(null);
   useEffect(
@@ -69,11 +85,12 @@ export function useFluentTimelineProps(input: {
     [],
   );
   const onAnswerPendingAsk = useCallback((questionId: string, optionValue: string) => {
+    const answeredKey = pendingAskKey(pendingRequestIdRef.current, questionId);
     selectRef.current(questionId, optionValue);
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null;
-      advanceRef.current();
+      if (shouldAdvanceAfterAnswer(answeredKey, activeKeyRef.current)) advanceRef.current();
     }, ADVANCE_DELAY_MS);
   }, []);
 

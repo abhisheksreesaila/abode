@@ -416,6 +416,10 @@ export type MessagesTimelineRow =
       message: ChatMessage;
       durationStart: string;
       showAssistantMeta: boolean;
+      /** Fluent avatar head: every user message, and the first assistant message after one. */
+      showHead: boolean;
+      /** Only the latest turn's head carries model and access detail, so older ones never go stale. */
+      showHeadDetail: boolean;
       showAssistantCopyButton: boolean;
       assistantCopyStreaming: boolean;
       assistantTurnDiffSummary?: TurnDiffSummary | undefined;
@@ -1135,6 +1139,7 @@ export function deriveMessagesTimelineRows(input: {
     );
   };
 
+  let awaitingAssistantHead = true;
   let scannedActivityThrough = -1;
   for (let index = 0; index < input.timelineEntries.length; index += 1) {
     const timelineEntry = input.timelineEntries[index];
@@ -1401,12 +1406,23 @@ export function deriveMessagesTimelineRows(input: {
       terminalAssistantMessageIds.has(timelineEntry.message.id) &&
       !assistantResponseStillInProgress;
 
+    let showHead = false;
+    if (timelineEntry.message.role === "user") {
+      showHead = true;
+      awaitingAssistantHead = true;
+    } else if (timelineEntry.message.role === "assistant" && awaitingAssistantHead) {
+      showHead = true;
+      awaitingAssistantHead = false;
+    }
+
     nextRows.push({
       kind: "message",
       id: timelineEntry.id,
       createdAt: timelineEntry.createdAt,
       message: timelineEntry.message,
       durationStart,
+      showHead,
+      showHeadDetail: false,
       showAssistantMeta,
       showAssistantCopyButton: showAssistantMeta,
       assistantCopyStreaming: timelineEntry.message.streaming || assistantResponseStillInProgress,
@@ -1484,6 +1500,13 @@ export function deriveMessagesTimelineRows(input: {
     });
   }
   const rows = attachTrailingToolGroupsToAssistant(nextRows);
+  for (let index = rows.length - 1; index >= 0; index -= 1) {
+    const row = rows[index]!;
+    if (row.kind === "message" && row.message.role === "assistant" && row.showHead) {
+      rows[index] = { ...row, showHeadDetail: true };
+      break;
+    }
+  }
   input.queuedMessages?.forEach((queuedMessage, index) => {
     rows.push({
       kind: "queued-message",
@@ -1704,6 +1727,8 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
         a.message === bm.message &&
         a.durationStart === bm.durationStart &&
         a.showAssistantMeta === bm.showAssistantMeta &&
+        a.showHead === bm.showHead &&
+        a.showHeadDetail === bm.showHeadDetail &&
         a.showAssistantCopyButton === bm.showAssistantCopyButton &&
         a.assistantCopyStreaming === bm.assistantCopyStreaming &&
         a.assistantTurnDiffSummary === bm.assistantTurnDiffSummary &&

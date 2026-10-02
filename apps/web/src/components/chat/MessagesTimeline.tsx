@@ -320,6 +320,7 @@ interface TimelineRowSharedState {
   onSteerQueuedMessage: (id: string) => void;
   steerQueuedMessageShortcutLabel: string | null;
   onRemoveQueuedMessage: (id: string) => void;
+  fluent: boolean;
   messageIdentity: MessageIdentity;
   onAnswerPendingAsk: (questionId: string, optionValue: string) => void;
 }
@@ -489,6 +490,8 @@ interface MessagesTimelineProps {
   onSteerQueuedMessage?: (id: string) => void;
   steerQueuedMessageShortcutLabel?: string | null;
   onRemoveQueuedMessage?: (id: string) => void;
+  /** The Fluent (abode) look is on: avatar heads and Simple-mode steps are built only then. */
+  fluent?: boolean;
   /** Agent name and model detail for the avatar rows (abode theme). */
   messageIdentity?: MessageIdentity;
   /** The active pending question, rendered inline as the amber ask block (abode theme). */
@@ -554,6 +557,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   onSteerQueuedMessage = NOOP_QUEUED_MESSAGE_ACTION,
   steerQueuedMessageShortcutLabel = null,
   onRemoveQueuedMessage = NOOP_QUEUED_MESSAGE_ACTION,
+  fluent = false,
   messageIdentity = DEFAULT_MESSAGE_IDENTITY,
   pendingAsk = null,
   onAnswerPendingAsk = NOOP_ANSWER_PENDING_ASK,
@@ -847,8 +851,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   // Simple/Detailed trims the derived rows (one store subscription, no new props).
   const transcriptMode = useTranscriptModeStore((store) => store.mode);
   const modeRows = useMemo(
-    () => simplifyRowsForMode(rawRows, timelineEntries, transcriptMode),
-    [rawRows, timelineEntries, transcriptMode],
+    () => simplifyRowsForMode(rawRows, timelineEntries, transcriptMode, fluent),
+    [rawRows, timelineEntries, transcriptMode, fluent],
   );
   // The ask block rides after the derived rows so the streaming fast path never sees it.
   const askRows = useMemo<MessagesTimelineRow[]>(
@@ -1255,6 +1259,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       onSteerQueuedMessage,
       steerQueuedMessageShortcutLabel,
       onRemoveQueuedMessage,
+      fluent,
       messageIdentity,
       onAnswerPendingAsk,
     }),
@@ -1295,6 +1300,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       onSteerQueuedMessage,
       steerQueuedMessageShortcutLabel,
       onRemoveQueuedMessage,
+      fluent,
       messageIdentity,
       onAnswerPendingAsk,
     ],
@@ -2203,12 +2209,14 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
     <div className="group flex flex-col items-end gap-1">
       <div className="relative max-w-[80%] rounded-2xl bg-message p-3 text-message-foreground">
         <MessageAuthorHeading>You</MessageAuthorHeading>
-        <MessageHead
-          name="You"
-          detail={null}
-          time={formatDayAwareTimestamp(row.message.createdAt, ctx.timestampFormat)}
-          agent={false}
-        />
+        {ctx.fluent ? (
+          <MessageHead
+            name="You"
+            detail={null}
+            time={formatDayAwareTimestamp(row.message.createdAt, ctx.timestampFormat)}
+            agent={false}
+          />
+        ) : null}
         {(regularImages.length > 0 || userVideos.length > 0) && (
           <div className="mb-2 grid max-w-[210px] grid-cols-2 gap-2">
             {regularImages.map((image) => (
@@ -2487,12 +2495,14 @@ function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "mess
     <>
       <div className="relative min-w-0 px-1 py-0.5">
         <MessageAuthorHeading>{ABODE_NAME}</MessageAuthorHeading>
-        <MessageHead
-          name={ctx.messageIdentity.agentName}
-          detail={ctx.messageIdentity.agentDetail}
-          time={formatDayAwareTimestamp(row.message.createdAt, ctx.timestampFormat)}
-          agent
-        />
+        {ctx.fluent && row.showHead ? (
+          <MessageHead
+            name={ctx.messageIdentity.agentName}
+            detail={row.showHeadDetail ? ctx.messageIdentity.agentDetail : null}
+            time={formatDayAwareTimestamp(row.message.createdAt, ctx.timestampFormat)}
+            agent
+          />
+        ) : null}
         {!row.message.streaming && ctx.onQuoteAssistantMessage && ctx.threadRef ? (
           <div className="absolute end-1 top-0 opacity-0 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover/assistant:opacity-100">
             <AskAboutMessageButton

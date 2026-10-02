@@ -407,6 +407,7 @@ import {
 import type { ComposerBannerStackItem } from "./chat/ComposerBannerStack";
 import { ComposerSurface } from "./chat/ComposerSurface";
 import { useFluentTimelineProps } from "./chat/useFluentTimelineProps";
+import { useIsFluentTheme } from "./chat/fluentTheme";
 import {
   hasAvailableCompactionProvider,
   hasDismissedResumeCompaction,
@@ -8882,7 +8883,9 @@ export default function ChatView(props: ChatViewProps) {
     setActivePendingUserInputQuestionIndex,
   ]);
 
+  const isFluent = useIsFluentTheme();
   const fluentTimelineProps = useFluentTimelineProps({
+    fluent: isFluent,
     modelSelection: activeThread?.modelSelection,
     providerModels: activeProviderStatus?.models,
     runtimeMode,
@@ -9983,6 +9986,7 @@ export default function ChatView(props: ChatViewProps) {
                   { context: { terminalFocus: false } },
                 )}
                 onRemoveQueuedMessage={onRemoveQueuedMessage}
+                fluent={isFluent}
                 messageIdentity={fluentTimelineProps.messageIdentity}
                 pendingAsk={paintOnlyDisplayedTimeline ? null : fluentTimelineProps.pendingAsk}
                 onAnswerPendingAsk={fluentTimelineProps.onAnswerPendingAsk}

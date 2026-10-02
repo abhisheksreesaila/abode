@@ -34,7 +34,7 @@ interface TurnWorkTotals {
 }
 
 /** Counts the same entries Detailed shows as tool rows, so the summary matches. */
-function totalsByTurn(entries: ReadonlyArray<TimelineEntry>) {
+function totalsByTurn(entries: ReadonlyArray<TimelineEntry>, withSteps: boolean) {
   const byTurn = new Map<string, WorkLogEntry[]>();
   for (const entry of entries) {
     if (entry.kind !== "work" || entry.entry.tone !== "tool" || !entry.entry.turnId) continue;
@@ -50,7 +50,7 @@ function totalsByTurn(entries: ReadonlyArray<TimelineEntry>) {
       toolCalls: 0,
       failed: 0,
       files: new Set(),
-      steps: deriveTurnSteps(kept, workEntryDisplayIndicatesToolFailure),
+      steps: withSteps ? deriveTurnSteps(kept, workEntryDisplayIndicatesToolFailure) : [],
     };
     for (const work of kept) {
       turn.toolCalls += 1;
@@ -98,6 +98,7 @@ export function simplifyRowsForMode(
   rows: MessagesTimelineRow[],
   entries: ReadonlyArray<TimelineEntry>,
   mode: TranscriptMode,
+  withSteps = false,
 ): MessagesTimelineRow[] {
   if (mode === "detailed") return rows;
   let totals: Map<string, TurnWorkTotals> | undefined;
@@ -122,7 +123,7 @@ export function simplifyRowsForMode(
         if (!row.active) continue;
         break;
       case "turn-fold": {
-        const turn = (totals ??= totalsByTurn(entries)).get(row.turnId);
+        const turn = (totals ??= totalsByTurn(entries, withSteps)).get(row.turnId);
         const label = formatWorkSummary(
           row.label,
           turn?.toolCalls ?? 0,
