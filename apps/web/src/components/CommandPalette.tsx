@@ -47,6 +47,7 @@ import {
   ArrowLeftIcon,
   ChartNoAxesColumnIcon,
   ListChecksIcon,
+  RepeatIcon,
   CheckIcon,
   ChevronRightIcon,
   CornerLeftUpIcon,
@@ -743,6 +744,9 @@ function OpenCommandPaletteDialog(props: {
     reportFailure: false,
   });
   const stopThreadSession = useAtomCommand(threadEnvironment.stopSession, {
+    reportFailure: false,
+  });
+  const updateThreadMetadata = useAtomCommand(threadEnvironment.updateMetadata, {
     reportFailure: false,
   });
   const refreshProviders = useAtomCommand(serverEnvironment.refreshProviders, {
@@ -2265,6 +2269,24 @@ function OpenCommandPaletteDialog(props: {
   }
 
   if (activeThread != null) {
+    const autonomousOn = activeThread.autonomous?.enabled === true;
+    actionItems.push({
+      kind: "action",
+      value: "action:toggle-autonomous",
+      searchTerms: ["autonomous", "auto", "continue", "agent", "unattended", "travel"],
+      title: "Toggle autonomous",
+      description: autonomousOn ? "On: click to stop" : "Off: keeps going on its own until done",
+      icon: <RepeatIcon className={ITEM_ICON_CLASS} />,
+      run: async () => {
+        const result = await updateThreadMetadata({
+          environmentId: activeThread.environmentId,
+          input: { threadId: activeThread.id, autonomous: { enabled: !autonomousOn } },
+        });
+        if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+          toastManager.add({ type: "error", title: "Could not change autonomous mode" });
+        }
+      },
+    });
     actionItems.push({
       kind: "action",
       value: "action:toggle-transcript-mode",

@@ -1,3 +1,4 @@
+import { formatAutoContinueLabel, parseAutoContinueMessage } from "@t3tools/shared/autonomous";
 import { ArrowUpIcon, ClockIcon } from "lucide-react";
 import { ReadOnlySourcePreview } from "../files/AttachmentFilePreview";
 import { useRightPanelStore } from "~/rightPanelStore";
@@ -1779,7 +1780,9 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
       {row.kind === "work-toggle" ? <WorkGroupToggleTimelineRow row={row} /> : null}
       {row.kind === "turn-fold" ? <TurnFoldTimelineRow row={row} /> : null}
       {row.kind === "context-compaction" ? <ContextCompactionTimelineRow row={row} /> : null}
-      {row.kind === "message" && row.message.role === "user" ? <UserTimelineRow row={row} /> : null}
+      {row.kind === "message" && row.message.role === "user" ? (
+        <UserOrAutoContinueTimelineRow row={row} />
+      ) : null}
       {row.kind === "message" && row.message.role === "assistant" ? (
         <AssistantTimelineRow row={row} />
       ) : null}
@@ -1941,6 +1944,29 @@ function ContextCompactionTimelineRow({
         {row.label}
       </span>
       <span className="h-px flex-1 bg-border/70" />
+    </div>
+  );
+}
+
+/**
+ * Autonomous mode's nudge turns (F-032) are ordinary user messages that open
+ * with a recognizable prefix. They render as one muted line instead of a bubble.
+ */
+function UserOrAutoContinueTimelineRow({
+  row,
+}: {
+  row: Extract<TimelineRow, { kind: "message" }>;
+}) {
+  const autoContinue = parseAutoContinueMessage(row.message.text);
+  if (autoContinue === null) return <UserTimelineRow row={row} />;
+  const label = formatAutoContinueLabel(autoContinue.count, autoContinue.cap);
+  return (
+    <div
+      data-auto-continue-row="true"
+      aria-label={label}
+      className="mx-auto w-full max-w-(--chat-max-width) py-1 text-muted-foreground text-xs"
+    >
+      {label}
     </div>
   );
 }
