@@ -109,4 +109,18 @@ it.layer(NodeServices.layer)("autonomous meta update", (it) => {
       expect(readModel.threads[0]?.autonomous).toBeUndefined();
     }),
   );
+
+  it.effect("refuses a count update after the thread was switched off", () =>
+    Effect.gen(function* () {
+      const stopped = {
+        ...readModel,
+        threads: [{ ...baseThread, autonomous: { enabled: false, count: 4, cap: 30 } }],
+      };
+      const result = yield* Effect.result(decide({ enabled: true, count: 5 }, stopped));
+      expect(result._tag).toBe("Failure");
+      // Turning it back on (no count) is still allowed.
+      const reenabled = yield* decide({ enabled: true }, stopped);
+      expect(reenabled.type).toBe("thread.meta-updated");
+    }),
+  );
 });

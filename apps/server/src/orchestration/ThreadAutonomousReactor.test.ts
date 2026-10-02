@@ -9,6 +9,7 @@ import {
   type OrchestrationCommand,
   type OrchestrationEvent,
   type OrchestrationMessage,
+  type OrchestrationShellSnapshot,
   type OrchestrationSessionStatus,
   type OrchestrationThread,
   type ThreadAutonomousState,
@@ -26,6 +27,7 @@ import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
 import { ServerActivation } from "../serverActivation.ts";
+import { OrchestrationCommandInvariantError } from "./Errors.ts";
 import {
   OrchestrationEngineService,
   type OrchestrationEngineShape,
@@ -131,8 +133,18 @@ const sessionSet = (threadId: ThreadId, status: OrchestrationSessionStatus): Orc
     },
   }) as OrchestrationEvent;
 
+interface HarnessOptions {
+  /** What the startup read of the read model sees; empty unless a test is about restarts. */
+  readonly shells?: ReadonlyArray<OrchestrationThread>;
+  /** Ingestion's drain waits on this, like a turn that is still being finalized. */
+  readonly drainGate?: Deferred.Deferred<void>;
+  /** The decider refuses count updates, as when the user switched it off meanwhile. */
+  readonly rejectCount?: boolean;
+}
+
 const makeHarness = Effect.fn("makeAutonomousHarness")(function* (
   threads: ReadonlyArray<OrchestrationThread>,
+  options: HarnessOptions = {},
 ) {
   const activation = yield* Deferred.make<void>();
   const store = yield* Ref.make(new Map(threads.map((thread) => [thread.id, thread])));
@@ -144,6 +156,17 @@ const makeHarness = Effect.fn("makeAutonomousHarness")(function* (
   const dispatch: OrchestrationEngineShape["dispatch"] = (command) =>
     Effect.gen(function* () {
       yield* Ref.update(commands, (all) => [...all, command]);
+      if (
+        options.rejectCount === true &&
+        command.type === "thread.meta.update" &&
+        (command.autonomous?.count ?? 0) > 0
+      ) {
+        yield* Queue.offer(dispatched, command);
+        return yield* new OrchestrationCommandInvariantError({
+          commandType: command.type,
+          detail: "autonomous mode is off",
+        });
+      }
       // Mirror what the real decider does to the stored thread so later
       // evaluations see the new count and stop state.
       if (command.type === "thread.meta.update" && command.autonomous !== undefined) {
@@ -173,6 +196,17 @@ const makeHarness = Effect.fn("makeAutonomousHarness")(function* (
     Layer.provide(
       Layer.mergeAll(
         Layer.mock(ProjectionSnapshotQuery)({
+          getShellSnapshot: () =>
+            Effect.succeed({
+              snapshotSequence: 0,
+              projects: [],
+              threads: (options.shells ?? []).map((thread) => ({
+                id: thread.id,
+                session: thread.session,
+                autonomous: thread.autonomous,
+              })),
+              updatedAt: NOW,
+            } as unknown as OrchestrationShellSnapshot),
           getThreadDetailById: (threadId) =>
             Ref.get(store).pipe(Effect.map((map) => Option.fromUndefinedOr(map.get(threadId)))),
         }),
@@ -187,7 +221,9 @@ const makeHarness = Effect.fn("makeAutonomousHarness")(function* (
         }),
         Layer.succeed(ProviderRuntimeIngestionService, {
           start: () => Effect.void,
-          drain: Ref.update(drainCount, (count) => count + 1),
+          drain: Ref.update(drainCount, (count) => count + 1).pipe(
+            Effect.andThen(options.drainGate ? Deferred.await(options.drainGate) : Effect.void),
+          ),
         }),
         Layer.succeed(ServerActivation, Deferred.await(activation)),
         Layer.succeed(Crypto.Crypto, testCrypto),
@@ -208,16 +244,21 @@ const makeHarness = Effect.fn("makeAutonomousHarness")(function* (
 
 const run = <A, E>(
   threads: ReadonlyArray<OrchestrationThread>,
-  body: (harness: Effect.Success<ReturnType<typeof makeHarness>>) => Effect.Effect<A, E>,
+  body: (
+    harness: Effect.Success<ReturnType<typeof makeHarness>> & {
+      readonly reactor: ThreadAutonomousReactor.ThreadAutonomousReactor["Service"];
+    },
+  ) => Effect.Effect<A, E>,
+  options: HarnessOptions = {},
 ) =>
   Effect.scoped(
     Effect.gen(function* () {
-      const harness = yield* makeHarness(threads);
+      const harness = yield* makeHarness(threads, options);
       const context = yield* Layer.build(harness.layer);
       const reactor = Context.get(context, ThreadAutonomousReactor.ThreadAutonomousReactor);
       yield* reactor.start();
       yield* Deferred.succeed(harness.activation, undefined);
-      return yield* body(harness);
+      return yield* body({ ...harness, reactor });
     }),
   );
 
@@ -427,6 +468,13 @@ describe("ThreadAutonomousReactor", () => {
                         { label: "Beta", description: "" },
                       ],
                     },
+                    {
+                      id: "q3",
+                      header: "Strict",
+                      question: "Which strict one?",
+                      allowCustomAnswer: false,
+                      options: [{ label: "Gamma", description: "" }],
+                    },
                     { id: "q2", header: "Free", question: "Anything else?", options: [] },
                   ],
                 },
@@ -437,10 +485,187 @@ describe("ThreadAutonomousReactor", () => {
           assert.strictEqual(answer?.type, "thread.user-input.respond");
           if (answer?.type === "thread.user-input.respond") {
             assert.strictEqual(answer.requestId, "req-1");
-            assert.strictEqual(answer.answers.q1, "Alpha");
+            assert.match(String(answer.answers.q1), /most reasonable option/);
+            assert.strictEqual(answer.answers.q3, "Gamma");
             assert.match(String(answer.answers.q2), /docs\/plan\.md/);
           }
         }),
       ),
+  );
+
+  it.effect("after a restart, a turn that died with the server counts as a turn end", () =>
+    run(
+      [
+        makeThread("auto", {
+          autonomous: on({ count: 1 }),
+          session: {
+            threadId: A,
+            status: "error",
+            providerName: "Codex",
+            runtimeMode: "full-access",
+            activeTurnId: null,
+            lastError: "Session lost",
+            updatedAt: NOW,
+          },
+        }),
+      ],
+      (harness) =>
+        Effect.gen(function* () {
+          // The orphan reconcile marks the interrupted run as failed.
+          yield* harness.publish(sessionSet(A, "error"));
+          const [stop] = yield* take(harness.dispatched, 1);
+          assert.strictEqual(
+            stop?.type === "thread.meta.update" && stop.autonomous?.stopReason,
+            "error",
+          );
+        }),
+      {
+        shells: [
+          makeThread("auto", {
+            autonomous: on({ count: 1 }),
+            session: {
+              threadId: A,
+              status: "running",
+              providerName: "Codex",
+              runtimeMode: "full-access",
+              activeTurnId: TurnId.make("turn-1"),
+              lastError: null,
+              updatedAt: NOW,
+            },
+          }),
+        ],
+      },
+    ),
+  );
+
+  it.effect("after a restart, an idle autonomous thread continues right away", () =>
+    run(
+      [makeThread("auto", { autonomous: on({ count: 1 }) })],
+      (harness) =>
+        Effect.gen(function* () {
+          const [, turn] = yield* take(harness.dispatched, 2);
+          assert.strictEqual(turn?.type, "thread.turn.start");
+        }),
+      { shells: [makeThread("auto", { autonomous: on({ count: 1 }) })] },
+    ),
+  );
+
+  it.effect("re-enabling after an interrupt or a rate limit continues instead of stopping", () =>
+    Effect.gen(function* () {
+      for (const [status, lastError] of [
+        ["interrupted", null],
+        ["error", "429 usage limit reached"],
+      ] as const) {
+        yield* run(
+          [
+            makeThread("auto", {
+              autonomous: on(),
+              session: {
+                threadId: A,
+                status,
+                providerName: "Codex",
+                runtimeMode: "full-access",
+                activeTurnId: null,
+                lastError,
+                updatedAt: NOW,
+              },
+            }),
+          ],
+          (harness) =>
+            Effect.gen(function* () {
+              yield* harness.publish({
+                ...eventBase(A),
+                type: "thread.meta-updated",
+                payload: { threadId: A, autonomous: on(), updatedAt: NOW },
+              } as OrchestrationEvent);
+              const [, turn] = yield* take(harness.dispatched, 2);
+              assert.strictEqual(turn?.type, "thread.turn.start");
+            }),
+        );
+      }
+    }),
+  );
+
+  it.effect("sends nothing when the count update is refused because it was switched off", () =>
+    run(
+      [makeThread("auto", { autonomous: on() })],
+      (harness) =>
+        Effect.gen(function* () {
+          for (const event of endTurn(A)) yield* harness.publish(event);
+          yield* take(harness.dispatched, 1);
+          yield* harness.reactor.drain;
+          assert.strictEqual(
+            (yield* Ref.get(harness.commands)).some(
+              (command) => command.type === "thread.turn.start",
+            ),
+            false,
+          );
+        }),
+      { rejectCount: true },
+    ),
+  );
+
+  it.effect("stops instead of nudging while a plan waits for approval", () =>
+    run(
+      [
+        makeThread("auto", {
+          autonomous: on(),
+          interactionMode: "plan",
+          latestTurn: {
+            turnId: TurnId.make("turn-1"),
+            state: "completed",
+            requestedAt: NOW,
+            startedAt: NOW,
+            completedAt: NOW,
+            assistantMessageId: null,
+          },
+          proposedPlans: [
+            {
+              id: "plan-1" as never,
+              turnId: TurnId.make("turn-1"),
+              planMarkdown: "# Plan",
+              implementedAt: null,
+              implementationThreadId: null,
+              createdAt: NOW,
+              updatedAt: NOW,
+            },
+          ],
+        }),
+      ],
+      (harness) =>
+        Effect.gen(function* () {
+          for (const event of endTurn(A)) yield* harness.publish(event);
+          const [stop] = yield* take(harness.dispatched, 1);
+          assert.strictEqual(
+            stop?.type === "thread.meta.update" && stop.autonomous?.stopReason,
+            "plan-awaiting-approval",
+          );
+        }),
+    ),
+  );
+
+  it.effect("an interrupt is handled even while a turn end waits on ingestion", () =>
+    Effect.gen(function* () {
+      const gate = yield* Deferred.make<void>();
+      yield* run(
+        [makeThread("auto", { autonomous: on() })],
+        (harness) =>
+          Effect.gen(function* () {
+            for (const event of endTurn(A)) yield* harness.publish(event);
+            yield* harness.publish({
+              ...eventBase(A),
+              type: "thread.turn-interrupt-requested",
+              payload: { threadId: A, createdAt: NOW },
+            } as OrchestrationEvent);
+            const [stop] = yield* take(harness.dispatched, 1);
+            assert.strictEqual(
+              stop?.type === "thread.meta.update" && stop.autonomous?.stopReason,
+              "interrupted",
+            );
+            yield* Deferred.succeed(gate, undefined);
+          }),
+        { drainGate: gate },
+      );
+    }),
   );
 });

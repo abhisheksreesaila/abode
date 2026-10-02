@@ -15,7 +15,7 @@ export const AUTONOMOUS_NUDGE =
 
 /** Answer for a free-text question the agent asked while running autonomously. */
 export const AUTONOMOUS_ASSUME_ANSWER =
-  "Make a reasonable assumption and proceed. Write the open question and your assumption into docs/plan.md under the ticket.";
+  "Assume, pick the most reasonable option and log the assumption in docs/plan.md under the ticket, then proceed.";
 
 /** Text of the user turn for the `count`th automatic continue. */
 export function autoContinueMessageText(count: number, cap: number): string {
@@ -42,6 +42,8 @@ export function decideAutoContinue(input: {
   readonly sessionStatus: OrchestrationSessionStatus | null;
   readonly lastError: string | null;
   readonly finalAssistantText: string | null;
+  /** A proposed plan from the latest turn is waiting for the user to approve it. */
+  readonly planAwaitingApproval?: boolean;
 }): AutoContinueDecision {
   const { state, sessionStatus } = input;
   if (state?.enabled !== true) return { action: "none" };
@@ -63,6 +65,13 @@ export function decideAutoContinue(input: {
       break;
     default:
       return { action: "none" };
+  }
+  if (input.planAwaitingApproval === true) {
+    return {
+      action: "stop",
+      reason: "plan-awaiting-approval",
+      detail: "A plan is waiting for your approval",
+    };
   }
   if (input.finalAssistantText !== null && endsWithAutonomousDoneMarker(input.finalAssistantText)) {
     return { action: "stop", reason: "done", detail: null };

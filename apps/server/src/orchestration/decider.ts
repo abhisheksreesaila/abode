@@ -1029,6 +1029,18 @@ export const decideOrchestrationCommand = Effect.fn("decideOrchestrationCommand"
           ],
         });
       }
+      // A stop must not be overwritten by a late count update from a continue
+      // that was decided before the stop landed.
+      if (
+        command.autonomous?.enabled === true &&
+        (command.autonomous.count ?? 0) > 0 &&
+        thread.autonomous?.enabled !== true
+      ) {
+        return yield* new OrchestrationCommandInvariantError({
+          commandType: command.type,
+          detail: `autonomous mode is off for thread ${command.threadId}`,
+        });
+      }
       const branch =
         command.branch !== undefined &&
         command.expectedBranch !== undefined &&

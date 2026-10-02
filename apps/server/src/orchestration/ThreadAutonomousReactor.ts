@@ -117,11 +117,25 @@ export const make = Effect.gen(function* () {
       return;
     }
 
+    const rawStatus = thread.session?.status ?? "idle";
+    // Turning it back on after a stop leaves the old error or interrupted
+    // session behind; that is not a fresh failure, so treat it as idle.
+    const sessionStatus =
+      item.kind === "enabled" && rawStatus !== "running" && rawStatus !== "starting"
+        ? "ready"
+        : rawStatus;
+    const latestTurnId = thread.latestTurn?.turnId ?? null;
     const decision = decideAutoContinue({
       state,
-      sessionStatus: thread.session?.status ?? "idle",
+      sessionStatus,
       lastError: thread.session?.lastError ?? null,
       finalAssistantText: finalAssistantTextSinceLastUserMessage(thread.messages),
+      planAwaitingApproval:
+        thread.interactionMode === "plan" &&
+        latestTurnId !== null &&
+        thread.proposedPlans.some(
+          (plan) => plan.implementedAt === null && plan.turnId === latestTurnId,
+        ),
     });
     switch (decision.action) {
       case "none":
@@ -130,12 +144,20 @@ export const make = Effect.gen(function* () {
         yield* stop(item.threadId, decision.reason, decision.detail);
         return;
       case "continue": {
-        yield* engine.dispatch({
-          type: "thread.meta.update",
-          commandId: yield* commandId(item.threadId, "count"),
-          threadId: item.threadId,
-          autonomous: { enabled: true, count: decision.nextCount, cap: state.cap },
-        });
+        // The decider refuses the count when the user switched it off after
+        // we read the thread; then nothing is sent.
+        const counted = yield* engine
+          .dispatch({
+            type: "thread.meta.update",
+            commandId: yield* commandId(item.threadId, "count"),
+            threadId: item.threadId,
+            autonomous: { enabled: true, count: decision.nextCount, cap: state.cap },
+          })
+          .pipe(
+            Effect.as(true),
+            Effect.catchTag("OrchestrationCommandInvariantError", () => Effect.succeed(false)),
+          );
+        if (!counted) return;
         const messageId = MessageId.make(
           `server:autonomous:${item.threadId}:${yield* crypto.randomUUIDv4}`,
         );
@@ -167,9 +189,9 @@ export const make = Effect.gen(function* () {
   });
 
   /**
-   * Answer a native question with its first option (or the assume-and-log
-   * instruction for free text) so the running turn is not stuck waiting for
-   * a person. A question that cannot be answered that way is left for them.
+   * Answer a native question with the assume-and-log instruction, or the
+   * first option when custom answers are not allowed, so the running turn is
+   * not stuck waiting for a person. Anything else is left for them.
    */
   const answerUserInput = Effect.fn("ThreadAutonomousReactor.answerUserInput")(function* (
     item: Extract<WorkItem, { kind: "user-input" }>,
@@ -182,11 +204,11 @@ export const make = Effect.gen(function* () {
     const answers: Record<string, string | string[]> = {};
     for (const question of requested.value.questions) {
       const first = question.options[0];
-      if (first !== undefined) {
+      if (question.allowCustomAnswer !== false) {
+        answers[question.id] = AUTONOMOUS_ASSUME_ANSWER;
+      } else if (first !== undefined) {
         const value = first.value ?? first.label;
         answers[question.id] = question.multiSelect === true ? [value] : value;
-      } else if (question.allowCustomAnswer !== false) {
-        answers[question.id] = AUTONOMOUS_ASSUME_ANSWER;
       } else {
         return;
       }
@@ -236,16 +258,21 @@ export const make = Effect.gen(function* () {
         const { threadId, session } = event.payload;
         const previous = lastStatus.get(threadId);
         lastStatus.set(threadId, session.status);
-        if (
-          (previous === "running" || previous === "starting") &&
-          TURN_ENDED_STATUSES.has(session.status)
-        ) {
-          return worker.enqueue({ kind: "turn-ended", threadId });
-        }
-        return Effect.void;
+        const wasActive = previous === "running" || previous === "starting";
+        // A bare ready (provider start-up, resume) is not a turn end, but a
+        // failure, stop or interrupt is, whatever came before it.
+        const ended =
+          session.status === "ready"
+            ? wasActive
+            : TURN_ENDED_STATUSES.has(session.status) && previous !== session.status;
+        return ended ? worker.enqueue({ kind: "turn-ended", threadId }) : Effect.void;
       }
       case "thread.turn-interrupt-requested":
-        return worker.enqueue({ kind: "interrupt-requested", threadId: event.payload.threadId });
+        // Run inline: queued work may be waiting on the ingestion drain, and
+        // the user's stop must not wait behind it.
+        return process({ kind: "interrupt-requested", threadId: event.payload.threadId }).pipe(
+          Effect.ignore,
+        );
       case "thread.meta-updated": {
         const autonomous = event.payload.autonomous;
         // Only turning it on writes count 0; later counts and stops never do.
@@ -284,7 +311,22 @@ export const make = Effect.gen(function* () {
   const start: ThreadAutonomousReactor["Service"]["start"] = Effect.fn(
     "ThreadAutonomousReactor.start",
   )(function* () {
+    // Subscribe before reading so no event falls in the gap.
     const events = yield* engine.subscribeDomainEvents;
+    // Reactors start before the orphaned-session reconcile, whose error
+    // transition for a turn that died with the server must count as a turn
+    // end. Threads that are autonomous and idle get one evaluation now.
+    const snapshot = yield* snapshots.getShellSnapshot().pipe(Effect.orDie);
+    for (const thread of snapshot.threads) {
+      const status = thread.session?.status;
+      if (status !== undefined) lastStatus.set(thread.id, status);
+      if (
+        thread.autonomous?.enabled === true &&
+        (status === undefined || status === "idle" || status === "ready")
+      ) {
+        yield* worker.enqueue({ kind: "enabled", threadId: thread.id });
+      }
+    }
     yield* forkParked(Stream.runForEach(events, processEvent));
   });
 

@@ -14,6 +14,7 @@ const STOP_REASON_TEXT = {
   error: "Stopped: the last turn failed.",
   interrupted: "Stopped: you interrupted it.",
   "rate-limited": "Stopped: a usage limit was reached.",
+  "plan-awaiting-approval": "Stopped: a plan is waiting for your approval.",
 } as const;
 
 export const AUTONOMOUS_ACCESS_WARNING =

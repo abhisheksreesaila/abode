@@ -704,6 +704,7 @@ export const ThreadAutonomousStopReason = Schema.Literals([
   "error",
   "interrupted",
   "rate-limited",
+  "plan-awaiting-approval",
 ]);
 export type ThreadAutonomousStopReason = typeof ThreadAutonomousStopReason.Type;
 
