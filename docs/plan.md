@@ -378,7 +378,7 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
 
 ### F-032: Autonomous mode
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check with a real Claude run)
 - **What:**
   - An Autonomous toggle per thread. When a Claude turn ends without a done signal (or with a question), abode replies with a continue nudge: "make reasonable assumptions, log open questions in docs/plan.md, end with your done signal". It's capped (e.g. 30 continues).
   - The thread and sidebar show its state.
