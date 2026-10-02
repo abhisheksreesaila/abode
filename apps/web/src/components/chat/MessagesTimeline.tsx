@@ -205,7 +205,7 @@ import {
   type TimelineLatestTurn,
   type WorkGroupScrollAnchor,
 } from "./MessagesTimeline.logic";
-import { simplifyRowsForMode } from "./transcriptMode.logic";
+import { resolveTurnFoldClick, simplifyRowsForMode } from "./transcriptMode.logic";
 import { toggleTranscriptMode, useTranscriptModeStore } from "./transcriptModeStore";
 import { TerminalContextInlineChip } from "./TerminalContextInlineChip";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
@@ -676,14 +676,14 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     (turnId: TurnId) => {
       suspendEndScrollMaintenanceForDisclosure(`turn-fold:${turnId}`);
       // In Simple the summary row is a doorway to the full trace.
-      const openFromSimple = useTranscriptModeStore.getState().mode === "simple";
-      if (openFromSimple) toggleTranscriptMode();
+      const mode = useTranscriptModeStore.getState().mode;
+      if (mode === "simple") toggleTranscriptMode();
       setExpandedTurnIds((existing) => {
         const next = new Set(existing);
-        if (next.has(turnId) && !openFromSimple) {
-          next.delete(turnId);
-        } else {
+        if (resolveTurnFoldClick(mode, existing.has(turnId)).expanded) {
           next.add(turnId);
+        } else {
+          next.delete(turnId);
         }
         return next;
       });

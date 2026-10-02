@@ -1,5 +1,7 @@
 import type { TimelineEntry, WorkLogEntry } from "../../session-logic";
-import type { MessagesTimelineRow } from "./MessagesTimeline.logic";
+import { omitSupersededLifecycleMarkers } from "@t3tools/client-runtime/work-log/presentation";
+import { workEntryDisplayIndicatesToolFailure } from "../../session-logic";
+import { workEntryIsVisibleInGroup, type MessagesTimelineRow } from "./MessagesTimeline.logic";
 
 /**
  * Simple reads like a report: messages, plans, questions, subagent summaries
@@ -25,26 +27,57 @@ function isWorkEntryVisibleInSimple(work: WorkLogEntry): boolean {
 
 interface TurnWorkTotals {
   toolCalls: number;
+  failed: number;
   files: Set<string>;
 }
 
+/** Counts the same entries Detailed shows as tool rows, so the summary matches. */
 function totalsByTurn(entries: ReadonlyArray<TimelineEntry>) {
-  const totals = new Map<string, TurnWorkTotals>();
+  const byTurn = new Map<string, WorkLogEntry[]>();
   for (const entry of entries) {
     if (entry.kind !== "work" || entry.entry.tone !== "tool" || !entry.entry.turnId) continue;
-    let turn = totals.get(entry.entry.turnId);
-    if (!turn) totals.set(entry.entry.turnId, (turn = { toolCalls: 0, files: new Set() }));
-    turn.toolCalls += 1;
-    for (const file of entry.entry.changedFiles ?? []) turn.files.add(file);
+    if (!workEntryIsVisibleInGroup(entry.entry)) continue;
+    const list = byTurn.get(entry.entry.turnId);
+    if (list) list.push(entry.entry);
+    else byTurn.set(entry.entry.turnId, [entry.entry]);
+  }
+  const totals = new Map<string, TurnWorkTotals>();
+  for (const [turnId, list] of byTurn) {
+    const turn: TurnWorkTotals = { toolCalls: 0, failed: 0, files: new Set() };
+    for (const work of omitSupersededLifecycleMarkers(list, (entry) => entry)) {
+      turn.toolCalls += 1;
+      if (workEntryDisplayIndicatesToolFailure(work)) turn.failed += 1;
+      for (const file of work.changedFiles ?? []) turn.files.add(file);
+    }
+    totals.set(turnId, turn);
   }
   return totals;
 }
 
-export function formatWorkSummary(label: string, toolCalls: number, files: number): string {
+export function formatWorkSummary(
+  label: string,
+  toolCalls: number,
+  files: number,
+  failed = 0,
+): string {
   const parts = [label];
   if (toolCalls > 0) parts.push(`${toolCalls} tool ${toolCalls === 1 ? "call" : "calls"}`);
   if (files > 0) parts.push(`${files} ${files === 1 ? "file" : "files"} edited`);
+  if (failed > 0) parts.push(`${failed} failed`);
   return parts.join(" \u00b7 ");
+}
+
+/**
+ * What clicking a "Worked for ..." row does. In Simple it is a doorway: switch
+ * to Detailed and keep the turn expanded. In Detailed it toggles the turn.
+ */
+export function resolveTurnFoldClick(
+  mode: TranscriptMode,
+  expanded: boolean,
+): { switchToDetailed: boolean; expanded: boolean } {
+  return mode === "simple"
+    ? { switchToDetailed: true, expanded: true }
+    : { switchToDetailed: false, expanded: !expanded };
 }
 
 /**
@@ -64,16 +97,30 @@ export function simplifyRowsForMode(
   for (const row of rows) {
     switch (row.kind) {
       case "work-toggle":
-        continue;
-      case "work":
-        if (!row.groupedEntries.some(isWorkEntryVisibleInSimple)) continue;
+        if (!row.hasFailure) continue;
         break;
+      case "work": {
+        // The expanded details of a kept live or failed group must stay, or its chevron is dead.
+        const previous = out.at(-1);
+        const detailsOfKept =
+          row.isExpandedToolGroup &&
+          previous !== undefined &&
+          (previous.kind === "work-live" || previous.kind === "work-toggle") &&
+          row.id === `${previous.groupId}:details`;
+        if (!detailsOfKept && !row.groupedEntries.some(isWorkEntryVisibleInSimple)) continue;
+        break;
+      }
       case "activity-group":
         if (!row.active) continue;
         break;
       case "turn-fold": {
         const turn = (totals ??= totalsByTurn(entries)).get(row.turnId);
-        const label = formatWorkSummary(row.label, turn?.toolCalls ?? 0, turn?.files.size ?? 0);
+        const label = formatWorkSummary(
+          row.label,
+          turn?.toolCalls ?? 0,
+          turn?.files.size ?? 0,
+          turn?.failed ?? 0,
+        );
         out.push(label === row.label ? row : { ...row, label });
         continue;
       }

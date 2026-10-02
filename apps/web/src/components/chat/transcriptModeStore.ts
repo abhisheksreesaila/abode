@@ -5,7 +5,7 @@ import {
   type TranscriptMode,
 } from "./transcriptMode.logic";
 
-const STORAGE_KEY = "abode:transcript-mode";
+const STORAGE_KEY = "abode:transcript-mode:v1";
 
 function readPersistedMode(): TranscriptMode {
   try {

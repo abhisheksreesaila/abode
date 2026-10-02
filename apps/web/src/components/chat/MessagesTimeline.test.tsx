@@ -188,8 +188,6 @@ beforeAll(async () => {
   ({ MessagesTimeline, resolvePreviewAnnotationImage } = await import("./MessagesTimeline"));
 }, 30_000);
 
-// The scroll-settling test clears every global stub; mounted timeline rows
-// still touch `window` through the tooltip's focus handling.
 // These cases cover the full transcript. Static markup reads the store's
 // initial (Simple) snapshot, so pin Detailed here; filtering has its own tests.
 vi.mock("./transcriptModeStore", () => ({
@@ -198,6 +196,8 @@ vi.mock("./transcriptModeStore", () => ({
   toggleTranscriptMode: () => {},
 }));
 
+// The scroll-settling test clears every global stub; mounted timeline rows
+// still touch `window` through the tooltip's focus handling.
 beforeEach(stubDomGlobals);
 
 const ACTIVE_THREAD_ENVIRONMENT_ID = EnvironmentId.make("environment-local");

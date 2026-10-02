@@ -5,6 +5,7 @@ import {
   DEFAULT_TRANSCRIPT_MODE,
   formatWorkSummary,
   parseTranscriptMode,
+  resolveTurnFoldClick,
   simplifyRowsForMode,
 } from "./transcriptMode.logic";
 
@@ -82,5 +83,69 @@ describe("simplifyRowsForMode", () => {
   it("formats singular counts and omits zeros", () => {
     expect(formatWorkSummary("Worked", 1, 1)).toBe("Worked · 1 tool call · 1 file edited");
     expect(formatWorkSummary("Worked", 0, 0)).toBe("Worked");
+  });
+
+  it("keeps the expanded details under a live row and a failed toggle, drops other details", () => {
+    const detail = (groupId: string) =>
+      row({
+        kind: "work",
+        id: `${groupId}:details`,
+        isExpandedToolGroup: true,
+        groupedEntries: [workEntry("d")],
+      });
+    const input: MessagesTimelineRow[] = [
+      row({ kind: "work-toggle", id: "ok-toggle", groupId: "ok", hasFailure: false }),
+      detail("ok"),
+      row({ kind: "work-live", id: "live", groupId: "g1" }),
+      detail("g1"),
+      row({ kind: "work-toggle", id: "bad-toggle", groupId: "g2", hasFailure: true }),
+      detail("g2"),
+    ];
+    expect(simplifyRowsForMode(input, [], "simple").map((r) => r.id)).toEqual([
+      "live",
+      "g1:details",
+      "bad-toggle",
+      "g2:details",
+    ]);
+  });
+
+  it("counts failures and ignores superseded or neutral entries in the summary", () => {
+    const failing = [
+      workTimeline(workEntry("ok", { label: "Read a", toolCallId: "1" })),
+      workTimeline(
+        workEntry("bad", {
+          label: "Run b",
+          toolCallId: "2",
+          tone: "tool",
+          toolLifecycleStatus: "failed",
+        }),
+      ),
+    ];
+    const fold = simplifyRowsForMode(rows, failing, "simple").find((r) => r.id === "fold");
+    expect(fold).toMatchObject({ label: expect.stringContaining("2 tool calls") });
+    expect(fold).toMatchObject({ label: expect.stringContaining("1 failed") });
+  });
+
+  it("formats a failure count", () => {
+    expect(formatWorkSummary("Worked", 3, 0, 1)).toBe("Worked \u00b7 3 tool calls \u00b7 1 failed");
+  });
+
+  it("fold click in Simple opens Detailed with the turn expanded; in Detailed it toggles", () => {
+    expect(resolveTurnFoldClick("simple", false)).toEqual({
+      switchToDetailed: true,
+      expanded: true,
+    });
+    expect(resolveTurnFoldClick("simple", true)).toEqual({
+      switchToDetailed: true,
+      expanded: true,
+    });
+    expect(resolveTurnFoldClick("detailed", true)).toEqual({
+      switchToDetailed: false,
+      expanded: false,
+    });
+    expect(resolveTurnFoldClick("detailed", false)).toEqual({
+      switchToDetailed: false,
+      expanded: true,
+    });
   });
 });
