@@ -8891,6 +8891,7 @@ export default function ChatView(props: ChatViewProps) {
     questionIndex: activePendingQuestionIndex,
     questionCount: activePendingUserInput?.questions.length ?? 1,
     onDismiss: (requestId) => void onDismissUserInput(requestId as ApprovalRequestId),
+    onPrevious: () => onPreviousActivePendingUserInputQuestion(),
     modelSelection: activeThread?.modelSelection,
     providerModels: activeProviderStatus?.models,
     runtimeMode,
@@ -9996,7 +9997,7 @@ export default function ChatView(props: ChatViewProps) {
                 pendingAsk={paintOnlyDisplayedTimeline ? null : fluentTimelineProps.pendingAsk}
                 onAnswerPendingAsk={fluentTimelineProps.onAnswerPendingAsk}
                 onDismissPendingAsk={fluentTimelineProps.onDismissPendingAsk}
-                onPreviousPendingAsk={onPreviousActivePendingUserInputQuestion}
+                onPreviousPendingAsk={fluentTimelineProps.onPreviousPendingAsk}
               />
 
               {/* scroll to end pill — shown when user has scrolled away from the live edge */}

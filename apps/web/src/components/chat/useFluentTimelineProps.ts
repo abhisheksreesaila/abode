@@ -38,6 +38,7 @@ export function useFluentTimelineProps(input: {
   questionIndex: number;
   questionCount: number;
   onDismiss: (requestId: string) => void;
+  onPrevious: () => void;
   onSelectOption: (questionId: string, optionValue: string) => void;
   onAdvance: () => void;
 }): {
@@ -45,6 +46,7 @@ export function useFluentTimelineProps(input: {
   pendingAsk: PendingAsk | null;
   onAnswerPendingAsk: (questionId: string, optionValue: string) => void;
   onDismissPendingAsk: (requestId: string) => void;
+  onPreviousPendingAsk: () => void;
 } {
   const { modelSelection, providerModels, runtimeMode, pendingRequestId, activeQuestion } = input;
   // Memoized on the derived strings, so a provider-list refresh that changes nothing visible
@@ -137,6 +139,17 @@ export function useFluentTimelineProps(input: {
     dismissRef.current = input.onDismiss;
   });
   const onDismissPendingAsk = useCallback((requestId: string) => dismissRef.current(requestId), []);
+  const previousRef = useRef(input.onPrevious);
+  useEffect(() => {
+    previousRef.current = input.onPrevious;
+  });
+  const onPreviousPendingAsk = useCallback(() => previousRef.current(), []);
 
-  return { messageIdentity, pendingAsk, onAnswerPendingAsk, onDismissPendingAsk };
+  return {
+    messageIdentity,
+    pendingAsk,
+    onAnswerPendingAsk,
+    onDismissPendingAsk,
+    onPreviousPendingAsk,
+  };
 }
