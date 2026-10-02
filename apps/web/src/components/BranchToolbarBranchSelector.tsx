@@ -60,6 +60,7 @@ import {
 } from "./ThreadStatusIndicators";
 import { Button } from "./ui/button";
 import { ComposerControl } from "./chat/ComposerControl";
+import { resolveBranchTint } from "./chat/chipTint";
 import { Switch } from "./ui/switch";
 import { getVirtualizedScrollFadeClassName } from "./ui/scroll-area";
 import {
@@ -829,7 +830,7 @@ export function BranchToolbarBranchSelector({
           onContextMenu={(event) => handleBranchContextMenu(event, resolvedActiveBranch)}
         >
           <ComboboxTrigger
-            render={<ComposerControl size="xs" />}
+            render={<ComposerControl size="xs" tint={resolveBranchTint(resolvedActiveBranch)} />}
             // No press-scale: the popup aligns live to this trigger, so a
             // momentary 0.97 shrink would drag the open popup ~3px sideways.
             className="min-w-0 max-w-full active:scale-100"

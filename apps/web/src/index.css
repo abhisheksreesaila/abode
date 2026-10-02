@@ -2249,6 +2249,43 @@ code {
   --ws-8: #d7ba7d;
 }
 
+/* Composer chip tints (F-027, components/chat/chipTint.ts). --chip-<name> is
+   the hue used for fills and borders; --chip-<name>-fg is the text color, kept
+   dark enough on light themes and light enough on dark ones to pass 4.5:1 over
+   the tinted chip. Light values are the fallback for every theme; .dark
+   (which every dark theme, abode included, sets) swaps in the VS Code hues. */
+:root {
+  --chip-danger: #d12f2f;
+  --chip-danger-fg: #a31515;
+  --chip-caution: #b58900;
+  --chip-caution-fg: #7a5c00;
+  --chip-safe: #2e8b3d;
+  --chip-safe-fg: #1e6b2c;
+  --chip-purple: #a64ca0;
+  --chip-purple-fg: #7d2f78;
+  --chip-blue: #0a7fc2;
+  --chip-blue-fg: #05588a;
+  --chip-teal: #12907b;
+  --chip-teal-fg: #0b6657;
+  --chip-claude: #d97757;
+  --chip-codex: #10a37f;
+}
+
+.dark {
+  --chip-danger: #f14c4c;
+  --chip-danger-fg: #ff8a8a;
+  --chip-caution: #cca700;
+  --chip-caution-fg: #e2c14a;
+  --chip-safe: #89d185;
+  --chip-safe-fg: #89d185;
+  --chip-purple: #c586c0;
+  --chip-purple-fg: #d9a6d5;
+  --chip-blue: #4fc1ff;
+  --chip-blue-fg: #8fd3ff;
+  --chip-teal: #4ec9b0;
+  --chip-teal-fg: #7fdcc8;
+}
+
 /* abode density: VS Code-like. Scoped to the theme id so every other theme
    keeps T3's global values. 13px UI is the 14px base scaled by 13/14, which
    also tightens rem-based row padding; controls drop to a 4px radius. */
