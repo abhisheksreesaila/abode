@@ -167,10 +167,71 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
   - [ ] User-wide and workspace items are visibly distinct.
   - [ ] An empty state links to creating the first skill or agent.
 
+## Phase 2b: from Abhishek's mockup comments (2026-10-02)
+
+Mockup version 3 shows all of these. Each ticket starts by checking what T3 already has (it already ships plan, question and tool cards, token usage, Claude usage limits and checkpoint revert) and restyles or reuses before building anything new.
+
+### F-013: Simple / Detailed transcript
+
+- **Status:** todo
+- **Depends on:** F-005
+- **What:** a Simple/Detailed toggle in the chat header, remembered globally.
+  - Simple shows only messages and the rich cards: plan checklist, questions with clickable options, a "done" summary with files changed and test results, and subagents.
+  - Detailed also shows every tool call (expandable), inline diffs and subagent detail.
+  - Everything is formatted HTML, never terminal text.
+- **Acceptance:**
+  - [ ] A real Claude turn reads like a report in Simple and shows every tool call in Detailed.
+  - [ ] Questions are answerable from the card.
+  - [ ] The toggle is also in the command palette.
+
+### F-014: Context meter
+
+- **Status:** todo
+- **What:** "Context 38% · 76k / 200k" with a thin bar in the composer footer, using the existing thread token usage. It turns amber near the limit; clicking it offers /compact.
+- **Acceptance:**
+  - [ ] It matches Claude's own context figure for the thread and updates after each turn, with no extra WebSocket traffic.
+
+### F-015: Usage limits by window
+
+- **Status:** todo
+- **What:** the status bar shows the limit closest to running out with its absolute reset time ("5h 42% · resets 3:40pm"). Clicking it opens a popover with a row per window: session 5h, weekly all models, weekly per model, and monthly spend where a provider has one. Amber at 80%, red at 95%.
+- **Acceptance:**
+  - [ ] The figures match `claude /usage` for the same account.
+  - [ ] It's reachable on web and desktop.
+
+### F-016: Edit a prompt and ask about anything
+
+- **Status:** todo
+- **What:**
+  - Hover your own message to Edit it, which rewinds to that checkpoint and re-runs. The edit is marked in history.
+  - Hover any agent card or selected text to "Ask about this", which quotes it into the composer.
+- **Acceptance:**
+  - [ ] Editing restores files to that checkpoint and re-runs.
+  - [ ] The quoted reference is sent with the next prompt and can be removed.
+
+### F-017: Provider tint and clear agent names
+
+- **Status:** todo
+- **What:**
+  - The harness/model picker gets a faint provider tint: Claude orange `#d97757` at about 12%, and Codex its own.
+  - Names are made distinct: the sidebar "Agents" (threads), "Agent types" under Customizations, and the side panel tab "Subagents".
+- **Acceptance:**
+  - [ ] The tint matches the mockup.
+  - [ ] All three labels are renamed everywhere they appear: sidebar, tab, command palette and settings.
+
+### F-018: Codex conventions in Customizations (deferred until there's a Codex subscription)
+
+- **Status:** todo
+- **What:** tag each customization with its source (Claude Code or Codex) and use that tool's real paths and frontmatter:
+  - Codex skills: `~/.codex/skills/`
+  - Codex prompts: `~/.codex/prompts/`
+  - Codex instructions: `AGENTS.md`
+  - Codex MCP: `[mcp_servers]` in `~/.codex/config.toml`
+
 ### F-012: A week of daily use
 
 - **Status:** todo
-- **Depends on:** F-002 to F-011
+- **Depends on:** F-002 to F-011 (phase 2b can follow)
 - **What:** run all Claude sessions in abode for a week, and note friction in `docs/lessons.md`.
 - **Acceptance:**
   - [ ] Abhishek says it replaced the terminals, or lists what stopped it. Then plan phase 3 (mobile via Tailscale).

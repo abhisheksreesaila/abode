@@ -805,6 +805,269 @@
     width: 43%;
     background: var(--accent);
   }
+
+  /* --- round 2: comments from Abhishek --- */
+  .win.sidebar-closed .body {
+    grid-template-columns: 0 1fr 440px;
+  }
+  .win.sidebar-closed.panel-closed .body {
+    grid-template-columns: 0 1fr;
+  }
+  .win.sidebar-closed .sidebar {
+    display: none;
+  }
+  .sb-close {
+    background: none;
+    border: 0;
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+    padding: 0 4px;
+  }
+  .sb-close:hover {
+    color: var(--fg);
+  }
+  .term {
+    display: none;
+    border-top: 1px solid var(--line);
+    background: var(--bg-side);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 12px;
+    color: var(--muted);
+    height: 120px;
+    overflow: auto;
+  }
+  .win.term-open .term {
+    display: block;
+  }
+  .win.term-open .chat {
+    grid-template-rows: 36px 1fr auto 28px 120px;
+  }
+  .term-bar .x {
+    margin-left: 8px;
+    cursor: pointer;
+    text-transform: none;
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-left: 12px;
+  }
+  .seg button {
+    font: inherit;
+    font-size: 11.5px;
+    background: none;
+    border: 0;
+    color: var(--muted);
+    padding: 2px 10px;
+    cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] {
+    background: var(--list-active);
+    color: var(--fg-strong);
+  }
+  .chat.mode-simple .detail {
+    display: none;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg-side);
+    padding: 12px 14px;
+    max-width: 72ch;
+    display: grid;
+    gap: 8px;
+    position: relative;
+  }
+  .card h3 {
+    margin: 0;
+    font-size: 13px;
+    color: var(--fg-strong);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card .tag {
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 4px;
+  }
+  .card li {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+  .card li .cb {
+    width: 14px;
+    color: var(--muted);
+  }
+  .card li.done {
+    color: var(--muted);
+  }
+  .card li.done .cb {
+    color: var(--ok);
+  }
+  .card.ask {
+    border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+  }
+  .opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .opts button {
+    font: inherit;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-input);
+    color: var(--fg);
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .opts button.rec {
+    border-color: var(--accent);
+  }
+  .files {
+    font-family: var(--mono);
+    font-size: 12px;
+    display: grid;
+    gap: 2px;
+  }
+  .files .add {
+    color: var(--ok);
+  }
+  .files .del {
+    color: var(--err);
+  }
+  .tests {
+    font-size: 12px;
+    color: var(--ok);
+  }
+  .hover-act {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+  }
+  .hover-act button {
+    font: inherit;
+    font-size: 11px;
+    color: var(--fg);
+    background: var(--bg-input);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 8px;
+    cursor: pointer;
+  }
+  .msg.user {
+    position: relative;
+    padding-right: 64px;
+  }
+  .quote {
+    margin: 8px 10px 0;
+    border-left: 2px solid var(--accent);
+    background: var(--bg-input);
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+  }
+  .quote b {
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .quote .x {
+    margin-left: auto;
+    cursor: pointer;
+  }
+  .ctx {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+  .ctx .bar {
+    width: 48px;
+  }
+  .ctx .bar i {
+    width: 38%;
+    background: var(--muted);
+  }
+  .pick.claude {
+    background: color-mix(in srgb, #d97757 12%, var(--bg-input));
+    border-color: color-mix(in srgb, #d97757 40%, var(--line));
+    color: #f0b49a;
+  }
+  .usage {
+    cursor: pointer;
+    position: relative;
+  }
+  .usage .pct {
+    color: var(--fg);
+  }
+  .pop {
+    position: absolute;
+    bottom: 26px;
+    right: 0;
+    width: 300px;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
+    padding: 10px 12px;
+    display: grid;
+    gap: 8px;
+    z-index: 5;
+    color: var(--fg);
+  }
+  .pop .r1 {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    font-size: 12px;
+  }
+  .pop .r1 .bar {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .pop .r1 small {
+    grid-column: 1 / -1;
+    color: var(--faint);
+  }
+  .pop h4 {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .src {
+    font-family: var(--ui);
+    font-size: 10px;
+    color: #f0b49a;
+    margin-left: 6px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     * {
       transition: none !important;
@@ -826,6 +1089,8 @@
   <div class="tabs" role="group" aria-label="Mockup controls">
     <button id="panel" aria-pressed="true">Side panel open</button>
     <button id="voice" aria-pressed="false">Show recording</button>
+    <button id="ask" aria-pressed="false">Show "Ask about this"</button>
+    <button id="usageBtn" aria-pressed="false">Show usage limits</button>
   </div>
 
   <div class="frame">
@@ -859,7 +1124,14 @@
         <!-- sidebar -->
         <aside class="sidebar">
           <div>
-            <div class="sb-head"><span>Agents</span><span>⋯</span></div>
+            <div class="sb-head">
+              <span>Agents</span
+              ><span
+                ><button class="sb-close" id="sbClose" title="Close sidebar (Ctrl+B)">
+                  ⟨
+                </button></span
+              >
+            </div>
             <button class="newbtn">
               ＋ New agent
               <kbd
@@ -953,13 +1225,17 @@
                 /></svg
               >Skills<span class="n">12</span>
             </div>
-            <div class="cfile sel">tdd/SKILL.md<span class="scope">user</span></div>
-            <div class="cfile">deploy/SKILL.md<span class="scope">workspace</span></div>
+            <div class="cfile sel">
+              tdd/SKILL.md<span class="src">Claude</span><span class="scope">user</span>
+            </div>
+            <div class="cfile">
+              deploy/SKILL.md<span class="src">Claude</span><span class="scope">workspace</span>
+            </div>
             <div class="citem">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
                 <circle cx="8" cy="5.5" r="2.5" />
                 <path d="M3 14c.6-2.8 2.6-4.2 5-4.2s4.4 1.4 5 4.2" /></svg
-              >Agents<span class="n">3</span>
+              >Agent types<span class="n">3</span>
             </div>
             <div class="citem">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
@@ -976,24 +1252,40 @@
         </aside>
 
         <!-- chat -->
-        <section class="chat" style="--wsc: var(--ws-1)">
+        <section class="chat mode-simple" id="chat" style="--wsc: var(--ws-1)">
           <div class="chat-head">
             <span class="chip"
               ><span class="dot" style="background: var(--wsc)"></span>finxplorer</span
             >
             <span class="title">Stability review fixes</span>
+            <span class="seg" role="group" aria-label="Transcript detail"
+              ><button id="mSimple" aria-pressed="true">Simple</button
+              ><button id="mDetail" aria-pressed="false">Detailed</button></span
+            >
             <span class="branch">⎇ abode/stability-fixes · worktree</span>
           </div>
           <div class="log">
             <div class="msg user">
               Go through the stability review findings, fix the flaky retry tests first, then the
               queue backoff. Use subagents so it goes in parallel.
+              <span class="hover-act"
+                ><button title="Edit and re-run from here">✎ Edit</button></span
+              >
             </div>
-            <div class="msg">
-              <p>Starting with the flaky tests. I'll split this into two parallel tasks.</p>
+            <div class="card">
+              <h3><span class="tag">Plan</span>Stability fixes</h3>
+              <ul>
+                <li class="done"><span class="cb">✓</span>Read the stability review findings</li>
+                <li class="done"><span class="cb">✓</span>Find the flaky retry tests (Explore)</li>
+                <li><span class="cb">◻</span>Fix the retry queue (developer subagent)</li>
+                <li><span class="cb">◻</span>Queue backoff</li>
+                <li><span class="cb">◻</span>Run the full queue test suite</li>
+              </ul>
             </div>
-            <div class="tool"><b>Read</b> docs/stability-review.md <span class="ok">✓</span></div>
-            <div class="tool">
+            <div class="tool detail">
+              <b>Read</b> docs/stability-review.md <span class="ok">✓</span>
+            </div>
+            <div class="tool detail">
               <b>Grep</b> "retry" in tests/ · 14 matches <span class="ok">✓</span>
             </div>
             <div class="spawn">
@@ -1006,8 +1298,41 @@
                 <span class="when">running 48s</span>
               </div>
             </div>
-            <div class="tool">
+            <div class="card ask">
+              <h3>
+                <span class="tag" style="color: var(--warn)">Needs you</span>How should the flaky
+                retry test be fixed?
+              </h3>
+              <div>The retry test depends on wall-clock time, so it fails on slow CI runners.</div>
+              <div class="opts">
+                <button class="rec">Inject a fake clock (recommended)</button
+                ><button>Raise the timeout to 10s</button><button>Skip it for now</button>
+              </div>
+            </div>
+            <div class="tool detail">
               <b>Edit</b> src/queue/backoff.ts +18 −6 <span class="ok">✓</span>
+            </div>
+            <div class="tool detail">
+              <b>Bash</b> vp test run tests/queue · 42 passed <span class="ok">✓</span>
+            </div>
+            <div class="card">
+              <span class="hover-act"><button>Ask about this</button></span>
+              <h3><span class="tag" style="color: var(--ok)">Done</span>Queue backoff</h3>
+              <div>
+                Retries now back off exponentially with jitter (250ms to 30s), so a burst of
+                failures no longer hammers Plaid.
+              </div>
+              <div class="files">
+                <span
+                  >src/queue/backoff.ts <span class="add">+18</span>
+                  <span class="del">−6</span></span
+                >
+                <span
+                  >tests/queue/backoff.test.ts <span class="add">+34</span>
+                  <span class="del">−0</span></span
+                >
+              </div>
+              <div class="tests">✓ 42 tests passed · 0 failed</div>
             </div>
           </div>
           <div class="composer">
@@ -1016,8 +1341,12 @@
                 ><span class="dot" style="background: var(--ws-1)"></span>finxplorer
                 <span class="caret">▼</span></span
               >
-              <span class="pick">Claude · Opus 5.5 <span class="caret">▼</span></span>
+              <span class="pick claude">Claude · Opus 5.5 <span class="caret">▼</span></span>
               <span class="pick">Worktree <span class="caret">▼</span></span>
+            </div>
+            <div class="quote" id="quote" hidden>
+              <span>Asking about</span><b>Done · Queue backoff</b
+              ><span class="x" title="Remove">✕</span>
             </div>
             <div class="input" id="input">
               <span class="ghost"
@@ -1032,6 +1361,9 @@
               <span class="pick">Auto-accept edits <span class="caret">▼</span></span>
               <span class="hint">/ commands · $ skills · @ files</span>
               <span class="spacer"></span>
+              <span class="ctx" title="Context window. Click to compact."
+                ><span class="bar"><i></i></span>Context 38% · 76k / 200k</span
+              >
               <button class="mic" id="mic" title="Hold to talk (Ctrl+Shift+Space)">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
                   <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" />
@@ -1042,8 +1374,14 @@
             </div>
           </div>
           <div class="term-bar">
-            <span class="on">Terminal</span><span>Output</span
-            ><span style="margin-left: auto">Ctrl J</span>
+            <span class="on" id="termTab" style="cursor: pointer">Terminal</span><span>Output</span
+            ><span style="margin-left: auto">Ctrl J</span
+            ><span class="x" id="termClose" title="Close terminal (Ctrl+J)">✕</span>
+          </div>
+          <div class="term">
+            ~/Projects/finxplorer (abode/stability-fixes) $ vp test run tests/queue<br />✓
+            tests/queue/backoff.test.ts (12)<br />✓ tests/queue/retry.test.ts (30)<br />Test Files 2
+            passed · Tests 42 passed
           </div>
         </section>
 
@@ -1053,7 +1391,7 @@
             <div class="ptab on">Editor</div>
             <div class="ptab">Browser</div>
             <div class="ptab">Diff</div>
-            <div class="ptab">Agents</div>
+            <div class="ptab">Subagents</div>
             <div class="end">
               <button class="ico" title="Close side panel (Ctrl+Alt+B)">✕</button>
             </div>
@@ -1093,13 +1431,59 @@
         <span>⎇ abode/stability-fixes</span>
         <span>3 agents running · 1 needs you</span>
         <span class="r"
-          ><span>Voice: whisper base.en · offline</span><span>Claude Max · 42% of 5h</span></span
+          ><span>Voice: whisper base.en · offline</span
+          ><span class="usage" id="usage"
+            >Claude Max · <span class="pct">5h 42%</span> · resets 3:40pm
+            <span class="pop" id="pop" hidden>
+              <h4>Claude Max usage</h4>
+              <span class="r1"
+                ><span>Session (5h), all models</span><span>42%</span
+                ><span class="bar"><i style="width: 42%"></i></span
+                ><small>resets today 3:40pm</small></span
+              >
+              <span class="r1"
+                ><span>Weekly, all models</span><span>61%</span
+                ><span class="bar"><i style="width: 61%"></i></span
+                ><small>resets Mon 9:00am</small></span
+              >
+              <span class="r1"
+                ><span>Weekly, Opus</span><span style="color: var(--warn)">83%</span
+                ><span class="bar"><i style="width: 83%; background: var(--warn)"></i></span
+                ><small>resets Mon 9:00am</small></span
+              >
+            </span></span
+          ></span
         >
       </div>
     </div>
   </div>
 
   <div class="notes">
+    <div class="note">
+      <h2>Round 2 (from your comments)</h2>
+      <ul>
+        <li>
+          Each drawer has its own close: ⟨ on the sidebar, ✕ on the terminal and the side panel. The
+          three title bar toggles work.
+        </li>
+        <li>
+          The chat reads like a report. Simple shows plan, question and done cards; Detailed adds
+          every tool call.
+        </li>
+        <li>
+          Hover your own message to Edit it, which re-runs from there. Hover any card to "Ask about
+          this".
+        </li>
+        <li>
+          The context meter sits by the mic, and the status bar shows the limit closest to running
+          out (click it for all windows).
+        </li>
+        <li>
+          The Claude picker is tinted orange. Names are now distinct: "Agents" in the sidebar are
+          your threads, "Agent types" are definition files, and "Subagents" is the live tab.
+        </li>
+      </ul>
+    </div>
     <div class="note">
       <h2>Voice states</h2>
       <div class="states">
@@ -1153,6 +1537,50 @@
   const win = document.getElementById("win");
   const panel = document.getElementById("panel"),
     voice = document.getElementById("voice");
+  const chat = document.getElementById("chat");
+  const setMode = (simple) => {
+    chat.classList.toggle("mode-simple", simple);
+    document.getElementById("mSimple").setAttribute("aria-pressed", String(simple));
+    document.getElementById("mDetail").setAttribute("aria-pressed", String(!simple));
+  };
+  document.getElementById("mSimple").onclick = () => setMode(true);
+  document.getElementById("mDetail").onclick = () => setMode(false);
+  const toggleSidebar = () => win.classList.toggle("sidebar-closed");
+  document.getElementById("sbClose").onclick = toggleSidebar;
+  const tb = document.querySelectorAll(".toggles .ico");
+  tb[0].onclick = () => {
+    toggleSidebar();
+    tb[0].classList.toggle("on", !win.classList.contains("sidebar-closed"));
+  };
+  const toggleTerm = () => {
+    const o = win.classList.toggle("term-open");
+    tb[1].classList.toggle("on", o);
+  };
+  tb[1].onclick = toggleTerm;
+  document.getElementById("termTab").onclick = toggleTerm;
+  document.getElementById("termClose").onclick = () => {
+    win.classList.remove("term-open");
+    tb[1].classList.remove("on");
+  };
+  const askBtn = document.getElementById("ask"),
+    quote = document.getElementById("quote");
+  const setAsk = (on) => {
+    quote.hidden = !on;
+    askBtn.setAttribute("aria-pressed", String(on));
+  };
+  askBtn.onclick = () => setAsk(quote.hidden);
+  quote.querySelector(".x").onclick = () => setAsk(false);
+  document
+    .querySelectorAll(".card .hover-act button")
+    .forEach((b) => (b.onclick = () => setAsk(true)));
+  const usageBtn = document.getElementById("usageBtn"),
+    pop = document.getElementById("pop");
+  const setPop = (on) => {
+    pop.hidden = !on;
+    usageBtn.setAttribute("aria-pressed", String(on));
+  };
+  usageBtn.onclick = () => setPop(pop.hidden);
+  document.getElementById("usage").onclick = () => setPop(pop.hidden);
   const togglePanel = () => {
     const open = win.classList.toggle("panel-closed");
     panel.setAttribute("aria-pressed", String(!open));
