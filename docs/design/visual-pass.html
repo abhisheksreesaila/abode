@@ -615,12 +615,13 @@
     width: 12px;
     height: 12px;
   }
-  .chip.agent {
+  .chip.agent { background: var(--input); border-color: var(--line); color: var(--fg); }
+  .chip.agent::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--claude); }
     background: color-mix(in srgb, var(--claude) 12%, var(--input));
     border-color: color-mix(in srgb, var(--claude) 40%, var(--line));
     color: #f0b49a;
   }
-  .chip.danger {
+  .chip.danger { background: rgb(241 76 76 / .16); border-color: rgb(241 76 76 / .6); color: #ff8a8a; font-weight: 600; }
     background: rgb(244 135 113 / 0.14);
     border-color: rgb(244 135 113 / 0.45);
     color: #f6a291;
@@ -990,7 +991,7 @@
       <div class="cbox">
         <div class="cin">Ask, or hold Ctrl Shift Space to talk</div>
         <div class="cfoot">
-          <span class="chip agent">🧠 Orchestrator · Opus 5.5</span>
+          <span class="chip agent">Orchestrator · Opus 5.5</span>
           <span class="chip danger"
             ><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M8 1.5 15 14H1z" />
@@ -1026,7 +1027,10 @@
         <div>
           <span class="chip worktree">worktree</span>Teal: an isolated worktree, safe to experiment
         </div>
-        <div><span class="chip agent">Claude</span>Orange: the provider, as now</div>
+        <div>
+          <span class="chip agent">Claude</span>Neutral chip with an orange dot, so it never
+          competes with the red
+        </div>
         <div><span class="send">Send</span>Blue: the one primary action</div>
       </div>
     </div>
