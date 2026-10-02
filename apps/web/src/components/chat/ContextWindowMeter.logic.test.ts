@@ -2,9 +2,11 @@ import { ProviderDriverKind, ProviderInstanceId, type ServerProvider } from "@t3
 import { describe, expect, it } from "vite-plus/test";
 import { deriveProviderInstanceEntries } from "../../providerInstances";
 import {
+  formatContextMeterLabel,
   formatContextWindowCompactionMessage,
   hasAvailableCompactionProvider,
   hasDismissedResumeCompaction,
+  resolveContextMeterTone,
   resolveContextWindowModelDisplayName,
   shouldOfferResumeCompaction,
   shouldReserveContextWindowMeter,
@@ -284,5 +286,28 @@ describe("shouldReserveContextWindowMeter", () => {
     expect(shouldReserveContextWindowMeter({ ...loadingStartedThread, meterEnabled: false })).toBe(
       false,
     );
+  });
+});
+
+describe("context meter bar", () => {
+  it("formats the label like Claude's own figure", () => {
+    expect(
+      formatContextMeterLabel({ usedPercentage: 38, usedTokens: 76_000, maxTokens: 200_000 }),
+    ).toEqual({ percent: "Context 38%", tokens: "76k / 200k" });
+  });
+
+  it("shows only the token count when the window size is unknown", () => {
+    expect(
+      formatContextMeterLabel({ usedPercentage: null, usedTokens: 76_000, maxTokens: null }),
+    ).toEqual({ percent: "Context 76k", tokens: null });
+  });
+
+  it("turns amber near the limit and red when nearly full", () => {
+    expect(resolveContextMeterTone(38)).toBe("normal");
+    expect(resolveContextMeterTone(74.9)).toBe("normal");
+    expect(resolveContextMeterTone(75)).toBe("warning");
+    expect(resolveContextMeterTone(90)).toBe("warning");
+    expect(resolveContextMeterTone(90.1)).toBe("critical");
+    expect(resolveContextMeterTone(null)).toBe("normal");
   });
 });

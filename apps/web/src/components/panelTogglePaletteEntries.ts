@@ -22,7 +22,16 @@ export const PANEL_TOGGLE_PALETTE_ENTRIES = [
   {
     target: "rightPanel",
     title: "Toggle side panel",
-    searchTerms: ["side panel", "right panel", "agents", "preview", "files", "hide", "show"],
+    searchTerms: [
+      "side panel",
+      "right panel",
+      "agents",
+      "subagents",
+      "preview",
+      "files",
+      "hide",
+      "show",
+    ],
     shortcutCommand: "rightPanel.toggle",
     Icon: PanelRightIcon,
   },

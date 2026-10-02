@@ -6303,13 +6303,18 @@ export default function ChatView(props: ChatViewProps) {
       ),
       title: working
         ? liveCount > 0
-          ? `${liveCount} ${liveCount === 1 ? "agent" : "agents"} working`
+          ? `${liveCount} ${liveCount === 1 ? "subagent" : "subagents"} working`
           : "Background work"
         : "Monitoring",
       actions: (
         <>
           {showViewAgents ? (
-            <Button size="xs" variant="ghost" aria-label="View agents" onClick={addAgentsSurface}>
+            <Button
+              size="xs"
+              variant="ghost"
+              aria-label="View subagents"
+              onClick={addAgentsSurface}
+            >
               View
             </Button>
           ) : null}
