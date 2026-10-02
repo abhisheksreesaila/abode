@@ -136,6 +136,7 @@ describe("threadSquareTone", () => {
   it("maps thread status labels to the three squares plus done", () => {
     expect(threadSquareTone("Working")).toBe("running");
     expect(threadSquareTone("Connecting")).toBe("running");
+    expect(threadSquareTone("Auto")).toBe("running");
     expect(threadSquareTone("Pending Approval")).toBe("needs-you");
     expect(threadSquareTone("Plan Ready")).toBe("needs-you");
     expect(threadSquareTone("Completed")).toBe("done");
