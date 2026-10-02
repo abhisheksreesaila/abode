@@ -1,6 +1,6 @@
-# ABode 🏡
+# abode 🏡
 
-**ABode is my personal fork of [T3 Code](https://github.com/pingdotgg/t3code).** It's one home for all my workspaces and coding agents. I use it every day to run them (Claude Code first, Codex later).
+**abode is my personal fork of [T3 Code](https://github.com/pingdotgg/t3code).** It's one home for all my workspaces and coding agents. I use it every day to run them (Claude Code first, Codex later).
 
 I'm adding the things I missed from VS Code's agents window:
 - local voice dictation

@@ -1,4 +1,4 @@
-# ABode plan (phases 1–2)
+# abode plan (phases 1–2)
 
 <!--
 Format: one ticket per vertical slice, each independently shippable.
@@ -55,7 +55,7 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
   - [ ] Abhishek approves the artboards.
   - [ ] A short handoff is written for F-005 to F-011.
 
-### F-005: ABode theme
+### F-005: abode theme
 - **Status:** todo
 - **Depends on:** F-004
 - **What:** a VS Code Dark Modern–style palette and density, added as a new built-in theme in its own file and registered with a small hook. Selectable in Settings → Appearance and set as the default.
@@ -127,6 +127,6 @@ Brief: docs/brief.md. Rule: server/contract changes are add-only.
 ### F-012: A week of daily use
 - **Status:** todo
 - **Depends on:** F-002 to F-011
-- **What:** run all Claude sessions in ABode for a week, and note friction in `docs/lessons.md`.
+- **What:** run all Claude sessions in abode for a week, and note friction in `docs/lessons.md`.
 - **Acceptance:**
   - [ ] Abhishek says it replaced the terminals, or lists what stopped it. Then plan phase 3 (mobile via Tailscale).

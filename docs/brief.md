@@ -1,6 +1,6 @@
 Status: approved (2026-10-01)
 
-# ABode: product brief (phases 1–2)
+# abode: product brief (phases 1–2)
 
 ## Why (the mission)
 - **Why this exists:** one window where I talk to all my coding agents across every workspace, so I stop juggling terminals and workspace switches.
@@ -38,7 +38,7 @@ Status: approved (2026-10-01)
 - **The screen that matters:** the main window, meaning sidebar, chat and a closable side panel. There I pick a workspace, speak a prompt, and glance at which agents are busy.
 
 ## How we'll know it worked
-- **Signal:** after a week, I run all my Claude sessions in ABode instead of separate terminals.
+- **Signal:** after a week, I run all my Claude sessions in abode instead of separate terminals.
 - **Done for phases 1–2:**
   - Voice works offline in the desktop app.
   - The phase 2 layout is in daily use.
