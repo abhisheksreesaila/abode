@@ -226,6 +226,13 @@ import {
   type ProviderInstanceEntry,
 } from "../providerInstances";
 import { useThreadRunningTerminalIds } from "../state/terminalSessions";
+import { SidebarSubagentRows } from "./sidebar/SidebarSubagentRows";
+import { buildWorkspaceColorMenuItem } from "./sidebar/workspaceColor";
+import { useProjectWorkspaceColor, workspaceBarStyle } from "./sidebar/workspaceColorHooks";
+import {
+  applyWorkspaceColorMenuChoice,
+  useEnsureWorkspaceColors,
+} from "./sidebar/workspaceColorStore";
 import { stackedThreadToast, toastManager } from "./ui/toast";
 import { Button, InlineButton } from "./ui/button";
 import {
@@ -1009,6 +1016,10 @@ const dropVerbBadge: Record<SidebarDropVerb, ReactNode> = {
   ),
 };
 
+// Workspace color marker (abode F-006): a 3px bar on the row's left edge.
+const workspaceColorBarClassName =
+  "relative before:absolute before:inset-y-0.5 before:left-0 before:w-[3px] before:rounded-full before:bg-(--workspace-color,transparent) before:content-['']";
+
 const SidebarThreadRow = memo(function SidebarThreadRow(props: {
   thread: SidebarThreadSummary;
   variant: "card" | "slim";
@@ -1098,6 +1109,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
   );
   const threadKey = scopedThreadKey(threadRef);
   const { leaseLiveStatus, rowRef } = useSidebarRowSubscriptionLease(props.isActive);
+  const workspaceColor = useProjectWorkspaceColor(props.project);
   const isRegeneratingTitle = thread.titleRegeneration != null;
   const lastVisitedAt = useUiStateStore((state) => state.threadLastVisitedAtById[threadKey]);
   const isSelected = useThreadSelectionStore((state) => state.selectedThreadKeys.has(threadKey));
@@ -1646,8 +1658,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
         className={cn(
           // Matches the h-9 row so unrendered rows never shift the list when they paint.
           "list-none [content-visibility:auto] [contain-intrinsic-size:auto_36px]",
-          sortable?.isDragging && "relative z-20",
+          workspaceColorBarClassName,
+          sortable?.isDragging && "z-20",
         )}
+        style={workspaceBarStyle(workspaceColor)}
       >
         <Tooltip disabled={sortable?.isDragging}>
           <TooltipTrigger
@@ -1802,8 +1816,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
       className={cn(
         // Matches the h-[4.875rem] content box; the py-0.5 padding is added on top.
         "list-none py-0.5 [content-visibility:auto] [contain-intrinsic-size:auto_78px]",
-        sortable?.isDragging && "relative z-20",
+        workspaceColorBarClassName,
+        sortable?.isDragging && "z-20",
       )}
+      style={workspaceBarStyle(workspaceColor)}
     >
       <Tooltip disabled={snoozeMenuOpen || sortable?.isDragging}>
         <TooltipTrigger
@@ -2047,6 +2063,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
         </TooltipTrigger>
         {detailsTooltip}
       </Tooltip>
+      <SidebarSubagentRows
+        thread={thread}
+        isActive={props.isActive}
+        guideColor={workspaceColor?.color}
+      />
     </li>
   );
 });
@@ -2392,6 +2413,7 @@ export default function Sidebar() {
     () => sortLogicalProjectsForSidebar(unsortedProjectGroups, threads, sidebarProjectSortOrder),
     [sidebarProjectSortOrder, threads, unsortedProjectGroups],
   );
+  useEnsureWorkspaceColors(unsortedProjectGroups.map((group) => group.projectKey));
   const projectGroupsRef = useRef(projectGroups);
   projectGroupsRef.current = projectGroups;
   const serverConfigs = useAtomValue(environmentServerConfigsAtom);
@@ -4218,35 +4240,47 @@ export default function Sidebar() {
           ) ?? null;
         const clicked = await settlePromise(() =>
           api.contextMenu.show(
-            buildThreadActionMenuItems({
-              branch: thread.branch ?? null,
-              projectFilter: threadProjectGroup
-                ? {
-                    label: threadProjectGroup.displayName,
-                    isActive: projectScopeKey === threadProjectGroup.projectKey,
-                  }
-                : null,
-              isPinned,
-              isSettled,
-              autoSettleEnabled: thread.autoSettleDisabledAt == null,
-              isSnoozed,
-              canSnoozeNow: canSnooze(thread, { now: new Date().toISOString() }),
-              isRegeneratingTitle,
-              isRunning:
-                thread.session?.status === "running" && thread.session.activeTurnId != null,
-              supports: {
-                settlement: supportsSettlement,
-                autoSettleOptOut: supportsAutoSettleOptOut,
-                snooze: supportsSnooze,
-                pinning: supportsPinning,
-                titleRegeneration: supportsTitleRegeneration,
-              },
-              snoozePresets,
-            }),
+            [
+              ...buildThreadActionMenuItems({
+                branch: thread.branch ?? null,
+                projectFilter: threadProjectGroup
+                  ? {
+                      label: threadProjectGroup.displayName,
+                      isActive: projectScopeKey === threadProjectGroup.projectKey,
+                    }
+                  : null,
+                isPinned,
+                isSettled,
+                autoSettleEnabled: thread.autoSettleDisabledAt == null,
+                isSnoozed,
+                canSnoozeNow: canSnooze(thread, { now: new Date().toISOString() }),
+                isRegeneratingTitle,
+                isRunning:
+                  thread.session?.status === "running" && thread.session.activeTurnId != null,
+                supports: {
+                  settlement: supportsSettlement,
+                  autoSettleOptOut: supportsAutoSettleOptOut,
+                  snooze: supportsSnooze,
+                  pinning: supportsPinning,
+                  titleRegeneration: supportsTitleRegeneration,
+                },
+                snoozePresets,
+              }),
+              ...(threadProjectGroup
+                ? [{ ...buildWorkspaceColorMenuItem(), separatorBefore: true }]
+                : []),
+            ],
             position,
           ),
         );
         if (clicked._tag === "Failure") return;
+        if (
+          clicked.value &&
+          threadProjectGroup &&
+          applyWorkspaceColorMenuChoice(threadProjectGroup.projectKey, clicked.value)
+        ) {
+          return;
+        }
         if (clicked.value?.startsWith("snooze:")) {
           const preset =
             clicked.value === "snooze:custom"

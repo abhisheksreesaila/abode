@@ -25,6 +25,7 @@ import {
 import { createPortal } from "react-dom";
 import GitActionsControl from "../GitActionsControl";
 import { isTrailingDoubleClick } from "../Sidebar.logic";
+import { useProjectWorkspaceColor } from "../sidebar/workspaceColorHooks";
 import { type DraftId } from "~/composerDraftStore";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { toastManager } from "../ui/toast";
@@ -196,6 +197,7 @@ export const ChatHeader = memo(function ChatHeader({
   if (!actionsCollapsed && actionsOpen) setActionsOpen(false);
   const primaryEnvironmentId = usePrimaryEnvironmentId();
   const activeProjectName = activeProject?.title;
+  const workspaceColor = useProjectWorkspaceColor(activeProject);
   const activeProjectCwd = activeProject?.workspaceRoot ?? null;
   const fileScripts = useT3ProjectFileScripts(
     activeThreadEnvironmentId,
@@ -417,7 +419,13 @@ export const ChatHeader = memo(function ChatHeader({
                       type="button"
                       aria-label={`New thread in ${activeProjectName}`}
                       onClick={onNewThreadInProject}
-                      className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                      className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                      // Workspace chip (abode F-006): the project's color as a tinted pill.
+                      style={
+                        workspaceColor
+                          ? { backgroundColor: workspaceColor.tint, color: workspaceColor.color }
+                          : undefined
+                      }
                     />
                   }
                 >

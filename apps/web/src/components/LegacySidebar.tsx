@@ -200,6 +200,13 @@ import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useIsMobile } from "~/hooks/useMediaQuery";
 import { CommandDialogTrigger } from "./ui/command";
 import { useClientSettings, useUpdateClientSettings } from "~/hooks/useSettings";
+import { SidebarSubagentRows } from "./sidebar/SidebarSubagentRows";
+import { buildWorkspaceColorMenuItem } from "./sidebar/workspaceColor";
+import {
+  applyWorkspaceColorMenuChoice,
+  useEnsureWorkspaceColors,
+} from "./sidebar/workspaceColorStore";
+import { useWorkspaceColorStyle } from "./sidebar/workspaceColorHooks";
 import { primaryServerKeybindingsAtom } from "../state/server";
 import {
   derivePhysicalProjectKey,
@@ -1045,11 +1052,14 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
   } = props;
   const showMoreButtonRender = useMemo(() => <button type="button" />, []);
   const showLessButtonRender = useMemo(() => <button type="button" />, []);
+  const workspaceColor = useWorkspaceColorStyle(projectKey);
 
   return (
     <SidebarMenuSub
       ref={attachThreadListAutoAnimateRef}
       className="mx-0.5 my-0 w-full translate-x-0 overflow-hidden sm:mx-1"
+      // Workspace guide line (abode F-006).
+      style={workspaceColor ? { borderLeftColor: workspaceColor.color } : undefined}
     >
       {shouldShowThreadPanel && showEmptyThreadState ? (
         <SidebarMenuSubItem className="w-full" data-thread-selection-safe>
@@ -1065,34 +1075,41 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
         renderedThreads.map((thread) => {
           const threadKey = scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id));
           return (
-            <SidebarThreadRow
-              key={threadKey}
-              thread={thread}
-              orderedProjectThreadKeys={orderedProjectThreadKeys}
-              isActive={activeRouteThreadKey === threadKey}
-              openPullRequestsInRightPanel={openPullRequestsInRightPanel}
-              jumpLabel={threadJumpLabelByKey.get(threadKey) ?? null}
-              appSettingsConfirmThreadArchive={appSettingsConfirmThreadArchive}
-              renamingThreadKey={renamingThreadKey}
-              renamingTitle={renamingTitle}
-              setRenamingTitle={setRenamingTitle}
-              startThreadRename={startThreadRename}
-              renamingInputRef={renamingInputRef}
-              renamingCommittedRef={renamingCommittedRef}
-              confirmingArchiveThreadKey={confirmingArchiveThreadKey}
-              setConfirmingArchiveThreadKey={setConfirmingArchiveThreadKey}
-              confirmArchiveButtonRefs={confirmArchiveButtonRefs}
-              handleThreadClick={handleThreadClick}
-              navigateToThread={navigateToThread}
-              onFileDropThreads={onFileDropThreads}
-              handleMultiSelectContextMenu={handleMultiSelectContextMenu}
-              handleThreadContextMenu={handleThreadContextMenu}
-              clearSelection={clearSelection}
-              commitRename={commitRename}
-              cancelRename={cancelRename}
-              attemptArchiveThread={attemptArchiveThread}
-              openPrLink={openPrLink}
-            />
+            <React.Fragment key={threadKey}>
+              <SidebarThreadRow
+                thread={thread}
+                orderedProjectThreadKeys={orderedProjectThreadKeys}
+                isActive={activeRouteThreadKey === threadKey}
+                openPullRequestsInRightPanel={openPullRequestsInRightPanel}
+                jumpLabel={threadJumpLabelByKey.get(threadKey) ?? null}
+                appSettingsConfirmThreadArchive={appSettingsConfirmThreadArchive}
+                renamingThreadKey={renamingThreadKey}
+                renamingTitle={renamingTitle}
+                setRenamingTitle={setRenamingTitle}
+                startThreadRename={startThreadRename}
+                renamingInputRef={renamingInputRef}
+                renamingCommittedRef={renamingCommittedRef}
+                confirmingArchiveThreadKey={confirmingArchiveThreadKey}
+                setConfirmingArchiveThreadKey={setConfirmingArchiveThreadKey}
+                confirmArchiveButtonRefs={confirmArchiveButtonRefs}
+                handleThreadClick={handleThreadClick}
+                navigateToThread={navigateToThread}
+                onFileDropThreads={onFileDropThreads}
+                handleMultiSelectContextMenu={handleMultiSelectContextMenu}
+                handleThreadContextMenu={handleThreadContextMenu}
+                clearSelection={clearSelection}
+                commitRename={commitRename}
+                cancelRename={cancelRename}
+                attemptArchiveThread={attemptArchiveThread}
+                openPrLink={openPrLink}
+              />
+              <SidebarSubagentRows
+                thread={thread}
+                isActive={activeRouteThreadKey === threadKey}
+                guideColor={workspaceColor?.color}
+                asListItem
+              />
+            </React.Fragment>
           );
         })}
 
@@ -1171,6 +1188,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
     isManualProjectSorting,
     dragHandleProps,
   } = props;
+  const workspaceColor = useWorkspaceColorStyle(project.projectKey);
   const environmentMachine = project.allRemoteMembersAreWsl
     ? "linux"
     : project.allRemoteMembersAreDesktopLocal
@@ -1764,6 +1782,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
             buildTargetedItem("rename", "Rename"),
             buildTargetedItem("grouping", "Group into..."),
             buildTargetedItem("copy-path", "Copy Path"),
+            buildWorkspaceColorMenuItem(),
             { id: "project-settings", label: "Project settings", icon: "settings" },
             buildTargetedItem("delete", "Remove", {
               destructive: true,
@@ -1776,6 +1795,10 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         );
 
         if (!clicked) {
+          return;
+        }
+
+        if (applyWorkspaceColorMenuChoice(project.projectKey, clicked)) {
           return;
         }
 
@@ -2365,7 +2388,18 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
 
   return (
     <>
-      <div className="group/project-header relative">
+      <div
+        className="group/project-header relative rounded-sm"
+        // Option B: tinted row with a 3px workspace-color left border.
+        style={
+          workspaceColor
+            ? {
+                backgroundColor: workspaceColor.tint,
+                borderLeft: `3px solid ${workspaceColor.color}`,
+              }
+            : undefined
+        }
+      >
         <SidebarMenuButton
           ref={isManualProjectSorting ? dragHandleProps?.setActivatorNodeRef : undefined}
           className={isManualProjectSorting ? "cursor-grab active:cursor-grabbing" : undefined}
@@ -3412,6 +3446,7 @@ export default function LegacySidebar() {
     () => sidebarThreads.filter((thread) => thread.archivedAt === null),
     [sidebarThreads],
   );
+  useEnsureWorkspaceColors(sidebarProjects.map((project) => project.projectKey));
   const sortedProjects = useMemo(() => {
     const sortableProjects = sidebarProjects.map((project) => ({
       ...project,

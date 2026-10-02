@@ -68,6 +68,5 @@ export function useEnsureWorkspaceColors(projectKeys: ReadonlyArray<string>): vo
   useEffect(() => {
     useWorkspaceColorStore.getState().ensureAssigned(projectKeys);
     // The signature stands in for the list identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
 }

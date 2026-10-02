@@ -67,7 +67,7 @@ export function hashWorkspaceColorIndex(key: string): number {
  * to return to the assigned slot.
  */
 export function nextAutoColorIndex(assigned: Readonly<Record<string, number>>): number {
-  const counts = new Array<number>(WORKSPACE_COLORS.length).fill(0);
+  const counts = Array.from({ length: WORKSPACE_COLORS.length }, () => 0);
   for (const index of Object.values(assigned)) {
     if (isValidIndex(index)) counts[index]! += 1;
   }
