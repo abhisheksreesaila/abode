@@ -2,18 +2,16 @@ import type { ScopedThreadRef } from "@t3tools/contracts";
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { useEffect, useRef } from "react";
 
-import { requestPanelToggle } from "../../panelToggleBus";
 import { readThreadPreviewState, useThreadPreviewState } from "../../previewStateStore";
 import { selectThreadRightPanelState, useRightPanelStore } from "../../rightPanelStore";
 import { previewEnvironment } from "../../state/preview";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../../terminalUiStateStore";
+import { restoreWorkspaceDrawer } from "../../workspaceDrawerRestore";
 import {
-  planWorkspaceDrawerRestore,
   recordFromThread,
   useWorkspaceDrawerStore,
   type ThreadDrawerSnapshot,
-  type WorkspaceDrawerTab,
 } from "../../workspaceDrawerStore";
 import { openPreviewSession } from "../preview/openPreviewSession";
 
@@ -29,24 +27,13 @@ function readThreadSnapshot(threadRef: ScopedThreadRef): ThreadDrawerSnapshot {
   };
 }
 
-function activateTab(threadRef: ScopedThreadRef, tab: WorkspaceDrawerTab): void {
-  const store = useRightPanelStore.getState();
-  switch (tab.kind) {
-    case "files":
-    case "diff":
-      store.open(threadRef, tab.kind);
-      return;
-    case "file":
-      store.openFile(threadRef, tab.relativePath);
-      return;
-    case "preview": {
-      const surface = selectThreadRightPanelState(store.byThreadKey, threadRef).surfaces.find(
-        (entry) => entry.kind === "preview",
-      );
-      if (surface) store.activateSurface(threadRef, surface.id);
-      return;
-    }
-  }
+/** True when the thread's drawer, terminal or browser URL differs from `baseline`. */
+function changedSince(current: ThreadDrawerSnapshot, baseline: ThreadDrawerSnapshot): boolean {
+  return (
+    current.panel !== baseline.panel ||
+    current.terminalOpen !== baseline.terminalOpen ||
+    current.browserUrl !== baseline.browserUrl
+  );
 }
 
 /**
@@ -55,12 +42,15 @@ function activateTab(threadRef: ScopedThreadRef, tab: WorkspaceDrawerTab): void 
  * (2) copies later drawer, terminal and browser changes back into the
  * workspace record. Every toggle (keybinding, palette, status bar, close
  * button) goes through the thread stores, so recording at the store level
- * covers them all.
+ * covers them all. Recording only reacts to changes made after the restore,
+ * so a thread that was left as it was (sheet layout) never overwrites the
+ * workspace's choice.
  */
 export function WorkspaceDrawerSync(props: {
   threadRef: ScopedThreadRef;
   workspaceKey: string;
   configuredPreviewUrls: ReadonlyArray<string>;
+  sheetLayout: boolean;
 }) {
   const { threadRef, workspaceKey } = props;
   const threadKey = scopedThreadKey(threadRef);
@@ -70,8 +60,8 @@ export function WorkspaceDrawerSync(props: {
   useEffect(() => {
     latest.current = { props, openPreview };
   });
-  // The thread whose drawer has been reconciled with its workspace; recording waits for it.
-  const syncedThreadKey = useRef<string | null>(null);
+  // Set once the thread has been reconciled with its workspace; recording waits for it.
+  const baseline = useRef<ThreadDrawerSnapshot | null>(null);
   const preview = useThreadPreviewState(threadRef);
   const previewUrl =
     preview.snapshot && preview.snapshot.navStatus._tag !== "Idle"
@@ -81,90 +71,80 @@ export function WorkspaceDrawerSync(props: {
   useEffect(() => {
     let cancelled = false;
     const { threadRef } = latest.current.props;
-    syncedThreadKey.current = null;
-    const { configuredPreviewUrls } = latest.current.props;
-    const record = useWorkspaceDrawerStore.getState().byWorkspaceKey[workspaceKey];
+    baseline.current = null;
 
-    const finish = () => {
-      if (cancelled) return;
-      syncedThreadKey.current = threadKey;
-      recordCurrent();
-    };
-    const recordCurrent = () => {
-      if (syncedThreadKey.current !== threadKey) return;
+    const recordIfChanged = () => {
+      const base = baseline.current;
+      if (!base) return;
+      const current = readThreadSnapshot(threadRef);
+      if (!changedSince(current, base)) return;
       const state = useWorkspaceDrawerStore.getState();
-      const next = recordFromThread(
-        state.byWorkspaceKey[workspaceKey],
-        readThreadSnapshot(threadRef),
-        Date.now(),
+      state.setRecord(
+        workspaceKey,
+        recordFromThread(state.byWorkspaceKey[workspaceKey], current, Date.now()),
       );
-      state.setRecord(workspaceKey, next);
     };
 
+    const record = useWorkspaceDrawerStore.getState().byWorkspaceKey[workspaceKey];
     const run = async () => {
-      if (!record) return;
-      const plan = planWorkspaceDrawerRestore(
+      if (!record) return { applied: true };
+      const { props: p, openPreview: open } = latest.current;
+      return restoreWorkspaceDrawer({
         record,
-        readThreadSnapshot(threadRef),
-        configuredPreviewUrls,
-      );
-      const panel = useRightPanelStore.getState();
-      if (!plan.drawerOpen) {
-        panel.close(threadRef);
-      } else {
-        if (plan.ensureFiles) panel.open(threadRef, "files");
-        if (plan.openBrowser) {
-          const { url } = plan.openBrowser;
-          if (url === null) {
-            panel.openBrowser(threadRef, null);
-          } else {
-            // The previous session of another thread cannot be shared (sessions are
-            // per thread on the server), so this reloads the saved URL once.
-            const result = await openPreviewSession({
-              openPreview: latest.current.openPreview,
-              threadRef,
-              url,
-            });
-            if (result._tag === "Success") {
-              useRightPanelStore.getState().openBrowser(threadRef, result.value.tabId);
-            } else {
-              useRightPanelStore.getState().openBrowser(threadRef, null);
-            }
-          }
-        }
-        if (cancelled) return;
-        if (plan.activate) activateTab(threadRef, plan.activate);
-        useRightPanelStore.getState().show(threadRef);
-      }
-      if (plan.terminal === "close") {
-        useTerminalUiStateStore.getState().setTerminalOpen(threadRef, false);
-      } else if (plan.terminal === "open") {
-        // Opening may need a server terminal, which only the chat view knows how to start.
-        requestPanelToggle("terminal");
-      }
+        configuredPreviewUrls: p.configuredPreviewUrls,
+        sheetLayout: p.sheetLayout,
+        readThread: () => readThreadSnapshot(threadRef),
+        terminalHasSessions: () =>
+          selectThreadTerminalUiState(
+            useTerminalUiStateStore.getState().terminalUiStateByThreadKey,
+            threadRef,
+          ).terminalIds.length > 0,
+        // Browser sessions are per thread on the server, so a thread without one loads the saved URL.
+        openBrowserSession: async (url) => {
+          const result = await openPreviewSession({ openPreview: open, threadRef, url });
+          return result._tag === "Success" ? result.value.tabId : null;
+        },
+        applyPanel: (application) =>
+          useRightPanelStore.getState().applyWorkspaceDrawer(threadRef, application),
+        setTerminalOpen: (open) =>
+          useTerminalUiStateStore.getState().setTerminalOpen(threadRef, open),
+        isCancelled: () => cancelled,
+      });
     };
-    void run().finally(finish);
+    void run().then(({ applied }) => {
+      if (cancelled) return;
+      baseline.current = readThreadSnapshot(threadRef);
+      // An unrestored thread (sheet layout) is not the workspace's choice: wait for a real change.
+      if (applied) {
+        const state = useWorkspaceDrawerStore.getState();
+        state.setRecord(
+          workspaceKey,
+          recordFromThread(state.byWorkspaceKey[workspaceKey], baseline.current, Date.now()),
+        );
+      }
+    });
 
-    const unsubscribeRight = useRightPanelStore.subscribe(recordCurrent);
-    const unsubscribeTerminal = useTerminalUiStateStore.subscribe(recordCurrent);
+    const unsubscribeRight = useRightPanelStore.subscribe(recordIfChanged);
+    const unsubscribeTerminal = useTerminalUiStateStore.subscribe(recordIfChanged);
     return () => {
       cancelled = true;
       unsubscribeRight();
       unsubscribeTerminal();
     };
-    // The restore runs once per thread; changes are copied back by the effects below.
   }, [threadKey, workspaceKey]);
 
   useEffect(() => {
-    if (syncedThreadKey.current !== threadKey) return;
+    const base = baseline.current;
+    if (!base) return;
+    const current = {
+      ...readThreadSnapshot(latest.current.props.threadRef),
+      browserUrl: previewUrl,
+    };
+    if (!changedSince(current, base)) return;
     const state = useWorkspaceDrawerStore.getState();
     state.setRecord(
       workspaceKey,
-      recordFromThread(
-        state.byWorkspaceKey[workspaceKey],
-        { ...readThreadSnapshot(latest.current.props.threadRef), browserUrl: previewUrl },
-        Date.now(),
-      ),
+      recordFromThread(state.byWorkspaceKey[workspaceKey], current, Date.now()),
     );
   }, [previewUrl, threadKey, workspaceKey]);
 

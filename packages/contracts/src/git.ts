@@ -223,6 +223,8 @@ const VcsStatusLocalShape = {
         path: TrimmedNonEmptyStringSchema,
         insertions: NonNegativeInt,
         deletions: NonNegativeInt,
+        /** Set when the file was deleted in the working tree. Absent on older servers. */
+        deleted: Schema.optional(Schema.Boolean),
       }),
     ),
     insertions: NonNegativeInt,

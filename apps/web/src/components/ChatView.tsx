@@ -9832,6 +9832,7 @@ export default function ChatView(props: ChatViewProps) {
           threadRef={activeThreadRef}
           workspaceKey={activeProjectKey}
           configuredPreviewUrls={configuredPreviewUrls}
+          sheetLayout={shouldUseRightPanelSheet}
         />
       ) : null}
       <Dialog
