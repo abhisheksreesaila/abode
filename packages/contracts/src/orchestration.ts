@@ -697,6 +697,32 @@ export const ThreadTitleState = Schema.Struct({
 });
 export type ThreadTitleState = typeof ThreadTitleState.Type;
 
+/** Why autonomous mode stopped continuing a thread on its own. */
+export const ThreadAutonomousStopReason = Schema.Literals([
+  "done",
+  "cap",
+  "error",
+  "interrupted",
+  "rate-limited",
+]);
+export type ThreadAutonomousStopReason = typeof ThreadAutonomousStopReason.Type;
+
+export const DEFAULT_AUTONOMOUS_CAP = 30;
+
+/**
+ * Per-thread autonomous mode. Absent means off, so older servers and clients
+ * that never heard of the field behave exactly as before.
+ */
+export const ThreadAutonomousState = Schema.Struct({
+  enabled: Schema.Boolean,
+  /** Auto-continues sent since it was last enabled. */
+  count: NonNegativeInt,
+  cap: PositiveInt,
+  stopReason: Schema.optional(Schema.NullOr(ThreadAutonomousStopReason)),
+  stopDetail: Schema.optional(Schema.NullOr(Schema.String)),
+});
+export type ThreadAutonomousState = typeof ThreadAutonomousState.Type;
+
 export const ThreadTitleRegeneration = Schema.Struct({
   requestId: CommandId,
   startedAt: IsoDateTime,
@@ -845,6 +871,8 @@ export const OrchestrationThread = Schema.Struct({
   // Pending-only state. Optional so older servers remain compatible.
   titleRegeneration: Schema.optional(Schema.NullOr(ThreadTitleRegeneration)),
   titleState: Schema.optional(Schema.NullOr(ThreadTitleState)),
+  // Optional so payloads from older servers still decode; absent means off.
+  autonomous: Schema.optional(Schema.NullOr(ThreadAutonomousState)),
   deletedAt: Schema.NullOr(IsoDateTime),
   messages: Schema.Array(OrchestrationMessage),
   proposedPlans: Schema.Array(OrchestrationProposedPlan).pipe(
@@ -915,6 +943,7 @@ export const OrchestrationThreadShell = Schema.Struct({
   autoSettleDisabledAt: Schema.optional(Schema.NullOr(IsoDateTime)),
   titleRegeneration: Schema.optional(Schema.NullOr(ThreadTitleRegeneration)),
   titleState: Schema.optional(Schema.NullOr(ThreadTitleState)),
+  autonomous: Schema.optional(Schema.NullOr(ThreadAutonomousState)),
   session: Schema.NullOr(OrchestrationSession),
   latestUserMessageAt: Schema.NullOr(IsoDateTime),
   hasPendingApprovals: Schema.Boolean,
@@ -1238,6 +1267,14 @@ const ThreadActiveReorderCommand = Schema.Struct({
   orderKey: TrimmedNonEmptyString,
 });
 
+const ThreadAutonomousPatch = Schema.Struct({
+  enabled: Schema.Boolean,
+  count: Schema.optional(NonNegativeInt),
+  cap: Schema.optional(PositiveInt),
+  stopReason: Schema.optional(Schema.NullOr(ThreadAutonomousStopReason)),
+  stopDetail: Schema.optional(Schema.NullOr(Schema.String)),
+});
+
 const ThreadMetaUpdateCommand = Schema.Struct({
   type: Schema.Literal("thread.meta.update"),
   commandId: CommandId,
@@ -1249,6 +1286,8 @@ const ThreadMetaUpdateCommand = Schema.Struct({
   expectedBranch: Schema.optional(Schema.NullOr(TrimmedNonEmptyString)),
   worktreePath: Schema.optional(Schema.NullOr(TrimmedNonEmptyString)),
   linkedPullRequest: Schema.optional(Schema.NullOr(ThreadLinkedPullRequest)),
+  // Add-only: enable or stop autonomous mode. The server fills count and cap.
+  autonomous: Schema.optional(ThreadAutonomousPatch),
 }).check(
   Schema.makeFilter(
     (input) =>
@@ -1862,6 +1901,8 @@ export const ThreadMetaUpdatedPayload = Schema.Struct({
   /** Pending state shared with clients. Null clears a matching request. */
   titleRegeneration: Schema.optional(Schema.NullOr(ThreadTitleRegeneration)),
   titleState: Schema.optional(Schema.NullOr(ThreadTitleState)),
+  /** Full autonomous state; older clients ignore the field. */
+  autonomous: Schema.optional(ThreadAutonomousState),
   modelSelection: Schema.optional(ModelSelection),
   branch: Schema.optional(Schema.NullOr(TrimmedNonEmptyString)),
   worktreePath: Schema.optional(Schema.NullOr(TrimmedNonEmptyString)),
