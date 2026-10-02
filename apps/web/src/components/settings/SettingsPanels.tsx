@@ -50,7 +50,7 @@ import * as Duration from "effect/Duration";
 import * as Equal from "effect/Equal";
 import * as Schema from "effect/Schema";
 import { APP_VERSION, HOSTED_APP_CHANNEL, HOSTED_APP_CHANNEL_LABEL } from "../../branding";
-import { ABODE_CREDIT } from "../../brand";
+import { ABODE_CREDIT, ABODE_NAME } from "../../brand";
 import {
   canCheckForUpdate,
   getDesktopUpdateButtonTooltip,
@@ -3297,7 +3297,7 @@ export function GeneralSettingsPanel() {
         />
         <SettingsRow
           {...searchableSetting("open-source-licenses")}
-          description="Notices for dependencies, assets, and optional tools used by abode."
+          description={`Notices for dependencies, assets, and optional tools used by ${ABODE_NAME}.`}
           control={
             <Button
               render={<Link to="/settings/open-source-licenses" />}

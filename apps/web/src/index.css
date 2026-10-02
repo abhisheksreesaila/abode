@@ -2266,14 +2266,12 @@ html[data-theme-id="abode"] {
    with blur; here every glass consumer (composer, floating controls, menus)
    resolves to its solid theme color, and the grain texture is dropped so the
    panel is flat. The composer keeps its distinct raised color
-   (--app-theme-surface-raised, #252526). Other themes are untouched. */
-html[data-theme-id="abode"] {
+   (--app-theme-surface-raised, #252526). The extra :not() raises specificity
+   above the root dark-variant rule so blur really is off. Other themes are
+   untouched. */
+html[data-theme-id="abode"]:not([data-theme-id=""]) {
   --glass-opacity: 100%;
   --glass-blur: 0px;
   --glass-saturation: 1;
   --surface-grain: none;
-}
-
-html[data-theme-id="abode"] [data-slot="sidebar-inset"] {
-  background-color: var(--app-theme-canvas);
 }
