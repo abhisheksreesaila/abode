@@ -206,6 +206,11 @@ export function ContextWindowMeter(props: {
 }
 
 /** Holds the meter's footprint while a thread's activities are still loading. */
-export function ContextWindowMeterPlaceholder() {
-  return <span aria-hidden="true" className="size-7 shrink-0" />;
+export function ContextWindowMeterPlaceholder({ variant = "ring" }: { variant?: "ring" | "bar" }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={variant === "bar" ? "h-7 w-28 shrink-0" : "size-7 shrink-0"}
+    />
+  );
 }

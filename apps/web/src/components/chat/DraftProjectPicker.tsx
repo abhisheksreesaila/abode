@@ -35,7 +35,6 @@ import {
   MenuTrigger,
 } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { InlineButton } from "../ui/button";
 import { ComposerControl } from "./ComposerControl";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 
@@ -253,16 +252,15 @@ export type DraftProjectPicker = ReturnType<typeof useDraftProjectPicker>;
 /** The project dropdown; the caller supplies the trigger and its label. */
 export function DraftProjectMenu({
   picker,
-  variant,
   label,
   ariaLabel,
+  disabled,
   align = "center",
 }: {
   readonly picker: DraftProjectPicker;
-  /** `inline` sits in the hero sentence; `chip` is the composer row's compact control. */
-  readonly variant: "inline" | "chip";
   readonly label: ReactNode;
   readonly ariaLabel?: string;
+  readonly disabled?: boolean;
   readonly align?: "start" | "center" | "end";
 }) {
   const {
@@ -289,19 +287,12 @@ export function DraftProjectMenu({
             // project title) so the hero sentence reads naturally: an
             // aria-label here would replace the title with an action phrase
             // mid-sentence and baffle screen-reader users.
-            variant === "chip" ? (
-              <MenuTrigger
-                render={<ComposerControl size="xs" chip className="max-w-56 min-w-0 gap-1.5" />}
-                data-draft-project-trigger=""
-                aria-label={ariaLabel}
-              />
-            ) : (
-              <MenuTrigger
-                render={<InlineButton tone="picker" />}
-                data-draft-project-trigger=""
-                className="pointer-events-auto max-w-64 align-baseline"
-              />
-            )
+            <MenuTrigger
+              render={<ComposerControl size="xs" chip className="max-w-56 min-w-0 gap-1.5" />}
+              data-composer-workspace-picker=""
+              aria-label={ariaLabel}
+              disabled={disabled}
+            />
           }
         >
           {label}

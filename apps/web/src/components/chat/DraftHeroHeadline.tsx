@@ -6,7 +6,7 @@ import { shortcutLabelForCommand } from "~/keybindings";
 import { primaryServerKeybindingsAtom } from "~/state/server";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { InlineButton } from "../ui/button";
-import { DraftProjectMenu, useDraftProjectPicker } from "./DraftProjectPicker";
+import { useDraftProjectPicker } from "./DraftProjectPicker";
 
 interface DraftHeroHeadlineProps {
   readonly draftId: DraftId | null;
@@ -32,16 +32,10 @@ export function DraftHeroHeadline({
   } = picker;
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
 
+  // The composer's picker row owns choosing the workspace; the headline only
+  // names it. With nothing to choose from, it still offers to add a project.
   const projectSelector = shouldShowProjectMenu ? (
-    <DraftProjectMenu
-      picker={picker}
-      variant="inline"
-      label={
-        <span className="min-w-0 truncate">
-          {isScratchDraft ? "No project" : (activeProjectDisplayName ?? "Choose a project")}
-        </span>
-      }
-    />
+    <span>{activeProjectDisplayName ?? "Choose a project"}</span>
   ) : (
     <button
       type="button"
@@ -78,7 +72,9 @@ export function DraftHeroHeadline({
               onClick={() =>
                 void startScratch().then((started) => {
                   if (started) {
-                    document.querySelector<HTMLElement>("[data-draft-project-trigger]")?.focus();
+                    document
+                      .querySelector<HTMLElement>("[data-composer-workspace-picker]")
+                      ?.focus();
                   }
                 })
               }
@@ -110,9 +106,7 @@ export function DraftHeroHeadline({
       {/* Reserved whenever threads can skip a project, so the heading does not
           move. Without a project, the picker moves here to choose one. */}
       {scratchWorkspaceRoot === null ? null : (
-        <p className="mt-2 flex h-6 items-center text-sm">
-          {isScratchDraft ? projectSelector : orStartWithoutProject}
-        </p>
+        <p className="mt-2 flex h-6 items-center text-sm">{orStartWithoutProject}</p>
       )}
     </div>
   );

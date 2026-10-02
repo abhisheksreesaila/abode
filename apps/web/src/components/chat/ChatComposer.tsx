@@ -245,6 +245,10 @@ import {
 import { useEnvironmentQuery } from "~/state/query";
 import { useDebouncedValue } from "~/state/queries";
 import { ComposerPickerRow } from "./ComposerPickerRow";
+import {
+  modelPickerNeedsComposerExpanded,
+  resolveModelPickerPlacement,
+} from "./composerPickerPlacement";
 import { ProviderModelPicker } from "./ProviderModelPicker";
 import { resolveModelPickerSelectedModel } from "./ModelPickerContent";
 import {
@@ -1195,6 +1199,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
   compact: boolean;
   activeContextWindow: ContextWindowSnapshot | null;
   reserveContextWindowMeter: boolean;
+  meterVariant: "ring" | "bar";
   activeThreadModelDisplayName: string | null;
   isPreparingWorktree: boolean;
   pendingAction: {
@@ -1224,7 +1229,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
     <>
       {props.activeContextWindow ? (
         <ContextWindowMeter
-          variant={props.compact ? "ring" : "bar"}
+          variant={props.meterVariant}
           usage={props.activeContextWindow}
           modelDisplayName={props.activeThreadModelDisplayName}
           onCompact={props.onCompactContext}
@@ -1232,7 +1237,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
           compactDisabledReason={props.compactDisabledReason}
         />
       ) : props.reserveContextWindowMeter ? (
-        <ContextWindowMeterPlaceholder />
+        <ContextWindowMeterPlaceholder variant={props.meterVariant} />
       ) : null}
       <ComposerPrimaryActions
         compact={props.compact}
@@ -4761,11 +4766,13 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const composerControlsVisibleInStrip = composerControlsInStrip && restingControlsVisible;
   // On a draft the picker moves to the composer's top row, beside the workspace
   // picker; it is rendered in exactly one place.
-  const modelPickerInTopRow =
-    routeKind === "draft" &&
-    draftId !== null &&
-    !isComposerCollapsedMobile &&
-    !showProviderUnavailable;
+  const modelPickerPlacement = resolveModelPickerPlacement({
+    routeKind,
+    hasDraftId: draftId !== null,
+    isCollapsedMobile: isComposerCollapsedMobile,
+    providerUnavailable: showProviderUnavailable,
+  });
+  const modelPickerInTopRow = modelPickerPlacement === "top-row";
   const composerControlsHidden = composerControlsInStrip && !restingControlsVisible;
   if (composerControlsHidden && !modelPickerInTopRow && isComposerModelPickerOpen) {
     setIsComposerModelPickerOpen(false);
@@ -5854,7 +5861,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   // Imperative handle
   // ------------------------------------------------------------------
   const openModelPicker = useCallback(() => {
-    if (composerControlsHidden && !modelPickerInTopRow) {
+    if (
+      modelPickerNeedsComposerExpanded({
+        placement: modelPickerPlacement,
+        stripControlsHidden: composerControlsHidden,
+      })
+    ) {
       if (composerBlurFrameRef.current !== null) {
         window.cancelAnimationFrame(composerBlurFrameRef.current);
         composerBlurFrameRef.current = null;
@@ -5865,7 +5877,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     setIsComposerModelPickerOpen(true);
   }, [
     composerControlsHidden,
-    modelPickerInTopRow,
+    modelPickerPlacement,
     setIsComposerFocused,
     setIsComposerScrollCollapsed,
   ]);
@@ -6469,7 +6481,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
               )}
             >
               {modelPickerInTopRow && draftId !== null ? (
-                <ComposerPickerRow draftId={draftId} modelPicker={providerModelPicker} />
+                <ComposerPickerRow
+                  draftId={draftId}
+                  modelPicker={providerModelPicker}
+                  disabled={providerCatalogPending || isSendBusy}
+                />
               ) : null}
               {isStashMenuOpen && !composerMenuOpen && !isComposerApprovalState && (
                 <ComposerCommandMenuLayer anchor={composerMenuAnchor}>
@@ -7084,6 +7100,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                       settings.contextWindowMeterEnabled ? activeContextWindow : null
                     }
                     reserveContextWindowMeter={reserveContextWindowMeter}
+                    meterVariant={
+                      isComposerFooterCompact || isComposerPrimaryActionsCompact ? "ring" : "bar"
+                    }
                     activeThreadModelDisplayName={activeThreadModelDisplayName}
                     pendingAction={pendingPrimaryAction}
                     isRunning={phase === "running"}

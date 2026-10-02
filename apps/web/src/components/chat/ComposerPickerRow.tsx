@@ -18,6 +18,8 @@ import { DraftProjectMenu, useDraftProjectPicker } from "./DraftProjectPicker";
 export function ComposerPickerRow(props: {
   readonly draftId: DraftId;
   readonly modelPicker: ReactNode;
+  /** True while a send is in flight, matching the model picker. */
+  readonly disabled: boolean;
 }) {
   const draft = useComposerDraftStore((store) => store.getDraftSession(props.draftId));
   const projectRef = draft ? scopeProjectRef(draft.environmentId, draft.projectId) : null;
@@ -42,7 +44,7 @@ export function ComposerPickerRow(props: {
         <DraftProjectMenu
           picker={picker}
           align="start"
-          variant="chip"
+          disabled={props.disabled}
           ariaLabel={`Workspace: ${label}`}
           label={
             <>
