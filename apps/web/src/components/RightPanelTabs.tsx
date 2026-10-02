@@ -1,3 +1,10 @@
+import {
+  RIGHT_PANEL_TAB_ACTIVE_CLASS,
+  RIGHT_PANEL_TAB_CLASS,
+  RIGHT_PANEL_TAB_INACTIVE_CLASS,
+  RIGHT_PANEL_TAB_STRIP_CLASS,
+  RightPanelCloseButton,
+} from "./rightPanelChrome";
 import { pullRequestHostOf, type SourceControlProviderKind } from "@t3tools/contracts";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import { useProjects, useServerConfigs, useThreadShells } from "~/state/entities";
@@ -1108,7 +1115,8 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
     >
       <div
         className={cn(
-          "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-1 pl-2",
+          "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-1",
+          RIGHT_PANEL_TAB_STRIP_CLASS,
           // The sheet overlays from the viewport top, so its tab bar keeps
           // the titlebar's height: a compact row re-centers the layout
           // controls a few pixels higher and the cluster jumps on open.
@@ -1127,7 +1135,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
           className="min-w-0 flex-1"
           data-right-panel-tab-list
         >
-          <div className="flex h-full w-max min-w-full items-center gap-1">
+          <div className="flex h-full w-max min-w-full items-end gap-0">
             {props.surfaces.map((surface) => {
               const active = surface.id === props.activeSurfaceId;
               const pending = props.pendingSurfaceIds.has(surface.id);
@@ -1149,11 +1157,9 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
                   onAuxClick={(event) => handleTabAuxClick(event, surface)}
                   onContextMenu={(event) => void handleTabContextMenu(event, surface)}
                   className={cn(
-                    "cursor-pointer group/tab flex h-6 max-w-36 shrink-0 items-center gap-0.5 rounded-md pr-2 pl-1.5 text-xs",
+                    RIGHT_PANEL_TAB_CLASS,
                     ownsDesktopTitleBar && "[-webkit-app-region:no-drag]",
-                    active
-                      ? "bg-accent text-foreground"
-                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                    active ? RIGHT_PANEL_TAB_ACTIVE_CLASS : RIGHT_PANEL_TAB_INACTIVE_CLASS,
                   )}
                 >
                   <PanelTabCloseButton
@@ -1391,6 +1397,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
             </Tooltip>
           </div>
         ) : null}
+        <RightPanelCloseButton />
         {props.layoutControls}
         {ownsDesktopTitleBar && !props.layoutControls ? (
           // Keeps the tabs clear of the window controls when the layout toggles live elsewhere.

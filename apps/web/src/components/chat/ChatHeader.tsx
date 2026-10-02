@@ -44,6 +44,7 @@ import { threadEnvironment } from "../../state/threads";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { observeResponsiveBreakpointFade, usePanelAnimationSettings } from "../../panelAnimations";
 import { ProjectFavicon } from "../ProjectFavicon";
+import { TitleSearchBox } from "./TitleSearchBox";
 import {
   WorkspaceBreadcrumb,
   WorkspaceBreadcrumbItem,
@@ -499,6 +500,7 @@ export const ChatHeader = memo(function ChatHeader({
           )}
         </WorkspaceBreadcrumbItem>
       </WorkspaceBreadcrumb>
+      <TitleSearchBox projectName={activeProjectName ?? null} threadTitle={activeThreadTitle} />
       <div
         ref={headerActionsRef}
         data-chat-header-actions

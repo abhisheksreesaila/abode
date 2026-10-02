@@ -42,6 +42,7 @@ import {
   PROVIDER_SEND_TURN_MAX_INPUT_CHARS,
 } from "@t3tools/contracts";
 import type { EnvironmentConnectionPresentation } from "@t3tools/client-runtime/connection";
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
   isPasteAsTextShortcut,
   nextPastedTextFileName,
@@ -294,6 +295,7 @@ import {
   renderProviderTraitsPicker,
 } from "./composerProviderState";
 import { ContextWindowMeter, ContextWindowMeterPlaceholder } from "./ContextWindowMeter";
+import { usePublishStatusBarThreadInfo } from "../statusBar/useStatusBarBridge";
 import {
   providerSupportsManualCompaction,
   resolveContextWindowModelDisplayName,
@@ -2128,6 +2130,13 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     () => resolveContextWindowModelDisplayName(activeThreadModelSelection, modelOptionsByInstance),
     [activeThreadModelSelection, modelOptionsByInstance],
   );
+  usePublishStatusBarThreadInfo({
+    threadKey: activeThreadId
+      ? scopedThreadKey(scopeThreadRef(environmentId, activeThreadId))
+      : null,
+    modelLabel: activeThreadModelDisplayName,
+    contextPercent: activeContextWindow?.usedPercentage ?? null,
+  });
   const reserveContextWindowMeter = shouldReserveContextWindowMeter({
     meterEnabled: settings.contextWindowMeterEnabled,
     detailLoading: props.threadSyncPhase === "loading",
