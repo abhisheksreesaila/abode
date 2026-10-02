@@ -13,25 +13,25 @@ Source: Abhishek's composite mockup https://claude.ai/artifact/8WdcZeJY48ZQtmJAn
 
 ## Tokens (abode theme)
 
-| Token                                           | Value                                                                                                               |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| bg (editor/chat)                                | `#1f1f1f`                                                                                                           |
-| side (sidebar, tabs strip, drawers, status bar) | `#181818`                                                                                                           |
-| line                                            | `#2b2b2b`                                                                                                           |
-| line-hi (inputs, diff borders)                  | `#3c3c3c`                                                                                                           |
-| pill / chip bg                                  | `#2b2b2b`                                                                                                           |
-| hover                                           | `#2a2d2e`                                                                                                           |
-| text / strong / muted / dim                     | `#cccccc` / `#ffffff` / `#9d9d9d` / `#6e6e6e`                                                                       |
-| accent                                          | `#0078d4`                                                                                                           |
-| accent-hi (links, meter, AI model text)         | `#4cc2ff`                                                                                                           |
-| accent-bg (brand chip)                          | `rgb(0 120 212 / .22)`                                                                                              |
-| selection (active thread row)                   | `#04395e` with an inset 1px accent ring                                                                             |
-| green (ok/running)                              | `#4ec9b0`                                                                                                           |
-| red (risk/failed)                               | `#f14c4c`, bg `rgb(241 76 76 / .16)`                                                                                |
-| amber (waiting)                                 | `#cca700`, bg `rgb(204 167 0 / .14)`                                                                                |
-| diff add / del                                  | `rgb(78 201 176 / .14)` / `rgb(241 76 76 / .14)`                                                                    |
-| workspace colors                                | `#4cc2ff`, `#c586c0`, `#dcdcaa`, `#4ec9b0` (then the existing --ws-5..8)                                            |
-| fonts                                           | UI: "Segoe UI Variable", "Segoe UI", system-ui, Inter; code: Consolas, "Cascadia Code", "JetBrains Mono", monospace |
+| Token                                           | Value                                                                              |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------- |
+| bg (editor/chat)                                | `#1f1f1f`                                                                          |
+| side (sidebar, tabs strip, drawers, status bar) | `#181818`                                                                          |
+| line                                            | `#2b2b2b`                                                                          |
+| line-hi (inputs, diff borders)                  | `#3c3c3c`                                                                          |
+| pill / chip bg                                  | `#2b2b2b`                                                                          |
+| hover                                           | `#2a2d2e`                                                                          |
+| text / strong / muted / dim                     | `#cccccc` / `#ffffff` / `#9d9d9d` / `#6e6e6e`                                      |
+| accent                                          | `#0078d4`                                                                          |
+| accent-hi (links, meter, AI model text)         | `#4cc2ff`                                                                          |
+| accent-bg (brand chip)                          | `rgb(0 120 212 / .22)`                                                             |
+| selection (active thread row)                   | `#04395e` with an inset 1px accent ring                                            |
+| green (ok/running)                              | `#4ec9b0`                                                                          |
+| red (risk/failed)                               | `#f14c4c`, bg `rgb(241 76 76 / .16)`                                               |
+| amber (waiting)                                 | `#cca700`, bg `rgb(204 167 0 / .14)`                                               |
+| diff add / del                                  | `rgb(78 201 176 / .14)` / `rgb(241 76 76 / .14)`                                   |
+| workspace colors                                | `#4cc2ff`, `#c586c0`, `#dcdcaa`, `#4ec9b0` (then the existing --ws-5..8)           |
+| fonts                                           | UI: Inter; code: JetBrains Mono (both bundled, variable, via @fontsource-variable) |
 
 ## Layout
 

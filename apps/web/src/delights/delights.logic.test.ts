@@ -7,6 +7,7 @@ import {
   isFridayShipTime,
   minuteToDate,
   parseDelightsEnabled,
+  reduceSparkle,
   sendTooltip,
   type AutonomousSnapshot,
 } from "./delights.logic";
@@ -104,5 +105,23 @@ describe("detectAutonomousDone", () => {
   it("fires once per run: an unchanged done state does not re-fire", () => {
     const done = snap({ enabled: false, stopReason: "done" });
     expect(detectAutonomousDone(done, done)).toBeNull();
+  });
+});
+
+describe("reduceSparkle", () => {
+  it("does not replay the sparkle when returning to a finished thread (A -> B -> A)", () => {
+    let state = reduceSparkle({ threadKey: null, token: 0 }, { type: "thread", threadKey: "A" });
+    state = reduceSparkle(state, { type: "done", threadKey: "A" });
+    expect(state).toEqual({ threadKey: "A", token: 1 });
+    state = reduceSparkle(state, { type: "thread", threadKey: "B" });
+    state = reduceSparkle(state, { type: "thread", threadKey: "A" });
+    expect(state).toEqual({ threadKey: "A", token: 0 });
+  });
+
+  it("bumps the token for a second finished run on the same thread", () => {
+    let state = reduceSparkle({ threadKey: null, token: 0 }, { type: "thread", threadKey: "A" });
+    state = reduceSparkle(state, { type: "done", threadKey: "A" });
+    state = reduceSparkle(state, { type: "done", threadKey: "A" });
+    expect(state.token).toBe(2);
   });
 });

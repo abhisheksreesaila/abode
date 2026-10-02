@@ -1,9 +1,10 @@
 import type { ThreadAutonomousState } from "@t3tools/contracts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 
 import { toastManager } from "../components/ui/toast";
 import {
   detectAutonomousDone,
+  reduceSparkle,
   snapshotAutonomous,
   type AutonomousSnapshot,
 } from "./delights.logic";
@@ -21,11 +22,16 @@ export function useAutonomousDoneSparkle(
 ): number {
   const enabled = useDelightsEnabled();
   const previous = useRef<AutonomousSnapshot | null>(null);
-  const [sparkle, setSparkle] = useState<{ threadKey: string; token: number } | null>(null);
+  const [sparkle, dispatch] = useReducer(reduceSparkle, { threadKey: null, token: 0 });
 
   const isEnabled = autonomous?.enabled === true;
   const count = autonomous?.count ?? 0;
   const stopReason = autonomous?.stopReason ?? null;
+
+  // A thread change clears the sparkle, so coming back never replays it.
+  useEffect(() => {
+    dispatch({ type: "thread", threadKey });
+  }, [threadKey]);
 
   useEffect(() => {
     if (threadKey === null) {
@@ -36,7 +42,7 @@ export function useAutonomousDoneSparkle(
     const done = detectAutonomousDone(previous.current, next);
     previous.current = next;
     if (done === null || !enabled || document.visibilityState === "hidden") return;
-    setSparkle((current) => ({ threadKey, token: (current?.token ?? 0) + 1 }));
+    dispatch({ type: "done", threadKey });
     toastManager.add({
       type: "success",
       title: "All done ✨",
@@ -44,5 +50,5 @@ export function useAutonomousDoneSparkle(
     });
   }, [threadKey, isEnabled, count, stopReason, enabled]);
 
-  return sparkle !== null && sparkle.threadKey === threadKey && enabled ? sparkle.token : 0;
+  return sparkle.threadKey === threadKey && enabled ? sparkle.token : 0;
 }

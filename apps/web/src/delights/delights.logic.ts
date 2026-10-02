@@ -66,6 +66,29 @@ export function snapshotAutonomous(
   };
 }
 
+export interface SparkleState {
+  readonly threadKey: string | null;
+  readonly token: number;
+}
+
+export type SparkleAction =
+  | { readonly type: "thread"; readonly threadKey: string | null }
+  | { readonly type: "done"; readonly threadKey: string };
+
+/**
+ * Sparkle token for the visible thread. Changing thread clears it, so
+ * returning to a thread that finished earlier never replays the sparkle.
+ */
+export function reduceSparkle(state: SparkleState, action: SparkleAction): SparkleState {
+  if (action.type === "thread") {
+    return state.threadKey === action.threadKey ? state : { threadKey: action.threadKey, token: 0 };
+  }
+  return {
+    threadKey: action.threadKey,
+    token: state.threadKey === action.threadKey ? state.token + 1 : 1,
+  };
+}
+
 /**
  * A run finishing is the transition enabled -> stopped(done) on one thread, so
  * a thread that was already done when opened, or a switch between threads,

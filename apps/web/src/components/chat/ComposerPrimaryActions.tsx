@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Spinner } from "../ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { useFridayShipIt } from "../../delights/Delights";
+import { useSendTooltip } from "../../delights/Delights";
 import { composerFloatingLayerProps } from "./composerEventScope";
 
 interface PendingActionState {
@@ -89,7 +89,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
     environmentIdentificationMode === "artwork",
   );
 
-  const shipIt = useFridayShipIt();
+  const sendTip = useSendTooltip();
   const renderStopGenerationButton = (insidePendingAction: boolean) => (
     <button
       type="button"
@@ -268,15 +268,13 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
     </button>
   );
 
-  // Friday afternoons the Send tooltip is "Ship it". Everything else keeps the
-  // bare button, with no tooltip wrapper.
-  const sendControl = shipIt ? (
-    <Tooltip>
+  // Friday afternoons the Send tooltip is "Ship it". The tooltip is always
+  // mounted and only disabled otherwise, so the button never remounts.
+  const sendControl = (
+    <Tooltip disabled={sendTip === null}>
       <TooltipTrigger render={sendButton} />
-      <TooltipPopup side="top">Ship it 🚢</TooltipPopup>
+      <TooltipPopup side="top">{sendTip}</TooltipPopup>
     </Tooltip>
-  ) : (
-    sendButton
   );
 
   if (!isRunning) {

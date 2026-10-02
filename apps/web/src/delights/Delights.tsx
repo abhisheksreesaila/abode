@@ -1,8 +1,14 @@
 import { memo } from "react";
 
-import { useNowMinute } from "../hooks/useNowMinute";
+import { useNowMinuteSelector } from "../hooks/useNowMinute";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../components/ui/tooltip";
-import { greetingForHour, isCoffeeTime, isFridayShipTime, minuteToDate } from "./delights.logic";
+import {
+  greetingForHour,
+  isCoffeeTime,
+  isFridayShipTime,
+  minuteToDate,
+  sendTooltip,
+} from "./delights.logic";
 import { useDelightsEnabled } from "./delightsSetting";
 
 /**
@@ -12,8 +18,8 @@ import { useDelightsEnabled } from "./delightsSetting";
  */
 export const CoffeeStatus = memo(function CoffeeStatus() {
   const enabled = useDelightsEnabled();
-  const nowMinute = useNowMinute();
-  if (!enabled || !isCoffeeTime(minuteToDate(nowMinute))) return null;
+  const coffee = useNowMinuteSelector((minute) => isCoffeeTime(minuteToDate(minute)));
+  if (!enabled || !coffee) return null;
   return (
     <Tooltip>
       <TooltipTrigger
@@ -47,13 +53,21 @@ export function DoneSparkle() {
 /** Greeting line above the project welcome title, by local time of day. */
 export function useWelcomeGreeting(): string | null {
   const enabled = useDelightsEnabled();
-  const nowMinute = useNowMinute();
-  return enabled ? greetingForHour(minuteToDate(nowMinute).getHours()) : null;
+  const greeting = useNowMinuteSelector((minute) =>
+    greetingForHour(minuteToDate(minute).getHours()),
+  );
+  return enabled ? greeting : null;
 }
 
 /** True on Friday afternoons, with delights on. */
 export function useFridayShipIt(): boolean {
   const enabled = useDelightsEnabled();
-  const nowMinute = useNowMinute();
-  return enabled && isFridayShipTime(minuteToDate(nowMinute));
+  const friday = useNowMinuteSelector((minute) => isFridayShipTime(minuteToDate(minute)));
+  return enabled && friday;
+}
+
+/** The Send tooltip text for right now, or null for no tooltip. */
+export function useSendTooltip(): string | null {
+  const enabled = useDelightsEnabled();
+  return useNowMinuteSelector((minute) => sendTooltip(minuteToDate(minute), enabled));
 }
