@@ -1,21 +1,22 @@
 import { Button } from "../ui/button";
 import { type ContextWindowSnapshot, formatContextWindowTokens } from "~/lib/contextWindow";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
-import { formatContextWindowCompactionMessage } from "./ContextWindowMeter.logic";
+import {
+  formatContextMeterLabel,
+  formatContextPercentage,
+  formatContextWindowCompactionMessage,
+  resolveContextMeterTone,
+} from "./ContextWindowMeter.logic";
 import { Minimize2Icon } from "lucide-react";
 import { composerFloatingLayerProps } from "./composerEventScope";
 
-function formatPercentage(value: number | null): string | null {
-  if (value === null || !Number.isFinite(value)) {
-    return null;
-  }
-  if (value < 10) {
-    return `${value.toFixed(1).replace(/\.0$/, "")}%`;
-  }
-  return `${Math.round(value)}%`;
-}
-
+/**
+ * `ring` is the compact icon-sized meter; `bar` is the footer's thin bar with
+ * "Context 38% · 76k / 200k" beside it. Both open the same popover, which
+ * offers Compact context.
+ */
 export function ContextWindowMeter(props: {
+  variant?: "ring" | "bar";
   usage: ContextWindowSnapshot;
   modelDisplayName?: string | null;
   onCompact?: (() => void) | undefined;
@@ -23,17 +24,26 @@ export function ContextWindowMeter(props: {
   compactDisabledReason?: string | null | undefined;
 }) {
   const { usage, modelDisplayName, onCompact, compactDisabled, compactDisabledReason } = props;
-  const usedPercentage = formatPercentage(usage.usedPercentage);
+  const variant = props.variant ?? "ring";
+  const usedPercentage = formatContextPercentage(usage.usedPercentage);
   const normalizedPercentage = Math.max(0, Math.min(100, usage.usedPercentage ?? 0));
   const radius = 9.75;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - normalizedPercentage / 100);
   const totalProcessedTokens = usage.totalProcessedTokens ?? null;
   const showTotalProcessed = totalProcessedTokens !== null && totalProcessedTokens > 0;
-  const isOverloaded = normalizedPercentage > 90;
-  const usageColor = isOverloaded
-    ? "var(--color-error)"
-    : "color-mix(in oklab, var(--color-muted-foreground) 72%, transparent)";
+  const tone = resolveContextMeterTone(usage.usedPercentage);
+  const usageColor =
+    tone === "critical"
+      ? "var(--color-error)"
+      : tone === "warning"
+        ? "var(--color-warning)"
+        : "color-mix(in oklab, var(--color-muted-foreground) 72%, transparent)";
+  const meterLabel = formatContextMeterLabel(usage);
+  const triggerAriaLabel =
+    usage.maxTokens !== null && usedPercentage
+      ? `Context window ${usedPercentage} used`
+      : `Context window ${formatContextWindowTokens(usage.usedTokens)} tokens used`;
 
   return (
     <Popover>
@@ -42,45 +52,77 @@ export function ContextWindowMeter(props: {
         delay={150}
         closeDelay={onCompact ? 150 : 0}
         render={
-          <Button
-            size="icon-sm"
-            variant="ghost-muted"
-            className="size-7"
-            aria-label={
-              usage.maxTokens !== null && usedPercentage
-                ? `Context window ${usedPercentage} used`
-                : `Context window ${formatContextWindowTokens(usage.usedTokens)} tokens used`
-            }
-          >
-            <span className="relative flex size-5 items-center justify-center">
-              <svg
-                viewBox="0 0 24 24"
-                className="-rotate-90 absolute inset-0 size-full transform-gpu mx-0!"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r={radius}
-                  fill="none"
-                  className="stroke-muted-foreground/24"
-                  strokeWidth="3"
-                />
-                <circle
-                  cx="12"
-                  cy="12"
-                  r={radius}
-                  fill="none"
-                  stroke={usageColor}
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={dashOffset}
-                  className="transition-[stroke-dashoffset,stroke] duration-500 ease-out motion-reduce:transition-none"
-                />
-              </svg>
-            </span>
-          </Button>
+          variant === "bar" ? (
+            <Button
+              size="xs"
+              variant="ghost-muted"
+              aria-label={triggerAriaLabel}
+              data-context-meter-tone={tone}
+            >
+              <span className="flex items-center gap-2 tabular-nums">
+                <span
+                  aria-hidden="true"
+                  className="relative h-1 w-14 shrink-0 overflow-hidden rounded-full bg-muted-foreground/24"
+                >
+                  <span
+                    className="absolute inset-y-0 left-0 rounded-full"
+                    style={{ width: `${normalizedPercentage}%`, backgroundColor: usageColor }}
+                  />
+                </span>
+                <span
+                  className={tone === "normal" ? undefined : "font-medium"}
+                  style={tone === "normal" ? undefined : { color: usageColor }}
+                >
+                  {meterLabel.percent}
+                </span>
+                {meterLabel.tokens ? (
+                  <span className="hidden text-muted-foreground @2xl/composer-surface:inline">
+                    · {meterLabel.tokens}
+                  </span>
+                ) : null}
+              </span>
+            </Button>
+          ) : (
+            <Button
+              size="icon-sm"
+              variant="ghost-muted"
+              className="size-7"
+              aria-label={
+                usage.maxTokens !== null && usedPercentage
+                  ? `Context window ${usedPercentage} used`
+                  : `Context window ${formatContextWindowTokens(usage.usedTokens)} tokens used`
+              }
+            >
+              <span className="relative flex size-5 items-center justify-center">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="-rotate-90 absolute inset-0 size-full transform-gpu mx-0!"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r={radius}
+                    fill="none"
+                    className="stroke-muted-foreground/24"
+                    strokeWidth="3"
+                  />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r={radius}
+                    fill="none"
+                    stroke={usageColor}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={dashOffset}
+                    className="transition-[stroke-dashoffset,stroke] duration-500 ease-out motion-reduce:transition-none"
+                  />
+                </svg>
+              </span>
+            </Button>
+          )
         }
       />
       <PopoverPopup

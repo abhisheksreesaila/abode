@@ -1224,6 +1224,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
     <>
       {props.activeContextWindow ? (
         <ContextWindowMeter
+          variant={props.compact ? "ring" : "bar"}
           usage={props.activeContextWindow}
           modelDisplayName={props.activeThreadModelDisplayName}
           onCompact={props.onCompactContext}

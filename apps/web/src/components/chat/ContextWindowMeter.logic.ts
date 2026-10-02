@@ -7,6 +7,7 @@ import {
   resolveSelectableProviderInstanceEntry,
   type ProviderInstanceEntry,
 } from "../../providerInstances";
+import { formatContextWindowTokens } from "~/lib/contextWindow";
 import { getTriggerDisplayModelName, type ModelEsque } from "./providerIconUtils";
 
 const CLAUDE_RESUME_COMPACTION_MINUTES = 70;
@@ -134,4 +135,41 @@ export function shouldReserveContextWindowMeter(input: {
     input.threadStarted &&
     input.providerReportsContextWindow !== false
   );
+}
+
+export function formatContextPercentage(value: number | null): string | null {
+  if (value === null || !Number.isFinite(value)) {
+    return null;
+  }
+  if (value < 10) {
+    return `${value.toFixed(1).replace(/\.0$/, "")}%`;
+  }
+  return `${Math.round(value)}%`;
+}
+
+/** The bar meter's text: "Context 38%" and "76k / 200k" (null when the window size is unknown). */
+export function formatContextMeterLabel(input: {
+  readonly usedPercentage: number | null;
+  readonly usedTokens: number | null;
+  readonly maxTokens?: number | null | undefined;
+}): { readonly percent: string; readonly tokens: string | null } {
+  const percent =
+    (input.maxTokens ?? null) !== null ? formatContextPercentage(input.usedPercentage) : null;
+  if (percent === null) {
+    return { percent: `Context ${formatContextWindowTokens(input.usedTokens)}`, tokens: null };
+  }
+  return {
+    percent: `Context ${percent}`,
+    tokens: `${formatContextWindowTokens(input.usedTokens)} / ${formatContextWindowTokens(input.maxTokens ?? null)}`,
+  };
+}
+
+export type ContextMeterTone = "normal" | "warning" | "critical";
+
+/** Amber from 75% used, red above 90%, matching the ring meter's error threshold. */
+export function resolveContextMeterTone(usedPercentage: number | null): ContextMeterTone {
+  if (usedPercentage === null) return "normal";
+  if (usedPercentage > 90) return "critical";
+  if (usedPercentage >= 75) return "warning";
+  return "normal";
 }
