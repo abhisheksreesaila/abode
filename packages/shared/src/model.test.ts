@@ -3,6 +3,8 @@ import { ProviderInstanceId, type ModelCapabilities } from "@t3tools/contracts";
 
 import {
   applyClaudePromptEffortPrefix,
+  carryOverClaudeAgentOption,
+  getClaudeAgentOptionValue,
   buildExplicitProviderOptionSelectionsFromDescriptors,
   buildProviderOptionSelectionsFromDescriptors,
   createModelCapabilities,
@@ -242,5 +244,46 @@ describe("readCustomModelEntries", () => {
       name: "X",
       capabilities,
     });
+  });
+});
+
+describe("Claude agent option", () => {
+  const instance = ProviderInstanceId.make("claudeAgent");
+  const withAgent = (value: string) =>
+    createModelSelection(instance, "m", [
+      { id: "effort", value: "high" },
+      { id: "agent", value },
+    ]);
+
+  it("reads a chosen agent and treats none as no agent", () => {
+    expect(getClaudeAgentOptionValue(withAgent("orchestrator"))).toBe("orchestrator");
+    expect(getClaudeAgentOptionValue(withAgent("none"))).toBeUndefined();
+    expect(getClaudeAgentOptionValue(createModelSelection(instance, "m"))).toBeUndefined();
+  });
+
+  it("trims the agent name and ignores a blank value", () => {
+    expect(getClaudeAgentOptionValue(withAgent("  reviewer "))).toBe("reviewer");
+    expect(getClaudeAgentOptionValue(withAgent("   "))).toBeUndefined();
+  });
+
+  it("carries the earlier agent over a selection that dropped it", () => {
+    const earlier = withAgent("orchestrator");
+    const next = createModelSelection(instance, "m", [{ id: "effort", value: "low" }]);
+    expect(carryOverClaudeAgentOption(next, earlier).options).toEqual([
+      { id: "effort", value: "low" },
+      { id: "agent", value: "orchestrator" },
+    ]);
+    expect(next.options).toHaveLength(1);
+  });
+
+  it("lets an explicit agent entry, including none, win", () => {
+    const cleared = withAgent("none");
+    expect(carryOverClaudeAgentOption(cleared, withAgent("orchestrator"))).toBe(cleared);
+  });
+
+  it("changes nothing when there was no earlier agent", () => {
+    const next = createModelSelection(instance, "m");
+    expect(carryOverClaudeAgentOption(next, createModelSelection(instance, "m"))).toBe(next);
+    expect(carryOverClaudeAgentOption(next, undefined)).toBe(next);
   });
 });

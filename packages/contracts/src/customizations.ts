@@ -33,6 +33,12 @@ export type CustomizationsListInput = typeof CustomizationsListInput.Type;
 
 export const CustomizationsListResult = Schema.Struct({
   items: Schema.Array(CustomizationItem),
+  /**
+   * Agent that Claude Code runs the main session as when nothing is chosen,
+   * from the `agent` key of settings.json (workspace local, then workspace,
+   * then user). Optional so older clients and servers ignore it.
+   */
+  defaultAgent: Schema.optional(TrimmedNonEmptyString),
 });
 export type CustomizationsListResult = typeof CustomizationsListResult.Type;
 

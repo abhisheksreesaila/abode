@@ -676,6 +676,50 @@ describe("ClaudeAdapterLive", () => {
     );
   });
 
+  it.effect("runs the main session as the agent chosen in the model selection", () => {
+    const harness = makeHarness({ claudeConfig: { launchArgs: "--agent from-launch-args" } });
+    return Effect.gen(function* () {
+      const adapter = yield* ClaudeAdapter;
+      yield* adapter.startSession({
+        threadId: THREAD_ID,
+        provider: ProviderDriverKind.make("claudeAgent"),
+        modelSelection: createModelSelection(
+          ProviderInstanceId.make("claudeAgent"),
+          SYNTHETIC_CLAUDE_THINKING_MODEL,
+          [{ id: "agent", value: "orchestrator" }],
+        ),
+        runtimeMode: "full-access",
+      });
+
+      const createInput = harness.getLastCreateQueryInput();
+      assert.equal(createInput?.options.agent, "orchestrator");
+      // The chosen agent replaces the launch arg so the CLI sees one --agent.
+      assert.equal(createInput?.options.extraArgs?.agent, undefined);
+    }).pipe(
+      Effect.provideService(Random.Random, makeDeterministicRandomService()),
+      Effect.provide(harness.layer),
+    );
+  });
+
+  it.effect("leaves the agent to settings.json and launch args when none is chosen", () => {
+    const harness = makeHarness({ claudeConfig: { launchArgs: "--agent from-launch-args" } });
+    return Effect.gen(function* () {
+      const adapter = yield* ClaudeAdapter;
+      yield* adapter.startSession({
+        threadId: THREAD_ID,
+        provider: ProviderDriverKind.make("claudeAgent"),
+        runtimeMode: "full-access",
+      });
+
+      const createInput = harness.getLastCreateQueryInput();
+      assert.equal(createInput?.options.agent, undefined);
+      assert.equal(createInput?.options.extraArgs?.agent, "from-launch-args");
+    }).pipe(
+      Effect.provideService(Random.Random, makeDeterministicRandomService()),
+      Effect.provide(harness.layer),
+    );
+  });
+
   it.effect("honors a launch-arg that omits Claude thinking display", () => {
     const harness = makeHarness({
       claudeConfig: { launchArgs: "--thinking-display omitted" },

@@ -65,6 +65,38 @@ export function getModelSelectionStringOptionValue(
   return getProviderOptionStringSelectionValue(modelSelection?.options, id);
 }
 
+/** Option id carrying the agent a Claude session runs as (`--agent`). */
+export const CLAUDE_AGENT_OPTION_ID = "agent";
+/**
+ * Explicit "plain Claude Code" choice. Option values must be non-empty, so
+ * clearing an agent writes this instead of removing the option; a removed
+ * option means "not chosen" and inherits the thread's earlier agent.
+ */
+// Reserved: an agent literally named "none" cannot be chosen.
+export const CLAUDE_AGENT_NONE = "none";
+
+/** The chosen agent name; undefined when absent, empty or explicitly none. */
+export function getClaudeAgentOptionValue(
+  modelSelection: ModelSelection | null | undefined,
+): string | undefined {
+  const value = getModelSelectionStringOptionValue(modelSelection, CLAUDE_AGENT_OPTION_ID)?.trim();
+  return value && value !== CLAUDE_AGENT_NONE ? value : undefined;
+}
+
+/**
+ * Clients that rebuild options from descriptors (the official mobile app)
+ * never send `agent`. Keep the thread's earlier agent choice for them; any
+ * `agent` entry in the new selection, including none, wins.
+ */
+export function carryOverClaudeAgentOption(
+  next: ModelSelection,
+  previous: ModelSelection | null | undefined,
+): ModelSelection {
+  if (next.options?.some((option) => option.id === CLAUDE_AGENT_OPTION_ID)) return next;
+  const earlier = previous?.options?.find((option) => option.id === CLAUDE_AGENT_OPTION_ID);
+  return earlier ? { ...next, options: [...(next.options ?? []), earlier] } : next;
+}
+
 export function getModelSelectionBooleanOptionValue(
   modelSelection: ModelSelection | null | undefined,
   id: string,

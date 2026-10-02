@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveContextStripLabelsCompact } from "./BranchToolbar.logic";
 import {
   COMPOSER_FOOTER_COMPACT_BREAKPOINT_PX,
   COMPOSER_FOOTER_WIDE_ACTIONS_COMPACT_BREAKPOINT_PX,
   COMPOSER_RESTING_EXPANSION_MIN_PX,
   getRestingComposerImagePreviewCounts,
+  resolveComposerFooterBlockIds,
   resolveComposerTimelineInset,
   resolveScrollToEndClearance,
   resolveRestingComposerControlsLayout,
-  resolveRestingComposerControlsNaturalWidth,
   shouldAnimateComposerRestingTransition,
   shouldUseCompactComposerPrimaryActions,
   shouldUseCompactComposerFooter,
@@ -258,65 +257,38 @@ describe("resolveRestingComposerControlsLayout", () => {
   });
 });
 
-describe("context strip labels and resting composer controls", () => {
-  // Widths captured from a desktop renderer that crashed with React error
-  // 185. The strip is 724px wide. Its expanded labels need 327px, and the
-  // rest of its chrome needs 125px. The composer controls sit in the host
-  // that takes whatever is left.
-  const stripWidth = 724;
-  const labelWidth = 327;
-  const chromeWidth = 125;
+describe("footer blocks with the workspace chips", () => {
+  // Footer order is agent, traits, mode, workspace chips; trailing blocks
+  // leave first. Widths are typical: picker 140, agent 90, traits 60,
+  // mode 130, chips 210, overflow 24.
   const measurement = {
     gap: 4,
-    naturalFixedWidth: 96.3828125 + 5 + 4,
-    minimumFixedWidth: 52 + 5 + 4,
-    blockWidths: [130.6953125, 119.671875],
-    overflowWidth: 28,
+    naturalFixedWidth: 140,
+    minimumFixedWidth: 96,
+    blockWidths: [90, 60, 130, 210],
+    overflowWidth: 24,
   };
-  const naturalWidth = resolveRestingComposerControlsNaturalWidth(measurement);
 
-  function hostWidth(compact: boolean): number {
-    return stripWidth - chromeWidth - (compact ? 0 : labelWidth);
-  }
-
-  it("keeps the labels compact when the full controls only fit beside compact labels", () => {
-    // Compact labels leave 599px, so the composer shows every block.
-    const layout = resolveRestingComposerControlsLayout({
-      ...measurement,
-      hostWidth: hostWidth(true),
+  it("shows every block, chips included, when the footer has room", () => {
+    expect(resolveRestingComposerControlsLayout({ ...measurement, hostWidth: 700 })).toEqual({
+      hiddenCount: 0,
+      visible: true,
     });
-    expect(layout).toEqual({ hiddenCount: 0, visible: true });
-
-    // The strip reserves the natural controls width, so expanding the
-    // labels is off the table: 125 + 327 + 364 > 724.
-    const compact = resolveContextStripLabelsCompact({
-      compact: true,
-      neededWidth: chromeWidth + labelWidth + naturalWidth,
-      availableWidth: stripWidth,
-    });
-    expect(compact).toBe(true);
-
-    // The next pass sees the same inputs and lands on the same answer.
-    expect(
-      resolveRestingComposerControlsLayout({ ...measurement, hostWidth: hostWidth(compact) }),
-    ).toEqual(layout);
   });
 
-  it("does not settle when the strip only reserves the visible controls", () => {
-    // Regression guard for the alternating layout. Reserving only the
-    // controls left visible after two blocks moved into overflow makes the
-    // strip expand its labels, which shrinks the host below what the full
-    // controls need, which hides the blocks again.
-    const hiddenControlsWidth = 137;
-    const expands = !resolveContextStripLabelsCompact({
-      compact: true,
-      neededWidth: chromeWidth + labelWidth + hiddenControlsWidth,
-      availableWidth: stripWidth,
+  it("moves the chips into the more menu before the mode picker", () => {
+    // 140 + 90 + 60 + 130 + 24 + 4 * 4 = 460 fits; the chips would need 210 more.
+    expect(resolveRestingComposerControlsLayout({ ...measurement, hostWidth: 480 })).toEqual({
+      hiddenCount: 1,
+      visible: true,
     });
-    expect(expands).toBe(true);
-    expect(
-      resolveRestingComposerControlsLayout({ ...measurement, hostWidth: hostWidth(false) }),
-    ).toEqual({ hiddenCount: 2, visible: true });
+  });
+
+  it("keeps only the picker and the more menu at phone width", () => {
+    expect(resolveRestingComposerControlsLayout({ ...measurement, hostWidth: 180 })).toEqual({
+      hiddenCount: 4,
+      visible: true,
+    });
   });
 });
 
@@ -523,5 +495,30 @@ describe("progressive composer controls", () => {
         previous = next;
       }
     }
+  });
+});
+
+describe("resolveComposerFooterBlockIds", () => {
+  const all = { hasAgent: true, hasTraits: true, hasContext: true, providerUnavailable: false };
+
+  it("orders agent, traits, mode, then the workspace chips", () => {
+    expect(resolveComposerFooterBlockIds(all)).toEqual(["agent", "traits", "mode", "context"]);
+  });
+
+  it("keeps the workspace chips when no provider is available", () => {
+    expect(resolveComposerFooterBlockIds({ ...all, providerUnavailable: true })).toEqual([
+      "context",
+    ]);
+  });
+
+  it("omits blocks the thread does not have", () => {
+    expect(
+      resolveComposerFooterBlockIds({
+        ...all,
+        hasAgent: false,
+        hasTraits: false,
+        hasContext: false,
+      }),
+    ).toEqual(["mode"]);
   });
 });

@@ -17,6 +17,7 @@ import type { ReactNode } from "react";
 
 import type { DraftId } from "../../composerDraftStore";
 import { getProviderModelCapabilities } from "../../providerModels";
+import { keepChosenAgent } from "./composerAgent";
 import type { ComposerControlSize } from "./ComposerControl";
 import { shouldRenderTraitsControls, TraitsMenuContent, TraitsPicker } from "./TraitsPicker";
 
@@ -99,6 +100,15 @@ function resolveComposerOptionSelections(
   return { caps, selections: withImplicitFastModeDefault(caps, modelOptions) };
 }
 
+/** The chosen Claude agent is not a model option, so descriptor filtering would drop it. */
+function withClaudeAgentOption(
+  provider: ProviderDriverKind,
+  dispatched: ReadonlyArray<ProviderOptionSelection> | undefined,
+  modelOptions: ReadonlyArray<ProviderOptionSelection> | null | undefined,
+): ReadonlyArray<ProviderOptionSelection> | undefined {
+  return provider === "claudeAgent" ? keepChosenAgent(dispatched, modelOptions) : dispatched;
+}
+
 export function getComposerProviderState(input: ComposerProviderStateInput): ComposerProviderState {
   const {
     provider,
@@ -144,9 +154,10 @@ export function getComposerProviderState(input: ComposerProviderStateInput): Com
   return {
     provider,
     promptEffort,
-    modelOptionsForDispatch: buildExplicitProviderOptionSelectionsFromDescriptors(
-      descriptors,
-      selections,
+    modelOptionsForDispatch: withClaudeAgentOption(
+      provider,
+      buildExplicitProviderOptionSelectionsFromDescriptors(descriptors, selections),
+      modelOptions,
     ),
     ...(ultrathinkActive
       ? {
