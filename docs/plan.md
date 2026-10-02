@@ -159,7 +159,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-011: Customizations list and side-panel editing
 
-- **Status:** todo
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **Depends on:** F-005, F-010
 - **What:** a bottom-left list of Skills, Agents, MCP servers and Instructions, grouped as User or Workspace. Clicking an item opens its file in the side panel's Editor tab, with a lock toggle (read-only on or off). Markdown also renders in the Browser tab.
 - **Acceptance:**
