@@ -205,6 +205,8 @@ import {
   type TimelineLatestTurn,
   type WorkGroupScrollAnchor,
 } from "./MessagesTimeline.logic";
+import { filterTimelineEntriesForMode } from "./transcriptMode.logic";
+import { useTranscriptModeStore } from "./transcriptModeStore";
 import { TerminalContextInlineChip } from "./TerminalContextInlineChip";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { Spinner } from "../ui/spinner";
@@ -489,7 +491,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   agentPanelModel,
   onOpenAgents = NOOP_OPEN_AGENTS,
   listRef,
-  timelineEntries,
+  timelineEntries: allTimelineEntries,
   latestTurn,
   runningTurnId,
   turnDiffSummaries,
@@ -769,6 +771,13 @@ export const MessagesTimeline = memo(function MessagesTimeline({
         ? undefined
         : new Set(liveAgentTaskKey.length > 0 ? liveAgentTaskKey.split("\n") : []),
     [liveAgentTaskKey],
+  );
+  // Simple/Detailed is a pure filter ahead of row derivation: one store
+  // subscription, no new props, and Detailed passes the entries through.
+  const transcriptMode = useTranscriptModeStore((store) => store.mode);
+  const timelineEntries = useMemo(
+    () => filterTimelineEntriesForMode(allTimelineEntries, transcriptMode),
+    [allTimelineEntries, transcriptMode],
   );
   const rawRows = useMemo(() => {
     const previous = rowsProjectionRef.current;

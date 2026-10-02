@@ -190,6 +190,14 @@ beforeAll(async () => {
 
 // The scroll-settling test clears every global stub; mounted timeline rows
 // still touch `window` through the tooltip's focus handling.
+// These cases cover the full transcript. Static markup reads the store's
+// initial (Simple) snapshot, so pin Detailed here; filtering has its own tests.
+vi.mock("./transcriptModeStore", () => ({
+  useTranscriptModeStore: (select: (store: { mode: "detailed" }) => unknown) =>
+    select({ mode: "detailed" }),
+  toggleTranscriptMode: () => {},
+}));
+
 beforeEach(stubDomGlobals);
 
 const ACTIVE_THREAD_ENVIRONMENT_ID = EnvironmentId.make("environment-local");

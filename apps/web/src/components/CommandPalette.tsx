@@ -46,6 +46,7 @@ import * as Option from "effect/Option";
 import {
   ArrowLeftIcon,
   ChartNoAxesColumnIcon,
+  ListChecksIcon,
   CheckIcon,
   ChevronRightIcon,
   CornerLeftUpIcon,
@@ -202,6 +203,7 @@ import { stackedThreadToast, toastManager } from "./ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 import { ComposerHandleContext, useComposerHandleContext } from "../composerHandleContext";
 import type { ChatComposerHandle } from "./chat/ChatComposer";
+import { toggleTranscriptMode } from "./chat/transcriptModeStore";
 import { getProjectOrderKey, selectProjectGroupingSettings } from "../logicalProject";
 import { legacyProjectCwdPreferenceKey, useUiStateStore } from "../uiStateStore";
 import {
@@ -2243,6 +2245,19 @@ function OpenCommandPaletteDialog(props: {
       icon: <PullRequestGlyph.pullRequest className={ITEM_ICON_CLASS} />,
       run: async () => {
         await navigate({ to: "/pull-requests", search: readPullRequestListPreferences() });
+      },
+    });
+  }
+
+  if (activeThread != null) {
+    actionItems.push({
+      kind: "action",
+      value: "action:toggle-transcript-mode",
+      searchTerms: ["simple", "detailed", "transcript", "tool calls", "verbose", "report"],
+      title: "Toggle Simple / Detailed transcript",
+      icon: <ListChecksIcon className={ITEM_ICON_CLASS} />,
+      run: async () => {
+        toggleTranscriptMode();
       },
     });
   }
