@@ -3,7 +3,7 @@ import type {
   ContextMenuItem as TreeContextMenuItem,
   ContextMenuOpenContext as TreeContextMenuOpenContext,
 } from "@pierre/trees";
-import type { EnvironmentId, ProjectEntry } from "@t3tools/contracts";
+import type { EnvironmentId, ProjectEntry, ScopedThreadRef } from "@t3tools/contracts";
 import { FileTree, useFileTree, useFileTreeSearch, useFileTreeSelector } from "@pierre/trees/react";
 import { serializeComposerFileLink } from "@t3tools/shared/composerTrigger";
 import { ChevronsDownUpIcon, ChevronsUpDownIcon } from "lucide-react";
@@ -22,6 +22,7 @@ import { readLocalApi } from "~/localApi";
 import { T3_PIERRE_ICONS } from "~/pierre-icons";
 import { PIERRE_TREE_UNSAFE_CSS, pierreTreeStyle } from "~/pierre-tree-theme";
 
+import { ChangesList } from "./ChangesList";
 import { createFileTreeDragMentionController } from "./fileTreeDragMention";
 import { areAllDirectoriesExpanded, setAllDirectoriesExpanded } from "./fileTreeExpansion";
 import { buildFileTreePathUpdates } from "./fileTreePathReconciliation";
@@ -36,6 +37,7 @@ interface FileBrowserPanelProps {
   selectedPath: string | null;
   /** Bumped when the same path should be revealed again (e.g. re-opened from search). */
   selectedPathRevealId: number;
+  threadRef?: ScopedThreadRef | null | undefined;
   onOpenFile: (relativePath: string) => void;
   onRefreshSelectedFile?: () => void;
   workspaceMutationId: string | null;
@@ -100,6 +102,7 @@ export default function FileBrowserPanel({
   projectName,
   selectedPath,
   selectedPathRevealId,
+  threadRef,
   onOpenFile,
   onRefreshSelectedFile,
   workspaceMutationId,
@@ -547,6 +550,12 @@ export default function FileBrowserPanel({
           Loading files…
         </div>
       )}
+      <ChangesList
+        environmentId={environmentId}
+        cwd={cwd}
+        threadRef={threadRef}
+        onOpenFile={onOpenFile}
+      />
       <FileTree
         model={model}
         aria-label={`${projectName} files`}

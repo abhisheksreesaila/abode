@@ -237,6 +237,12 @@ function parsePorcelainPath(line: string): string | null {
   return filePath.length > 0 ? filePath : null;
 }
 
+/** Path of a tracked entry whose index or worktree state is "deleted" in a porcelain v2 line. */
+export function parsePorcelainDeletedPath(line: string): string | null {
+  if (!line.startsWith("1 ") || !line.slice(2, 4).includes("D")) return null;
+  return parsePorcelainPath(line);
+}
+
 function filterBranchesForListQuery(
   refs: ReadonlyArray<VcsRef>,
   query?: string,
@@ -1844,6 +1850,7 @@ export const makeGitVcsDriverCore = Effect.fn("makeGitVcsDriverCore")(function* 
     let aheadOfDefaultCount = 0;
     let hasWorkingTreeChanges = false;
     const changedFilesWithoutNumstat = new Set<string>();
+    const deletedPaths = new Set<string>();
 
     for (const line of statusStdout.split(/\r?\n/g)) {
       if (line.startsWith("# branch.head ")) {
@@ -1867,6 +1874,8 @@ export const makeGitVcsDriverCore = Effect.fn("makeGitVcsDriverCore")(function* 
         hasWorkingTreeChanges = true;
         const pathValue = parsePorcelainPath(line);
         if (pathValue) changedFilesWithoutNumstat.add(pathValue);
+        const deletedPath = parsePorcelainDeletedPath(line);
+        if (deletedPath) deletedPaths.add(deletedPath);
       }
     }
 
@@ -1903,13 +1912,23 @@ export const makeGitVcsDriverCore = Effect.fn("makeGitVcsDriverCore")(function* 
       .map(([filePath, stat]) => {
         insertions += stat.insertions;
         deletions += stat.deletions;
-        return { path: filePath, insertions: stat.insertions, deletions: stat.deletions };
+        return {
+          path: filePath,
+          insertions: stat.insertions,
+          deletions: stat.deletions,
+          ...(deletedPaths.has(filePath) ? { deleted: true } : {}),
+        };
       })
       .toSorted((a, b) => a.path.localeCompare(b.path));
 
     for (const filePath of changedFilesWithoutNumstat) {
       if (fileStatMap.has(filePath)) continue;
-      files.push({ path: filePath, insertions: 0, deletions: 0 });
+      files.push({
+        path: filePath,
+        insertions: 0,
+        deletions: 0,
+        ...(deletedPaths.has(filePath) ? { deleted: true } : {}),
+      });
     }
     files.sort((a, b) => a.path.localeCompare(b.path));
 

@@ -502,6 +502,7 @@ import {
 } from "../lib/attachmentUploadQueue";
 import { sanitizeThreadErrorMessage } from "~/rpc/transportError";
 import { RightPanelSheet } from "./RightPanelSheet";
+import { WorkspaceDrawerSync } from "./workspaceDrawer/WorkspaceDrawerSync";
 import { previewEnvironment } from "../state/preview";
 import { clampFileAttachmentUploadBytes } from "@t3tools/client-runtime/state/attachments";
 import { appAtomRegistry } from "../rpc/atomRegistry";
@@ -9826,6 +9827,14 @@ export default function ChatView(props: ChatViewProps) {
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
+      {activeThreadRef && activeProjectKey ? (
+        <WorkspaceDrawerSync
+          threadRef={activeThreadRef}
+          workspaceKey={activeProjectKey}
+          configuredPreviewUrls={configuredPreviewUrls}
+          sheetLayout={shouldUseRightPanelSheet}
+        />
+      ) : null}
       <Dialog
         open={
           deviceSetupThread !== null &&

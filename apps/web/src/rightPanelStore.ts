@@ -163,6 +163,11 @@ interface RightPanelStoreState {
   closeAllSurfaces: (ref: ScopedThreadRef) => void;
   reconcileBrowserSurfaces: (ref: ScopedThreadRef, tabIds: readonly string[]) => void;
   reconcileFileSurfaces: (ref: ScopedThreadRef, workspaceAvailable: boolean) => void;
+  /**
+   * Applies a workspace's remembered drawer to a thread. Not a user choice, so it does not
+   * advance the user-action revision and proactive panels (diff, pull requests) still open.
+   */
+  applyWorkspaceDrawer: (ref: ScopedThreadRef, drawer: WorkspaceDrawerApplication) => void;
   show: (ref: ScopedThreadRef) => void;
   close: (ref: ScopedThreadRef) => void;
   toggleVisibility: (ref: ScopedThreadRef) => void;
@@ -173,13 +178,22 @@ interface RightPanelStoreState {
   removeThread: (ref: ScopedThreadRef) => void;
 }
 
+export interface WorkspaceDrawerApplication {
+  /** `null` leaves open/closed as it is. */
+  isOpen: boolean | null;
+  /** Surfaces to add when missing, without selecting them. */
+  ensure: ReadonlyArray<RightPanelSurface>;
+  /** Surface to select, if it exists once `ensure` is applied. */
+  activate: string | null;
+}
+
 const EMPTY_THREAD_STATE: ThreadRightPanelState = {
   isOpen: false,
   activeSurfaceId: null,
   surfaces: [],
 };
 
-const singletonSurface = (
+export const singletonSurface = (
   kind: Exclude<RightPanelKind, "file" | "preview" | "terminal" | "pull-request">,
 ): RightPanelSurface => {
   switch (kind) {
@@ -196,12 +210,12 @@ const singletonSurface = (
   }
 };
 
-const browserSurface = (tabId: string | null): RightPanelSurface =>
+export const browserSurface = (tabId: string | null): RightPanelSurface =>
   tabId
     ? { id: `browser:${tabId}`, kind: "preview", resourceId: tabId }
     : { id: "browser:new", kind: "preview", resourceId: null };
 
-const fileSurface = (
+export const fileSurface = (
   relativePath: string,
   revealLine: number | null,
   revealRequestId: number,
@@ -812,6 +826,32 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
               activeSurfaceId: activeStillExists
                 ? current.activeSurfaceId
                 : (surfaces.at(-1)?.id ?? null),
+            };
+          }),
+        ),
+      applyWorkspaceDrawer: (ref, drawer) =>
+        set((state) =>
+          automaticUpdate(state, scopedThreadKey(ref), (current) => {
+            const addsRealBrowser = drawer.ensure.some(
+              (surface) => surface.kind === "preview" && surface.resourceId !== null,
+            );
+            const surfaces = current.surfaces.filter(
+              (surface) => !(addsRealBrowser && surface.id === "browser:new"),
+            );
+            for (const surface of drawer.ensure) {
+              if (!surfaces.some((entry) => entry.id === surface.id)) surfaces.push(surface);
+            }
+            const activeSurfaceId =
+              drawer.activate !== null && surfaces.some((entry) => entry.id === drawer.activate)
+                ? drawer.activate
+                : (surfaces.find((entry) => entry.id === current.activeSurfaceId)?.id ??
+                  surfaces[0]?.id ??
+                  null);
+            return {
+              ...current,
+              surfaces,
+              activeSurfaceId,
+              isOpen: drawer.isOpen ?? current.isOpen,
             };
           }),
         ),
