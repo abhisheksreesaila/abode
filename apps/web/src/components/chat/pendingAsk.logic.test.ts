@@ -53,6 +53,27 @@ describe("askOptionForKey", () => {
   });
 });
 
+describe("option descriptions", () => {
+  it("carries a description, trimmed, and drops empty or label-equal ones", () => {
+    const ask = derivePendingAsk(
+      "r1",
+      {
+        id: "q",
+        header: "H",
+        question: "Q",
+        multiSelect: false,
+        options: [
+          { label: "Apply", description: "  Writes the patch  " },
+          { label: "Skip", description: "" },
+          { label: "Later", description: "Later" },
+        ],
+      } as never,
+      false,
+    )!;
+    expect(ask.options.map((o) => o.description)).toEqual(["Writes the patch", "", ""]);
+  });
+});
+
 describe("advance guard", () => {
   it("advances only while the answered question is still active", () => {
     const answered = pendingAskKey("r1", "q1");

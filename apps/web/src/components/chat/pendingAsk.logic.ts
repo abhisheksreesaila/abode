@@ -9,6 +9,8 @@ export interface PendingAsk {
   readonly options: ReadonlyArray<{
     readonly value: string;
     readonly label: string;
+    /** Muted line under the button; empty when the option has none or it repeats the label. */
+    readonly description: string;
     readonly primary: boolean;
   }>;
   readonly responding: boolean;
@@ -22,6 +24,11 @@ export interface PendingAsk {
  * Only single-select questions become buttons: picking one answers, the same
  * as the composer panel's auto-advance. Multi-select stays in the composer.
  */
+export function optionDescription(label: string, description: string | undefined): string {
+  const text = description?.trim() ?? "";
+  return text === label.trim() ? "" : text;
+}
+
 export function isInlineAskQuestion(question: {
   multiSelect?: boolean | undefined;
   options: ReadonlyArray<unknown>;
@@ -50,6 +57,7 @@ export function derivePendingAsk(
     options: question.options.map((option, index) => ({
       value: option.value ?? option.label,
       label: option.label,
+      description: optionDescription(option.label, option.description),
       primary: index === primaryIndex,
     })),
     responding,
@@ -85,7 +93,9 @@ export function pendingAskEqual(a: PendingAsk, b: PendingAsk): boolean {
     a.options.length === b.options.length &&
     a.options.every(
       (option, i) =>
-        option.value === b.options[i]!.value && option.primary === b.options[i]!.primary,
+        option.value === b.options[i]!.value &&
+        option.description === b.options[i]!.description &&
+        option.primary === b.options[i]!.primary,
     )
   );
 }

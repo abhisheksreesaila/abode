@@ -8885,7 +8885,8 @@ export default function ChatView(props: ChatViewProps) {
 
   const isFluent = useIsFluentTheme();
   const fluentTimelineProps = useFluentTimelineProps({
-    fluent: isFluent,
+    // The ask row (and its number keys) must go away with it while a thread switch only paints.
+    fluent: isFluent && !paintOnlyDisplayedTimeline,
     dismissible: activePendingUserInput?.dismissible ?? false,
     questionIndex: activePendingQuestionIndex,
     questionCount: activePendingUserInput?.questions.length ?? 1,
@@ -9995,6 +9996,7 @@ export default function ChatView(props: ChatViewProps) {
                 pendingAsk={paintOnlyDisplayedTimeline ? null : fluentTimelineProps.pendingAsk}
                 onAnswerPendingAsk={fluentTimelineProps.onAnswerPendingAsk}
                 onDismissPendingAsk={fluentTimelineProps.onDismissPendingAsk}
+                onPreviousPendingAsk={onPreviousActivePendingUserInputQuestion}
               />
 
               {/* scroll to end pill — shown when user has scrolled away from the live edge */}

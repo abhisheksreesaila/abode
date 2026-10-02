@@ -71,8 +71,9 @@ export const PendingAskBlock = memo(function PendingAskBlock(props: {
   ask: PendingAsk;
   onAnswer: (questionId: string, optionValue: string) => void;
   onDismiss: (requestId: string) => void;
+  onPrevious: () => void;
 }) {
-  const { ask, onAnswer, onDismiss } = props;
+  const { ask, onAnswer, onDismiss, onPrevious } = props;
   return (
     <div data-fluent="ask" role="group" aria-label={ask.header} data-pending-ask="">
       <p data-fluent="ask-text">
@@ -84,17 +85,31 @@ export const PendingAskBlock = memo(function PendingAskBlock(props: {
         {ask.question}
       </p>
       <div data-fluent="ask-actions">
-        {ask.options.map((option, index) => (
+        {ask.questionIndex > 0 ? (
           <Button
-            key={option.value}
             size="compact"
-            variant={option.primary ? "default" : "outline"}
+            variant="ghost-muted"
             disabled={ask.responding}
-            onClick={() => onAnswer(ask.questionId, option.value)}
+            onClick={onPrevious}
           >
-            {index < 9 ? <span data-fluent="ask-key">{index + 1}</span> : null}
-            {option.label}
+            {"\u2039 Previous"}
           </Button>
+        ) : null}
+        {ask.options.map((option, index) => (
+          <div key={option.value} data-fluent="ask-option">
+            <Button
+              size="compact"
+              variant={option.primary ? "default" : "outline"}
+              disabled={ask.responding}
+              onClick={() => onAnswer(ask.questionId, option.value)}
+            >
+              {index < 9 ? <span data-fluent="ask-key">{index + 1}</span> : null}
+              {option.label}
+            </Button>
+            {option.description ? (
+              <span data-fluent="ask-description">{option.description}</span>
+            ) : null}
+          </div>
         ))}
         {ask.dismissible ? (
           <Button

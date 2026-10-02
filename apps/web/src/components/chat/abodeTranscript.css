@@ -122,6 +122,22 @@ html[data-theme-id="abode"] {
     opacity: 0.8;
   }
 
+  [data-fluent="ask-option"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 220px;
+  }
+
+  [data-fluent="ask-description"] {
+    color: #9d9d9d;
+    font-size: 11.5px;
+  }
+
+  [data-fluent="ask-actions"] {
+    align-items: flex-start;
+  }
+
   [data-fluent="ask-text"] {
     margin: 0 0 8px;
     color: #cccccc;
