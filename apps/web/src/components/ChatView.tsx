@@ -1,5 +1,6 @@
 import { isChatGptUsageLimitError } from "@t3tools/shared/usageLimits";
 import { useLoadBalancedEnvironment } from "../hooks/useLoadBalancedEnvironment";
+import { onPanelToggleRequest } from "../panelToggleBus";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 import type { UsageLimitSourceSnapshots } from "@t3tools/contracts";
 import {
@@ -5025,6 +5026,12 @@ export default function ChatView(props: ChatViewProps) {
     }
     useRightPanelStore.getState().toggleVisibility(activeThreadRef);
   }, [activeThreadRef, closePreviewPanel, rightPanelOpen]);
+  // Command palette toggles run the same paths as the keyboard shortcuts.
+  useEffect(
+    () => onPanelToggleRequest("terminal", toggleTerminalVisibility),
+    [toggleTerminalVisibility],
+  );
+  useEffect(() => onPanelToggleRequest("rightPanel", toggleRightPanel), [toggleRightPanel]);
   const toggleRightPanelMaximized = useCallback(() => {
     if (!canMaximizeRightPanel) return;
     setMaximizedRightPanelThreadKey((threadKey) =>
