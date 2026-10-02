@@ -3,6 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   modelPickerNeedsComposerExpanded,
   resolveModelPickerPlacement,
+  shouldShowWorkspaceRow,
 } from "./composerPickerPlacement";
 
 const draft = {
@@ -41,5 +42,16 @@ describe("modelPickerNeedsComposerExpanded", () => {
     expect(
       modelPickerNeedsComposerExpanded({ placement: "footer", stripControlsHidden: false }),
     ).toBe(false);
+  });
+});
+
+describe("shouldShowWorkspaceRow", () => {
+  it("shows the workspace chip on every draft, including when the provider is unavailable", () => {
+    expect(shouldShowWorkspaceRow({ routeKind: "draft", hasDraftId: true })).toBe(true);
+    expect(resolveModelPickerPlacement({ ...draft, providerUnavailable: true })).toBe("footer");
+  });
+
+  it("does not show it on a started thread", () => {
+    expect(shouldShowWorkspaceRow({ routeKind: "server", hasDraftId: false })).toBe(false);
   });
 });

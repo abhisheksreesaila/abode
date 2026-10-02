@@ -247,6 +247,7 @@ import { useDebouncedValue } from "~/state/queries";
 import { ComposerPickerRow } from "./ComposerPickerRow";
 import {
   modelPickerNeedsComposerExpanded,
+  shouldShowWorkspaceRow,
   resolveModelPickerPlacement,
 } from "./composerPickerPlacement";
 import { ProviderModelPicker } from "./ProviderModelPicker";
@@ -6480,10 +6481,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 isComposerResting && "py-2 sm:py-2",
               )}
             >
-              {modelPickerInTopRow && draftId !== null ? (
+              {shouldShowWorkspaceRow({ routeKind, hasDraftId: draftId !== null }) &&
+              draftId !== null ? (
                 <ComposerPickerRow
                   draftId={draftId}
-                  modelPicker={providerModelPicker}
+                  modelPicker={modelPickerInTopRow ? providerModelPicker : null}
                   disabled={providerCatalogPending || isSendBusy}
                 />
               ) : null}

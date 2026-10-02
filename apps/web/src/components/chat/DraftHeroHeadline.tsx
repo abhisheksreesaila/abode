@@ -104,7 +104,7 @@ export function DraftHeroHeadline({
         )}
       </h1>
       {/* Reserved whenever threads can skip a project, so the heading does not
-          move. Without a project, the picker moves here to choose one. */}
+          move. Holds the "start without a project" link. */}
       {scratchWorkspaceRoot === null ? null : (
         <p className="mt-2 flex h-6 items-center text-sm">{orStartWithoutProject}</p>
       )}

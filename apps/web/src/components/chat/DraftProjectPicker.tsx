@@ -283,10 +283,8 @@ export function DraftProjectMenu({
       <Tooltip>
         <TooltipTrigger
           render={
-            // The trigger's accessible name comes from its visible text (the
-            // project title) so the hero sentence reads naturally: an
-            // aria-label here would replace the title with an action phrase
-            // mid-sentence and baffle screen-reader users.
+            // The chip's accessible name is an explicit "Workspace: <name>"
+            // label so a screen reader announces what the control is for.
             <MenuTrigger
               render={<ComposerControl size="xs" chip className="max-w-56 min-w-0 gap-1.5" />}
               data-composer-workspace-picker=""

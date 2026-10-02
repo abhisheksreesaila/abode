@@ -28,3 +28,11 @@ export function modelPickerNeedsComposerExpanded(input: {
 }): boolean {
   return input.placement === "footer" && input.stripControlsHidden;
 }
+
+/** Every draft shows the workspace chip, even when the model picker stays in the footer. */
+export function shouldShowWorkspaceRow(input: {
+  readonly routeKind: "server" | "draft";
+  readonly hasDraftId: boolean;
+}): boolean {
+  return input.routeKind === "draft" && input.hasDraftId;
+}

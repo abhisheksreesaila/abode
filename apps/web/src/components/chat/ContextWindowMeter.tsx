@@ -205,12 +205,24 @@ export function ContextWindowMeter(props: {
   );
 }
 
-/** Holds the meter's footprint while a thread's activities are still loading. */
+/**
+ * Holds the meter's footprint while a thread's activities are still loading.
+ * The bar variant renders the real trigger's structure with sample text, so
+ * its width matches without a measured constant.
+ */
 export function ContextWindowMeterPlaceholder({ variant = "ring" }: { variant?: "ring" | "bar" }) {
+  if (variant === "ring") {
+    return <span aria-hidden="true" className="size-7 shrink-0" />;
+  }
   return (
-    <span
-      aria-hidden="true"
-      className={variant === "bar" ? "h-7 w-28 shrink-0" : "size-7 shrink-0"}
-    />
+    <span aria-hidden="true" inert className="invisible">
+      <Button size="xs" variant="ghost-muted" tabIndex={-1}>
+        <span className="flex items-center gap-2 tabular-nums">
+          <span className="h-1 w-14 shrink-0" />
+          <span>Context 00%</span>
+          <span className="hidden @2xl/composer-surface:inline">· 000k / 000k</span>
+        </span>
+      </Button>
+    </span>
   );
 }

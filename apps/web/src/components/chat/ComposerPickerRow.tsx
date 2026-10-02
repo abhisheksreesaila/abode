@@ -17,6 +17,7 @@ import { DraftProjectMenu, useDraftProjectPicker } from "./DraftProjectPicker";
  */
 export function ComposerPickerRow(props: {
   readonly draftId: DraftId;
+  /** Null when the model picker lives in the footer instead. */
   readonly modelPicker: ReactNode;
   /** True while a send is in flight, matching the model picker. */
   readonly disabled: boolean;
