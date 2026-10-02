@@ -114,7 +114,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-007: VS Code panel toggles
 
-- **Status:** doing
+- **Status:** done
 - **Depends on:** F-005
 - **What:** title-bar toggle buttons for the sidebar, bottom terminal and side panel, with Ctrl+B, Ctrl+J and Ctrl+Alt+B (and their Cmd equivalents). The side panel is closed by default.
 - **Acceptance:**
@@ -143,7 +143,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-010: Customizations service (server, add-only)
 
-- **Status:** doing
+- **Status:** done
 - **What:** one new service with new RPC methods (it alters nothing existing):
   - It lists Claude **skills, agents, MCP servers and instructions** for a workspace. Each entry has a name, a file path and a scope: user (`~/.claude/…`, `~/.claude.json`) or workspace (`.claude/…`, `.mcp.json`, `CLAUDE.md`).
   - It reads and saves those files.
