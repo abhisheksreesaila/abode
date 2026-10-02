@@ -6,6 +6,9 @@ import {
   homeRelativePath,
   resolveWorkspacePill,
   splitLatestThreads,
+  threadMetaLabel,
+  threadSquareTone,
+  workspacePillView,
   workspaceInitials,
 } from "./workspaceList";
 
@@ -126,5 +129,32 @@ describe("threadListWindow", () => {
   it("never offers +0 older when the active thread is the only hidden one", () => {
     const window = threadListWindow([1, 2, 3], { expanded: false, isActive: (n) => n === 3 });
     expect(window).toMatchObject({ shown: [1, 2, 3], olderCount: 0, showMore: false });
+  });
+});
+
+describe("threadSquareTone", () => {
+  it("maps thread status labels to the three squares plus done", () => {
+    expect(threadSquareTone("Working")).toBe("running");
+    expect(threadSquareTone("Connecting")).toBe("running");
+    expect(threadSquareTone("Pending Approval")).toBe("needs-you");
+    expect(threadSquareTone("Plan Ready")).toBe("needs-you");
+    expect(threadSquareTone("Completed")).toBe("done");
+    expect(threadSquareTone(null)).toBe("idle");
+  });
+  it("swaps the age for needs you only while waiting", () => {
+    expect(threadMetaLabel("needs-you", "2m")).toBe("needs you");
+    expect(threadMetaLabel("running", "2m")).toBe("2m");
+  });
+});
+
+describe("workspacePillView", () => {
+  it("shows a count pill, and a red failed marker for failures", () => {
+    expect(
+      workspacePillView({ kind: "needs-you", count: 2, label: "2 needs you", detail: "" }),
+    ).toEqual({ kind: "count", tone: "needs-you", text: "2" });
+    expect(workspacePillView({ kind: "failed", count: 1, label: "failed", detail: "" })).toEqual({
+      kind: "failed",
+      text: "\u2297 failed",
+    });
   });
 });

@@ -3,9 +3,9 @@ import { resolveThreadCurrentPullRequestLink } from "@t3tools/shared/threadPullR
 import { Spinner } from "~/components/ui/spinner";
 import {
   ArchiveIcon,
-  ArrowUpDownIcon,
-  FolderPlusIcon,
+  EllipsisIcon,
   Globe2Icon,
+  PlusIcon,
   SearchIcon,
   SquarePenIcon,
   TerminalIcon,
@@ -17,7 +17,6 @@ import {
   PrStatusTooltipContent,
   terminalStatusFromRunningIds,
   synchronizeTerminalPulse,
-  ThreadStatusLabel,
   ThreadWorktreeIndicator,
   useLinkedThreadPullRequest,
 } from "./ThreadStatusIndicators";
@@ -155,7 +154,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
 } from "./ui/sidebar";
@@ -189,11 +187,18 @@ import { useIsMobile } from "~/hooks/useMediaQuery";
 import { CommandDialogTrigger } from "./ui/command";
 import { useClientSettings, useUpdateClientSettings } from "~/hooks/useSettings";
 import { SidebarSubagentRows } from "./sidebar/SidebarSubagentRows";
+import {
+  SidebarAgentsHeader,
+  SidebarSectionHeader,
+  ThreadStatusSquare,
+} from "./sidebar/FluentSidebarParts";
 import { WorkspaceHeaderContent } from "./sidebar/WorkspaceHeaderContent";
 import {
   formatWorkspaceLocation,
   resolveWorkspacePill,
   threadListWindow,
+  threadMetaLabel,
+  threadSquareTone,
 } from "./sidebar/workspaceList";
 import { buildWorkspaceColorMenuItem } from "./sidebar/workspaceColor";
 import {
@@ -727,9 +732,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         data-size="sm"
         data-testid={`thread-row-${thread.id}`}
         className={cn(
-          "relative isolate flex h-8 w-full min-w-0 cursor-pointer select-none items-center gap-2 overflow-hidden rounded-md px-2 text-left text-xs outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring group-data-[collapsible=icon]:hidden [&>span:last-child]:truncate [&>svg:not([class*='size-'])]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-muted-foreground",
+          "relative isolate flex h-[22px] w-full min-w-0 cursor-pointer select-none items-center gap-2 overflow-hidden rounded-xs px-2 text-left text-xs outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring group-data-[collapsible=icon]:hidden [&>span:last-child]:truncate [&>svg:not([class*='size-'])]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-muted-foreground",
           isActive
-            ? "bg-sidebar-row-active font-medium text-sidebar-foreground hover:bg-sidebar-row-active"
+            ? "bg-sidebar-row-active font-medium text-white ring-1 ring-inset ring-primary hover:bg-sidebar-row-active"
             : isSelected
               ? "bg-sidebar-row-selected text-sidebar-foreground hover:bg-sidebar-row-active"
               : "text-sidebar-muted-foreground/80 hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
@@ -780,7 +785,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               <PullRequestGlyph.pullRequest className="size-3" />
             </a>
           ) : null}
-          {threadStatus && <ThreadStatusLabel status={threadStatus} />}
+          <ThreadStatusSquare statusLabel={threadStatus?.label ?? null} />
           {renamingThreadKey === threadKey ? (
             <input
               ref={handleRenameInputRef}
@@ -945,8 +950,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                       isHighlighted ? "text-foreground" : "text-secondary-label"
                     }`}
                   >
-                    {formatRelativeTimeLabel(
-                      thread.latestUserMessageAt ?? thread.updatedAt ?? thread.createdAt,
+                    {threadMetaLabel(
+                      threadSquareTone(threadStatus?.label ?? null),
+                      formatRelativeTimeLabel(
+                        thread.latestUserMessageAt ?? thread.updatedAt ?? thread.createdAt,
+                      ),
                     )}
                   </span>
                 )}
@@ -1059,15 +1067,15 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
   return (
     <SidebarMenuSub
       ref={attachThreadListAutoAnimateRef}
-      className="mx-0.5 my-0 w-full translate-x-0 overflow-hidden sm:mx-1"
-      // Workspace guide line (abode F-006).
-      style={workspaceColor ? { borderLeftColor: workspaceColor.color } : undefined}
+      // Fluent (F-028): threads indent 32px; the workspace color lives on the row's dot.
+      variant="flush"
+      className="w-full overflow-hidden"
     >
       {shouldShowThreadPanel && showEmptyThreadState ? (
         <SidebarMenuSubItem className="w-full" data-thread-selection-safe>
           <div
             data-thread-selection-safe
-            className="flex h-8 w-full translate-x-0 items-center px-2 text-left text-xs text-sidebar-muted-foreground/75"
+            className="flex h-[22px] w-full translate-x-0 items-center px-2 text-left text-xs text-sidebar-muted-foreground/75"
           >
             <span>No threads yet</span>
           </div>
@@ -1117,32 +1125,30 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
 
       {projectExpanded && showMoreThreads && (
         <SidebarMenuSubItem className="w-full">
-          <SidebarMenuSubButton
-            render={showMoreButtonRender}
+          <button
+            type="button"
             data-thread-selection-safe
-            size="sm"
+            className="flex h-[22px] w-full cursor-pointer items-center px-2 text-left text-3xs text-secondary-label outline-hidden hover:text-sidebar-foreground focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
             onClick={() => {
               expandThreadListForProject(projectKey);
             }}
           >
-            <span className="flex min-w-0 flex-1 items-center gap-2">
-              <span>+{olderThreadCount} older</span>
-            </span>
-          </SidebarMenuSubButton>
+            {olderThreadCount} older
+          </button>
         </SidebarMenuSubItem>
       )}
       {projectExpanded && showLessThreads && (
         <SidebarMenuSubItem className="w-full">
-          <SidebarMenuSubButton
-            render={showLessButtonRender}
+          <button
+            type="button"
             data-thread-selection-safe
-            size="sm"
+            className="flex h-[22px] w-full cursor-pointer items-center px-2 text-left text-3xs text-secondary-label outline-hidden hover:text-sidebar-foreground focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
             onClick={() => {
               collapseThreadListForProject(projectKey);
             }}
           >
-            <span>Show less</span>
-          </SidebarMenuSubButton>
+            Show less
+          </button>
         </SidebarMenuSubItem>
       )}
     </SidebarMenuSub>
@@ -2358,20 +2364,9 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
 
   return (
     <>
-      <div
-        className="group/project-header relative rounded-sm"
-        // Option B: tinted row with a 3px workspace-color left border.
-        style={
-          workspaceColor
-            ? {
-                backgroundColor: workspaceColor.tint,
-                borderLeft: `3px solid ${workspaceColor.color}`,
-              }
-            : undefined
-        }
-      >
+      <div className="group/project-header relative">
         <SidebarMenuButton
-          size="lg"
+          size="workspace"
           ref={isManualProjectSorting ? dragHandleProps?.setActivatorNodeRef : undefined}
           className={isManualProjectSorting ? "cursor-grab active:cursor-grabbing" : undefined}
           {...(isManualProjectSorting && dragHandleProps ? dragHandleProps.attributes : {})}
@@ -2671,7 +2666,7 @@ function ProjectSortMenu({
         <TooltipTrigger
           render={<MenuTrigger render={<Button size="icon-xs" variant="ghost-muted" />} />}
         >
-          <ArrowUpDownIcon className="size-3.5" />
+          <EllipsisIcon className="size-3.5" />
         </TooltipTrigger>
         <TooltipPopup side="right">Sidebar options</TooltipPopup>
       </Tooltip>
@@ -2853,19 +2848,46 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
       fixedHeader={
         // Lifted above the stage backdrop, whose fade bleeds below the
         // header and would otherwise paint across the search row's outline.
-        <SidebarGroup className="z-[1]">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <CommandDialogTrigger
-                render={<SidebarMenuButton data-testid="command-palette-trigger" />}
+        <>
+          <SidebarAgentsHeader>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="icon-xs"
+                    variant="ghost-muted"
+                    aria-label="Add project"
+                    data-testid="sidebar-add-project-trigger"
+                    onClick={openAddProject}
+                  />
+                }
               >
-                <SearchIcon />
-                <span className="flex-1 truncate">Search</span>
-                {commandPaletteShortcutLabel ? <Kbd>{commandPaletteShortcutLabel}</Kbd> : null}
-              </CommandDialogTrigger>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+                <PlusIcon className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipPopup side="right">Add project</TooltipPopup>
+            </Tooltip>
+            <ProjectSortMenu
+              projectSortOrder={projectSortOrder}
+              threadSortOrder={threadSortOrder}
+              onProjectSortOrderChange={handleProjectSortOrderChange}
+              onThreadSortOrderChange={handleThreadSortOrderChange}
+            />
+          </SidebarAgentsHeader>
+          {/* Desktop widths reach search from the activity bar; the phone sheet has no rail. */}
+          <SidebarGroup className="z-[1] md:hidden">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <CommandDialogTrigger
+                  render={<SidebarMenuButton data-testid="command-palette-trigger" />}
+                >
+                  <SearchIcon />
+                  <span className="flex-1 truncate">Search</span>
+                  {commandPaletteShortcutLabel ? <Kbd>{commandPaletteShortcutLabel}</Kbd> : null}
+                </CommandDialogTrigger>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </>
       }
     >
       {showArm64IntelBuildWarning && arm64IntelBuildWarningDescription ? (
@@ -2893,33 +2915,7 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
       ) : null}
       <LocalSecondaryStatus />
       <SidebarGroup>
-        <div className="mb-1 flex items-center justify-between pl-2 pr-1.5">
-          <span className="text-xs font-medium text-sidebar-muted-foreground/80">Projects</span>
-          <div className="flex items-center gap-1">
-            <ProjectSortMenu
-              projectSortOrder={projectSortOrder}
-              threadSortOrder={threadSortOrder}
-              onProjectSortOrderChange={handleProjectSortOrderChange}
-              onThreadSortOrderChange={handleThreadSortOrderChange}
-            />
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    size="icon-xs"
-                    variant="ghost-muted"
-                    aria-label="Add project"
-                    data-testid="sidebar-add-project-trigger"
-                    onClick={openAddProject}
-                  />
-                }
-              >
-                <FolderPlusIcon className="size-3.5" />
-              </TooltipTrigger>
-              <TooltipPopup side="right">Add project</TooltipPopup>
-            </Tooltip>
-          </div>
-        </div>
+        <SidebarSectionHeader label="Workspaces" count={projectsLength} />
 
         {isManualProjectSorting ? (
           <DndContext

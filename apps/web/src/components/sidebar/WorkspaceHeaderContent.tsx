@@ -2,21 +2,19 @@ import { ChevronRightIcon } from "lucide-react";
 import { memo } from "react";
 
 import { cn } from "../../lib/utils";
-import { Badge } from "../ui/badge";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { workspaceInitials, type WorkspacePill, type WorkspacePillKind } from "./workspaceList";
+import { workspacePillView, type WorkspacePill, type WorkspacePillKind } from "./workspaceList";
 
-const PILL_VARIANT = {
-  "needs-you": "warning",
-  failed: "error",
-  running: "info",
-  done: "success",
-} as const satisfies Record<WorkspacePillKind, string>;
+const COUNT_PILL_TONE = {
+  "needs-you": "bg-warning/15 text-warning-foreground",
+  running: "bg-muted text-sidebar-foreground",
+  done: "bg-success/15 text-success-foreground",
+} as const satisfies Record<Exclude<WorkspacePillKind, "failed">, string>;
 
 /**
- * The inside of a workspace header button (abode F-024): chevron, colored
- * initials tile, name over location, and a right-aligned status pill that
- * stays visible while the workspace is collapsed.
+ * The inside of a workspace row (abode F-028, Fluent): one line with a chevron,
+ * an 8px square color dot, the name, a dim location, and on the right a count
+ * pill or a red "failed". The pill stays visible while the workspace is collapsed.
  */
 export const WorkspaceHeaderContent = memo(function WorkspaceHeaderContent(props: {
   readonly name: string;
@@ -27,46 +25,49 @@ export const WorkspaceHeaderContent = memo(function WorkspaceHeaderContent(props
   readonly groupedProjectCount: number;
 }) {
   const { name, location, color, expanded, pill, groupedProjectCount } = props;
+  const pillView = pill ? workspacePillView(pill) : null;
   return (
     <>
       <ChevronRightIcon
         className={cn(
-          "-ml-0.5 size-3 shrink-0 text-muted-foreground/70 transition-transform duration-150",
+          "size-3 shrink-0 text-muted-foreground/70 transition-transform duration-150",
           expanded && "rotate-90",
         )}
       />
       <span
         aria-hidden
-        className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-3xs font-bold text-background"
+        className="size-2 shrink-0 rounded-xs bg-muted"
         style={color ? { backgroundColor: color } : undefined}
-      >
-        {workspaceInitials(name)}
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold text-sidebar-foreground">{name}</span>
-          {groupedProjectCount > 1 ? (
-            <span className="shrink-0 text-secondary-label text-3xs">
-              {groupedProjectCount} projects
-            </span>
-          ) : null}
+      />
+      <span className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
+        <span className="shrink-0 truncate text-xs font-semibold text-sidebar-foreground">
+          {name}
         </span>
-        <span className="truncate font-mono text-3xs font-normal text-secondary-label">
+        {groupedProjectCount > 1 ? (
+          <span className="shrink-0 text-secondary-label text-3xs">
+            {groupedProjectCount} projects
+          </span>
+        ) : null}
+        <span className="min-w-0 truncate text-3xs font-normal text-secondary-label">
           {location}
         </span>
       </span>
-      {pill ? (
+      {pill && pillView ? (
         <Tooltip>
           <TooltipTrigger
             render={
-              <Badge
-                size="sm"
-                variant={PILL_VARIANT[pill.kind]}
+              <span
                 data-testid="workspace-status-pill"
+                className={cn(
+                  "inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center text-3xs font-bold",
+                  pillView.kind === "failed"
+                    ? "gap-0.5 text-destructive"
+                    : cn("rounded-full px-1.5", COUNT_PILL_TONE[pillView.tone]),
+                )}
               />
             }
           >
-            {pill.label}
+            {pillView.text}
           </TooltipTrigger>
           <TooltipPopup side="top">{pill.detail}</TooltipPopup>
         </Tooltip>

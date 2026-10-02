@@ -673,6 +673,9 @@ const sidebarMenuButtonVariants = cva(
         icon: "size-8 justify-center rounded-[var(--control-radius)] p-0",
         lg: "h-12 rounded-lg p-2 text-sm group-data-[collapsible=icon]:p-0!",
         sm: "h-7 rounded-lg p-2 text-xs",
+        // One-line workspace row (abode F-028).
+        workspace:
+          "h-[22px] rounded-[var(--control-radius)] px-1.5 text-xs group-data-[collapsible=icon]:p-0!",
       },
       variant: {
         default: "font-medium text-sidebar-muted-foreground/80",
@@ -735,11 +738,20 @@ function SidebarMenuButton({
   );
 }
 
-function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
+function SidebarMenuSub({
+  className,
+  variant = "default",
+  ...props
+}: React.ComponentProps<"ul"> & {
+  /** `flush` is the Fluent thread list (abode F-028): no guide line, rows indented 32px. */
+  variant?: "default" | "flush";
+}) {
   return (
     <ul
       className={cn(
-        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-sidebar-border border-l px-2.5 py-0.5",
+        variant === "flush"
+          ? "mx-0 flex min-w-0 flex-col pl-[32px]"
+          : "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-sidebar-border border-l px-2.5 py-0.5",
         "group-data-[collapsible=icon]:hidden",
         className,
       )}
