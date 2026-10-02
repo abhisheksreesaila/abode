@@ -26,6 +26,8 @@ import {
   type ThreadId,
 } from "@t3tools/contracts";
 import { getTerminalLabel } from "@t3tools/shared/terminalLabels";
+import { TerminalPanelHeader } from "./TerminalPanelHeader";
+import { formatTerminalPanelContext } from "./terminalPanelHeader.logic";
 import * as Schema from "effect/Schema";
 import {
   type PointerEvent as ReactPointerEvent,
@@ -65,6 +67,7 @@ import {
   isTerminalSplitShortcut,
   isTerminalSplitVerticalShortcut,
   isTerminalToggleShortcut,
+  shortcutLabelForCommand,
   terminalDeleteShortcutData,
   terminalNavigationShortcutData,
 } from "../keybindings";
@@ -1389,6 +1392,13 @@ export default function ThreadTerminalDrawer({
     };
   }, [syncHeight]);
 
+  const panelHeaderContext = formatTerminalPanelContext({
+    label: terminalLabelById.get(resolvedActiveTerminalId) ?? null,
+    cwd,
+    worktreePath,
+  });
+  const terminalToggleShortcutLabel = shortcutLabelForCommand(keybindings, "terminal.toggle");
+
   if (normalizedTerminalIds.length === 0) {
     return (
       <aside
@@ -1407,6 +1417,12 @@ export default function ThreadTerminalDrawer({
             onPointerMove={handleResizePointerMove}
             onPointerUp={handleResizePointerEnd}
             onPointerCancel={handleResizePointerEnd}
+          />
+        ) : null}
+        {!isPanel ? (
+          <TerminalPanelHeader
+            context={panelHeaderContext}
+            closeShortcutLabel={terminalToggleShortcutLabel}
           />
         ) : null}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-4 py-6 text-center text-sm text-muted-foreground">
@@ -1441,8 +1457,17 @@ export default function ThreadTerminalDrawer({
         />
       ) : null}
 
+      {!isPanel ? (
+        <TerminalPanelHeader
+          context={panelHeaderContext}
+          closeShortcutLabel={terminalToggleShortcutLabel}
+        />
+      ) : null}
+
       {!hasTerminalSidebar && (
-        <div className="pointer-events-none absolute right-2 top-2 z-20">
+        <div
+          className={cn("pointer-events-none absolute right-2 z-20", isPanel ? "top-2" : "top-9")}
+        >
           <div className="pointer-events-auto inline-flex items-center overflow-hidden rounded-md border border-border/80 bg-background shadow-xs">
             <TerminalActionButton
               className={`p-1 text-foreground/90 transition-colors ${
