@@ -2242,7 +2242,7 @@ code {
 /* Workspace accents (docs/design/main-window.md), assigned in order by F-006.
    Theme-independent: VS Code syntax hues that read on every dark canvas. */
 :root {
-  --ws-1: #4fc1ff;
+  --ws-1: #4cc2ff;
   --ws-2: #c586c0;
   --ws-3: #dcdcaa;
   --ws-4: #4ec9b0;
@@ -2298,13 +2298,33 @@ html[data-theme-id="abode"] {
   --chip-danger-fg: color-mix(in srgb, #ff8a8a 60%, var(--foreground));
 }
 
+/* abode Fluent palette (docs/design/fluent.md): one blue, green for ok, square-ish
+   2px corners and Segoe/Consolas. The branch chip is blue for every branch, so
+   the trunk "purple" chip tint resolves to the accent here; other themes keep
+   F-027's purple main / blue feature split. */
+html[data-theme-id="abode"] {
+  --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, Inter, sans-serif;
+  --font-mono: Consolas, "Cascadia Code", "JetBrains Mono", monospace;
+  --success: #4ec9b0;
+  --success-foreground: #4ec9b0;
+  --chip-blue: #0078d4;
+  --chip-blue-fg: #4cc2ff;
+  --chip-purple: #0078d4;
+  --chip-purple-fg: #4cc2ff;
+  --chip-teal: #4ec9b0;
+  --icon-pr: #4ec9b0;
+  --icon-usage: #4cc2ff;
+  --icon-phone: #4cc2ff;
+  --icon-settings: #4cc2ff;
+}
+
 /* abode density: VS Code-like. Scoped to the theme id so every other theme
    keeps T3's global values. 13px UI is the 14px base scaled by 13/14, which
-   also tightens rem-based row padding; controls drop to a 4px radius. */
+   also tightens rem-based row padding; controls drop to a 2px radius. */
 html[data-theme-id="abode"] {
   font-size: 92.857%;
   --radius: 0.375rem;
-  --control-radius: 4px;
+  --control-radius: 2px;
   --sidebar-content-inset: 0.375rem;
   --sidebar-control-gap: 0.25rem;
   --sidebar-row-content-inset: 0.5rem;

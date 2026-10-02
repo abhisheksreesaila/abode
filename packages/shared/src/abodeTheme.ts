@@ -3,7 +3,7 @@ import type { ThemeColors, ThemeDefinition } from "./themePalettes.ts";
 export const ABODE_THEME_ID = "abode";
 
 /**
- * VS Code Dark Modern, per docs/design/main-window.md. Dark only: the theme
+ * VS Code Dark Modern with the Fluent accent, per docs/design/fluent.md. Dark only: the theme
  * has no light half, so selecting it pins the appearance to dark.
  *
  * Deliberately not part of BUILT_IN_THEMES / BUILT_IN_THEME_IDS: those lists
@@ -26,7 +26,7 @@ export const ABODE_DARK_THEME_COLORS: ThemeColors = {
   textMuted: "#9d9d9d",
   border: "#2b2b2b",
   input: "#313131",
-  focus: "#2488db",
+  focus: "#0078d4",
   accent: "#0078d4",
   accentForeground: "#ffffff",
   secondary: "#313131",
@@ -36,14 +36,14 @@ export const ABODE_DARK_THEME_COLORS: ThemeColors = {
   placeholder: "#9d9d9d",
   secondaryLabel: "#9d9d9d",
   iconMuted: "#9d9d9d",
-  error: "#f48771",
-  errorForeground: "#f48771",
-  errorSurface: "#3a2420",
+  error: "#f14c4c",
+  errorForeground: "#f14c4c",
+  errorSurface: "#3a2022",
   warning: "#cca700",
   warningForeground: "#cca700",
   warningSurface: "#2e2a12",
   update: "#0078d4",
-  updateForeground: "#3794ff",
+  updateForeground: "#4cc2ff",
   updateSurface: "#14283c",
   accentSurface: "#2a2d2e",
   accentSurfaceForeground: "#e7e7e7",
@@ -59,8 +59,8 @@ export const ABODE_DARK_THEME_COLORS: ThemeColors = {
   sidebarMutedForeground: "#9d9d9d",
   sidebarControlSurface: "#252526",
   sidebarRowHover: "#2a2d2e",
-  sidebarRowActive: "#37373d",
-  sidebarRowSelected: "#37373d",
+  sidebarRowActive: "#04395e",
+  sidebarRowSelected: "#04395e",
   sidebarBorder: "#2b2b2b",
   terminalBackground: "#181818",
   terminalForeground: "#cccccc",
@@ -79,7 +79,7 @@ export const ABODE_THEME: ThemeDefinition = {
 
 /** Workspace accents, assigned in order (F-006). Mirrors --ws-1..8 in index.css. */
 export const ABODE_WORKSPACE_COLORS = [
-  "#4fc1ff",
+  "#4cc2ff",
   "#c586c0",
   "#dcdcaa",
   "#4ec9b0",
