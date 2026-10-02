@@ -367,7 +367,21 @@ const make = Effect.gen(function* () {
       }
     }
 
-    return { items };
+    // Claude Code lets the most specific settings file name the main agent.
+    let defaultAgent: string | undefined;
+    for (const settingsPath of [
+      path.join(workspaceRoot, ".claude", "settings.local.json"),
+      path.join(workspaceRoot, ".claude", "settings.json"),
+      path.join(configDir, "settings.json"),
+    ]) {
+      const value = field(parseJson(yield* readText(settingsPath)), "agent");
+      if (typeof value === "string" && value.trim().length > 0) {
+        defaultAgent = value.trim();
+        break;
+      }
+    }
+
+    return { items, ...(defaultAgent ? { defaultAgent } : {}) };
   });
 
   const readFile = Effect.fn("Customizations.readFile")(function* (

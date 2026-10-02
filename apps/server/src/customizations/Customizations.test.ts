@@ -135,6 +135,29 @@ describe("Customizations", () => {
     }).pipe(Effect.scoped, Effect.provide(TestLayer)),
   );
 
+  it.effect("reports the settings.json agent, workspace local over workspace over user", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, configDir, workspace } = yield* makeSandbox;
+      expect((yield* customizations.list({ cwd: workspace })).defaultAgent).toBeUndefined();
+
+      yield* put(path.join(configDir, "settings.json"), toJson({ agent: "orchestrator" }));
+      expect((yield* customizations.list({ cwd: workspace })).defaultAgent).toBe("orchestrator");
+
+      yield* put(path.join(workspace, ".claude", "settings.json"), toJson({ agent: "reviewer" }));
+      expect((yield* customizations.list({ cwd: workspace })).defaultAgent).toBe("reviewer");
+
+      yield* put(
+        path.join(workspace, ".claude", "settings.local.json"),
+        toJson({ agent: "developer" }),
+      );
+      expect((yield* customizations.list({ cwd: workspace })).defaultAgent).toBe("developer");
+
+      yield* put(path.join(workspace, ".claude", "settings.local.json"), "{ not json");
+      expect((yield* customizations.list({ cwd: workspace })).defaultAgent).toBe("reviewer");
+    }).pipe(Effect.provide(TestLayer), Effect.scoped),
+  );
+
   it.effect("never puts MCP env, headers or args in the response", () =>
     Effect.gen(function* () {
       const customizations = yield* Customizations.Customizations;

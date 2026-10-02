@@ -259,6 +259,11 @@ import {
 } from "./ComposerCommandMenu";
 import { ComposerPendingApprovalActions } from "./ComposerPendingApprovalActions";
 import { CompactComposerControlsMenu } from "./CompactComposerControlsMenu";
+import {
+  ComposerAgentMenuContent,
+  ComposerAgentPicker,
+  useComposerAgent,
+} from "./ComposerAgentPicker";
 import { ComposerImageThumbnail } from "./ComposerImageThumbnail";
 import { ComposerPrimaryActions } from "./ComposerPrimaryActions";
 import { ComposerPendingApprovalPanel } from "./ComposerPendingApprovalPanel";
@@ -1427,6 +1432,8 @@ export interface ChatComposerProps {
   keybindings: ResolvedKeybindingsConfig;
   terminalOpen: boolean;
   gitCwd: string | null;
+  /** The project's workspace root, where Claude's agents are listed from. */
+  projectCwd?: string | null;
   pullRequestProjectId: ProjectId | null;
   pullRequestRepository: string | null;
   restingControlsHost: HTMLDivElement | null;
@@ -1552,6 +1559,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     keybindings,
     terminalOpen,
     gitCwd,
+    projectCwd = null,
     pullRequestProjectId,
     pullRequestRepository,
     restingControlsHost,
@@ -2675,6 +2683,16 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     isComposerOwned: true,
   } satisfies Parameters<typeof renderProviderTraitsPicker>[0];
   const providerTraitsPicker = renderProviderTraitsPicker(providerTraitsPickerInput);
+  const composerAgent = useComposerAgent({
+    provider: selectedProvider,
+    instanceId: selectedInstanceId,
+    model: selectedModel,
+    environmentId,
+    projectCwd,
+    modelOptions: composerModelOptions?.[selectedInstanceId],
+    threadRef: routeKind === "server" ? routeThreadRef : undefined,
+    draftId: routeKind === "draft" && draftId ? draftId : undefined,
+  });
   const {
     controlsRef: restingComposerControlsRef,
     attachControls: attachRestingComposerControls,
@@ -4983,12 +5001,36 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const iconOnlyBlockCount = composerControlsInStrip
     ? restingControlsIconOnlyBlockCount
     : expandedControlsLayout.iconOnlyBlockCount;
+  const restingBlockIds = [
+    ...(composerAgent ? ["agent"] : []),
+    ...(providerTraitsPicker ? ["traits"] : []),
+    "mode",
+  ];
+  const isRestingBlockHidden = (id: string) =>
+    restingBlockIds.indexOf(id) >= restingBlockIds.length - restingHiddenBlockCount;
   const restingProviderTraitsPicker = renderProviderTraitsPicker({
     ...providerTraitsPickerInput,
     size: composerControlsInStrip ? "xs" : "sm",
-    hidden: composerControlsHidden || restingHiddenBlockCount > 1,
+    hidden: composerControlsHidden || isRestingBlockHidden("traits"),
   });
   const restingBlockDefs = [
+    ...(composerAgent
+      ? [
+          {
+            id: "agent",
+            content: (
+              <>
+                <ComposerControlSeparator size={composerControlsInStrip ? "xs" : "sm"} />
+                <ComposerAgentPicker
+                  agent={composerAgent}
+                  size={composerControlsInStrip ? "xs" : "sm"}
+                  hidden={composerControlsHidden || isRestingBlockHidden("agent")}
+                />
+              </>
+            ),
+          },
+        ]
+      : []),
     ...(providerTraitsPicker
       ? [
           {
@@ -5010,7 +5052,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           interactionMode={interactionMode}
           runtimeMode={runtimeMode}
           size={composerControlsInStrip ? "xs" : "sm"}
-          hidden={composerControlsHidden || restingHiddenBlockCount > 0}
+          hidden={composerControlsHidden || isRestingBlockHidden("mode")}
           onToggleInteractionMode={toggleInteractionMode}
           onRuntimeModeChange={handleRuntimeModeChange}
         />
@@ -5173,6 +5215,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             size={composerControlsInStrip ? "xs" : "sm"}
             hidden={composerControlsHidden || hiddenRestingBlockIds.length === 0}
             showInteractionModeToggle={planModeUiEnabled && hiddenRestingBlockIds.includes("mode")}
+            agentMenuContent={
+              composerAgent && hiddenRestingBlockIds.includes("agent") ? (
+                <ComposerAgentMenuContent agent={composerAgent} />
+              ) : undefined
+            }
             traitsMenuContent={
               hiddenRestingBlockIds.includes("traits") ? providerTraitsMenuContent : undefined
             }

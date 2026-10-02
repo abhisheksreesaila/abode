@@ -422,6 +422,46 @@ describe("getComposerProviderState", () => {
   });
 });
 
+describe("chosen Claude agent", () => {
+  it("is dispatched for Claude even though no descriptor declares it", () => {
+    const state = getComposerProviderState({
+      provider: ProviderDriverKind.make("claudeAgent"),
+      model: MODEL,
+      models: modelWith([booleanDescriptor("thinking")]),
+      modelOptions: selections(["thinking", false], ["agent", "orchestrator"]),
+      planModeEnabled: true,
+    });
+
+    expect(state.modelOptionsForDispatch).toEqual(
+      selections(["thinking", false], ["agent", "orchestrator"]),
+    );
+  });
+
+  it("is dispatched on its own when the model has no other options", () => {
+    const state = getComposerProviderState({
+      provider: ProviderDriverKind.make("claudeAgent"),
+      model: MODEL,
+      models: modelWith([]),
+      modelOptions: selections(["agent", "orchestrator"]),
+      planModeEnabled: true,
+    });
+
+    expect(state.modelOptionsForDispatch).toEqual(selections(["agent", "orchestrator"]));
+  });
+
+  it("is ignored for other providers", () => {
+    const state = getComposerProviderState({
+      provider: PROVIDER,
+      model: MODEL,
+      models: modelWith([booleanDescriptor("thinking")]),
+      modelOptions: selections(["thinking", false], ["agent", "orchestrator"]),
+      planModeEnabled: true,
+    });
+
+    expect(state.modelOptionsForDispatch).toEqual(selections(["thinking", false]));
+  });
+});
+
 describe("withImplicitFastModeDefault", () => {
   it("injects fastMode false only when the model exposes fastMode and no selection exists", () => {
     expect(

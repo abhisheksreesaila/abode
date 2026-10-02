@@ -4938,6 +4938,13 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
       const thinking = thinkingSupported
         ? getModelSelectionBooleanOptionValue(modelSelection, "thinking")
         : undefined;
+      // The agent the main session runs as. A chosen agent travels as the
+      // `agent` model option (see the web composer) and replaces a launch-arg
+      // `--agent`; with neither, Claude Code uses settings.json's `agent` key.
+      const chosenAgent = getModelSelectionStringOptionValue(modelSelection, "agent");
+      if (chosenAgent) {
+        delete extraArgs.agent;
+      }
       const thinkingDisplayArg = extraArgs["thinking-display"];
       const requestThinkingSummaries = shouldRequestClaudeThinkingSummaries({
         thinking,
@@ -5022,6 +5029,7 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
         supportedDialogKinds: ["resume_return"],
         env: McpProviderSession.withAgentDeviceEnvironment(claudeEnvironment, mcpSession),
         additionalDirectories,
+        ...(chosenAgent ? { agent: chosenAgent } : {}),
         ...(Object.keys(extraArgs).length > 0 ? { extraArgs } : {}),
         ...(mcpSession
           ? {

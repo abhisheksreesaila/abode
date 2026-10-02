@@ -38,6 +38,7 @@ import {
   ComposerControlIcon,
   type ComposerControlSize,
 } from "./ComposerControl";
+import { keepChosenAgent } from "./composerAgent";
 import { useComposerMenuProps } from "./composerEventScope";
 import { useComposerMenuState } from "./useComposerMenuState";
 
@@ -294,7 +295,13 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
 }: TraitsMenuContentProps & TraitsPersistence) {
   const setProviderModelOptions = useComposerDraftStore((store) => store.setProviderModelOptions);
   const updateModelOptions = useCallback(
-    (nextOptions: ProviderOptions | undefined) => {
+    (descriptorOptions: ProviderOptions | undefined) => {
+      // A trait edit rebuilds options from descriptors, which never include the
+      // chosen Claude agent, so carry it over rather than silently resetting it.
+      const nextOptions =
+        provider === "claudeAgent"
+          ? keepChosenAgent(descriptorOptions, modelOptions)
+          : descriptorOptions;
       if ("onModelOptionsChange" in persistence) {
         persistence.onModelOptionsChange(nextOptions);
         return;
@@ -309,7 +316,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
         persistSticky: true,
       });
     },
-    [instanceId, model, persistence, provider, setProviderModelOptions],
+    [instanceId, model, modelOptions, persistence, provider, setProviderModelOptions],
   );
   const {
     descriptors,
