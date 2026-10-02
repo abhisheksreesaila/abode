@@ -13,7 +13,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### M-001: abode runs as an always-on host
 
-- **Status:** todo
+- **Status:** doing
 - **What:**
   - A pinned build of abode, in its own checkout separate from the working copy, runs as a systemd user service.
   - Its own home is `~/.abode`, seeded with a `VACUUM INTO` snapshot of `~/.t3/userdata`. The installed T3 data is never touched.
@@ -27,7 +27,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### M-002: Pair the phone (needs Abhishek, about 20 minutes)
 
-- **Status:** todo
+- **Status:** blocked (Abhishek: run the Tailscale/lid command from the chat, install Tailscale + T3 Code on the phone)
 - **Depends on:** M-001
 - **What:** the steps only Abhishek can do:
   - install Tailscale on the laptop (sudo) and sign in;
@@ -43,7 +43,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-001: Voice spike, deciding whether in-app speech is good enough
 
-- **Status:** todo
+- **Status:** doing
 - **What:**
   - Throwaway prototype: Whisper (base.en or small.en) and Moonshine via transformers.js, running in the desktop app's renderer on this laptop. Use WebGPU if it's available, otherwise WASM.
   - Record five real prompts, say 5–20 seconds each, with project names and code words like "worktree", "fh-saas" or "pixi".
@@ -55,7 +55,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-002: Dictate into the composer
 
-- **Status:** todo
+- **Status:** doing
 - **Depends on:** F-001
 - **What:** a mic button in the composer, plus a hold-to-talk key. The speech is transcribed locally and inserted at the cursor; nothing is sent until Abhishek presses Enter. Works in desktop and web.
 - **Acceptance:**
@@ -68,7 +68,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-003: Voice settings
 
-- **Status:** todo
+- **Status:** doing
 - **Depends on:** F-002
 - **What:** a Voice section in Settings with: on/off, the hold-to-talk key (rebindable through the existing keybindings), and the downloaded model's size with a Delete button.
 - **Acceptance:**
@@ -80,7 +80,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-004: Design the main window
 
-- **Status:** todo
+- **Status:** review
 - **What:** artboards made with the `designer` skill, in VS Code Dark Modern structure with workspace accent colors, covering:
   - the colored workspace tree with threads and nested subagents;
   - the workspace and harness dropdowns;
@@ -93,7 +93,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-005: abode theme
 
-- **Status:** todo
+- **Status:** doing
 - **Depends on:** F-004
 - **What:** a VS Code Dark Modern–style palette and density, added as a new built-in theme in its own file and registered with a small hook. Selectable in Settings → Appearance and set as the default.
 - **Acceptance:**
@@ -103,7 +103,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-006: Workspace colors
 
-- **Status:** todo
+- **Status:** doing
 - **Depends on:** F-005
 - **What:** each project gets an accent color assigned automatically from a palette, editable from the project's context menu. The color shows on the project row, its threads and the chat header. It's stored on the client only.
 - **Acceptance:**
@@ -114,7 +114,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-007: VS Code panel toggles
 
-- **Status:** todo
+- **Status:** doing
 - **Depends on:** F-005
 - **What:** title-bar toggle buttons for the sidebar, bottom terminal and side panel, with Ctrl+B, Ctrl+J and Ctrl+Alt+B (and their Cmd equivalents). The side panel is closed by default.
 - **Acceptance:**
@@ -124,7 +124,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-008: Subagents in the sidebar
 
-- **Status:** todo
+- **Status:** doing
 - **Depends on:** F-005
 - **What:** running subagents nest under their thread with a live status dot. Clicking one opens the existing Agents tab, focused on it. Finished subagents collapse away.
 - **Acceptance:**
@@ -143,7 +143,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-010: Customizations service (server, add-only)
 
-- **Status:** todo
+- **Status:** doing
 - **What:** one new service with new RPC methods (it alters nothing existing):
   - It lists Claude **skills, agents, MCP servers and instructions** for a workspace. Each entry has a name, a file path and a scope: user (`~/.claude/…`, `~/.claude.json`) or workspace (`.claude/…`, `.mcp.json`, `CLAUDE.md`).
   - It reads and saves those files.

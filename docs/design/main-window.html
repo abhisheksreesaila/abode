@@ -817,20 +817,19 @@
     <h1>abode main window</h1>
     <p>
       F-004 mockup. It's VS Code's agents window: workspaces on the left, chat in the middle, and a
-      side panel you can close. Each workspace has its own color. Options A and B differ only in how
-      strongly the color shows. The buttons below also switch the side panel and the voice states.
+      side panel you can close. Each workspace has its own color: a tinted row with a colored left
+      edge, and the active thread is tinted in its workspace color. The buttons below also switch
+      the side panel and the voice states.
     </p>
   </header>
 
   <div class="tabs" role="group" aria-label="Mockup controls">
-    <button id="optA" aria-pressed="true">Option A · VS Code, colored dots</button>
-    <button id="optB" aria-pressed="false">Option B · color-forward</button>
     <button id="panel" aria-pressed="true">Side panel open</button>
     <button id="voice" aria-pressed="false">Show recording</button>
   </div>
 
   <div class="frame">
-    <div class="win" id="win">
+    <div class="win optB" id="win">
       <div class="titlebar">
         <span class="brand">abode</span>
         <div class="search">Search agents, workspaces, commands <kbd>Ctrl</kbd> <kbd>K</kbd></div>
@@ -1125,8 +1124,8 @@
           The side panel starts closed.
         </li>
         <li>
-          A workspace color shows in three places: its tree row, its threads' guide line, and the
-          chat chip.
+          A workspace color shows as a tinted row with a colored left edge, a full-strength guide
+          line on its threads and subagents, a tinted active thread, and the chat chip.
         </li>
         <li>
           Subagents nest under their thread only while running. Clicking one opens the Agents tab.
@@ -1152,17 +1151,8 @@
 
 <script>
   const win = document.getElementById("win");
-  const A = document.getElementById("optA"),
-    B = document.getElementById("optB");
   const panel = document.getElementById("panel"),
     voice = document.getElementById("voice");
-  const setOpt = (b) => {
-    win.classList.toggle("optB", b);
-    A.setAttribute("aria-pressed", String(!b));
-    B.setAttribute("aria-pressed", String(b));
-  };
-  A.onclick = () => setOpt(false);
-  B.onclick = () => setOpt(true);
   const togglePanel = () => {
     const open = win.classList.toggle("panel-closed");
     panel.setAttribute("aria-pressed", String(!open));

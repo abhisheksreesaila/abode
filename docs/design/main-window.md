@@ -1,7 +1,7 @@
 # Design handoff: main window (F-004)
 
 - **Mockup:** `docs/design/main-window.html`, also published privately at https://claude.ai/artifact/Toq9vXJGB9Lgegjofnx5sv.
-- **Chosen option: B (color-forward).** Abhishek said T3 felt "too monochromatic". B tints each workspace row with its color and gives that row a 3px left border; threads and subagents show a guide line in the workspace color. A is the same layout with only colored dots. If Abhishek prefers A in the morning, switching is a CSS-only change.
+- **Chosen option: B (color-forward), confirmed by Abhishek in a mockup comment on 2026-10-02.** Abhishek said T3 felt "too monochromatic". B tints each workspace row with its color and gives that row a 3px left border; threads and subagents show a guide line in the workspace color. A is the same layout with only colored dots. If Abhishek prefers A in the morning, switching is a CSS-only change.
 - **Approval:** pre-approved by Abhishek on 2026-10-01 ("close to VS Code"), to be reviewed in the morning.
 
 ## Tokens
