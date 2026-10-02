@@ -51,6 +51,11 @@ const EMPTY_AGENT_PANEL_MODEL = emptyAgentPanelModel();
 const NOOP_OPEN_AGENTS = () => {};
 const EMPTY_QUEUED_MESSAGES: ReadonlyArray<QueuedComposerMessage> = [];
 const NOOP_QUEUED_MESSAGE_ACTION = (_id: string) => {};
+const DEFAULT_MESSAGE_IDENTITY: MessageIdentity = {
+  agentName: DEFAULT_AGENT_NAME,
+  agentDetail: null,
+};
+const NOOP_ANSWER_PENDING_ASK = (_questionId: string, _optionValue: string) => {};
 const NOOP_USE_ARTIFACT_TEMPLATE = () => {};
 const NOOP_OPEN_ATTACHMENT = (_attachment: ChatFileAttachment) => {};
 import { resolveChatListAnchoredEndSpace } from "@t3tools/shared/chatList";
@@ -108,6 +113,9 @@ import remarkGfm from "remark-gfm";
 import type { Root, RootContent } from "mdast";
 import { T3Wordmark } from "../T3Wordmark";
 import { ABODE_NAME } from "../../brand";
+import { MessageHead, PendingAskBlock, TurnStepsList } from "./TranscriptFluent";
+import { DEFAULT_AGENT_NAME, type MessageIdentity } from "./messageAvatar.logic";
+import type { PendingAsk } from "./pendingAsk.logic";
 import {
   BotIcon,
   BrainIcon,
@@ -312,6 +320,8 @@ interface TimelineRowSharedState {
   onSteerQueuedMessage: (id: string) => void;
   steerQueuedMessageShortcutLabel: string | null;
   onRemoveQueuedMessage: (id: string) => void;
+  messageIdentity: MessageIdentity;
+  onAnswerPendingAsk: (questionId: string, optionValue: string) => void;
 }
 
 interface TimelineRowActivityState {
@@ -479,6 +489,12 @@ interface MessagesTimelineProps {
   onSteerQueuedMessage?: (id: string) => void;
   steerQueuedMessageShortcutLabel?: string | null;
   onRemoveQueuedMessage?: (id: string) => void;
+  /** Agent name and model detail for the avatar rows (abode theme). */
+  messageIdentity?: MessageIdentity;
+  /** The active pending question, rendered inline as the amber ask block (abode theme). */
+  pendingAsk?: PendingAsk | null;
+  /** Answers through the same path as the composer's pending-question panel. */
+  onAnswerPendingAsk?: (questionId: string, optionValue: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -538,6 +554,9 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   onSteerQueuedMessage = NOOP_QUEUED_MESSAGE_ACTION,
   steerQueuedMessageShortcutLabel = null,
   onRemoveQueuedMessage = NOOP_QUEUED_MESSAGE_ACTION,
+  messageIdentity = DEFAULT_MESSAGE_IDENTITY,
+  pendingAsk = null,
+  onAnswerPendingAsk = NOOP_ANSWER_PENDING_ASK,
 }: MessagesTimelineProps) {
   const listIdentityKey = displayThreadKey ?? routeThreadKey;
   const rememberedPosition = useMemo(
@@ -831,7 +850,23 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     () => simplifyRowsForMode(rawRows, timelineEntries, transcriptMode),
     [rawRows, timelineEntries, transcriptMode],
   );
-  const rows = useStableRows(modeRows, listIdentityKey);
+  // The ask block rides after the derived rows so the streaming fast path never sees it.
+  const askRows = useMemo<MessagesTimelineRow[]>(
+    () =>
+      pendingAsk
+        ? [
+            ...modeRows,
+            {
+              kind: "pending-ask",
+              id: `pending-ask:${pendingAsk.requestId}`,
+              createdAt: null,
+              ask: pendingAsk,
+            },
+          ]
+        : modeRows,
+    [modeRows, pendingAsk],
+  );
+  const rows = useStableRows(askRows, listIdentityKey);
   const minimapItems = useMemo(() => deriveTimelineMinimapItems(rows), [rows]);
   const restoreRowIndex =
     restoringThreadPosition && rememberedPosition?.atEnd === false
@@ -1220,6 +1255,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       onSteerQueuedMessage,
       steerQueuedMessageShortcutLabel,
       onRemoveQueuedMessage,
+      messageIdentity,
+      onAnswerPendingAsk,
     }),
     [
       readyCitationRequest,
@@ -1258,6 +1295,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       onSteerQueuedMessage,
       steerQueuedMessageShortcutLabel,
       onRemoveQueuedMessage,
+      messageIdentity,
+      onAnswerPendingAsk,
     ],
   );
   const backgroundWorktreeSetup =
@@ -1792,9 +1831,15 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
       {row.kind === "thinking" ? <ThinkingTimelineRow /> : null}
       {row.kind === "worktree-setup" ? <WorktreeSetupTimelineRow row={row} /> : null}
       {row.kind === "queued-message" ? <QueuedMessageTimelineRow row={row} /> : null}
+      {row.kind === "pending-ask" ? <PendingAskTimelineRow row={row} /> : null}
     </div>
   );
 });
+
+function PendingAskTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "pending-ask" }> }) {
+  const { onAnswerPendingAsk } = use(TimelineRowCtx);
+  return <PendingAskBlock ask={row.ask} onAnswer={onAnswerPendingAsk} />;
+}
 
 function WorktreeSetupTimelineRow({
   row,
@@ -2158,6 +2203,12 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
     <div className="group flex flex-col items-end gap-1">
       <div className="relative max-w-[80%] rounded-2xl bg-message p-3 text-message-foreground">
         <MessageAuthorHeading>You</MessageAuthorHeading>
+        <MessageHead
+          name="You"
+          detail={null}
+          time={formatDayAwareTimestamp(row.message.createdAt, ctx.timestampFormat)}
+          agent={false}
+        />
         {(regularImages.length > 0 || userVideos.length > 0) && (
           <div className="mb-2 grid max-w-[210px] grid-cols-2 gap-2">
             {regularImages.map((image) => (
@@ -2405,23 +2456,26 @@ function TurnFoldTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "turn-
   const Icon = row.expanded ? ChevronDownIcon : ChevronRightIcon;
 
   return (
-    <div className="group/timeline-row relative flex items-center gap-1 border-b border-border/60 pb-2 pe-0.5 pt-1">
-      <button
-        type="button"
-        aria-expanded={row.expanded}
-        data-scroll-anchor-ignore
-        onClick={() => ctx.onToggleTurnFold(row.turnId)}
-        className="flex cursor-pointer select-none items-center gap-1 rounded-md px-1 text-sm leading-relaxed text-muted-foreground tabular-nums transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
-      >
-        <span>{row.label}</span>
-        <Icon className="size-3.5" />
-      </button>
-      <TimelineRowTimestamp
-        createdAt={row.createdAt}
-        timestampFormat={ctx.timestampFormat}
-        className="ms-auto"
-      />
-    </div>
+    <>
+      {row.steps ? <TurnStepsList steps={row.steps} /> : null}
+      <div className="group/timeline-row relative flex items-center gap-1 border-b border-border/60 pb-2 pe-0.5 pt-1">
+        <button
+          type="button"
+          aria-expanded={row.expanded}
+          data-scroll-anchor-ignore
+          onClick={() => ctx.onToggleTurnFold(row.turnId)}
+          className="flex cursor-pointer select-none items-center gap-1 rounded-md px-1 text-sm leading-relaxed text-muted-foreground tabular-nums transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+        >
+          <span>{row.label}</span>
+          <Icon className="size-3.5" />
+        </button>
+        <TimelineRowTimestamp
+          createdAt={row.createdAt}
+          timestampFormat={ctx.timestampFormat}
+          className="ms-auto"
+        />
+      </div>
+    </>
   );
 }
 
@@ -2433,6 +2487,12 @@ function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "mess
     <>
       <div className="relative min-w-0 px-1 py-0.5">
         <MessageAuthorHeading>{ABODE_NAME}</MessageAuthorHeading>
+        <MessageHead
+          name={ctx.messageIdentity.agentName}
+          detail={ctx.messageIdentity.agentDetail}
+          time={formatDayAwareTimestamp(row.message.createdAt, ctx.timestampFormat)}
+          agent
+        />
         {!row.message.streaming && ctx.onQuoteAssistantMessage && ctx.threadRef ? (
           <div className="absolute end-1 top-0 opacity-0 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover/assistant:opacity-100">
             <AskAboutMessageButton

@@ -950,6 +950,8 @@ import { Button } from "../ui/button";
 import { Select, SelectItem, SelectPopup, SelectValue } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { ComposerVoiceControl } from "../../voice/ComposerVoiceControl";
+import { fluentReplyPlaceholder } from "../../voice/composerPlaceholder";
+import { useVoiceSettings } from "../../voice/voiceSettings";
 import { toastManager } from "../ui/toast";
 import {
   FileIcon,
@@ -2124,6 +2126,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   // ------------------------------------------------------------------
   // Context window
   // ------------------------------------------------------------------
+  const { settings: voiceSettings } = useVoiceSettings();
+  const fluentPlaceholder = fluentReplyPlaceholder(
+    voiceSettings,
+    typeof document === "undefined" ? undefined : document.documentElement.dataset.themeId,
+  );
   const activeThreadModelDisplayName = useMemo(
     () => resolveContextWindowModelDisplayName(activeThreadModelSelection, modelOptionsByInstance),
     [activeThreadModelSelection, modelOptionsByInstance],
@@ -7058,7 +7065,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                                 ? "Enable a provider in Settings to send a message"
                                 : phase === "disconnected"
                                   ? DISCONNECTED_COMPOSER_PLACEHOLDER
-                                  : "Ask anything, @tag files/folders, $use skills, or / for commands"
+                                  : (fluentPlaceholder ??
+                                    "Ask anything, @tag files/folders, $use skills, or / for commands")
                     }
                     disabled={
                       isConnecting ||

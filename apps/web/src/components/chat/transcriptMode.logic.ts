@@ -2,6 +2,7 @@ import type { TimelineEntry, WorkLogEntry } from "../../session-logic";
 import { omitSupersededLifecycleMarkers } from "@t3tools/client-runtime/work-log/presentation";
 import { workEntryDisplayIndicatesToolFailure } from "../../session-logic";
 import { workEntryIsVisibleInGroup, type MessagesTimelineRow } from "./MessagesTimeline.logic";
+import { deriveTurnSteps, type TurnStep } from "./turnSteps.logic";
 
 /**
  * Simple reads like a report: messages, plans, questions, subagent summaries
@@ -29,6 +30,7 @@ interface TurnWorkTotals {
   toolCalls: number;
   failed: number;
   files: Set<string>;
+  steps: TurnStep[];
 }
 
 /** Counts the same entries Detailed shows as tool rows, so the summary matches. */
@@ -43,8 +45,14 @@ function totalsByTurn(entries: ReadonlyArray<TimelineEntry>) {
   }
   const totals = new Map<string, TurnWorkTotals>();
   for (const [turnId, list] of byTurn) {
-    const turn: TurnWorkTotals = { toolCalls: 0, failed: 0, files: new Set() };
-    for (const work of omitSupersededLifecycleMarkers(list, (entry) => entry)) {
+    const kept = omitSupersededLifecycleMarkers(list, (entry) => entry);
+    const turn: TurnWorkTotals = {
+      toolCalls: 0,
+      failed: 0,
+      files: new Set(),
+      steps: deriveTurnSteps(kept, workEntryDisplayIndicatesToolFailure),
+    };
+    for (const work of kept) {
       turn.toolCalls += 1;
       if (workEntryDisplayIndicatesToolFailure(work)) turn.failed += 1;
       for (const file of work.changedFiles ?? []) turn.files.add(file);
@@ -121,7 +129,10 @@ export function simplifyRowsForMode(
           turn?.files.size ?? 0,
           turn?.failed ?? 0,
         );
-        out.push(label === row.label ? row : { ...row, label });
+        const steps = turn?.steps.length ? turn.steps : undefined;
+        out.push(
+          label === row.label && !steps ? row : { ...row, label, ...(steps ? { steps } : {}) },
+        );
         continue;
       }
     }

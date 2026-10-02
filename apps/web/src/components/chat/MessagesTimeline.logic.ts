@@ -31,6 +31,8 @@ import {
 } from "../../session-logic";
 import { type ChatMessage, type ProposedPlan, type TurnDiffSummary } from "../../types";
 import type { QueuedComposerMessage } from "../../queuedMessageStore";
+import { pendingAskEqual, type PendingAsk } from "./pendingAsk.logic";
+import { turnStepsEqual, type TurnStep } from "./turnSteps.logic";
 import {
   type MessageId,
   type OrchestrationLatestTurn,
@@ -398,6 +400,8 @@ export type MessagesTimelineRow =
       turnId: TurnId;
       label: string;
       expanded: boolean;
+      /** Simple mode only: the turn's tool entries as a compact steps list. */
+      steps?: ReadonlyArray<TurnStep>;
     }
   | {
       kind: "context-compaction";
@@ -460,6 +464,12 @@ export type MessagesTimelineRow =
       queuedMessage: QueuedComposerMessage;
       /** Oldest queued message, the one the next boundary sends. */
       isNext: boolean;
+    }
+  | {
+      kind: "pending-ask";
+      id: string;
+      createdAt: string | null;
+      ask: PendingAsk;
     };
 
 export interface StableMessagesTimelineRowsState {
@@ -1627,7 +1637,12 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
 
     case "turn-fold": {
       const bf = b as typeof a;
-      return a.createdAt === bf.createdAt && a.label === bf.label && a.expanded === bf.expanded;
+      return (
+        a.createdAt === bf.createdAt &&
+        a.label === bf.label &&
+        a.expanded === bf.expanded &&
+        turnStepsEqual(a.steps, bf.steps)
+      );
     }
 
     case "context-compaction": {
@@ -1637,6 +1652,9 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
 
     case "proposed-plan":
       return a.proposedPlan === (b as typeof a).proposedPlan;
+
+    case "pending-ask":
+      return pendingAskEqual(a.ask, (b as typeof a).ask);
 
     case "queued-message": {
       const bq = b as typeof a;

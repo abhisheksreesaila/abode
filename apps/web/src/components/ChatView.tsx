@@ -406,6 +406,7 @@ import {
 } from "./chat/ThreadErrorBanner";
 import type { ComposerBannerStackItem } from "./chat/ComposerBannerStack";
 import { ComposerSurface } from "./chat/ComposerSurface";
+import { useFluentTimelineProps } from "./chat/useFluentTimelineProps";
 import {
   hasAvailableCompactionProvider,
   hasDismissedResumeCompaction,
@@ -8881,6 +8882,17 @@ export default function ChatView(props: ChatViewProps) {
     setActivePendingUserInputQuestionIndex,
   ]);
 
+  const fluentTimelineProps = useFluentTimelineProps({
+    modelSelection: activeThread?.modelSelection,
+    providerModels: activeProviderStatus?.models,
+    runtimeMode,
+    pendingRequestId: activePendingUserInput?.requestId ?? null,
+    activeQuestion: activePendingProgress?.activeQuestion,
+    responding: activePendingIsResponding,
+    onSelectOption: onSelectActivePendingUserInputOption,
+    onAdvance: onAdvanceActivePendingUserInput,
+  });
+
   const onPreviousActivePendingUserInputQuestion = useCallback(() => {
     if (!activePendingProgress) {
       return;
@@ -9971,6 +9983,9 @@ export default function ChatView(props: ChatViewProps) {
                   { context: { terminalFocus: false } },
                 )}
                 onRemoveQueuedMessage={onRemoveQueuedMessage}
+                messageIdentity={fluentTimelineProps.messageIdentity}
+                pendingAsk={paintOnlyDisplayedTimeline ? null : fluentTimelineProps.pendingAsk}
+                onAnswerPendingAsk={fluentTimelineProps.onAnswerPendingAsk}
               />
 
               {/* scroll to end pill — shown when user has scrolled away from the live edge */}
