@@ -135,7 +135,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-009: Workspace and harness pickers above the composer
 
-- **Status:** doing (built, in review)
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **Depends on:** F-005
 - **What:** for a new thread, two compact dropdowns above the composer, one for the workspace and one for the harness (Claude, plus Codex when available). Reuse the existing environment and provider pickers where they exist.
 - **Acceptance:**
@@ -187,7 +187,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-014: Context meter
 
-- **Status:** doing (built, in review)
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** "Context 38% · 76k / 200k" with a thin bar in the composer footer, using the existing thread token usage. It turns amber near the limit; clicking it offers /compact.
 - **Acceptance:**
   - [ ] It matches Claude's own context figure for the thread and updates after each turn, with no extra WebSocket traffic.
@@ -212,7 +212,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-017: Provider tint and clear agent names
 
-- **Status:** doing (built, in review)
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - The harness/model picker gets a faint provider tint: Claude orange `#d97757` at about 12%, and Codex its own.
   - Names are made distinct: the sidebar "Agents" (threads), "Agent types" under Customizations, and the side panel tab "Subagents".
