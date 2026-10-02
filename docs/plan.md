@@ -194,7 +194,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-015: Usage limits by window
 
-- **Status:** todo
+- **Status:** review (reviewer PASS, merged; needs a real-app check against `claude /usage`)
 - **What:** the status bar shows the limit closest to running out with its absolute reset time ("5h 42% · resets 3:40pm"). Clicking it opens a popover with a row per window: session 5h, weekly all models, weekly per model, and monthly spend where a provider has one. Amber at 80%, red at 95%.
 - **Acceptance:**
   - [ ] The figures match `claude /usage` for the same account.
@@ -202,7 +202,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-016: Edit a prompt and ask about anything
 
-- **Status:** todo
+- **Status:** doing
 - **What:**
   - Hover your own message to Edit it, which rewinds to that checkpoint and re-runs. The edit is marked in history.
   - Hover any agent card or selected text to "Ask about this", which quotes it into the composer.
