@@ -1,23 +1,20 @@
 import { useAtomValue } from "@effect/atom-react";
-import { scopedThreadKey, scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { collectLimitAccounts } from "@t3tools/shared/usageLimits";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { GitBranchIcon, PanelRightIcon, SquareTerminalIcon } from "lucide-react";
-import { memo, useEffect, useMemo, type ComponentProps } from "react";
+import { memo, useEffect, useMemo, useRef, type ComponentProps } from "react";
 
 import { openCommandPalette } from "../../commandPaletteBus";
+import { isModelPickerOpen } from "../../modelPickerVisibility";
 import { useNowMinute } from "../../hooks/useNowMinute";
 import { shortcutLabelForCommand } from "../../keybindings";
 import { cn } from "../../lib/utils";
 import { requestPanelToggle } from "../../panelToggleBus";
 import { selectThreadRightPanelState, useRightPanelStore } from "../../rightPanelStore";
-import { useEnvironments } from "../../state/environments";
-import { useProject, useThreadShell } from "../../state/entities";
 import { environmentPresentations } from "../../state/presentation";
 import { primaryServerKeybindingsAtom } from "../../state/server";
 import { requestComposerControl, useStatusBarStore } from "../../statusBarStore";
 import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../../terminalUiStateStore";
-import { resolveThreadRouteRef } from "../../threadRoutes";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { pickClosestWindow } from "../sidebar/usageStatus";
 import {
@@ -98,18 +95,15 @@ const UsageStatusButton = memo(function UsageStatusButton() {
  * hosts live in the header.
  */
 export const AppStatusBar = memo(function AppStatusBar() {
-  const threadRef = useParams({
-    strict: false,
-    select: (params) => resolveThreadRouteRef(params),
-  });
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
-  const { environments } = useEnvironments();
-  const shell = useThreadShell(threadRef);
-  const project = useProject(shell ? scopeProjectRef(shell.environmentId, shell.projectId) : null);
-  const threadKey = threadRef ? scopedThreadKey(threadRef) : null;
+  // ChatView publishes the open thread, drafts included, so the bar follows
+  // the same thread the toggles act on.
+  const active = useStatusBarStore((state) => state.active);
+  const threadRef = active?.ref ?? null;
   const info = useStatusBarStore((state) =>
-    state.info !== null && state.info.threadKey === threadKey ? state.info : null,
+    state.info !== null && state.info.threadKey === active?.threadKey ? state.info : null,
   );
+  const pickerWasOpenRef = useRef(false);
   const terminalOpen = useTerminalUiStateStore(
     (state) =>
       selectThreadTerminalUiState(state.terminalUiStateByThreadKey, threadRef).terminalOpen,
@@ -127,12 +121,8 @@ export const AppStatusBar = memo(function AppStatusBar() {
     };
   }, []);
 
-  const hostLabel = shell
-    ? (environments.find((environment) => environment.environmentId === shell.environmentId)
-        ?.label ?? null)
-    : null;
-  const projectHost = formatProjectHost(project?.title ?? null, hostLabel);
-  const branch = shell?.branch ?? null;
+  const projectHost = formatProjectHost(active?.projectName ?? null, active?.hostLabel ?? null);
+  const branch = active?.branch ?? null;
   const contextLabel = info ? formatContextStatus(info.contextPercent) : null;
   const terminalShortcut = shortcutLabelForCommand(keybindings, "terminal.toggle");
   const rightPanelShortcut = shortcutLabelForCommand(keybindings, "rightPanel.toggle");
@@ -191,7 +181,18 @@ export const AppStatusBar = memo(function AppStatusBar() {
           aria-label={`Model ${info.modelLabel}`}
           tooltip="Change model"
           className="text-info-foreground"
-          onClick={() => requestComposerControl("model")}
+          // An open picker closes on the outside press that starts this click,
+          // so a click that began while it was open must not reopen it.
+          onPointerDown={() => {
+            pickerWasOpenRef.current = isModelPickerOpen();
+          }}
+          onClick={() => {
+            if (pickerWasOpenRef.current) {
+              pickerWasOpenRef.current = false;
+              return;
+            }
+            requestComposerControl("model");
+          }}
         >
           {info.modelLabel}
         </StatusBarButton>

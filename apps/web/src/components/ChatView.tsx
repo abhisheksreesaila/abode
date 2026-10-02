@@ -382,7 +382,10 @@ import { resolveTimelineIsAtEnd, worktreeSetupAgentStarted } from "./chat/Messag
 import { resolveComposerTimelineInset, resolveScrollToEndClearance } from "./composerFooterLayout";
 import { ChatHeader } from "./chat/ChatHeader";
 import { PanelLayoutControls, RightPanelMaximizeControl } from "./chat/PanelLayoutControls";
-import { useStatusBarComposerControls } from "./statusBar/useStatusBarBridge";
+import {
+  usePublishStatusBarActiveThread,
+  useStatusBarComposerControls,
+} from "./statusBar/useStatusBarBridge";
 import { expandedImageKey, type ExpandedImagePreview } from "./chat/ExpandedImagePreview";
 import { NoActiveThreadState } from "./NoActiveThreadState";
 import { WorkspacePageHeader } from "./WorkspacePageHeader";
@@ -5855,6 +5858,17 @@ export default function ChatView(props: ChatViewProps) {
     canOverrideServerThreadEnvMode && pendingServerThreadBranch !== undefined
       ? pendingServerThreadBranch
       : (activeThread?.branch ?? null);
+  usePublishStatusBarActiveThread(
+    activeThreadRef && activeThreadKey
+      ? {
+          threadKey: activeThreadKey,
+          ref: activeThreadRef,
+          branch: activeThreadBranch,
+          projectName: activeProject?.title ?? null,
+          hostLabel: activeEnvironmentOption?.label ?? null,
+        }
+      : null,
+  );
   const startFromOrigin = isLocalDraftThread
     ? (draftThread?.startFromOrigin ?? false)
     : canOverrideServerThreadEnvMode

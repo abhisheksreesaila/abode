@@ -2339,7 +2339,8 @@ html[data-theme-id="abode"]:not([data-theme-id=""]) {
     --status-bar-height: 22px;
   }
 
-  html[data-status-bar="on"] [data-slot="sidebar-wrapper"],
+  /* The wrapper is sized in AppSidebarLayout: its h-dvh! utility is layered
+     and important, which an unlayered rule cannot beat. */
   html[data-status-bar="on"] [data-slot="sidebar-inset"] {
     height: calc(100dvh - var(--status-bar-height)) !important;
     min-height: 0 !important;

@@ -310,7 +310,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   return (
     <PanelAnimationSuppressionProvider value={panelAnimationsSuppressed}>
       <SidebarProvider
-        className="h-dvh! min-h-0!"
+        className="h-[calc(100dvh-var(--status-bar-height))]! min-h-0!"
         data-panel-animations={routePanelAnimationsActive ? "true" : "false"}
         open={sidebarOpen}
         onOpenChange={handleSidebarOpenChange}

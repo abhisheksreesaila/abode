@@ -5,6 +5,7 @@
  * composer publishes a snapshot; the bar reads it only for the same thread.
  * The pickers live in the composer too, so the bar asks for them by event.
  */
+import type { ScopedThreadRef } from "@t3tools/contracts";
 import { create } from "zustand";
 
 export interface StatusBarThreadInfo {
@@ -15,7 +16,19 @@ export interface StatusBarThreadInfo {
   readonly contextPercent: number | null;
 }
 
+/** The thread the chat view has open, drafts included. ChatView publishes it. */
+export interface StatusBarActiveThread {
+  readonly threadKey: string;
+  readonly ref: ScopedThreadRef;
+  readonly branch: string | null;
+  readonly projectName: string | null;
+  readonly hostLabel: string | null;
+}
+
 interface StatusBarStoreState {
+  readonly active: StatusBarActiveThread | null;
+  publishActive: (active: StatusBarActiveThread) => void;
+  clearActive: (threadKey: string) => void;
   readonly info: StatusBarThreadInfo | null;
   publish: (info: StatusBarThreadInfo) => void;
   /** Drops the snapshot, but only if it is still this thread's. */
@@ -23,6 +36,20 @@ interface StatusBarStoreState {
 }
 
 export const useStatusBarStore = create<StatusBarStoreState>()((set) => ({
+  active: null,
+  publishActive: (active) =>
+    set((state) => {
+      const current = state.active;
+      return current &&
+        current.threadKey === active.threadKey &&
+        current.branch === active.branch &&
+        current.projectName === active.projectName &&
+        current.hostLabel === active.hostLabel
+        ? state
+        : { active };
+    }),
+  clearActive: (threadKey) =>
+    set((state) => (state.active?.threadKey === threadKey ? { active: null } : state)),
   info: null,
   publish: (info) =>
     set((state) => {

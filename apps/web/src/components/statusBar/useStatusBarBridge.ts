@@ -1,6 +1,10 @@
 import { useEffect, type RefObject } from "react";
 
-import { onComposerControlRequest, useStatusBarStore } from "../../statusBarStore";
+import {
+  onComposerControlRequest,
+  useStatusBarStore,
+  type StatusBarActiveThread,
+} from "../../statusBarStore";
 
 /**
  * The composer's side of the status bar: publishes the model label and context
@@ -19,6 +23,21 @@ export function usePublishStatusBarThreadInfo(input: {
     publish({ threadKey, modelLabel, contextPercent });
     return () => clear(threadKey);
   }, [threadKey, modelLabel, contextPercent]);
+}
+
+/** ChatView's side: says which thread (or draft) is open so the bar can follow it. */
+export function usePublishStatusBarActiveThread(active: StatusBarActiveThread | null): void {
+  const threadKey = active?.threadKey ?? null;
+  const branch = active?.branch ?? null;
+  const projectName = active?.projectName ?? null;
+  const hostLabel = active?.hostLabel ?? null;
+  const ref = active?.ref ?? null;
+  useEffect(() => {
+    if (threadKey === null || ref === null) return;
+    const { publishActive, clearActive } = useStatusBarStore.getState();
+    publishActive({ threadKey, ref, branch, projectName, hostLabel });
+    return () => clearActive(threadKey);
+  }, [threadKey, ref, branch, projectName, hostLabel]);
 }
 
 interface ComposerControlTarget {

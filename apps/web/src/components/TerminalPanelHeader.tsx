@@ -9,7 +9,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
  * left, the active shell's context and a close control on the right. Only
  * TERMINAL is offered. T3 has no diagnostics source for a Problems tab and
  * no agent log stream for an Output tab, and the design says not to fake
- * either. Close goes through the same bus as the key and the status bar.
+ * either. The top 6px is padding: the drawer's resize handle covers it. Close goes through the same bus as the key and the status bar.
  */
 export const TerminalPanelHeader = memo(function TerminalPanelHeader(props: {
   readonly context: string;
@@ -17,7 +17,7 @@ export const TerminalPanelHeader = memo(function TerminalPanelHeader(props: {
 }) {
   return (
     <div
-      className="flex h-7 shrink-0 items-stretch border-b border-border/60 bg-sidebar pl-2 pr-1 text-2xs uppercase tracking-wide"
+      className="flex h-8 shrink-0 pt-1.5 items-stretch border-b border-border/60 bg-sidebar pl-2 pr-1 text-2xs uppercase tracking-wide"
       data-terminal-panel-header
     >
       <div role="tablist" aria-label="Panel" className="flex items-stretch">
