@@ -80,7 +80,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-004: Design the main window
 
-- **Status:** review
+- **Status:** done (option B confirmed in comments; round 2 applied)
 - **What:** artboards made with the `designer` skill, in VS Code Dark Modern structure with workspace accent colors, covering:
   - the colored workspace tree with threads and nested subagents;
   - the workspace and harness dropdowns;
@@ -202,7 +202,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-016: Edit a prompt and ask about anything
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check: palette → restore dialog focus, button overlap)
 - **What:**
   - Hover your own message to Edit it, which rewinds to that checkpoint and re-runs. The edit is marked in history.
   - Hover any agent card or selected text to "Ask about this", which quotes it into the composer.
