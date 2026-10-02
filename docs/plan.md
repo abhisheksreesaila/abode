@@ -93,7 +93,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-005: abode theme
 
-- **Status:** doing
+- **Status:** done
 - **Depends on:** F-004
 - **What:** a VS Code Dark Modern–style palette and density, added as a new built-in theme in its own file and registered with a small hook. Selectable in Settings → Appearance and set as the default.
 - **Acceptance:**
