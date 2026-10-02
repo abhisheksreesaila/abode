@@ -335,6 +335,59 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
   - [ ] It's done with variants, not className restyles.
   - [ ] Contrast passes.
 
+## Phase 2e: Fluent window (docs/design/fluent.md; mockup https://claude.ai/artifact/8WdcZeJY48ZQtmJAnhVidu)
+
+It replaces the visual pass where they differ: one-line sidebar rows, the blue branch chip, and the Account footer.
+
+### F-028: Activity bar, Fluent sidebar and palette
+
+- **Status:** doing
+- **What:**
+  - a 48px activity bar;
+  - "Workspaces" with one-line rows and 22px thread rows with the selection style;
+  - the Account footer, with Settings moved to the activity bar;
+  - the Fluent tokens (one blue, amber waiting, red risk, square dots, 2px radius, Segoe/Consolas) for the abode theme, including the branch chip going blue.
+- **Acceptance:**
+  - [ ] Matches fluent.md.
+  - [ ] Nothing reachable before becomes unreachable.
+
+### F-029: Fluent transcript
+
+- **Status:** doing
+- **What:** avatar rows, ✓/◐ step lists, an inline diff block style, and an amber ask block with action buttons, by restyling the existing timeline items.
+- **Acceptance:**
+  - [ ] A real Claude turn renders like the mockup in Simple mode.
+  - [ ] Detailed mode still shows everything.
+
+### F-030: Drawers and status bar
+
+- **Status:** doing
+- **What:**
+  - Bottom panel tabs (Terminal / Output, plus Problems only if a real source exists) with a ⌄ close.
+  - Right drawer VS Code tabs with a › close.
+  - A new 22px status bar with branch, project · host, running and needs-you counts, panel toggles, model, ctx % and Max %.
+  - The title bar gets a centered search box that opens the palette.
+- **Acceptance:**
+  - [ ] Every toggle works from the title bar, the status bar, the drawer header and the keys.
+  - [ ] There are no fake counts.
+
+### F-031: Threads as editor tabs (deferred until after the trip)
+
+- **Status:** todo
+- **What:** threads open as tabs beside files in one editor group, and can be split.
+
+### F-032: Autonomous mode
+
+- **Status:** doing
+- **What:**
+  - An Autonomous toggle per thread. When a Claude turn ends without a done signal (or with a question), abode replies with a continue nudge: "make reasonable assumptions, log open questions in docs/plan.md, end with your done signal". It's capped (e.g. 30 continues).
+  - The thread and sidebar show its state.
+  - It works from the phone, so the official app sending a turn keeps the setting.
+- **Acceptance:**
+  - [ ] It keeps going until done or the cap.
+  - [ ] The user can stop it at any time.
+  - [ ] Any contract change is add-only.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
