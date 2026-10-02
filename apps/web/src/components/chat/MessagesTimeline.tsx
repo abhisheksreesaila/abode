@@ -205,6 +205,8 @@ import {
   type TimelineLatestTurn,
   type WorkGroupScrollAnchor,
 } from "./MessagesTimeline.logic";
+import { resolveTurnFoldClick, simplifyRowsForMode } from "./transcriptMode.logic";
+import { toggleTranscriptMode, useTranscriptModeStore } from "./transcriptModeStore";
 import { TerminalContextInlineChip } from "./TerminalContextInlineChip";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { Spinner } from "../ui/spinner";
@@ -673,12 +675,15 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   const onToggleTurnFold = useCallback(
     (turnId: TurnId) => {
       suspendEndScrollMaintenanceForDisclosure(`turn-fold:${turnId}`);
+      // In Simple the summary row is a doorway to the full trace.
+      const mode = useTranscriptModeStore.getState().mode;
+      if (mode === "simple") toggleTranscriptMode();
       setExpandedTurnIds((existing) => {
         const next = new Set(existing);
-        if (next.has(turnId)) {
-          next.delete(turnId);
-        } else {
+        if (resolveTurnFoldClick(mode, existing.has(turnId)).expanded) {
           next.add(turnId);
+        } else {
+          next.delete(turnId);
         }
         return next;
       });
@@ -810,7 +815,13 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     worktreeSetup,
     queuedMessages,
   ]);
-  const rows = useStableRows(rawRows, listIdentityKey);
+  // Simple/Detailed trims the derived rows (one store subscription, no new props).
+  const transcriptMode = useTranscriptModeStore((store) => store.mode);
+  const modeRows = useMemo(
+    () => simplifyRowsForMode(rawRows, timelineEntries, transcriptMode),
+    [rawRows, timelineEntries, transcriptMode],
+  );
+  const rows = useStableRows(modeRows, listIdentityKey);
   const minimapItems = useMemo(() => deriveTimelineMinimapItems(rows), [rows]);
   const restoreRowIndex =
     restoringThreadPosition && rememberedPosition?.atEnd === false
