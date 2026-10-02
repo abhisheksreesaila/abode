@@ -140,6 +140,8 @@ interface HarnessOptions {
   readonly drainGate?: Deferred.Deferred<void>;
   /** The decider refuses count updates, as when the user switched it off meanwhile. */
   readonly rejectCount?: boolean;
+  /** Leave the server activation gate closed; the test opens it. */
+  readonly holdActivation?: boolean;
 }
 
 const makeHarness = Effect.fn("makeAutonomousHarness")(function* (
@@ -256,8 +258,10 @@ const run = <A, E>(
       const harness = yield* makeHarness(threads, options);
       const context = yield* Layer.build(harness.layer);
       const reactor = Context.get(context, ThreadAutonomousReactor.ThreadAutonomousReactor);
-      yield* reactor.start();
-      yield* Deferred.succeed(harness.activation, undefined);
+      yield* reactor
+        .start()
+        .pipe(Effect.provideService(ServerActivation, Deferred.await(harness.activation)));
+      if (options.holdActivation !== true) yield* Deferred.succeed(harness.activation, undefined);
       return yield* body({ ...harness, reactor });
     }),
   );
@@ -547,6 +551,26 @@ describe("ThreadAutonomousReactor", () => {
           assert.strictEqual(turn?.type, "thread.turn.start");
         }),
       { shells: [makeThread("auto", { autonomous: on({ count: 1 }) })] },
+    ),
+  );
+
+  it.effect("startup evaluations wait for server activation", () =>
+    run(
+      [makeThread("auto", { autonomous: on({ count: 1 }) })],
+      (harness) =>
+        Effect.gen(function* () {
+          // Gate closed (an update trial): the idle thread must not be nudged.
+          yield* harness.publish(sessionSet(A, "running"));
+          yield* harness.reactor.drain;
+          assert.deepStrictEqual(yield* Ref.get(harness.commands), []);
+          yield* Deferred.succeed(harness.activation, undefined);
+          const [, turn] = yield* take(harness.dispatched, 2);
+          assert.strictEqual(turn?.type, "thread.turn.start");
+        }),
+      {
+        holdActivation: true,
+        shells: [makeThread("auto", { autonomous: on({ count: 1 }) })],
+      },
     ),
   );
 

@@ -698,7 +698,8 @@ export const ThreadTitleState = Schema.Struct({
 export type ThreadTitleState = typeof ThreadTitleState.Type;
 
 /** Why autonomous mode stopped continuing a thread on its own. */
-export const ThreadAutonomousStopReason = Schema.Literals([
+/** Reasons this server writes. */
+export const ThreadAutonomousKnownStopReason = Schema.Literals([
   "done",
   "cap",
   "error",
@@ -706,6 +707,9 @@ export const ThreadAutonomousStopReason = Schema.Literals([
   "rate-limited",
   "plan-awaiting-approval",
 ]);
+export type ThreadAutonomousKnownStopReason = typeof ThreadAutonomousKnownStopReason.Type;
+/** On the wire a plain string, so a reason added later never breaks an installed client. */
+export const ThreadAutonomousStopReason = TrimmedNonEmptyString;
 export type ThreadAutonomousStopReason = typeof ThreadAutonomousStopReason.Type;
 
 export const DEFAULT_AUTONOMOUS_CAP = 30;

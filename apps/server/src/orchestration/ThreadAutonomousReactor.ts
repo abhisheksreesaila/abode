@@ -5,7 +5,7 @@ import {
   UserInputRequestedPayload,
   type OrchestrationEvent,
   type OrchestrationSessionStatus,
-  type ThreadAutonomousStopReason,
+  type ThreadAutonomousKnownStopReason,
   type ThreadId,
 } from "@t3tools/contracts";
 import { makeDrainableWorker } from "@t3tools/shared/DrainableWorker";
@@ -88,7 +88,7 @@ export const make = Effect.gen(function* () {
 
   const stop = Effect.fn("ThreadAutonomousReactor.stop")(function* (
     threadId: ThreadId,
-    reason: ThreadAutonomousStopReason,
+    reason: ThreadAutonomousKnownStopReason,
     detail: string | null,
   ) {
     yield* engine.dispatch({
@@ -317,6 +317,7 @@ export const make = Effect.gen(function* () {
     // transition for a turn that died with the server must count as a turn
     // end. Threads that are autonomous and idle get one evaluation now.
     const snapshot = yield* snapshots.getShellSnapshot().pipe(Effect.orDie);
+    const idleAutonomousThreadIds: ThreadId[] = [];
     for (const thread of snapshot.threads) {
       const status = thread.session?.status;
       if (status !== undefined) lastStatus.set(thread.id, status);
@@ -324,10 +325,16 @@ export const make = Effect.gen(function* () {
         thread.autonomous?.enabled === true &&
         (status === undefined || status === "idle" || status === "ready")
       ) {
-        yield* worker.enqueue({ kind: "enabled", threadId: thread.id });
+        idleAutonomousThreadIds.push(thread.id);
       }
     }
-    yield* forkParked(Stream.runForEach(events, processEvent));
+    // Nothing is sent before activation: during an update trial the new
+    // server must not run turns.
+    yield* forkParked(
+      Effect.forEach(idleAutonomousThreadIds, (threadId) =>
+        worker.enqueue({ kind: "enabled", threadId }),
+      ).pipe(Effect.andThen(Stream.runForEach(events, processEvent))),
+    );
   });
 
   return { start, drain: worker.drain } satisfies ThreadAutonomousReactor["Service"];

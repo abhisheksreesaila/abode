@@ -2,7 +2,7 @@ import type {
   OrchestrationMessage,
   OrchestrationSessionStatus,
   ThreadAutonomousState,
-  ThreadAutonomousStopReason,
+  ThreadAutonomousKnownStopReason,
 } from "@t3tools/contracts";
 import {
   AUTONOMOUS_CONTINUE_PREFIX,
@@ -27,7 +27,7 @@ export type AutoContinueDecision =
   | { readonly action: "continue"; readonly nextCount: number }
   | {
       readonly action: "stop";
-      readonly reason: ThreadAutonomousStopReason;
+      readonly reason: ThreadAutonomousKnownStopReason;
       readonly detail: string | null;
     };
 

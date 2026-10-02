@@ -27,7 +27,10 @@ export function resolveAutonomousChip(
 ): AutonomousChipView {
   const on = state?.enabled === true;
   if (!on) {
-    const stopped = state?.stopReason ? ` ${STOP_REASON_TEXT[state.stopReason]}` : "";
+    const reason = state?.stopReason;
+    const stopped = reason
+      ? ` ${(STOP_REASON_TEXT as Record<string, string>)[reason] ?? "Stopped."}`
+      : "";
     const detail = state?.stopDetail ? ` (${state.stopDetail})` : "";
     return {
       on: false,
