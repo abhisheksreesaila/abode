@@ -2298,19 +2298,19 @@ html[data-theme-id="abode"] {
   --chip-danger-fg: color-mix(in srgb, #ff8a8a 60%, var(--foreground));
 }
 
-/* abode Fluent palette (docs/design/fluent.md): one blue, green for ok, square-ish
-   2px corners and Segoe/Consolas. The branch chip is blue for every branch, so
-   the trunk "purple" chip tint resolves to the accent here; other themes keep
-   F-027's purple main / blue feature split. */
-html[data-theme-id="abode"] {
+/* abode Fluent palette (docs/design/fluent.md): one blue, green for ok, 2px
+   corners and Segoe/Consolas. The branch chip is blue for every branch because
+   resolveBranchTint returns the blue tint in this theme (components/chat/chipTint.ts).
+   The doubled selector lifts specificity above the root dark-variant rules
+   (:root:is(.dark ...)), which would otherwise win. */
+html[data-theme-id="abode"]:not([data-theme-id=""]),
+html.dark[data-theme-id="abode"] {
   --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, Inter, sans-serif;
   --font-mono: Consolas, "Cascadia Code", "JetBrains Mono", monospace;
   --success: #4ec9b0;
   --success-foreground: #4ec9b0;
   --chip-blue: #0078d4;
   --chip-blue-fg: #4cc2ff;
-  --chip-purple: #0078d4;
-  --chip-purple-fg: #4cc2ff;
   --chip-teal: #4ec9b0;
   --icon-pr: #4ec9b0;
   --icon-usage: #4cc2ff;

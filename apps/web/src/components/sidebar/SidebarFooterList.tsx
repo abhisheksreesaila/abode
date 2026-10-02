@@ -1,6 +1,6 @@
 import { useAtomValue } from "@effect/atom-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, SmartphoneIcon, SparklesIcon } from "lucide-react";
+import { ArrowLeftIcon, SettingsIcon, SmartphoneIcon, SparklesIcon } from "lucide-react";
 import * as Option from "effect/Option";
 import { AsyncResult } from "effect/unstable/reactivity";
 import { memo, useCallback } from "react";
@@ -66,6 +66,7 @@ export const SidebarFooterList = memo(function SidebarFooterList() {
   );
   const openUsage = go(() => void navigate({ to: "/usage" }));
   const openConnections = go(() => void navigate({ to: "/settings/connections" }));
+  const openSettings = go(() => void navigate({ to: "/settings" }));
   const goBack = go(() => void navigateToMainApp());
 
   return (
@@ -105,6 +106,14 @@ export const SidebarFooterList = memo(function SidebarFooterList() {
         icon={<SmartphoneIcon />}
         title="Phone & Remote"
         onClick={openConnections}
+      />
+      {/* Desktop widths reach Settings from the activity bar; phones have no rail. */}
+      <SidebarFooterRow
+        className="md:hidden"
+        color="settings"
+        icon={<SettingsIcon />}
+        title="Settings"
+        onClick={openSettings}
       />
       <SidebarMenu>
         <SidebarUpdatePill />

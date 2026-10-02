@@ -8,6 +8,11 @@ import {
 } from "lucide-react";
 import { memo, type ComponentProps, type ReactElement, type ReactNode } from "react";
 
+import { useAtomValue } from "@effect/atom-react";
+import { shortcutLabelForCommand } from "../../keybindings";
+import { primaryServerKeybindingsAtom } from "../../state/server";
+import { useEnvironments } from "../../state/environments";
+import { cn } from "../../lib/utils";
 import { PullRequestGlyph } from "../pullRequest/pullRequestIcons";
 import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
 import {
@@ -62,21 +67,40 @@ function ActivityBarButton({
  * the footer or sidebar already did. Phone widths keep the sheet sidebar and
  * hide the rail.
  */
-export const ActivityBar = memo(function ActivityBar() {
+export const ActivityBar = memo(function ActivityBar({
+  reserveTitlebar = false,
+}: {
+  /** macOS window controls overlay the strip above the rail; the first cell starts below it. */
+  readonly reserveTitlebar?: boolean;
+}) {
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
   const { toggleSidebar, setOpen } = useSidebar();
   const sidebarOpen = useSidebarVisibility();
   const active = resolveActiveActivityItem({ pathname, sidebarOpen });
   const customizationsScope = useActiveCustomizationsScope();
+  const keybindings = useAtomValue(primaryServerKeybindingsAtom);
+  const searchShortcut = shortcutLabelForCommand(keybindings, "commandPalette.toggle");
+  const { environments } = useEnvironments();
+  // Same check as the sidebar footer: one connected server offering pull requests is enough.
+  const pullRequestsSupported = environments.some(
+    (environment) => environment.serverConfig?.environment.capabilities.pullRequests === true,
+  );
+  // The customizations list lives in the thread sidebar, which Settings swaps out.
+  const onSettings = active === "settings" || active === "connections";
   const [customizationsExpanded, setCustomizationsExpanded] = useCustomizationsExpanded();
 
   return (
     <nav
       aria-label="Activity bar"
       data-slot="activity-bar"
-      style={{ width: ACTIVITY_BAR_WIDTH_PX }}
-      className="sticky top-0 hidden h-dvh shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar md:flex"
+      style={{
+        width: ACTIVITY_BAR_WIDTH_PX,
+        ...(reserveTitlebar ? { paddingTop: "var(--workspace-topbar-height)" } : {}),
+      }}
+      className={cn(
+        "sticky top-0 hidden h-dvh shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar md:flex",
+      )}
     >
       <div className="flex flex-col">
         <Link
@@ -94,7 +118,7 @@ export const ActivityBar = memo(function ActivityBar() {
           onClick={toggleSidebar}
         />
         <ActivityBarButton
-          label="Search"
+          label={searchShortcut ? `Search (${searchShortcut})` : "Search"}
           icon={<SearchIcon />}
           render={
             <CommandDialogTrigger
@@ -109,18 +133,20 @@ export const ActivityBar = memo(function ActivityBar() {
             />
           }
         />
-        <ActivityBarButton
-          label="Pull requests"
-          active={active === "pull-requests"}
-          icon={<PullRequestGlyph.pullRequest />}
-          onClick={() =>
-            void navigate({ to: "/pull-requests", search: readPullRequestListPreferences() })
-          }
-        />
+        {pullRequestsSupported ? (
+          <ActivityBarButton
+            label="Pull requests"
+            active={active === "pull-requests"}
+            icon={<PullRequestGlyph.pullRequest />}
+            onClick={() =>
+              void navigate({ to: "/pull-requests", search: readPullRequestListPreferences() })
+            }
+          />
+        ) : null}
         <ActivityBarButton
           label={customizationsScope ? "Customizations" : "Customizations (open a thread)"}
           icon={<SparklesIcon />}
-          disabled={!customizationsScope}
+          disabled={!customizationsScope || onSettings}
           aria-expanded={customizationsExpanded && sidebarOpen}
           onClick={() => {
             // The list lives in the sidebar, so a closed sidebar opens it rather than toggling.

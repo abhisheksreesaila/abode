@@ -1060,8 +1060,6 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
     expandThreadListForProject,
     collapseThreadListForProject,
   } = props;
-  const showMoreButtonRender = useMemo(() => <button type="button" />, []);
-  const showLessButtonRender = useMemo(() => <button type="button" />, []);
   const workspaceColor = useWorkspaceColorStyle(projectKey);
 
   return (
@@ -3641,7 +3639,9 @@ export default function LegacySidebar() {
       {prewarmedSidebarThreadRefs.map((threadRef) => (
         <SidebarThreadDetailPrewarmer key={scopedThreadKey(threadRef)} threadRef={threadRef} />
       ))}
-      <SidebarChromeHeader isElectron={isElectron} />
+      {/* Desktop widths have the activity bar's "ab" and the AGENTS header; the phone
+          sheet keeps the wordmark row and its sidebar trigger. */}
+      {isMobile ? <SidebarChromeHeader isElectron={isElectron} /> : null}
 
       <SidebarProjectsContent
         showArm64IntelBuildWarning={showArm64IntelBuildWarning}

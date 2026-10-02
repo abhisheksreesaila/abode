@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 
+import { isElectron } from "../../env";
 import { cn } from "../../lib/utils";
 import { threadSquareTone, type ThreadSquareTone } from "./workspaceList";
 
 const SQUARE_TONE_CLASS: Record<ThreadSquareTone, string> = {
   running: "bg-success",
   "needs-you": "bg-warning",
-  done: "bg-primary",
+  done: "border border-success bg-transparent",
   idle: "bg-muted-foreground/40",
 };
 
@@ -16,7 +17,12 @@ const SQUARE_TONE_CLASS: Record<ThreadSquareTone, string> = {
  */
 export function SidebarAgentsHeader({ children }: { readonly children?: ReactNode }) {
   return (
-    <div className="flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5">
+    <div
+      className={cn(
+        "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5",
+        isElectron && "drag-region",
+      )}
+    >
       <span className="text-3xs font-medium uppercase tracking-wide text-sidebar-muted-foreground">
         Agents
       </span>

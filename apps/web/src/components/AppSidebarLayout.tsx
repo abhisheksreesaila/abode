@@ -74,15 +74,20 @@ function readViewportWidth(): number {
   return window.innerWidth;
 }
 
+/** Width left for sidebar plus chat once the activity bar (md and up) takes its 48px. */
+function readUsableViewportWidth(): number {
+  return window.innerWidth - (window.innerWidth >= 768 ? ACTIVITY_BAR_WIDTH_PX : 0);
+}
+
 function readInitialThreadSidebarWidth(): number {
   try {
     return resolveInitialThreadSidebarWidth(
       getLocalStorageItem(THREAD_SIDEBAR_WIDTH_STORAGE_KEY, Schema.Finite),
-      window.innerWidth,
+      readUsableViewportWidth(),
     );
   } catch (error) {
     console.error("Could not read persisted thread sidebar width.", error);
-    return resolveInitialThreadSidebarWidth(null, window.innerWidth);
+    return resolveInitialThreadSidebarWidth(null, readUsableViewportWidth());
   }
 }
 
@@ -141,7 +146,7 @@ function SidebarControl() {
     // the panel), so the trigger mirrors it: both clusters sit one extra pixel
     // off their edge and the titlebar reads symmetric.
     <div
-      className="pointer-events-none fixed left-[var(--workspace-controls-left)] top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center"
+      className="pointer-events-none fixed left-[var(--workspace-controls-left)] md:hidden top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center"
       data-sidebar-control=""
     >
       <Tooltip>
@@ -248,7 +253,11 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   // Subscribed rather than read once: the clamp must track live window size,
   // and a clamped drag ends with an unchanged width, which skips the re-render
   // that would otherwise refresh a render-time snapshot.
-  const viewportWidth = useSyncExternalStore(subscribeToViewportWidth, readViewportWidth);
+  const rawViewportWidth = useSyncExternalStore(subscribeToViewportWidth, readViewportWidth);
+  // The activity bar (F-028) sits left of the sidebar on desktop widths; phones keep the sheet.
+  const isPhone = useIsMobile();
+  const activityBarWidth = isPhone ? 0 : ACTIVITY_BAR_WIDTH_PX;
+  const viewportWidth = rawViewportWidth - activityBarWidth;
   const sidebarMaximumWidth = resolveThreadSidebarMaximumWidth(viewportWidth);
   const resetSidebarWidth = () => {
     try {
@@ -264,21 +273,13 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
       ? getWindowFullscreenState()
       : false;
   });
-  // The activity bar (F-028) sits left of the sidebar on desktop widths, so the floating
-  // sidebar toggle starts after it; phones keep the sheet and no rail.
-  const isPhone = useIsMobile();
-  const activityBarWidth = isPhone ? 0 : ACTIVITY_BAR_WIDTH_PX;
   const sidebarProviderStyle = {
     "--sidebar-width": `${sidebarWidth}px`,
     "--activity-bar-width": `${activityBarWidth}px`,
     "--panel-animation-duration": `${panelAnimationDurationMs}ms`,
     ...(isMacosDesktop && !isWindowFullscreen
       ? { "--workspace-controls-left": MACOS_TRAFFIC_LIGHTS_LEFT_INSET }
-      : activityBarWidth > 0
-        ? {
-            "--workspace-controls-left": `calc(env(titlebar-area-x, 0px) + ${activityBarWidth}px + 0.75rem)`,
-          }
-        : {}),
+      : {}),
   } as CSSProperties;
 
   useEffect(() => {
@@ -328,7 +329,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
         style={sidebarProviderStyle}
       >
         <ProjectProjectionRetention />
-        <ActivityBar />
+        <ActivityBar reserveTitlebar={isMacosDesktop && !isWindowFullscreen} />
         <Sidebar
           side="left"
           collapsible="offcanvas"
@@ -340,7 +341,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
             minWidth: THREAD_SIDEBAR_MIN_WIDTH,
             shouldAcceptWidth: ({ currentWidth, nextWidth, wrapper }) =>
               nextWidth <= currentWidth ||
-              wrapper.clientWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
+              wrapper.clientWidth - activityBarWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
             storageKey: THREAD_SIDEBAR_WIDTH_STORAGE_KEY,
             onResize: setSidebarWidth,
           }}

@@ -61,6 +61,8 @@ import {
 import { Button } from "./ui/button";
 import { ComposerControl } from "./chat/ComposerControl";
 import { resolveBranchTint } from "./chat/chipTint";
+import { useTheme } from "../hooks/useTheme";
+import { ABODE_THEME_ID } from "@t3tools/shared/themePalettes";
 import { Switch } from "./ui/switch";
 import { getVirtualizedScrollFadeClassName } from "./ui/scroll-area";
 import {
@@ -345,6 +347,9 @@ export function BranchToolbarBranchSelector({
       normalizedDeferredBranchQuery,
     ],
   );
+  // useTheme re-renders this on a theme switch; the id is read from the root it sets.
+  useTheme();
+  const isAbodeTheme = document.documentElement.dataset.themeId === ABODE_THEME_ID;
   const [resolvedActiveBranch, setOptimisticBranch] = useOptimistic(
     canonicalActiveBranch,
     (_currentBranch: string | null, optimisticBranch: string | null) => optimisticBranch,
@@ -830,7 +835,12 @@ export function BranchToolbarBranchSelector({
           onContextMenu={(event) => handleBranchContextMenu(event, resolvedActiveBranch)}
         >
           <ComboboxTrigger
-            render={<ComposerControl size="xs" tint={resolveBranchTint(resolvedActiveBranch)} />}
+            render={
+              <ComposerControl
+                size="xs"
+                tint={resolveBranchTint(resolvedActiveBranch, { brand: isAbodeTheme })}
+              />
+            }
             // No press-scale: the popup aligns live to this trigger, so a
             // momentary 0.97 shrink would drag the open popup ~3px sideways.
             className="min-w-0 max-w-full active:scale-100"

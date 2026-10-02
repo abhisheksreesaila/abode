@@ -40,7 +40,7 @@ export const WorkspaceHeaderContent = memo(function WorkspaceHeaderContent(props
         style={color ? { backgroundColor: color } : undefined}
       />
       <span className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-        <span className="shrink-0 truncate text-xs font-semibold text-sidebar-foreground">
+        <span className="min-w-0 truncate text-xs font-semibold text-sidebar-foreground">
           {name}
         </span>
         {groupedProjectCount > 1 ? (
@@ -48,7 +48,7 @@ export const WorkspaceHeaderContent = memo(function WorkspaceHeaderContent(props
             {groupedProjectCount} projects
           </span>
         ) : null}
-        <span className="min-w-0 truncate text-3xs font-normal text-secondary-label">
+        <span className="min-w-0 shrink-100 truncate text-3xs font-normal text-secondary-label">
           {location}
         </span>
       </span>
