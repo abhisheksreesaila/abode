@@ -13,11 +13,11 @@ env.allowLocalModels = false;
 // the desktop CSP) instead of transformers.js's default of loading it from cdn.jsdelivr.net.
 // The files are referenced by path because onnxruntime-web's package exports hide dist/.
 const ortWasmUrl = new URL(
-  "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
+  "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm",
   import.meta.url,
 ).href;
 const ortModuleUrl = new URL(
-  "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs",
+  "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.mjs",
   import.meta.url,
 ).href;
 env.useWasmCache = false;

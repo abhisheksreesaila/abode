@@ -32,12 +32,15 @@ export interface VoiceDictation {
  */
 export function useVoiceDictation(input: {
   enabled: boolean;
+  /** False blocks only new dictations; one already in flight finishes. */
+  canStart: boolean;
   shortcut: string;
   /** Returns false when the composer could not take the text. */
   onTranscript: (text: string) => boolean;
 }): VoiceDictation {
   const { shortcut } = input;
   const enabled = input.enabled;
+  const canStartRef = useRef(input.canStart);
   const [state, setState] = useState<RecordingState>(idleState);
   const stateRef = useRef<RecordingState>(idleState);
   const recorderRef = useRef<ActiveRecording | null>(null);
@@ -45,9 +48,11 @@ export function useVoiceDictation(input: {
   const ownerRef = useRef(Symbol("voice-dictation"));
   const onTranscriptRef = useRef(input.onTranscript);
   const { onTranscript } = input;
+  const { canStart } = input;
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
-  }, [onTranscript]);
+    canStartRef.current = canStart;
+  }, [onTranscript, canStart]);
 
   const send = useCallback((event: RecordingEvent) => {
     const transition = reduceRecording(stateRef.current, event);
@@ -102,6 +107,7 @@ export function useVoiceDictation(input: {
   const begin = useCallback(() => {
     const status = stateRef.current.status;
     if (status !== "idle" && status !== "error") return;
+    if (!canStartRef.current) return;
     if (activeOwner !== null && activeOwner !== ownerRef.current) return;
     activeOwner = ownerRef.current;
     send({ type: "start" });

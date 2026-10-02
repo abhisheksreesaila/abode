@@ -57,7 +57,8 @@ export function ComposerVoiceControl({
 }) {
   const { settings } = useVoiceSettings();
   const { state, toggle } = useVoiceDictation({
-    enabled: settings.enabled && !disabled,
+    enabled: settings.enabled,
+    canStart: !disabled,
     shortcut: settings.shortcut,
     onTranscript,
   });
@@ -88,7 +89,7 @@ export function ComposerVoiceControl({
               type="button"
               variant={recording ? "destructive" : "ghost"}
               size="icon-sm"
-              disabled={busy || disabled}
+              disabled={busy || (disabled && !recording)}
               onPointerDown={(event) => event.preventDefault()}
               onClick={toggle}
               aria-label={label}
