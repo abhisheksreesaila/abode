@@ -2249,6 +2249,15 @@ code {
   --ws-8: #d7ba7d;
 }
 
+/* Sidebar footer icon tiles (abode F-025): one fixed hue per item. */
+:root {
+  --icon-pr: #3fb950;
+  --icon-usage: #e2c14a;
+  --icon-customizations: #c586c0;
+  --icon-phone: #f48771;
+  --icon-settings: #4fc1ff;
+}
+
 /* abode density: VS Code-like. Scoped to the theme id so every other theme
    keeps T3's global values. 13px UI is the 14px base scaled by 13/14, which
    also tightens rem-based row padding; controls drop to a 4px radius. */
