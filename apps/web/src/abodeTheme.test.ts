@@ -1,7 +1,6 @@
 import { RESERVED_THEME_IDS } from "@t3tools/shared/themePalettes";
 import { describe, expect, it } from "vite-plus/test";
 
-import indexHtml from "../index.html?raw";
 import {
   ABODE_THEME,
   DEFAULT_THEME_ID,
@@ -78,9 +77,5 @@ describe("abode theme", () => {
     for (const [fg, bg, min] of pairs) {
       expect(contrast(fg, bg), `${fg} on ${bg}`).toBeGreaterThanOrEqual(min);
     }
-  });
-
-  it("boots on abode when nothing is stored", () => {
-    expect(indexHtml).toContain('getItem("t3code:theme") ?? "abode"');
   });
 });

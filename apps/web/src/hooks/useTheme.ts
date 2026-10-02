@@ -38,8 +38,9 @@ type DesktopThemeBridge = Pick<DesktopBridge, "setTheme">;
 
 const STORAGE_KEY = "t3code:theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
-// A profile with nothing stored opens on abode, which is dark only. Anyone who
-// has picked a theme (including "system") keeps their stored choice.
+// Any profile that never stored a theme (or whose stored theme no longer
+// resolves) opens on abode, which is dark only. A stored choice, including
+// "system", is kept.
 const DEFAULT_THEME_SNAPSHOT: ThemeSnapshot = {
   theme: DEFAULT_THEME_ID,
   resolvedTheme: "dark",

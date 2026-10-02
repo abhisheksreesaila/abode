@@ -226,9 +226,6 @@
         };
 
         try {
-          // A profile with nothing stored opens on abode (dark only),
-          // mirroring the runtime's DEFAULT_THEME_ID.
-          const storedTheme = window.localStorage.getItem("t3code:theme") ?? "abode";
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
           // Older builds stored the dark T3 Chat palette as its own theme id
           // and every maintainer theme under a t3- prefix; keep those
@@ -240,9 +237,21 @@
             "t3-ember": "ember",
             "t3-iris": "iris",
           };
+          // Nothing stored, or a stored id that no longer resolves (for
+          // example a removed published theme), opens on abode (dark only),
+          // mirroring the runtime's DEFAULT_THEME_ID fallback.
+          const rawTheme = window.localStorage.getItem("t3code:theme");
+          const rawThemeId = rawTheme === null ? "" : (LEGACY_THEME_IDS[rawTheme] ?? rawTheme);
+          const isKnownStoredTheme =
+            rawTheme === "light" ||
+            rawTheme === "dark" ||
+            rawTheme === "system" ||
+            (rawTheme !== null &&
+              (BUILT_IN_THEME_MODES[rawThemeId] !== undefined ||
+                findCustomTheme(rawThemeId) !== null));
+          const storedTheme = isKnownStoredTheme ? rawTheme : "abode";
           const isLegacyT3ChatDark = storedTheme === "t3-chat-dark";
-          const themeId =
-            storedTheme === null ? "" : (LEGACY_THEME_IDS[storedTheme] ?? storedTheme);
+          const themeId = LEGACY_THEME_IDS[storedTheme] ?? storedTheme;
           const legacyMode = isLegacyT3ChatDark ? "dark" : null;
           const builtInModes = BUILT_IN_THEME_MODES[themeId] ?? null;
           const customTheme = builtInModes ? null : findCustomTheme(themeId);
@@ -253,14 +262,8 @@
                   (mode) => mode === customTheme.appearance || customTheme.variants?.[mode],
                 )
               : null);
-          // Mirrors the runtime's isKnownThemePreference.
-          const isKnownTheme =
-            storedTheme === "light" ||
-            storedTheme === "dark" ||
-            storedTheme === "system" ||
-            themeModes !== null;
-          const theme = isKnownTheme && storedTheme ? storedTheme : "system";
-          const isThemed = isKnownTheme && themeModes !== null;
+          const theme = storedTheme;
+          const isThemed = themeModes !== null;
           const baseAppearance = customTheme
             ? customTheme.appearance
             : builtInModes?.length === 1
@@ -373,14 +376,9 @@
           } else {
             delete document.documentElement.dataset.themeId;
           }
-          // A resolved half is a selection even when the base theme is gone
-          // (deleting the base leaves the mix pointing at a real theme).
-          const hasSelection = halfThemeId !== null || (isKnownTheme && storedTheme !== null);
-          if (hasSelection) {
-            document.documentElement.dataset.themeSelected = "true";
-          } else {
-            delete document.documentElement.dataset.themeSelected;
-          }
+          // Every profile has a selection: an unset or unresolvable
+          // preference resolves to the default theme above.
+          document.documentElement.dataset.themeSelected = "true";
           document.documentElement.classList.toggle("dark", isDark);
           const chromeColor = customColors
             ? isThemeColor(customColors.chrome)
@@ -392,27 +390,23 @@
                 ? DARK_BACKGROUND
                 : LIGHT_BACKGROUND;
           document.documentElement.style.backgroundColor = chromeColor;
-          if (hasSelection) {
-            const splashColors = customSplash ?? builtInSplash ?? fallbackSplash;
-            for (const [name, value] of Object.entries(splashColors)) {
-              document.documentElement.style.setProperty(`--boot-${name}`, value);
-            }
+          const splashColors = customSplash ?? builtInSplash ?? fallbackSplash;
+          for (const [name, value] of Object.entries(splashColors)) {
+            document.documentElement.style.setProperty(`--boot-${name}`, value);
           }
           setThemeColor(chromeColor);
         } catch {
-          // Mirror the runtime's storage-failure fallback: follow the OS.
-          let prefersDark = true;
-          try {
-            prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          } catch {
-            // Keep the dark default when even matchMedia is unavailable.
+          // Mirror the runtime's storage-failure fallback: the default
+          // theme, abode (dark only).
+          const fallback = BUILT_IN_THEME_PALETTES.abode.dark;
+          document.documentElement.dataset.themeId = "abode";
+          document.documentElement.dataset.themeSelected = "true";
+          document.documentElement.classList.add("dark");
+          document.documentElement.style.backgroundColor = fallback.chrome;
+          for (const [name, value] of Object.entries(fallback)) {
+            document.documentElement.style.setProperty(`--boot-${name}`, value);
           }
-          delete document.documentElement.dataset.themeId;
-          delete document.documentElement.dataset.themeSelected;
-          document.documentElement.classList.toggle("dark", prefersDark);
-          const fallbackColor = prefersDark ? DARK_BACKGROUND : LIGHT_BACKGROUND;
-          document.documentElement.style.backgroundColor = fallbackColor;
-          setThemeColor(fallbackColor);
+          setThemeColor(fallback.chrome);
         }
       })();
     </script>
