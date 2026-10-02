@@ -1862,6 +1862,29 @@ describe("resolveThreadStatusPill", () => {
     ).toMatchObject({ label: "Awaiting Input", pulse: false });
   });
 
+  it("shows auto, ahead of working, for an autonomous thread and still yields to blockers", () => {
+    const autonomous = { enabled: true, count: 2, cap: 30 };
+    expect(resolveThreadStatusPill({ thread: { ...baseThread, autonomous } })).toMatchObject({
+      label: "Auto",
+      pulse: true,
+    });
+    expect(
+      resolveThreadStatusPill({
+        thread: { ...baseThread, autonomous, session: { ...baseThread.session, status: "ready" } },
+      }),
+    ).toMatchObject({ label: "Auto", pulse: false });
+    expect(
+      resolveThreadStatusPill({
+        thread: { ...baseThread, autonomous, hasPendingApprovals: true },
+      }),
+    ).toMatchObject({ label: "Pending Approval" });
+    expect(
+      resolveThreadStatusPill({
+        thread: { ...baseThread, autonomous: { ...autonomous, enabled: false } },
+      }),
+    ).toMatchObject({ label: "Working" });
+  });
+
   it("falls back to working when the thread is actively running without blockers", () => {
     expect(
       resolveThreadStatusPill({

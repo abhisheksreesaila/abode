@@ -61,7 +61,7 @@ export interface WorkspaceThreadState {
 }
 
 export const NEEDS_YOU_LABELS = new Set(["Pending Approval", "Awaiting Input", "Plan Ready"]);
-export const RUNNING_LABELS = new Set(["Working", "Connecting", "Monitoring"]);
+export const RUNNING_LABELS = new Set(["Working", "Connecting", "Monitoring", "Auto"]);
 
 function describeBucket(kind: WorkspacePillKind, count: number): string {
   if (kind === "running") return `${count} running`;

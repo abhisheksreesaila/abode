@@ -489,6 +489,7 @@ projectionSnapshotLayer("ProjectionSnapshotQuery", (it) => {
           autoSettleDisabledAt: null,
           titleRegeneration: null,
           titleState: null,
+          autonomous: null,
           deletedAt: null,
           messages: [
             {
@@ -616,6 +617,7 @@ projectionSnapshotLayer("ProjectionSnapshotQuery", (it) => {
           autoSettleDisabledAt: null,
           titleRegeneration: null,
           titleState: null,
+          autonomous: null,
           session: {
             threadId: ThreadId.make("thread-1"),
             status: "running",

@@ -1,8 +1,13 @@
-import { ProviderInteractionMode, RuntimeMode } from "@t3tools/contracts";
+import {
+  ProviderInteractionMode,
+  RuntimeMode,
+  type ThreadAutonomousState,
+} from "@t3tools/contracts";
 import { createContext, memo, use, useCallback, useRef, type ReactNode } from "react";
 import { EllipsisIcon } from "lucide-react";
 import {
   Menu,
+  MenuCheckboxItem,
   MenuPopup,
   MenuRadioGroup,
   MenuRadioItem,
@@ -11,6 +16,7 @@ import {
 } from "../ui/menu";
 import { ComposerControl, ComposerControlIcon } from "./ComposerControl";
 import { useComposerMenuProps } from "./composerEventScope";
+import { resolveAutonomousChip } from "./autonomousChip.logic";
 import { useComposerMenuState } from "./useComposerMenuState";
 
 const RunAfterCloseContext = createContext<((run: () => void) => void) | null>(null);
@@ -47,6 +53,8 @@ export const CompactComposerControlsMenu = memo(function CompactComposerControls
   hidden?: boolean;
   onToggleInteractionMode: () => void;
   onRuntimeModeChange: (mode: RuntimeMode) => void;
+  autonomous?: ThreadAutonomousState | null | undefined;
+  onAutonomousChange?: ((enabled: boolean) => void) | undefined;
 }) {
   const composerFloatingLayerProps = useComposerMenuProps();
   const size = props.size ?? "sm";
@@ -135,6 +143,17 @@ export const CompactComposerControlsMenu = memo(function CompactComposerControls
               </MenuRadioGroup>
             </>
           )}
+          {props.onAutonomousChange ? (
+            <>
+              <MenuDivider />
+              <MenuCheckboxItem
+                checked={props.autonomous?.enabled === true}
+                onCheckedChange={(checked) => props.onAutonomousChange?.(checked)}
+              >
+                {resolveAutonomousChip(props.autonomous, props.runtimeMode).label}
+              </MenuCheckboxItem>
+            </>
+          ) : null}
           {props.contextMenuContent ? (
             <>
               {props.showRuntimeMode === false ? null : <MenuDivider />}

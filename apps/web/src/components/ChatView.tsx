@@ -4508,6 +4508,29 @@ export default function ChatView(props: ChatViewProps) {
     ],
   );
 
+  // Autonomous mode lives on the server thread, so the chip only exists once there is one.
+  const autonomousThreadId = activeServerThread?.id ?? null;
+  const handleAutonomousChange = useCallback(
+    async (enabled: boolean) => {
+      if (autonomousThreadId === null) return;
+      const result = await updateThreadMetadata({
+        environmentId,
+        input: { threadId: autonomousThreadId, autonomous: { enabled } },
+      });
+      if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+        const error = squashAtomCommandFailure(result);
+        toastManager.add(
+          stackedThreadToast({
+            type: "error",
+            title: "Could not change autonomous mode",
+            description: error instanceof Error ? error.message : "An error occurred.",
+          }),
+        );
+      }
+    },
+    [autonomousThreadId, environmentId, updateThreadMetadata],
+  );
+
   const handleInteractionModeChange = useCallback(
     (mode: ProviderInteractionMode) => {
       if (mode === "plan" && !interactionModeEnabled) return;
@@ -10232,6 +10255,10 @@ export default function ChatView(props: ChatViewProps) {
                             toggleInteractionMode={toggleInteractionMode}
                             handleRuntimeModeChange={handleRuntimeModeChange}
                             handleInteractionModeChange={handleInteractionModeChange}
+                            autonomous={activeServerThread?.autonomous}
+                            onAutonomousChange={
+                              autonomousThreadId === null ? undefined : handleAutonomousChange
+                            }
                             focusComposer={focusComposer}
                             scheduleComposerFocus={scheduleComposerFocus}
                             setThreadError={setThreadError}

@@ -270,6 +270,9 @@ export function applyThreadDetailEvent(
           ...(event.payload.titleState !== undefined
             ? { titleState: event.payload.titleState }
             : {}),
+          ...(event.payload.autonomous !== undefined
+            ? { autonomous: event.payload.autonomous }
+            : {}),
           ...(event.payload.titleRegeneration !== undefined
             ? { titleRegeneration: event.payload.titleRegeneration }
             : {}),

@@ -6,6 +6,8 @@ import {
   ThreadLinkedPullRequest,
   UserInputRequestedPayload,
   isImportedAgentSessionMessageId,
+  DEFAULT_AUTONOMOUS_CAP,
+  type ThreadAutonomousState,
   type OrchestrationCommand,
   type OrchestrationEvent,
   type OrchestrationReadModel,
@@ -52,6 +54,35 @@ const monogramSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme
 const isScriptRunCommand = Schema.is(SCRIPT_RUN_COMMAND_PATTERN);
 
 const nowIso = Effect.map(DateTime.now, DateTime.formatIso);
+
+/**
+ * Autonomous patches fill in what the client left out: enabling starts a new
+ * run at zero, stopping keeps the count so the thread can still show it.
+ */
+function resolveAutonomousState(
+  current: ThreadAutonomousState | null | undefined,
+  patch: NonNullable<Extract<OrchestrationCommand, { type: "thread.meta.update" }>["autonomous"]>,
+): ThreadAutonomousState {
+  return {
+    enabled: patch.enabled,
+    count: patch.count ?? (patch.enabled ? 0 : (current?.count ?? 0)),
+    cap: patch.cap ?? current?.cap ?? DEFAULT_AUTONOMOUS_CAP,
+    stopReason: patch.stopReason ?? null,
+    stopDetail: patch.stopDetail ?? null,
+  };
+}
+
+function onlyAutonomousPatch(
+  command: Extract<OrchestrationCommand, { type: "thread.meta.update" }>,
+): boolean {
+  return (
+    command.autonomous !== undefined &&
+    Object.entries(command).every(
+      ([key, value]) =>
+        ["type", "commandId", "threadId", "autonomous"].includes(key) || value === undefined,
+    )
+  );
+}
 const decodeUserInputRequestedPayload = Schema.decodeUnknownOption(UserInputRequestedPayload);
 const threadPullRequestLinksEqual = Schema.toEquivalence(Schema.NullOr(ThreadLinkedPullRequest));
 
@@ -998,6 +1029,18 @@ export const decideOrchestrationCommand = Effect.fn("decideOrchestrationCommand"
           ],
         });
       }
+      // A stop must not be overwritten by a late count update from a continue
+      // that was decided before the stop landed.
+      if (
+        command.autonomous?.enabled === true &&
+        (command.autonomous.count ?? 0) > 0 &&
+        thread.autonomous?.enabled !== true
+      ) {
+        return yield* new OrchestrationCommandInvariantError({
+          commandType: command.type,
+          detail: `autonomous mode is off for thread ${command.threadId}`,
+        });
+      }
       const branch =
         command.branch !== undefined &&
         command.expectedBranch !== undefined &&
@@ -1051,7 +1094,12 @@ export const decideOrchestrationCommand = Effect.fn("decideOrchestrationCommand"
           ...(command.linkedPullRequest !== undefined
             ? { linkedPullRequest: command.linkedPullRequest }
             : {}),
-          updatedAt: occurredAt,
+          ...(command.autonomous !== undefined
+            ? { autonomous: resolveAutonomousState(thread.autonomous, command.autonomous) }
+            : {}),
+          // Flipping autonomous mode or counting a continue is not thread
+          // activity; leave the recency ordering alone.
+          updatedAt: onlyAutonomousPatch(command) ? thread.updatedAt : occurredAt,
         },
       };
     }

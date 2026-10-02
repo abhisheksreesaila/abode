@@ -235,7 +235,11 @@ import {
 } from "~/lib/composerContextRecords";
 import { requestConfirmDialog } from "~/confirmDialog";
 import { encodeComposerContextFragment } from "@t3tools/shared/composerContextClipboard";
-import type { ComposerContextClipboardFragment, ComposerContextRecord } from "@t3tools/contracts";
+import type {
+  ComposerContextClipboardFragment,
+  ComposerContextRecord,
+  ThreadAutonomousState,
+} from "@t3tools/contracts";
 import { resolveAssetUrl } from "~/assets/assetUrls";
 import { assetEnvironment } from "~/state/assets";
 import { readPreparedConnection } from "~/state/session";
@@ -960,6 +964,7 @@ import { toastManager } from "../ui/toast";
 import {
   FileIcon,
   BotIcon,
+  RepeatIcon,
   CircleAlertIcon,
   PaperclipIcon,
   PencilRulerIcon,
@@ -969,6 +974,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { resolveRuntimeModeTint } from "./chipTint";
+import { resolveAutonomousChip } from "./autonomousChip.logic";
 import { proposedPlanTitle } from "../../proposedPlan";
 import { hasProviderSetup } from "./ProviderStatusBanner";
 import {
@@ -1109,6 +1115,8 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
   hidden?: boolean;
   onToggleInteractionMode: () => void;
   onRuntimeModeChange: (mode: RuntimeMode) => void;
+  autonomous?: ThreadAutonomousState | null | undefined;
+  onAutonomousChange?: ((enabled: boolean) => void) | undefined;
 }) {
   const size = props.size ?? "sm";
   const composerFloatingLayerProps = useComposerMenuProps();
@@ -1121,6 +1129,34 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
     props.interactionMode === "plan"
       ? "Plan mode — click to return to normal build mode"
       : "Default mode — click to enter plan mode";
+
+  const autonomousChip = resolveAutonomousChip(props.autonomous, props.runtimeMode);
+  const autonomousToggle = props.onAutonomousChange ? (
+    <>
+      <ComposerControlSeparator size={size} />
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <ComposerControl
+              size={size}
+              className="shrink-0 whitespace-nowrap"
+              aria-pressed={autonomousChip.on}
+              aria-label="Autonomous mode"
+              tint={autonomousChip.on ? "branch-feature" : "none"}
+              type="button"
+              onClick={() => props.onAutonomousChange?.(!autonomousChip.on)}
+            />
+          }
+        >
+          <ComposerControlIcon icon={RepeatIcon} size={size} />
+          <span data-composer-control-label className="sr-only sm:not-sr-only">
+            {autonomousChip.label}
+          </span>
+        </TooltipTrigger>
+        <TooltipPopup side="top">{autonomousChip.tooltip}</TooltipPopup>
+      </Tooltip>
+    </>
+  ) : null;
 
   const interactionModeToggle = props.showInteractionModeToggle ? (
     <>
@@ -1214,6 +1250,7 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
       </Tooltip>
 
       {interactionModeToggle}
+      {autonomousToggle}
     </>
   );
 });
@@ -1517,6 +1554,9 @@ export interface ChatComposerProps {
   toggleInteractionMode: () => void;
   handleRuntimeModeChange: (mode: RuntimeMode) => void;
   handleInteractionModeChange: (mode: ProviderInteractionMode) => void;
+  /** Autonomous mode (F-032). The chip is absent until the thread exists on the server. */
+  autonomous?: ThreadAutonomousState | null | undefined;
+  onAutonomousChange?: ((enabled: boolean) => void) | undefined;
 
   focusComposer: () => void;
   scheduleComposerFocus: () => void;
@@ -1622,6 +1662,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     toggleInteractionMode,
     handleRuntimeModeChange,
     handleInteractionModeChange,
+    autonomous,
+    onAutonomousChange,
     focusComposer,
     scheduleComposerFocus,
     setThreadError,
@@ -5101,6 +5143,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           hidden={composerControlsHidden || isRestingBlockHidden("mode")}
           onToggleInteractionMode={toggleInteractionMode}
           onRuntimeModeChange={handleRuntimeModeChange}
+          autonomous={autonomous}
+          onAutonomousChange={onAutonomousChange}
         />
       ),
     },
@@ -5289,6 +5333,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             showRuntimeMode={hiddenRestingBlockIds.includes("mode")}
             onToggleInteractionMode={toggleInteractionMode}
             onRuntimeModeChange={handleRuntimeModeChange}
+            autonomous={autonomous}
+            onAutonomousChange={onAutonomousChange}
           />
         </div>
       </>

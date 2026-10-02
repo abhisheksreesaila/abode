@@ -553,7 +553,8 @@ export interface ThreadStatusPill {
     | "Completed"
     | "Pending Approval"
     | "Awaiting Input"
-    | "Plan Ready";
+    | "Plan Ready"
+    | "Auto";
   colorClass: string;
   dotClass: string;
   pulse: boolean;
@@ -565,6 +566,7 @@ export interface ThreadStatusPill {
 const THREAD_STATUS_PRIORITY: Record<ThreadStatusPill["label"], number> = {
   "Pending Approval": 6,
   "Awaiting Input": 5,
+  Auto: 4,
   Working: 4,
   Connecting: 4,
   "Plan Ready": 3,
@@ -581,6 +583,7 @@ type ThreadStatusInput = Pick<
   | "latestTurn"
   | "session"
   | "backgroundLiveness"
+  | "autonomous"
 > & {
   lastVisitedAt?: string | undefined;
 };
@@ -1057,6 +1060,18 @@ export function resolveThreadStatusPill(input: {
       colorClass: "text-indigo-600 dark:text-indigo-300/90",
       dotClass: "bg-indigo-500 dark:bg-indigo-300/90",
       pulse: false,
+    };
+  }
+
+  // Autonomous threads read "Auto" in both states: between turns they are about
+  // to continue on their own, so a plain idle or Completed row would mislead.
+  if (thread.autonomous?.enabled === true) {
+    const active = thread.session?.status === "running" || thread.session?.status === "starting";
+    return {
+      label: "Auto",
+      colorClass: "text-blue-600 dark:text-blue-300/90",
+      dotClass: "bg-blue-500 dark:bg-blue-300/90",
+      pulse: active,
     };
   }
 
