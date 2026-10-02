@@ -239,7 +239,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   );
   const handleSidebarOpenChange = (open: boolean) => {
     setSidebarOpen(open);
-    writePersistedSidebarOpen(localStorage, open);
+    writePersistedSidebarOpen(typeof localStorage === "undefined" ? null : localStorage, open);
   };
   const [sidebarWidth, setSidebarWidth] = useState(readInitialThreadSidebarWidth);
   // Subscribed rather than read once: the clamp must track live window size,

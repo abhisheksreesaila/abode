@@ -2020,7 +2020,7 @@ function OpenCommandPaletteDialog(props: {
 
   actionItems.push(
     ...PANEL_TOGGLE_PALETTE_ENTRIES.filter(
-      (entry) => entry.target === "sidebar" || activeThread != null,
+      (entry) => entry.target === "sidebar" || activeThread != null || activeDraftThread != null,
     ).map((entry): CommandPaletteActionItem => ({
       kind: "action",
       value: `action:toggle-${entry.target}`,

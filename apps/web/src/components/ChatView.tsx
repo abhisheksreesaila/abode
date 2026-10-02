@@ -1,6 +1,6 @@
-import { onPanelToggleRequest } from "../panelToggleBus";
 import { isChatGptUsageLimitError } from "@t3tools/shared/usageLimits";
 import { useLoadBalancedEnvironment } from "../hooks/useLoadBalancedEnvironment";
+import { onPanelToggleRequest } from "../panelToggleBus";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 import type { UsageLimitSourceSnapshots } from "@t3tools/contracts";
 import {
