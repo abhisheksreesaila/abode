@@ -2925,6 +2925,11 @@ describe("ProviderCommandReactor", () => {
           { id: "agent", value: "orchestrator" },
         ]),
       });
+      // The thread's own selection records the carried agent for other clients.
+      await waitFor(async () => {
+        const thread = (await harness.readModel()).threads.find((t) => t.id === "thread-1");
+        return thread?.modelSelection.options?.some((o) => o.id === "agent") === true;
+      });
     });
 
     it("lets an explicit none clear the agent", async () => {

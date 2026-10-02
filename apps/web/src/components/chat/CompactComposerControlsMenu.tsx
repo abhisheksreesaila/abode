@@ -76,7 +76,9 @@ export const CompactComposerControlsMenu = memo(function CompactComposerControls
               aria-label="More composer controls"
               data-composer-more-trigger="true"
               data-composer-shortcut={[
-                "composer.mode",
+                props.showRuntimeMode !== false || props.showInteractionModeToggle
+                  ? "composer.mode"
+                  : "",
                 props.traitsMenuContent ? "composer.effort" : "",
                 props.contextMenuContent ? (props.contextShortcuts ?? "") : "",
               ]

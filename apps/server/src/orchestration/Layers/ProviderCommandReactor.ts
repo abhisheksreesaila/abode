@@ -861,7 +861,20 @@ const make = Effect.gen(function* () {
     if (info?.driverKind !== "claudeAgent") return selection;
     const previous =
       threadModelSelections.get(threadId) ?? (yield* resolveThreadShell(threadId))?.modelSelection;
-    return carryOverClaudeAgentOption(selection, previous);
+    const carried = carryOverClaudeAgentOption(selection, previous);
+    if (carried !== selection) {
+      // Record the carried choice on the thread so clients showing its model
+      // selection (the web agent label) stay truthful after a mobile turn.
+      yield* orchestrationEngine
+        .dispatch({
+          type: "thread.meta.update",
+          commandId: yield* serverCommandId("carry-claude-agent"),
+          threadId,
+          modelSelection: carried,
+        })
+        .pipe(Effect.ignoreCause({ log: true }));
+    }
+    return carried;
   });
 
   const buildSendTurnRequestForThread = Effect.fnUntraced(function* (rawInput: {

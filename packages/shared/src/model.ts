@@ -72,6 +72,7 @@ export const CLAUDE_AGENT_OPTION_ID = "agent";
  * clearing an agent writes this instead of removing the option; a removed
  * option means "not chosen" and inherits the thread's earlier agent.
  */
+// Reserved: an agent literally named "none" cannot be chosen.
 export const CLAUDE_AGENT_NONE = "none";
 
 /** The chosen agent name; undefined when absent, empty or explicitly none. */
