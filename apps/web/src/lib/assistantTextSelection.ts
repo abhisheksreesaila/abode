@@ -1,4 +1,5 @@
 import { ASSISTANT_CITATION_CONTEXT_LENGTH, type AssistantCitation } from "@t3tools/contracts";
+import { isWholeMessageCitation } from "@t3tools/shared/assistantCitations";
 
 export type AssistantTextSelector = {
   readonly text: string;
@@ -266,6 +267,16 @@ export function resolveAssistantCitationRange(
 ): Range | null {
   if (excludedAncestor(root) !== null) return null;
   const stream = readAssistantText(root);
+  if (isWholeMessageCitation(selector)) {
+    // A whole-message quote carries markdown, so match the message, not its text.
+    const first = stream.chunks[0];
+    const last = stream.chunks.at(-1);
+    if (first === undefined || last === undefined) return null;
+    const range = root.ownerDocument.createRange();
+    range.setStart(first.node, 0);
+    range.setEnd(last.node, last.node.length);
+    return isUsableRange(root, range) ? range : null;
+  }
   const match = findAssistantCitationText(stream.text, selector);
   if (match === null) return null;
 

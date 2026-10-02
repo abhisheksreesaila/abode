@@ -118,14 +118,57 @@ export function collectAssistantCitations(text: string) {
   return citations;
 }
 
+/**
+ * A quote of a whole message is stored in the existing wire format as
+ * start 0, end 1 with text longer than one character. The schema requires
+ * end > start, and a real selection's end - start is its whitespace-normalized
+ * length, which is at least 2 for any non-blank text longer than one
+ * character, so the two never collide.
+ */
+export const WHOLE_MESSAGE_CITATION_END = 1;
+
+export function isWholeMessageCitation(
+  citation: Pick<AssistantCitation, "text" | "start" | "end">,
+): boolean {
+  return (
+    citation.start === 0 &&
+    citation.end === WHOLE_MESSAGE_CITATION_END &&
+    citation.text.length > 1 &&
+    citation.text.trim() !== ""
+  );
+}
+
+/**
+ * Drops the common Markdown syntax from a whole-message quote so previews read
+ * as prose. Display only; the saved quote keeps the original text. Avoids
+ * regex lookbehind, which Hermes lacks.
+ */
+export function stripBasicMarkdown(text: string): string {
+  return text
+    .replace(/```[^\n]*\n?([\s\S]*?)```/g, "$1")
+    .replace(/^ {0,3}#{1,6}\s+/gm, "")
+    .replace(/^ {0,3}>\s?/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(^|[^\w*])[*_]([^*_\n]+)[*_](?![\w*])/gm, "$1$2")
+    .replace(/~~(.+?)~~/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .trim();
+}
+
+/** What a quote shows in titles, chips and native text. */
+export function assistantCitationDisplayText(citation: AssistantCitation): string {
+  return isWholeMessageCitation(citation) ? stripBasicMarkdown(citation.text) : citation.text;
+}
+
 /** Titles and previews include the selected text and user comment without Markdown escaping. */
 export function assistantCitationsToPlainText(prompt: string): string {
   return prompt.replace(CITATION_LINK, (source: string, href: string) => {
     const citation = parseAssistantCitationHref(href);
     if (!citation) return source;
-    return citation.comment === undefined
-      ? citation.text
-      : `${citation.text}\nComment: ${citation.comment}`;
+    const quote = assistantCitationDisplayText(citation);
+    return citation.comment === undefined ? quote : `${quote}\nComment: ${citation.comment}`;
   });
 }
 
@@ -172,7 +215,7 @@ export function renderAssistantCitationsAsText(prompt: string): string {
   let text = "";
   let cursor = 0;
   for (const match of matches) {
-    const quote = escapeMarkdownText(match.citation.text);
+    const quote = escapeMarkdownText(assistantCitationDisplayText(match.citation));
     text += `${prompt.slice(cursor, match.start)}\n\n> Assistant quote:\n${quote
       .split("\n")
       .map((line) => `> ${line}`)

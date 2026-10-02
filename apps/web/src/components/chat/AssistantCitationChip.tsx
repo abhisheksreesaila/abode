@@ -1,5 +1,8 @@
 import type { AssistantCitation } from "@t3tools/contracts";
-import { serializeAssistantCitation } from "@t3tools/shared/assistantCitations";
+import {
+  assistantCitationDisplayText,
+  serializeAssistantCitation,
+} from "@t3tools/shared/assistantCitations";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PencilIcon, QuoteIcon } from "lucide-react";
 import {
@@ -94,7 +97,10 @@ export function AssistantCitationChip({
         },
       }
     : undefined;
-  const preview = (citation.comment?.trim() || citation.text).replace(/\s+/g, " ");
+  const preview = (citation.comment?.trim() || assistantCitationDisplayText(citation)).replace(
+    /\s+/g,
+    " ",
+  );
   const label = preview.length > 64 ? `${preview.slice(0, 64)}…` : preview;
   const sourceLinkProps = {
     to: "/$environmentId/$threadId" as const,

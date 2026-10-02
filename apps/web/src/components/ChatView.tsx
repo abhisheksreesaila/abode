@@ -1679,12 +1679,16 @@ export default function ChatView(props: ChatViewProps) {
         toastManager.add({
           type: "warning",
           title: "The composer is not ready",
-          description:
-            "Try citing the selection after the connection or pending input is resolved.",
+          description: "Try again in a moment.",
         });
       }
       return inserted;
     },
+    [composerRef],
+  );
+  // Whole-message quote: the button reports failure itself.
+  const quoteAssistantMessage = useCallback(
+    (citation: AssistantCitation) => composerRef.current?.citeAssistantText(citation) ?? false,
     [composerRef],
   );
   const [isWorkspaceFileDragActive, setIsWorkspaceFileDragActive] = useState(false);
@@ -9839,6 +9843,7 @@ export default function ChatView(props: ChatViewProps) {
                 {...(!paintOnlyDisplayedTimeline
                   ? {
                       onCiteAssistantText: citeAssistantText,
+                      onQuoteAssistantMessage: quoteAssistantMessage,
                       agentPanelModel,
                       onOpenAgents: addAgentsSurface,
                       onUseArtifactTemplate: useArtifactTemplate,

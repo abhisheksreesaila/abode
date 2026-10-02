@@ -8,8 +8,13 @@ import {
   ThreadId,
   type AssistantCitation,
 } from "@t3tools/contracts";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
+import { AssistantCitation as AssistantCitationSchema } from "@t3tools/contracts";
 import {
   assistantCitationsToPlainText,
+  isWholeMessageCitation,
+  stripBasicMarkdown,
   collectAssistantCitations,
   expandAssistantCitationsForProvider,
   formatAssistantCitationHref,
@@ -344,6 +349,75 @@ describe("assistant citation references", () => {
         "",
         "",
       ].join("\n"),
+    );
+  });
+});
+
+// The parser as shipped before whole-message quotes: strict keys, schema decode.
+function legacyParse(href: string): AssistantCitation | null {
+  const url = new URL(href);
+  const parts = url.pathname.slice(1).split("/");
+  const requiredKeys = ["text", "start", "end", "prefix", "suffix"];
+  const comment = url.searchParams.get("comment");
+  if (
+    url.searchParams.size !== requiredKeys.length + (comment === null ? 0 : 1) ||
+    requiredKeys.some((key) => url.searchParams.getAll(key).length !== 1)
+  ) {
+    return null;
+  }
+  return Option.getOrNull(
+    Schema.decodeUnknownOption(AssistantCitationSchema)({
+      version: 1,
+      environmentId: decodeURIComponent(parts[0]!),
+      threadId: decodeURIComponent(parts[1]!),
+      messageId: decodeURIComponent(parts[2]!),
+      text: url.searchParams.get("text"),
+      start: Number(url.searchParams.get("start")),
+      end: Number(url.searchParams.get("end")),
+      prefix: url.searchParams.get("prefix"),
+      suffix: url.searchParams.get("suffix"),
+      ...(comment === null ? {} : { comment }),
+    }),
+  );
+}
+
+describe("whole-message quotes", () => {
+  const whole: AssistantCitation = {
+    ...citation,
+    text: "## Done\n\nFixed **retry** in `queue.ts` ([notes](http://x.y)).\n\n- item one",
+    start: 0,
+    end: 1,
+    prefix: "",
+    suffix: "",
+  };
+
+  it("is accepted unchanged by the previous parser", () => {
+    expect(legacyParse(formatAssistantCitationHref(whole))).toEqual(whole);
+    expect(parseAssistantCitationHref(formatAssistantCitationHref(whole))).toEqual(whole);
+  });
+
+  it("is recognised, and real selections are not mistaken for it", () => {
+    expect(isWholeMessageCitation(whole)).toBe(true);
+    expect(isWholeMessageCitation(citation)).toBe(false);
+    expect(isWholeMessageCitation({ text: "a", start: 0, end: 1 })).toBe(false);
+    expect(isWholeMessageCitation({ text: "a ", start: 0, end: 2 })).toBe(false);
+  });
+
+  it("previews and native text show no raw markdown", () => {
+    const prompt = serializeAssistantCitation(whole);
+    expect(assistantCitationsToPlainText(prompt)).toBe(
+      "Done\n\nFixed retry in queue.ts (notes).\nitem one",
+    );
+    expect(renderAssistantCitationsAsText(prompt)).not.toMatch(/\*\*|`/);
+  });
+
+  it("leaves selected-text quotes untouched", () => {
+    expect(assistantCitationsToPlainText(serializeAssistantCitation(citation))).toBe(citation.text);
+  });
+
+  it("strips fences, headings, emphasis and quotes", () => {
+    expect(stripBasicMarkdown("# T\n```ts\nconst a = 1;\n```\n> *note* __bold__ ~~x~~")).toBe(
+      "T\nconst a = 1;\n\nnote bold x",
     );
   });
 });
