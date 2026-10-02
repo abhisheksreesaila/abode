@@ -5,13 +5,14 @@
  */
 export type RecordingState =
   | { status: "idle" }
-  | { status: "recording" }
+  | { status: "recording"; /** Muted live preview of the words heard so far. */ interim?: string }
   | { status: "transcribing"; downloadProgress: number | null }
   | { status: "error"; message: string };
 
 export type RecordingEvent =
   | { type: "start" }
   | { type: "stop" }
+  | { type: "interim"; text: string }
   | { type: "cancel" }
   | { type: "progress"; fraction: number }
   | { type: "transcribed"; text: string }
@@ -38,6 +39,10 @@ export function reduceRecording(state: RecordingState, event: RecordingEvent): R
     case "stop":
       return state.status === "recording"
         ? { state: { status: "transcribing", downloadProgress: null } }
+        : { state };
+    case "interim":
+      return state.status === "recording"
+        ? { state: { status: "recording", interim: event.text } }
         : { state };
     case "cancel":
       return state.status === "recording" || state.status === "transcribing"

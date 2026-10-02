@@ -8,10 +8,17 @@ import {
   type RecordingState,
 } from "./recordingMachine";
 import { isShortcutRelease, matchesVoiceShortcut } from "./shortcut";
+import { startInterimLoop } from "./interimLoop";
+import { SPEECH_SAMPLE_RATE } from "./pcmBuffer";
 import { transcribe } from "./transcriberClient";
 
 /** Shorter than this is an accidental tap, not speech. */
-const MIN_SAMPLES = 16_000 * 0.3;
+const MIN_SAMPLES = SPEECH_SAMPLE_RATE * 0.3;
+/** How often the audio so far is re-transcribed for the live preview. */
+const INTERIM_INTERVAL_MS = 1_000;
+/** Keeps preview latency flat on long dictations: only the last few seconds are re-read. */
+const INTERIM_WINDOW_SAMPLES = SPEECH_SAMPLE_RATE * 12;
+const INTERIM_MIN_SAMPLES = SPEECH_SAMPLE_RATE * 0.5;
 const ERROR_VISIBLE_MS = 6_000;
 const INSERT_FAILED_MESSAGE = "Can't insert right now.";
 const TRANSCRIBE_FAILED_MESSAGE =
@@ -45,6 +52,7 @@ export function useVoiceDictation(input: {
   const stateRef = useRef<RecordingState>(idleState);
   const recorderRef = useRef<ActiveRecording | null>(null);
   const tokenRef = useRef(0);
+  const stopInterimRef = useRef<(() => void) | null>(null);
   const ownerRef = useRef(Symbol("voice-dictation"));
   const onTranscriptRef = useRef(input.onTranscript);
   const { onTranscript } = input;
@@ -58,6 +66,10 @@ export function useVoiceDictation(input: {
     const transition = reduceRecording(stateRef.current, event);
     stateRef.current = transition.state;
     setState(transition.state);
+    if (transition.state.status !== "recording") {
+      stopInterimRef.current?.();
+      stopInterimRef.current = null;
+    }
     if (transition.discardAudio) {
       recorderRef.current?.discard();
       recorderRef.current = null;
@@ -119,6 +131,14 @@ export function useVoiceDictation(input: {
           return;
         }
         recorderRef.current = recorder;
+        if (stateRef.current.status === "recording") {
+          stopInterimRef.current = startInterimLoop({
+            intervalMs: INTERIM_INTERVAL_MS,
+            snapshot: () => recorder.snapshot(INTERIM_WINDOW_SAMPLES, INTERIM_MIN_SAMPLES),
+            transcribe: (audio) => transcribe(audio, () => {}),
+            onText: (text) => send({ type: "interim", text }),
+          });
+        }
         // Released before the mic opened: go straight to transcription.
         if (stateRef.current.status === "transcribing") {
           recorderRef.current = null;

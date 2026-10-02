@@ -1,10 +1,12 @@
-const WHISPER_SAMPLE_RATE = 16_000;
+import { createDownsampler, createPcmStore, type PcmSnapshot } from "./pcmBuffer";
 
 export interface ActiveRecording {
   /** Stops capturing and resolves with 16 kHz mono samples. */
   finish: () => Promise<Float32Array>;
   /** Stops capturing and throws the audio away. */
   discard: () => void;
+  /** Audio so far, capped to the last maxSamples; null while shorter than minSamples. */
+  snapshot: (maxSamples: number, minSamples: number) => PcmSnapshot | null;
 }
 
 export const INSECURE_CONTEXT_MESSAGE = "Voice needs HTTPS (use Tailscale HTTPS or localhost).";
@@ -33,43 +35,47 @@ export async function startRecording(): Promise<ActiveRecording> {
   // Browsers hide mediaDevices on insecure origins (plain http that is not localhost).
   if (!navigator.mediaDevices?.getUserMedia) throw new InsecureContextError();
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  let context: AudioContext | null = null;
+  let processor: ScriptProcessorNode | null = null;
+  let released = false;
+  // Idempotent: every exit path (finish, discard, setup failure) frees the mic.
   const release = () => {
+    if (released) return;
+    released = true;
+    if (processor) processor.onaudioprocess = null;
+    processor?.disconnect();
     for (const track of stream.getTracks()) track.stop();
+    if (context) void context.close();
   };
-  let recorder: MediaRecorder;
-  const chunks: Blob[] = [];
-  let stopped: Promise<void>;
+  const store = createPcmStore();
   try {
-    recorder = new MediaRecorder(stream);
-    recorder.addEventListener("dataavailable", (event) => {
-      if (event.data.size > 0) chunks.push(event.data);
-    });
-    const active = recorder;
-    stopped = new Promise<void>((resolve) =>
-      active.addEventListener("stop", () => resolve(), { once: true }),
-    );
-    recorder.start();
+    // Capture raw PCM at the device rate and downsample ourselves: Firefox refuses to
+    // connect a MediaStream whose rate differs from the context's.
+    context = new AudioContext();
+    const downsample = createDownsampler(context.sampleRate);
+    const source = context.createMediaStreamSource(stream);
+    processor = context.createScriptProcessor(4096, 1, 1);
+    processor.onaudioprocess = (event) => {
+      if (!released) store.push(downsample(event.inputBuffer.getChannelData(0)));
+    };
+    // A processor only runs while connected to the destination; the zero gain keeps it silent.
+    const mute = context.createGain();
+    mute.gain.value = 0;
+    source.connect(processor);
+    processor.connect(mute);
+    mute.connect(context.destination);
+    void context.resume();
   } catch (error) {
     release();
     throw error;
   }
   return {
-    discard: () => {
-      if (recorder.state !== "inactive") recorder.stop();
-      release();
-    },
+    discard: release,
     finish: async () => {
-      if (recorder.state !== "inactive") recorder.stop();
-      await stopped;
       release();
-      const bytes = await new Blob(chunks, { type: recorder.mimeType }).arrayBuffer();
-      const context = new AudioContext({ sampleRate: WHISPER_SAMPLE_RATE });
-      try {
-        const decoded = await context.decodeAudioData(bytes);
-        return decoded.getChannelData(0).slice();
-      } finally {
-        void context.close();
-      }
+      return store.all();
     },
+    snapshot: (maxSamples, minSamples) =>
+      released || store.length < minSamples ? null : store.tail(maxSamples),
   };
 }

@@ -69,8 +69,18 @@ export function ComposerVoiceControl({
   const status = describeVoiceStatus(state, elapsed);
   const busy = state.status === "transcribing";
   const label = recording ? "Stop dictation" : "Dictate";
+  const interim = state.status === "recording" ? state.interim : undefined;
   return (
-    <>
+    <div className="relative flex items-center gap-2">
+      {interim ? (
+        // Muted ghost of what has been heard so far; the real text lands on release.
+        <p
+          data-voice-interim="true"
+          className="pointer-events-none absolute right-0 bottom-full mb-2 line-clamp-3 w-72 max-w-[70vw] rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs italic text-muted-foreground shadow-sm"
+        >
+          {interim}
+        </p>
+      ) : null}
       {status ? (
         <span
           role={state.status === "error" ? "alert" : "status"}
@@ -103,6 +113,6 @@ export function ComposerVoiceControl({
           {label} (hold {voiceShortcutLabel(settings.shortcut)})
         </TooltipPopup>
       </Tooltip>
-    </>
+    </div>
   );
 }
