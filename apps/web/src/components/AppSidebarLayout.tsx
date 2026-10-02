@@ -31,6 +31,7 @@ import { resolveThreadRouteRef } from "../threadRoutes";
 import { cn, isMacPlatform } from "../lib/utils";
 import { primaryServerKeybindingsAtom } from "../state/server";
 import { useEnvironmentIdentificationMode, useLegacySidebarEnabled } from "../hooks/useSettings";
+import { useIsMobile } from "../hooks/useMediaQuery";
 import {
   PanelAnimationSuppressionProvider,
   usePanelAnimationSettings,
@@ -39,6 +40,8 @@ import {
 import LegacyThreadSidebar from "./LegacySidebar";
 import ThreadSidebar from "./Sidebar";
 import { SettingsSidebarNav } from "./settings/SettingsSidebarNav";
+import { ActivityBar } from "./sidebar/ActivityBar";
+import { ACTIVITY_BAR_WIDTH_PX } from "./sidebar/activityBar";
 import { SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import { MainAppLocationTracker } from "./sidebar/mainAppLocation";
 import { useSidebarStageBackdropVariant } from "./SidebarStageBackdrop";
@@ -261,12 +264,21 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
       ? getWindowFullscreenState()
       : false;
   });
+  // The activity bar (F-028) sits left of the sidebar on desktop widths, so the floating
+  // sidebar toggle starts after it; phones keep the sheet and no rail.
+  const isPhone = useIsMobile();
+  const activityBarWidth = isPhone ? 0 : ACTIVITY_BAR_WIDTH_PX;
   const sidebarProviderStyle = {
     "--sidebar-width": `${sidebarWidth}px`,
+    "--activity-bar-width": `${activityBarWidth}px`,
     "--panel-animation-duration": `${panelAnimationDurationMs}ms`,
     ...(isMacosDesktop && !isWindowFullscreen
       ? { "--workspace-controls-left": MACOS_TRAFFIC_LIGHTS_LEFT_INSET }
-      : {}),
+      : activityBarWidth > 0
+        ? {
+            "--workspace-controls-left": `calc(env(titlebar-area-x, 0px) + ${activityBarWidth}px + 0.75rem)`,
+          }
+        : {}),
   } as CSSProperties;
 
   useEffect(() => {
@@ -316,6 +328,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
         style={sidebarProviderStyle}
       >
         <ProjectProjectionRetention />
+        <ActivityBar />
         <Sidebar
           side="left"
           collapsible="offcanvas"
