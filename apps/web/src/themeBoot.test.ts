@@ -491,28 +491,27 @@ describe("index.html boot script", () => {
       prefersDark: false,
     });
 
-    expect(boot.themeId).toBeUndefined();
-    expect(boot.themeSelected).toBeUndefined();
-    expect(boot.backgroundColor).toBe("#ffffff");
-    expect(boot.metaContent).toBe("#ffffff");
-  });
-
-  it("leaves unknown preferences unthemed so the runtime default applies", () => {
-    const boot = runBootScript({
-      storage: { [THEME_STORAGE_KEY]: "gone-theme" },
-      prefersDark: true,
-    });
-    expect(boot.themeId).toBeUndefined();
-    expect(boot.themeSelected).toBeUndefined();
+    expect(boot.themeId).toBe("abode");
+    expect(boot.themeSelected).toBe("true");
     expect(boot.isDark).toBe(true);
+    expect(boot.backgroundColor).toBe("#181818");
+    expect(boot.metaContent).toBe("#181818");
   });
 
-  it("follows the OS appearance when storage is unavailable", () => {
-    const light = runBootScript({ storageThrows: true, prefersDark: false });
-    expect(light.isDark).toBe(false);
-    expect(light.themeId).toBeUndefined();
+  it("opens unknown or unset preferences on abode, matching the runtime default", () => {
+    for (const storage of [{ [THEME_STORAGE_KEY]: "gone-theme" }, {}]) {
+      const boot = runBootScript({ storage, prefersDark: false });
+      expect(boot.themeId).toBe("abode");
+      expect(boot.themeSelected).toBe("true");
+      expect(boot.isDark).toBe(true);
+    }
+  });
 
-    const dark = runBootScript({ storageThrows: true, prefersDark: true });
-    expect(dark.isDark).toBe(true);
+  it("opens on abode regardless of the OS appearance when storage is unavailable", () => {
+    for (const prefersDark of [false, true]) {
+      const boot = runBootScript({ storageThrows: true, prefersDark });
+      expect(boot.themeId).toBe("abode");
+      expect(boot.isDark).toBe(true);
+    }
   });
 });

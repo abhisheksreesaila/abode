@@ -3,6 +3,9 @@ import * as Schema from "effect/Schema";
 import "culori/css";
 import { converter, parse } from "culori/fn";
 import {
+  ABODE_THEME,
+  ABODE_THEME_ID,
+  ABODE_WORKSPACE_COLORS,
   BUILT_IN_THEMES,
   EMBER_THEME,
   GROVE_THEME,
@@ -20,7 +23,17 @@ import {
   type ThemeVariants,
 } from "@t3tools/shared/themePalettes";
 
-export { EMBER_THEME, GROVE_THEME, IRIS_THEME, OCEAN_THEME, T3_CHAT_THEME, THEME_COLOR_ROLES };
+export {
+  ABODE_THEME,
+  ABODE_THEME_ID,
+  ABODE_WORKSPACE_COLORS,
+  EMBER_THEME,
+  GROVE_THEME,
+  IRIS_THEME,
+  OCEAN_THEME,
+  T3_CHAT_THEME,
+  THEME_COLOR_ROLES,
+};
 export type { ThemeAppearance, ThemeColorRole, ThemeColors, ThemeDefinition, ThemeVariants };
 
 export const T3_CHAT_THEME_ID = "t3-chat" as const;
@@ -1067,7 +1080,15 @@ export function updateThemeColorFamily(
   }
 }
 
-const BUILT_IN_THEME_DEFINITIONS: ReadonlyArray<ThemeDefinition> = BUILT_IN_THEMES;
+/** What a profile with no stored preference opens on. */
+export const DEFAULT_THEME_ID = ABODE_THEME_ID;
+
+// abode is web/desktop only, so it rides here instead of in the shared
+// BUILT_IN_THEMES list that the mobile app mirrors.
+const BUILT_IN_THEME_DEFINITIONS: ReadonlyArray<ThemeDefinition> = [
+  ABODE_THEME,
+  ...BUILT_IN_THEMES,
+];
 
 export function getThemeDefinition(theme: ThemePreference): ThemeDefinition | null {
   const themeId = themeIdFromPreference(theme);

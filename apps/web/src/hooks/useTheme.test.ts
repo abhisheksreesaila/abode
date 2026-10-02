@@ -82,6 +82,16 @@ describe("theme failure handling", () => {
     expect(readThemePreference()).toBe("t3-chat");
   });
 
+  it("opens on dark abode when no theme was ever stored", async () => {
+    vi.stubGlobal("window", { localStorage: createStorage() });
+
+    const { readThemePreference } = await import("./useTheme");
+    const { resolveThemeAppearance } = await import("../themePalette");
+
+    expect(readThemePreference()).toBe("abode");
+    expect(resolveThemeAppearance("abode", false, false, "dark", null)).toBe("dark");
+  });
+
   it("falls back during initial theme application and logs only safe attributes", async () => {
     const cause = new Error("private browsing storage failure");
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
