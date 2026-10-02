@@ -1,5 +1,6 @@
 import { useAtomValue } from "@effect/atom-react";
 import { collectLimitAccounts, type LimitAccount } from "@t3tools/shared/usageLimits";
+import { GaugeIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 
 import { useNowMinute } from "../../hooks/useNowMinute";
@@ -8,6 +9,7 @@ import { cn } from "../../lib/utils";
 import { environmentPresentations } from "../../state/presentation";
 import { getDriverOption } from "../settings/providerDriverMeta";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
+import { SidebarFooterRow } from "./SidebarFooterRow";
 import {
   compactWindowLabel,
   formatResetAbsolute,
@@ -37,12 +39,16 @@ function accountTitle(account: LimitAccount): string {
 }
 
 /**
- * The limit closest to running out, as one line at the foot of the sidebar,
+ * The limit closest to running out, as a row at the foot of the sidebar,
  * with every window of every reporting account in a popover. It reads the
  * limits the server already publishes and never polls: the numbers move when
  * a turn or an explicit probe refreshes them.
  */
-export const SidebarUsageStatus = memo(function SidebarUsageStatus() {
+export const SidebarUsageStatus = memo(function SidebarUsageStatus({
+  onOpenUsagePage,
+}: {
+  readonly onOpenUsagePage: () => void;
+}) {
   const presentations = useAtomValue(environmentPresentations.presentationsAtom);
   const timestampFormat = usePrimarySettings((settings) => settings.timestampFormat);
   const nowMinute = useNowMinute();
@@ -50,7 +56,17 @@ export const SidebarUsageStatus = memo(function SidebarUsageStatus() {
   const accounts = useMemo(() => collectLimitAccounts(presentations), [presentations]);
   const closest = useMemo(() => pickClosestWindow(accounts, now), [accounts, now]);
   const hasWindows = accounts.some((account) => account.limits.windows.length > 0);
-  if (!hasWindows) return null;
+  // Nothing reported yet: the row stays as the way to the usage page.
+  if (!hasWindows) {
+    return (
+      <SidebarFooterRow
+        color="usage"
+        icon={<GaugeIcon />}
+        title="Usage"
+        onClick={onOpenUsagePage}
+      />
+    );
+  }
 
   // With nothing live left to rank, the item stays so the popover is still reachable.
   const tone = closest ? usageTone(closest.window.usedPercent) : "ok";
@@ -62,30 +78,38 @@ export const SidebarUsageStatus = memo(function SidebarUsageStatus() {
     <Popover>
       <PopoverTrigger
         render={
-          <button
-            type="button"
+          <SidebarFooterRow
             aria-label="Usage limits"
             data-tone={tone}
-            className="flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-start text-xs text-muted-foreground outline-hidden ring-ring hover:bg-accent focus-visible:ring-2"
+            color="usage"
+            icon={<GaugeIcon />}
+            title={closest ? accountTitle(closest.account) : "Usage"}
+            subtitle={
+              closest
+                ? `${compactWindowLabel(closest.window)} ${Math.round(closest.window.usedPercent)}% used${reset ? ` · resets ${reset}` : ""}`
+                : "Limits reset"
+            }
+            meter={
+              closest
+                ? {
+                    percent: closest.window.usedPercent,
+                    label: "Usage",
+                    barClass: tone === "ok" ? undefined : TONE_BAR[tone],
+                  }
+                : undefined
+            }
           />
         }
-      >
-        <span className="truncate">
-          {closest ? (
-            <>
-              {accountTitle(closest.account)} ·{" "}
-              <span className={cn("font-medium tabular-nums", TONE_TEXT[tone])}>
-                {compactWindowLabel(closest.window)} {Math.round(closest.window.usedPercent)}% used
-              </span>
-              {reset ? ` · resets ${reset}` : null}
-            </>
-          ) : (
-            "Limits reset"
-          )}
-        </span>
-      </PopoverTrigger>
+      />
       <PopoverPopup side="top" align="start" sideOffset={6} width="md" padding="compact">
         <div className="flex w-full flex-col gap-3">
+          <button
+            type="button"
+            onClick={onOpenUsagePage}
+            className="cursor-pointer self-start text-xs text-primary hover:underline"
+          >
+            Open usage page
+          </button>
           {accounts.map((account) => (
             <section key={account.key} className="flex flex-col gap-2">
               <h4 className="text-xs font-medium text-foreground">{accountTitle(account)} usage</h4>

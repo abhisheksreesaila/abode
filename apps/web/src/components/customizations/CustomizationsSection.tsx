@@ -42,7 +42,7 @@ import {
 
 const EXPANDED_STORAGE_KEY = "abode.customizationsExpanded";
 
-interface CustomizationsScope {
+export interface CustomizationsScope {
   readonly environmentId: EnvironmentId;
   readonly cwd: string;
   readonly projectName: string;
@@ -51,7 +51,7 @@ interface CustomizationsScope {
 }
 
 /** The active thread's project; customizations are per workspace, not per worktree. */
-function useActiveCustomizationsScope(): CustomizationsScope | null {
+export function useActiveCustomizationsScope(): CustomizationsScope | null {
   const routeTarget = useParams({
     strict: false,
     select: (params) => resolveThreadRouteTarget(params),
@@ -76,11 +76,19 @@ function useActiveCustomizationsScope(): CustomizationsScope | null {
   };
 }
 
-/** Bottom-of-sidebar list of the workspace's Claude skills, agents, MCP servers and instructions. */
+/** Shared with the footer's Customizations row, which opens and closes the section. */
+export function useCustomizationsExpanded() {
+  return useLocalStorage(EXPANDED_STORAGE_KEY, false, Schema.Boolean);
+}
+
+/**
+ * Bottom-of-sidebar list of the workspace's Claude skills, agents, MCP servers and instructions.
+ * Collapsed, it is just the footer's Customizations row.
+ */
 export function CustomizationsSection() {
   const scope = useActiveCustomizationsScope();
-  const [expanded, setExpanded] = useLocalStorage(EXPANDED_STORAGE_KEY, false, Schema.Boolean);
-  if (!scope) return null;
+  const [expanded, setExpanded] = useCustomizationsExpanded();
+  if (!scope || !expanded) return null;
 
   return (
     <section
