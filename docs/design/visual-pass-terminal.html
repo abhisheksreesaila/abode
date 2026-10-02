@@ -1,0 +1,649 @@
+<title>abode terminal skin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+/>
+<style>
+  /* Layout: the same four boards as the visual pass, reskinned flat in the house Terminal Ledger system. Square corners, hairlines, mono labels, purple brand accent; workspace and risk colors stay. */
+  :root {
+    color-scheme: dark;
+    --bg: #0d0d14;
+    --surface: #13131e;
+    --surface-2: #1a1a28;
+    --surface-3: #1f1f30;
+    --border: #252538;
+    --border-hi: #32324c;
+    --accent: #7c3aed;
+    --accent-hi: #9d5cf5;
+    --accent-dim: rgb(124 58 237 / 0.15);
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --blue: #60a5fa;
+    --pink: #f472b6;
+    --teal: #2dd4bf;
+    --orange: #fb923c;
+    --text: #f5f5ff;
+    --text-mid: #c0c0dc;
+    --text-dim: #8e8eae;
+    --ws1: #60a5fa;
+    --ws2: #9d5cf5;
+    --ws3: #fbbf24;
+    --ws4: #2dd4bf;
+    --ws5: #f472b6;
+    --mono: "Space Mono", "Courier New", monospace;
+    --sans: Inter, "Helvetica Neue", system-ui, sans-serif;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text-mid);
+    font: 13.5px/1.6 var(--sans);
+    padding-block: 28px 56px;
+    padding-inline: 16px;
+  }
+  .page {
+    max-width: 1240px;
+    margin: 0 auto;
+    display: grid;
+    gap: 32px;
+  }
+  .kicker {
+    font: 700 10.5px var(--mono);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-hi);
+  }
+  h1 {
+    margin: 4px 0 0;
+    font: 700 22px var(--mono);
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .intro p {
+    margin: 8px 0 0;
+    max-width: 72ch;
+    color: var(--text-dim);
+  }
+  section {
+    display: grid;
+    gap: 12px;
+  }
+  section > header {
+    display: grid;
+    gap: 2px;
+  }
+  section h2 {
+    margin: 0;
+    font: 600 16px var(--sans);
+    color: var(--text);
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .win {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    min-width: 0;
+  }
+  .win > .bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    font: 700 10.5px var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .lights {
+    display: flex;
+    gap: 5px;
+  }
+  .lights i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: block;
+  }
+  .mono {
+    font-family: var(--mono);
+  }
+  .dim {
+    color: var(--text-dim);
+  }
+
+  /* sidebar */
+  .sb {
+    width: 300px;
+  }
+  .brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lock {
+    font: 700 14px var(--mono);
+    letter-spacing: 0.22em;
+    color: var(--text);
+  }
+  .lock b {
+    color: var(--accent-hi);
+  }
+  .ws {
+    display: grid;
+    grid-template-columns: 12px 28px 1fr auto;
+    gap: 0 8px;
+    align-items: center;
+    padding: 8px 12px 6px 8px;
+    border-top: 1px solid var(--border);
+  }
+  .ws:first-of-type {
+    border-top: 0;
+  }
+  .ws .chev {
+    font: 10px var(--mono);
+    color: var(--text-dim);
+    grid-row: span 2;
+  }
+  .ws .ini {
+    grid-row: span 2;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    font: 700 11px var(--mono);
+    color: var(--c);
+    border: 1px solid var(--c);
+    background: color-mix(in srgb, var(--c) 10%, transparent);
+  }
+  .ws .name {
+    font: 700 12.5px var(--mono);
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .ws .loc {
+    grid-column: 3;
+    font: 10.5px var(--mono);
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ws .tag {
+    grid-row: span 2;
+    grid-column: 4;
+  }
+  .tag {
+    font: 700 9.5px var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border: 1px solid currentColor;
+  }
+  .t-run {
+    color: var(--green);
+  }
+  .t-wait {
+    color: var(--yellow);
+  }
+  .t-err {
+    color: var(--red);
+  }
+  .th {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 12px 3px 56px;
+    font-size: 12.5px;
+  }
+  .th .t {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .th .m {
+    font: 10.5px var(--mono);
+    color: var(--text-dim);
+  }
+  .th.on {
+    background: var(--surface-3);
+    color: var(--text);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .sq {
+    width: 7px;
+    height: 7px;
+    flex: none;
+  }
+  .more {
+    padding: 0 12px 6px 56px;
+    font: 10.5px var(--mono);
+    color: var(--text-dim);
+  }
+
+  /* footer */
+  .foot {
+    border-top: 1px solid var(--border);
+  }
+  .fi {
+    display: grid;
+    grid-template-columns: 26px 1fr auto;
+    gap: 0 10px;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .fi:last-child {
+    border-bottom: 0;
+  }
+  .fi:hover {
+    background: var(--surface-2);
+  }
+  .fi .ic {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    font: 700 12px var(--mono);
+    color: var(--ic);
+    border: 1px solid var(--ic);
+  }
+  .fi .lbl {
+    font: 700 10.5px var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .fi .sub {
+    font: 10.5px var(--mono);
+    color: var(--text-dim);
+  }
+  .fi .end {
+    font: 10.5px var(--mono);
+    color: var(--text-dim);
+  }
+  .meter {
+    height: 2px;
+    background: var(--border);
+    margin-top: 4px;
+  }
+  .meter i {
+    display: block;
+    height: 100%;
+    background: var(--yellow);
+  }
+
+  /* welcome */
+  .welcome {
+    width: min(780px, 100%);
+  }
+  .welcome .body {
+    padding: 28px 28px 22px;
+    display: grid;
+    gap: 14px;
+  }
+  .prompt {
+    font: 12px var(--mono);
+    color: var(--text-dim);
+  }
+  .prompt b {
+    color: var(--green);
+    font-weight: 400;
+  }
+  .welcome h3 {
+    margin: 0;
+    font: 600 26px var(--sans);
+    color: var(--text);
+    text-wrap: balance;
+  }
+  .welcome h3 em {
+    font-style: normal;
+    color: var(--ws3);
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+  .cursor {
+    display: inline-block;
+    width: 0.55em;
+    background: var(--ws3);
+    height: 1em;
+    vertical-align: -0.1em;
+    margin-left: 4px;
+  }
+  .welcome .tagline {
+    color: var(--text-mid);
+    max-width: 60ch;
+    border-left: 2px solid var(--border-hi);
+    padding-left: 12px;
+  }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .fact {
+    font: 10.5px var(--mono);
+    padding: 2px 8px;
+    border: 1px solid var(--border-hi);
+    color: var(--text-dim);
+  }
+  .ideas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+  .idea {
+    padding: 12px;
+    border-right: 1px solid var(--border);
+    display: grid;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .idea:last-child {
+    border-right: 0;
+  }
+  .idea:hover {
+    background: var(--surface-2);
+    box-shadow: inset 0 -2px 0 var(--c);
+  }
+  .idea .k {
+    font: 700 10.5px var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c);
+  }
+  .idea .d {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* composer */
+  .composer {
+    width: min(780px, 100%);
+  }
+  .composer .body {
+    padding: 14px;
+  }
+  .cbox {
+    border: 1px solid var(--border-hi);
+    background: var(--surface-2);
+  }
+  .cin {
+    padding: 12px;
+    min-height: 52px;
+    font: 12.5px var(--mono);
+    color: var(--text-dim);
+  }
+  .cin b {
+    color: var(--accent-hi);
+    font-weight: 400;
+  }
+  .cfoot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    padding: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .chip {
+    font: 700 10px var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--border-hi);
+    color: var(--text-mid);
+    white-space: nowrap;
+  }
+  .chip.agent::before {
+    content: "● ";
+    color: var(--orange);
+  }
+  .chip.danger {
+    color: var(--red);
+    border-color: var(--red);
+    background: rgb(248 113 113 / 0.1);
+  }
+  .chip.caution {
+    color: var(--yellow);
+    border-color: var(--yellow);
+  }
+  .chip.safe {
+    color: var(--green);
+    border-color: var(--green);
+  }
+  .chip.main {
+    color: var(--ws2);
+    border-color: var(--ws2);
+  }
+  .chip.feat {
+    color: var(--blue);
+    border-color: var(--blue);
+  }
+  .chip.wt {
+    color: var(--teal);
+    border-color: var(--teal);
+  }
+  .sp {
+    flex: 1;
+  }
+  .btn {
+    font: 700 10.5px var(--mono);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--accent);
+  }
+  .mic {
+    font: 700 10.5px var(--mono);
+    padding: 5px 9px;
+    border: 1px solid var(--border-hi);
+    color: var(--text-mid);
+  }
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 8px 16px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .legend div {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .note {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-dim);
+    max-width: 300px;
+  }
+</style>
+
+<div class="page">
+  <header class="intro">
+    <div class="kicker">// abode · design option</div>
+    <h1>Terminal skin</h1>
+    <p>
+      The same four boards in your house Terminal Ledger style: square corners, hairline rules,
+      Space Mono labels and the purple brand accent. Workspace and risk colors stay, now as outlines
+      and text instead of fills, so it's flat without going monochrome.
+    </p>
+  </header>
+
+  <section>
+    <header>
+      <div class="kicker">01 · sidebar · option b</div>
+      <h2>Workspace list</h2>
+    </header>
+    <div class="row">
+      <div class="win sb">
+        <div class="brand">
+          <span class="lock"><b>AB</b>ODE</span
+          ><span class="kicker" style="color: var(--text-dim)">agents</span>
+        </div>
+        <div class="ws" style="--c: var(--ws1)">
+          <span class="chev">▾</span><span class="ini">FX</span><span class="name">finxplorer</span
+          ><span class="tag t-run">2 run</span><span class="loc">~/Projects/finxplorer</span>
+        </div>
+        <div class="th on">
+          <span class="sq" style="background: var(--green)"></span
+          ><span class="t">Stability review fixes</span><span class="m">2m</span>
+        </div>
+        <div class="th">
+          <span class="sq" style="background: var(--yellow)"></span
+          ><span class="t">Plaid webhook signature</span><span class="m">needs you</span>
+        </div>
+        <div class="more">+3 older</div>
+        <div class="ws" style="--c: var(--ws2)">
+          <span class="chev">▾</span><span class="ini">AB</span><span class="name">abode</span
+          ><span class="tag t-run">1 run</span><span class="loc">~/Projects/t3code</span>
+        </div>
+        <div class="th">
+          <span class="sq" style="background: var(--green)"></span
+          ><span class="t">Voice dictation</span><span class="m">8m</span>
+        </div>
+        <div class="ws" style="--c: var(--ws3)">
+          <span class="chev">▸</span><span class="ini">TO</span><span class="name">travel-os</span
+          ><span class="tag t-err">failed</span><span class="loc">mac-mini · ~/code/travel-os</span>
+        </div>
+        <div class="ws" style="--c: var(--ws4)">
+          <span class="chev">▸</span><span class="ini">PN</span
+          ><span class="name">personalnote</span
+          ><span class="tag" style="visibility: hidden">-</span
+          ><span class="loc">~/Projects/personalnote</span>
+        </div>
+        <div class="foot">
+          <div class="fi" style="--ic: var(--green)">
+            <span class="ic">PR</span><span class="lbl">Pull requests</span
+            ><span class="end">3 open</span>
+          </div>
+          <div class="fi" style="--ic: var(--yellow)">
+            <span class="ic">%</span
+            ><span
+              ><span class="lbl">Claude Max</span>
+              <div class="sub">5h 42% used · resets 3:40pm</div>
+              <div class="meter"><i style="width: 42%"></i></div></span
+            ><span class="end"></span>
+          </div>
+          <div class="fi" style="--ic: var(--pink)">
+            <span class="ic">*</span><span class="lbl">Customizations</span
+            ><span class="end">19</span>
+          </div>
+          <div class="fi" style="--ic: var(--red)">
+            <span class="ic">▯</span><span class="lbl">Phone &amp; remote</span
+            ><span class="end">1 paired</span>
+          </div>
+          <div class="fi" style="--ic: var(--blue)">
+            <span class="ic">⚙</span><span class="lbl">Settings</span><span class="end">⌘,</span>
+          </div>
+        </div>
+      </div>
+      <div class="note" style="border: 1px solid var(--border); background: var(--surface)">
+        The sidebar (board 1) and the footer (board 2) are shown together as they'd appear. Initials
+        are outlined tiles, statuses are bracketed tags, and the active thread has a purple left
+        edge.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <div class="kicker">03 · new thread</div>
+      <h2>Project welcome</h2>
+    </header>
+    <div class="win welcome">
+      <div class="bar">
+        <span class="lights"
+          ><i style="background: #f87171"></i><i style="background: #fbbf24"></i
+          ><i style="background: #34d399"></i></span
+        >travel-os · new thread
+      </div>
+      <div class="body">
+        <div class="prompt"><b>abhishek@mac-mini</b> ~/code/travel-os (main) $ cat README.md</div>
+        <h3>🧳 What should we build in <em>travel-os</em> today?<span class="cursor"></span></h3>
+        <div class="tagline">
+          Plan trips like a pro: itineraries, budgets and bookings in one place.
+        </div>
+        <div class="facts">
+          <span class="fact">~/code/travel-os</span><span class="fact">mac-mini</span
+          ><span class="fact">⎇ main</span
+          ><span class="fact" style="color: var(--green); border-color: var(--green)"
+            >3 threads · 1 running</span
+          >
+        </div>
+        <div class="ideas">
+          <div class="idea" style="--c: var(--blue)">
+            <span class="k">✨ Feature</span><span class="d">Describe it; I'll plan first</span>
+          </div>
+          <div class="idea" style="--c: var(--red)">
+            <span class="k">🐛 Bug</span><span class="d">Paste the error or what you saw</span>
+          </div>
+          <div class="idea" style="--c: var(--green)">
+            <span class="k">📖 Explain</span><span class="d">A tour of how it works</span>
+          </div>
+          <div class="idea" style="--c: var(--accent-hi)">
+            <span class="k">🧭 Resume</span><span class="d">"Booking flow", 2h ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <div class="kicker">04 · composer</div>
+      <h2>Chips with meaning</h2>
+    </header>
+    <div class="win composer">
+      <div class="bar">composer</div>
+      <div class="body">
+        <div class="cbox">
+          <div class="cin"><b>&gt;</b> ask, or hold ctrl+shift+space to talk</div>
+          <div class="cfoot">
+            <span class="chip agent">Orchestrator · Opus 5.5</span>
+            <span class="chip danger">⚠ Full access</span>
+            <span class="chip main">⎇ master</span>
+            <span class="chip">laptop</span>
+            <span class="sp"></span>
+            <span class="chip" style="border-color: transparent">ctx 38%</span>
+            <span class="mic">MIC</span>
+            <span class="btn">Send</span>
+          </div>
+        </div>
+        <div class="legend">
+          <div>
+            <span class="chip danger">⚠ Full access</span>Red: runs anything. Red only means risk.
+          </div>
+          <div><span class="chip caution">Auto edits</span>Amber: edits land unreviewed</div>
+          <div><span class="chip safe">Ask first</span>Green: asks before acting</div>
+          <div><span class="chip main">⎇ master</span>Purple: the main branch</div>
+          <div><span class="chip feat">⎇ feature/x</span>Blue: a feature branch</div>
+          <div><span class="chip wt">Worktree</span>Teal: isolated, safe to try things</div>
+          <div><span class="chip agent">Claude</span>Neutral with an orange dot</div>
+          <div><span class="btn">Send</span>Purple: the one primary action</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
