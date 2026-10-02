@@ -86,7 +86,7 @@ export const SidebarUsageStatus = memo(function SidebarUsageStatus({
             title={closest ? accountTitle(closest.account) : "Usage"}
             subtitle={
               closest
-                ? `${compactWindowLabel(closest.window)} ${Math.round(closest.window.usedPercent)}% used${reset ? ` · resets ${reset}` : ""}`
+                ? `${Math.round(closest.window.usedPercent)}% of ${compactWindowLabel(closest.window)}${reset ? ` · resets ${reset}` : ""}`
                 : "Limits reset"
             }
             meter={
@@ -94,7 +94,7 @@ export const SidebarUsageStatus = memo(function SidebarUsageStatus({
                 ? {
                     percent: closest.window.usedPercent,
                     label: "Usage",
-                    barClass: tone === "ok" ? undefined : TONE_BAR[tone],
+                    barClass: tone === "ok" ? "bg-primary" : TONE_BAR[tone],
                   }
                 : undefined
             }

@@ -33,10 +33,17 @@ export function resolveRuntimeModeTint(mode: RuntimeMode): ChipTint {
 
 const MAIN_BRANCH_NAMES: ReadonlySet<string> = new Set(["main", "master", "trunk"]);
 
-/** Purple for the trunk branch, blue for anything else, none when there is no branch. */
-export function resolveBranchTint(branch: string | null | undefined): ChipTint {
+/**
+ * Purple for the trunk branch, blue for anything else, none when there is no branch.
+ * `brand` (the abode theme) makes every branch blue, the Fluent accent.
+ */
+export function resolveBranchTint(
+  branch: string | null | undefined,
+  options: { readonly brand?: boolean } = {},
+): ChipTint {
   const name = branch?.trim();
   if (!name) return "none";
+  if (options.brand) return "branch-feature";
   return MAIN_BRANCH_NAMES.has(name.toLowerCase()) ? "branch-main" : "branch-feature";
 }
 

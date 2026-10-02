@@ -17,6 +17,7 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "../ui/sidebar";
 import { SidebarUpdatePill } from "./SidebarUpdatePill";
 import { SidebarFooterRow } from "./SidebarFooterRow";
+import { SidebarSectionHeader } from "./FluentSidebarParts";
 import { SidebarUsageStatus } from "./SidebarUsageStatus";
 import { isSidebarUtilityPage, useNavigateToMainApp } from "./mainAppLocation";
 
@@ -33,8 +34,8 @@ function CustomizationsCount({ scope }: { readonly scope: CustomizationsScope })
 }
 
 /**
- * The sidebar footer's list rows (abode F-025). Everything the old icon strip
- * reached stays reachable: Settings, Pull requests, Usage (the usage row's
+ * The sidebar footer's "Account" list (abode F-025, Fluent in F-028). Everything the old icon
+ * strip reached stays reachable: Settings (now in the activity bar), Pull requests, Usage (the usage row's
  * popover links to the page), Back on utility pages, and the update pill.
  */
 export const SidebarFooterList = memo(function SidebarFooterList() {
@@ -69,7 +70,8 @@ export const SidebarFooterList = memo(function SidebarFooterList() {
   const goBack = go(() => void navigateToMainApp());
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col">
+      <SidebarSectionHeader label="Account" />
       {isOnUtilityPage ? (
         <SidebarMenu>
           <SidebarMenuItem>
@@ -84,7 +86,7 @@ export const SidebarFooterList = memo(function SidebarFooterList() {
         <SidebarFooterRow
           color="pr"
           icon={<PullRequestGlyph.pullRequest />}
-          title="Pull requests"
+          title="Pull Requests"
           onClick={openPullRequests}
         />
       ) : null}
@@ -102,10 +104,12 @@ export const SidebarFooterList = memo(function SidebarFooterList() {
       <SidebarFooterRow
         color="phone"
         icon={<SmartphoneIcon />}
-        title="Phone and remote"
+        title="Phone & Remote"
         onClick={openConnections}
       />
+      {/* Desktop widths reach Settings from the activity bar; phones have no rail. */}
       <SidebarFooterRow
+        className="md:hidden"
         color="settings"
         icon={<SettingsIcon />}
         title="Settings"

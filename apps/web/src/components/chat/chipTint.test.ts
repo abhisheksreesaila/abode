@@ -25,6 +25,12 @@ describe("resolveBranchTint", () => {
     expect(resolveBranchTint("main-fix")).toBe("branch-feature");
   });
 
+  it("is blue for every branch in the brand (abode) theme", () => {
+    expect(resolveBranchTint("main", { brand: true })).toBe("branch-feature");
+    expect(resolveBranchTint("feature/x", { brand: true })).toBe("branch-feature");
+    expect(resolveBranchTint(null, { brand: true })).toBe("none");
+  });
+
   it("is untinted without a branch", () => {
     expect(resolveBranchTint(null)).toBe("none");
     expect(resolveBranchTint("  ")).toBe("none");

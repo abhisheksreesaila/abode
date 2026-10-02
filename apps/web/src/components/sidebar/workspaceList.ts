@@ -158,3 +158,33 @@ export function splitLatestThreads<T>(
   const shown = threads.filter((thread, index) => index < latest || options.isActive?.(thread));
   return { shown, olderCount: threads.length - shown.length };
 }
+
+export type ThreadSquareTone = "running" | "needs-you" | "done" | "idle";
+
+/** The 7px status square of a thread row (F-028): green running, amber needs you, dim idle. */
+export function threadSquareTone(statusLabel: string | null): ThreadSquareTone {
+  if (statusLabel === null) return "idle";
+  if (NEEDS_YOU_LABELS.has(statusLabel)) return "needs-you";
+  if (RUNNING_LABELS.has(statusLabel)) return "running";
+  if (statusLabel === "Completed") return "done";
+  return "idle";
+}
+
+/** The right-hand meta label of a thread row: "needs you" replaces the age while it waits. */
+export function threadMetaLabel(tone: ThreadSquareTone, relativeAge: string): string {
+  return tone === "needs-you" ? "needs you" : relativeAge;
+}
+
+export type WorkspacePillView =
+  | { readonly kind: "failed"; readonly text: string }
+  | {
+      readonly kind: "count";
+      readonly tone: Exclude<WorkspacePillKind, "failed">;
+      readonly text: string;
+    };
+
+/** What the one-line workspace row shows on its right: a count pill, or red "failed". */
+export function workspacePillView(pill: WorkspacePill): WorkspacePillView {
+  if (pill.kind === "failed") return { kind: "failed", text: "\u2297 failed" };
+  return { kind: "count", tone: pill.kind, text: String(pill.count) };
+}
