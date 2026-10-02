@@ -45,6 +45,7 @@ import {
 import { Separator } from "./ui/separator";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 import { MiddleTruncate } from "./ui/middle-truncate";
+import { useRunAfterComposerMenuClose } from "./chat/CompactComposerControlsMenu";
 import { useComposerMenuProps } from "./chat/composerEventScope";
 import { cn } from "~/lib/utils";
 
@@ -610,6 +611,7 @@ export const BranchToolbarOverflowItems = memo(function BranchToolbarOverflowIte
     onOpenBranchPicker,
   } = props;
   const model = useBranchToolbarModel(props);
+  const runAfterMenuClose = useRunAfterComposerMenuClose();
   if (!model.ready) return null;
 
   return (
@@ -645,9 +647,9 @@ export const BranchToolbarOverflowItems = memo(function BranchToolbarOverflowIte
           <MenuGroup>
             <MenuGroupLabel>Branch</MenuGroupLabel>
             <MenuItem
-              // Let the menu finish closing before the picker opens, or the
-              // closing menu's outside-press handling dismisses the picker.
-              onClick={() => window.requestAnimationFrame(onOpenBranchPicker)}
+              // Open the picker once the menu has finished closing, or the
+              // closing menu's outside-press handling dismisses it.
+              onClick={() => runAfterMenuClose(onOpenBranchPicker)}
             >
               <GitBranchIcon className="size-3" />
               <MiddleTruncate value={model.branchLabel ?? "Switch branch"} />

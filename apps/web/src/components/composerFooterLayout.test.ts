@@ -5,6 +5,7 @@ import {
   COMPOSER_FOOTER_WIDE_ACTIONS_COMPACT_BREAKPOINT_PX,
   COMPOSER_RESTING_EXPANSION_MIN_PX,
   getRestingComposerImagePreviewCounts,
+  resolveComposerFooterBlockIds,
   resolveComposerTimelineInset,
   resolveScrollToEndClearance,
   resolveRestingComposerControlsLayout,
@@ -494,5 +495,30 @@ describe("progressive composer controls", () => {
         previous = next;
       }
     }
+  });
+});
+
+describe("resolveComposerFooterBlockIds", () => {
+  const all = { hasAgent: true, hasTraits: true, hasContext: true, providerUnavailable: false };
+
+  it("orders agent, traits, mode, then the workspace chips", () => {
+    expect(resolveComposerFooterBlockIds(all)).toEqual(["agent", "traits", "mode", "context"]);
+  });
+
+  it("keeps the workspace chips when no provider is available", () => {
+    expect(resolveComposerFooterBlockIds({ ...all, providerUnavailable: true })).toEqual([
+      "context",
+    ]);
+  });
+
+  it("omits blocks the thread does not have", () => {
+    expect(
+      resolveComposerFooterBlockIds({
+        ...all,
+        hasAgent: false,
+        hasTraits: false,
+        hasContext: false,
+      }),
+    ).toEqual(["mode"]);
   });
 });

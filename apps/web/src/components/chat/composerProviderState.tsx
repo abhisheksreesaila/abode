@@ -17,7 +17,7 @@ import type { ReactNode } from "react";
 
 import type { DraftId } from "../../composerDraftStore";
 import { getProviderModelCapabilities } from "../../providerModels";
-import { getChosenAgent, withChosenAgent } from "./composerAgent";
+import { keepChosenAgent } from "./composerAgent";
 import type { ComposerControlSize } from "./ComposerControl";
 import { shouldRenderTraitsControls, TraitsMenuContent, TraitsPicker } from "./TraitsPicker";
 
@@ -106,9 +106,7 @@ function withClaudeAgentOption(
   dispatched: ReadonlyArray<ProviderOptionSelection> | undefined,
   modelOptions: ReadonlyArray<ProviderOptionSelection> | null | undefined,
 ): ReadonlyArray<ProviderOptionSelection> | undefined {
-  return provider === "claudeAgent"
-    ? withChosenAgent(dispatched, getChosenAgent(modelOptions))
-    : dispatched;
+  return provider === "claudeAgent" ? keepChosenAgent(dispatched, modelOptions) : dispatched;
 }
 
 export function getComposerProviderState(input: ComposerProviderStateInput): ComposerProviderState {

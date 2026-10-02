@@ -97,6 +97,21 @@ interface BranchToolbarBranchSelectorProps {
   onComposerFocusRequest?: () => void;
 }
 
+/**
+ * The element the branch popup should anchor to: null when the chip itself is
+ * on screen, otherwise the visible "more controls" trigger that holds it.
+ */
+function resolveVisibleAnchor(chip: HTMLElement | null): Element | null {
+  if (!chip) return null;
+  const isShown = (element: Element) =>
+    element.checkVisibility({ visibilityProperty: true }) && element.closest("[inert]") === null;
+  if (isShown(chip)) return null;
+  const shell = chip.closest('[data-slot="composer-shell"]') ?? document;
+  return (
+    Array.from(shell.querySelectorAll('[data-composer-more-trigger="true"]')).find(isShown) ?? null
+  );
+}
+
 function toBranchActionErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "An error occurred.";
 }
@@ -118,6 +133,10 @@ export function BranchToolbarBranchSelector({
   onComposerFocusRequest,
 }: BranchToolbarBranchSelectorProps) {
   const composerFloatingLayerProps = useComposerMenuProps();
+  const rootRef = useRef<HTMLDivElement>(null);
+  // Set while the chip is folded into the footer's more menu: the popup then
+  // anchors to that menu's trigger instead of the inert, invisible chip.
+  const [popupAnchor, setPopupAnchor] = useState<Element | null>(null);
   const startFromOriginSwitchId = useId();
   const stopThreadSession = useAtomCommand(threadEnvironment.stopSession, "thread session stop");
   const updateThreadMetadata = useAtomCommand(
@@ -545,6 +564,8 @@ export function BranchToolbarBranchSelector({
   const handleOpenChange = useCallback((open: boolean) => {
     previousBranchListScrollTopRef.current = null;
     setIsBranchMenuOpen(open);
+    // A normal open anchors to the chip; the handle re-sets this after calling.
+    if (open) setPopupAnchor(null);
     if (!open) {
       setBranchQuery("");
       highlightedBranchValueRef.current = null;
@@ -557,6 +578,7 @@ export function BranchToolbarBranchSelector({
       open: () => {
         if (isInitialBranchesLoadPending || isBranchActionPending) return;
         handleOpenChange(true);
+        setPopupAnchor(resolveVisibleAnchor(rootRef.current));
       },
     }),
     [handleOpenChange, isBranchActionPending, isInitialBranchesLoadPending],
@@ -784,6 +806,7 @@ export function BranchToolbarBranchSelector({
       value={resolvedActiveBranch}
     >
       <div
+        ref={rootRef}
         className={cn("flex min-w-0 items-center gap-1", className)}
         data-composer-context-control
       >
@@ -826,6 +849,7 @@ export function BranchToolbarBranchSelector({
         align="end"
         side="top"
         className="flex w-80 flex-col"
+        anchor={popupAnchor}
         {...composerFloatingLayerProps}
       >
         <ComboboxSearchInput

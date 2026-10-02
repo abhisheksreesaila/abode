@@ -9753,6 +9753,16 @@ export default function ChatView(props: ChatViewProps) {
     : null;
   const hasComposerContextControls =
     branchToolbarProps !== null && (isGitRepo || showComposerEnvironmentIndicator);
+  // The commands the "more" menu entries answer to: environment when it can be
+  // picked, workspace when the thread's workspace is not pinned.
+  const contextControlsShortcuts = [
+    hasMultipleEnvironments && !envLocked ? "composer.host" : "",
+    isGitRepo && !envLocked && !(routeKind === "server" && activeThreadWorktreePath !== null)
+      ? "composer.workspace"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
@@ -10133,6 +10143,7 @@ export default function ChatView(props: ChatViewProps) {
                                   contextControls: (
                                     <BranchToolbar ref={branchToolbarRef} {...branchToolbarProps} />
                                   ),
+                                  contextControlsShortcuts,
                                   contextControlsMenu: (
                                     <BranchToolbarOverflowItems
                                       {...branchToolbarProps}

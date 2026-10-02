@@ -51,17 +51,19 @@ describe("agent option", () => {
     expect(getChosenAgent(options)).toBe("orchestrator");
   });
 
-  it("clears the agent and drops an empty option list", () => {
-    expect(withChosenAgent([{ id: "agent", value: "orchestrator" }], null)).toBeUndefined();
-    expect(
-      withChosenAgent(
-        [
-          { id: "agent", value: "orchestrator" },
-          { id: "effort", value: "high" },
-        ],
-        null,
-      ),
-    ).toEqual([{ id: "effort", value: "high" }]);
+  it("clears with an explicit none entry that reads back as no agent", () => {
+    const cleared = withChosenAgent(
+      [
+        { id: "agent", value: "orchestrator" },
+        { id: "effort", value: "high" },
+      ],
+      null,
+    );
+    expect(cleared).toEqual([
+      { id: "effort", value: "high" },
+      { id: "agent", value: "none" },
+    ]);
+    expect(getChosenAgent(cleared)).toBeNull();
   });
 
   it("survives a trait edit that rebuilt the options from descriptors", () => {

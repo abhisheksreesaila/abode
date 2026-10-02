@@ -62,6 +62,7 @@ import {
   resolveSourceControlWriterModelSelection,
   ServerSettingsService,
 } from "../../serverSettings.ts";
+import { carryOverClaudeAgentOption } from "@t3tools/shared/model";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { VcsStatusBroadcaster } from "../../vcs/VcsStatusBroadcaster.ts";
 import { GitWorkflowService } from "../../git/GitWorkflowService.ts";
@@ -844,7 +845,26 @@ const make = Effect.gen(function* () {
     return startedSession.threadId;
   });
 
-  const buildSendTurnRequestForThread = Effect.fnUntraced(function* (input: {
+  /**
+   * Claude only: a client that rebuilt its options without `agent` (the
+   * official mobile app) keeps the agent chosen earlier on this thread. The
+   * web client clears an agent explicitly with the `none` entry.
+   */
+  const withCarriedClaudeAgent = Effect.fnUntraced(function* (
+    threadId: ThreadId,
+    selection: ModelSelection | undefined,
+  ) {
+    if (selection === undefined) return selection;
+    const info = yield* providerService
+      .getInstanceInfo(selection.instanceId)
+      .pipe(Effect.orElseSucceed(() => undefined));
+    if (info?.driverKind !== "claudeAgent") return selection;
+    const previous =
+      threadModelSelections.get(threadId) ?? (yield* resolveThreadShell(threadId))?.modelSelection;
+    return carryOverClaudeAgentOption(selection, previous);
+  });
+
+  const buildSendTurnRequestForThread = Effect.fnUntraced(function* (rawInput: {
     readonly threadId: ThreadId;
     readonly messageText: string;
     readonly attachments?: ReadonlyArray<ChatAttachment>;
@@ -853,6 +873,14 @@ const make = Effect.gen(function* () {
     readonly createdAt: string;
     readonly titleSeed?: string;
   }) {
+    const carriedModelSelection = yield* withCarriedClaudeAgent(
+      rawInput.threadId,
+      rawInput.modelSelection,
+    );
+    const input =
+      carriedModelSelection !== undefined
+        ? { ...rawInput, modelSelection: carriedModelSelection }
+        : rawInput;
     const thread = yield* resolveThreadShell(input.threadId);
     if (!thread) {
       return yield* Effect.die(
@@ -1445,20 +1473,24 @@ const make = Effect.gen(function* () {
         () => void compactingThreadIds.delete(event.payload.threadId),
       );
       yield* Effect.gen(function* () {
+        const compactionModelSelection = yield* withCarriedClaudeAgent(
+          event.payload.threadId,
+          event.payload.modelSelection,
+        );
         yield* ensureSessionForThread(
           event.payload.threadId,
           event.payload.createdAt,
-          event.payload.modelSelection !== undefined
-            ? { modelSelection: event.payload.modelSelection, pendingTurnStart: true }
+          compactionModelSelection !== undefined
+            ? { modelSelection: compactionModelSelection, pendingTurnStart: true }
             : { pendingTurnStart: true },
         );
         compactionSessionEnsured = true;
-        if (event.payload.modelSelection !== undefined) {
-          threadModelSelections.set(event.payload.threadId, event.payload.modelSelection);
+        if (compactionModelSelection !== undefined) {
+          threadModelSelections.set(event.payload.threadId, compactionModelSelection);
         }
         yield* providerService.compactThread(
           event.payload.threadId,
-          event.payload.modelSelection,
+          compactionModelSelection,
           event.payload.messageId,
         );
       }).pipe(

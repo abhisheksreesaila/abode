@@ -191,6 +191,8 @@ import {
   resolveRestingComposerControlsLayout,
   shouldAnimateComposerRestingTransition,
   shouldUseCompactComposerPrimaryActions,
+  resolveComposerFooterBlockIds,
+  type ComposerFooterBlockId,
   shouldUseCompactComposerFooter,
   shouldUseRestingComposerLayout,
 } from "../composerFooterLayout";
@@ -1441,6 +1443,8 @@ export interface ChatComposerProps {
    */
   contextControls?: ReactNode;
   contextControlsMenu?: ReactNode;
+  /** The `composer.host` / `composer.workspace` commands the context controls offer. */
+  contextControlsShortcuts?: string;
   pullRequestProjectId: ProjectId | null;
   pullRequestRepository: string | null;
   restingControlsHost: HTMLDivElement | null;
@@ -1568,6 +1572,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     projectCwd = null,
     contextControls,
     contextControlsMenu,
+    contextControlsShortcuts,
     pullRequestProjectId,
     pullRequestRepository,
     restingControlsHost,
@@ -5008,20 +5013,22 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const iconOnlyBlockCount = composerControlsInStrip
     ? restingControlsIconOnlyBlockCount
     : expandedControlsLayout.iconOnlyBlockCount;
-  const restingBlockIds = [
-    ...(composerAgent ? ["agent"] : []),
-    ...(providerTraitsPicker ? ["traits"] : []),
-    "mode",
-    ...(contextControls ? ["context"] : []),
-  ];
-  const isRestingBlockHidden = (id: string) =>
+  // Without a usable provider only the workspace chips remain, so the thread's
+  // environment, workspace and branch stay reachable.
+  const restingBlockIds = resolveComposerFooterBlockIds({
+    hasAgent: composerAgent !== null,
+    hasTraits: providerTraitsPicker !== null,
+    hasContext: Boolean(contextControls),
+    providerUnavailable: showProviderUnavailable,
+  });
+  const isRestingBlockHidden = (id: ComposerFooterBlockId) =>
     restingBlockIds.indexOf(id) >= restingBlockIds.length - restingHiddenBlockCount;
   const restingProviderTraitsPicker = renderProviderTraitsPicker({
     ...providerTraitsPickerInput,
     size: composerControlsInStrip ? "xs" : "sm",
     hidden: composerControlsHidden || isRestingBlockHidden("traits"),
   });
-  const restingBlockDefs = [
+  const allRestingBlockDefs = [
     ...(composerAgent
       ? [
           {
@@ -5080,6 +5087,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         ]
       : []),
   ];
+  const restingBlockDefs = allRestingBlockDefs.filter((def) =>
+    (restingBlockIds as string[]).includes(def.id),
+  );
   const hiddenRestingBlockIds = restingBlockDefs
     .slice(restingBlockDefs.length - restingHiddenBlockCount)
     .map((def) => def.id);
@@ -5172,24 +5182,26 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       onOpenProviderSetup={onOpenProviderSetup}
     />
   );
-  const composerControls = showProviderUnavailable ? (
-    <ComposerControl
-      type="button"
-      disabled={!providerSetupInstanceId}
-      onClick={() => {
-        if (providerSetupInstanceId) {
-          onOpenProviderSetup(providerSetupInstanceId);
-        }
-      }}
-      data-chat-provider-unavailable="true"
-      className="shrink-0"
-    >
-      <CircleAlertIcon className="size-4" />
-      {providerSetupInstanceId ? "Open provider settings" : "No provider available"}
-    </ComposerControl>
-  ) : (
+  const composerControls = (
     <>
-      {modelPickerInTopRow ? null : providerModelPicker}
+      {showProviderUnavailable ? (
+        <ComposerControl
+          type="button"
+          disabled={!providerSetupInstanceId}
+          onClick={() => {
+            if (providerSetupInstanceId) {
+              onOpenProviderSetup(providerSetupInstanceId);
+            }
+          }}
+          data-chat-provider-unavailable="true"
+          className="shrink-0"
+        >
+          <CircleAlertIcon className="size-4" />
+          {providerSetupInstanceId ? "Open provider settings" : "No provider available"}
+        </ComposerControl>
+      ) : modelPickerInTopRow ? null : (
+        providerModelPicker
+      )}
 
       <>
         {restingBlockDefs.map((def, index) => {
@@ -5242,9 +5254,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 ? contextControlsMenu
                 : undefined
             }
-            showRuntimeMode={
-              hiddenRestingBlockIds.length === 0 || hiddenRestingBlockIds.includes("mode")
-            }
+            contextShortcuts={contextControlsShortcuts}
+            showRuntimeMode={hiddenRestingBlockIds.includes("mode")}
             onToggleInteractionMode={toggleInteractionMode}
             onRuntimeModeChange={handleRuntimeModeChange}
           />

@@ -2880,6 +2880,89 @@ describe("ProviderCommandReactor", () => {
     });
   });
 
+  describe("chosen Claude agent across turns", () => {
+    const startTurn = (
+      harness: Awaited<ReturnType<typeof createHarness>>,
+      n: number,
+      selection: ReturnType<typeof createModelSelection>,
+    ) =>
+      Effect.runPromise(
+        harness.engine.dispatch({
+          type: "thread.turn.start",
+          commandId: CommandId.make(`cmd-agent-turn-${n}`),
+          threadId: ThreadId.make("thread-1"),
+          message: {
+            messageId: asMessageId(`agent-message-${n}`),
+            role: "user",
+            text: `turn ${n}`,
+            attachments: [],
+          },
+          modelSelection: selection,
+          interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+          runtimeMode: "approval-required",
+          createdAt: "2026-01-01T00:00:00.000Z",
+        }),
+      );
+    const claude = (options: Array<{ id: string; value: string }>) =>
+      createModelSelection(ProviderInstanceId.make("claudeAgent"), "claude-sonnet-4-6", options);
+    const claudeThread = {
+      threadModelSelection: {
+        instanceId: ProviderInstanceId.make("claudeAgent"),
+        model: "claude-sonnet-4-6",
+      },
+    };
+
+    it("keeps the agent when a later selection drops it", async () => {
+      const harness = await createHarness(claudeThread);
+      await startTurn(harness, 1, claude([{ id: "agent", value: "orchestrator" }]));
+      await waitFor(() => harness.sendTurn.mock.calls.length === 1);
+      await startTurn(harness, 2, claude([{ id: "effort", value: "max" }]));
+      await waitFor(() => harness.sendTurn.mock.calls.length === 2);
+
+      expect(harness.sendTurn.mock.calls[1]?.[0]).toMatchObject({
+        modelSelection: claude([
+          { id: "effort", value: "max" },
+          { id: "agent", value: "orchestrator" },
+        ]),
+      });
+    });
+
+    it("lets an explicit none clear the agent", async () => {
+      const harness = await createHarness(claudeThread);
+      await startTurn(harness, 1, claude([{ id: "agent", value: "orchestrator" }]));
+      await waitFor(() => harness.sendTurn.mock.calls.length === 1);
+      await startTurn(harness, 2, claude([{ id: "agent", value: "none" }]));
+      await waitFor(() => harness.sendTurn.mock.calls.length === 2);
+      await startTurn(harness, 3, claude([{ id: "effort", value: "max" }]));
+      await waitFor(() => harness.sendTurn.mock.calls.length === 3);
+
+      expect(harness.sendTurn.mock.calls[1]?.[0]).toMatchObject({
+        modelSelection: claude([{ id: "agent", value: "none" }]),
+      });
+      // The cleared choice is what later turns inherit.
+      expect(harness.sendTurn.mock.calls[2]?.[0]).toMatchObject({
+        modelSelection: claude([
+          { id: "effort", value: "max" },
+          { id: "agent", value: "none" },
+        ]),
+      });
+    });
+
+    it("does not touch other providers", async () => {
+      const harness = await createHarness();
+      const codex = (options: Array<{ id: string; value: string }>) =>
+        createModelSelection(ProviderInstanceId.make("codex"), "gpt-5.3-codex", options);
+      await startTurn(harness, 1, codex([{ id: "agent", value: "orchestrator" }]));
+      await waitFor(() => harness.sendTurn.mock.calls.length === 1);
+      await startTurn(harness, 2, codex([{ id: "reasoningEffort", value: "high" }]));
+      await waitFor(() => harness.sendTurn.mock.calls.length === 2);
+
+      expect(harness.sendTurn.mock.calls[1]?.[0]).toMatchObject({
+        modelSelection: codex([{ id: "reasoningEffort", value: "high" }]),
+      });
+    });
+  });
+
   it("forwards plan interaction mode to the provider turn request", async () => {
     const harness = await createHarness();
     const now = "2026-01-01T00:00:00.000Z";

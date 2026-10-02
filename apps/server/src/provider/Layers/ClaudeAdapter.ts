@@ -62,6 +62,7 @@ import {
 import {
   applyClaudePromptEffortPrefix,
   getModelSelectionBooleanOptionValue,
+  getClaudeAgentOptionValue,
   getModelSelectionStringOptionValue,
   getProviderOptionDescriptors,
   resolvePromptInjectedEffort,
@@ -4941,7 +4942,7 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
       // The agent the main session runs as. A chosen agent travels as the
       // `agent` model option (see the web composer) and replaces a launch-arg
       // `--agent`; with neither, Claude Code uses settings.json's `agent` key.
-      const chosenAgent = getModelSelectionStringOptionValue(modelSelection, "agent");
+      const chosenAgent = getClaudeAgentOptionValue(modelSelection);
       if (chosenAgent) {
         delete extraArgs.agent;
       }

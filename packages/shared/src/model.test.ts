@@ -3,6 +3,8 @@ import { ProviderInstanceId, type ModelCapabilities } from "@t3tools/contracts";
 
 import {
   applyClaudePromptEffortPrefix,
+  carryOverClaudeAgentOption,
+  getClaudeAgentOptionValue,
   buildExplicitProviderOptionSelectionsFromDescriptors,
   buildProviderOptionSelectionsFromDescriptors,
   createModelCapabilities,

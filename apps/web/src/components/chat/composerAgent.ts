@@ -1,37 +1,51 @@
 import type { CustomizationItem, ProviderOptionSelection } from "@t3tools/contracts";
+import { CLAUDE_AGENT_NONE, CLAUDE_AGENT_OPTION_ID } from "@t3tools/shared/model";
 
 /**
  * The agent a Claude Code session runs as (`--agent`) travels as an `agent`
  * entry in the model selection's options. It is not a model descriptor, so
  * it is carried beside the descriptor-built options instead of through them.
+ * Clearing writes the `none` value rather than removing the entry: the server
+ * keeps a thread's earlier agent for clients that omit the entry.
  */
-export const CLAUDE_AGENT_OPTION_ID = "agent";
+const AGENT_OPTION_ID = CLAUDE_AGENT_OPTION_ID;
 
 type Options = ReadonlyArray<ProviderOptionSelection> | null | undefined;
 
-export function getChosenAgent(options: Options): string | null {
-  const selection = options?.find((option) => option.id === CLAUDE_AGENT_OPTION_ID);
+/** The raw `agent` entry, `none` included; null when there is no entry. */
+export function getAgentEntry(options: Options): string | null {
+  const selection = options?.find((option) => option.id === AGENT_OPTION_ID);
   return typeof selection?.value === "string" && selection.value.length > 0
     ? selection.value
     : null;
 }
 
-/** `options` with the chosen agent set (or cleared with `null`); undefined when nothing is left. */
+/** The chosen agent name, or null for none or no entry. */
+export function getChosenAgent(options: Options): string | null {
+  const value = getAgentEntry(options);
+  return value === CLAUDE_AGENT_NONE ? null : value;
+}
+
+/** `options` with the agent set; null writes the explicit `none` entry. */
 export function withChosenAgent(
   options: Options,
   agent: string | null,
-): ReadonlyArray<ProviderOptionSelection> | undefined {
-  const rest = (options ?? []).filter((option) => option.id !== CLAUDE_AGENT_OPTION_ID);
-  const next = agent ? [...rest, { id: CLAUDE_AGENT_OPTION_ID, value: agent }] : rest;
-  return next.length > 0 ? next : undefined;
+): ReadonlyArray<ProviderOptionSelection> {
+  const rest = (options ?? []).filter((option) => option.id !== AGENT_OPTION_ID);
+  return [...rest, { id: AGENT_OPTION_ID, value: agent ?? CLAUDE_AGENT_NONE }];
 }
 
-/** Keeps the chosen agent when a trait edit replaces the descriptor-built options. */
+/** Keeps the agent entry when a trait edit replaces the descriptor-built options. */
 export function keepChosenAgent(
   next: Options,
   previous: Options,
 ): ReadonlyArray<ProviderOptionSelection> | undefined {
-  return withChosenAgent(next, getChosenAgent(previous));
+  const entry = getAgentEntry(previous);
+  if (entry === null) return next && next.length > 0 ? next : undefined;
+  return [
+    ...(next ?? []).filter((option) => option.id !== AGENT_OPTION_ID),
+    { id: AGENT_OPTION_ID, value: entry },
+  ];
 }
 
 export const DEFAULT_AGENT_LABEL = "Claude Code";

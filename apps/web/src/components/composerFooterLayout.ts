@@ -142,20 +142,6 @@ function restingComposerControlsWidth(
 }
 
 /**
- * The width the resting controls take with nothing moved into overflow.
- *
- * The context strip reserves this much for the composer before deciding
- * whether its own labels may expand. Judging against the currently visible
- * controls instead lets the strip expand into space the composer just gave
- * up, which shrinks the host, hides the controls again, and repeats.
- */
-export function resolveRestingComposerControlsNaturalWidth(
-  input: RestingComposerControlsMeasurement,
-): number {
-  return restingComposerControlsWidth(input, 0);
-}
-
-/**
  * Fit footer controls using natural widths: remove trailing labels first,
  * then move trailing blocks into overflow. Resting and expanded share this
  * decision, including the slack needed to safely restore controls.
@@ -221,4 +207,26 @@ export function resolveScrollToEndClearance(input: {
     }
   }
   return Math.ceil(input.overlayHeight - (top - contentTop));
+}
+
+export type ComposerFooterBlockId = "agent" | "traits" | "mode" | "context";
+
+/**
+ * The footer's resting blocks in priority order; the last ones leave first.
+ * Without a usable provider the agent, traits and mode controls have nothing
+ * to act on, but the thread's workspace chips stay so the environment and
+ * branch remain reachable.
+ */
+export function resolveComposerFooterBlockIds(input: {
+  hasAgent: boolean;
+  hasTraits: boolean;
+  hasContext: boolean;
+  providerUnavailable: boolean;
+}): ComposerFooterBlockId[] {
+  return [
+    ...(input.hasAgent && !input.providerUnavailable ? (["agent"] as const) : []),
+    ...(input.hasTraits && !input.providerUnavailable ? (["traits"] as const) : []),
+    ...(input.providerUnavailable ? [] : (["mode"] as const)),
+    ...(input.hasContext ? (["context"] as const) : []),
+  ];
 }
