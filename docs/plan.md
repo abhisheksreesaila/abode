@@ -43,7 +43,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-001: Voice spike, deciding whether in-app speech is good enough
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
 - **What:**
   - Throwaway prototype: Whisper (base.en or small.en) and Moonshine via transformers.js, running in the desktop app's renderer on this laptop. Use WebGPU if it's available, otherwise WASM.
   - Record five real prompts, say 5–20 seconds each, with project names and code words like "worktree", "fh-saas" or "pixi".
@@ -55,7 +55,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-002: Dictate into the composer
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
 - **Depends on:** F-001
 - **What:** a mic button in the composer, plus a hold-to-talk key. The speech is transcribed locally and inserted at the cursor; nothing is sent until Abhishek presses Enter. Works in desktop and web.
 - **Acceptance:**
@@ -68,7 +68,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-003: Voice settings
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
 - **Depends on:** F-002
 - **What:** a Voice section in Settings with: on/off, the hold-to-talk key (rebindable through the existing keybindings), and the downloaded model's size with a Delete button.
 - **Acceptance:**
