@@ -623,7 +623,7 @@ const selectAutoShowFloatingPreview = (settings: { browserAutoShowFloatingPrevie
 const DevicePanel = lazy(() =>
   import("./device/DevicePanel").then((module) => ({ default: module.DevicePanel })),
 );
-const FilePreviewPanel = lazy(() => import("./files/FilePreviewPanel"));
+const FilePreviewPanel = lazy(() => import("./customizations/FilePreviewPanelRouter"));
 const EMPTY_PENDING_FILE_SURFACE_IDS: ReadonlySet<string> = new Set();
 const TYPE_TO_FOCUS_EDITABLE_SELECTOR = [
   "input",
