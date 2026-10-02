@@ -7007,6 +7007,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   className="flex shrink-0 flex-nowrap items-center justify-end gap-2"
                 >
                   <ComposerVoiceControl
+                    disabled={
+                      isConnecting ||
+                      isComposerApprovalState ||
+                      pendingUserInputs.length > 0 ||
+                      projectSelectionRequired
+                    }
                     onTranscript={(text) =>
                       insertComposerText(text, "cursor", { ensureLeadingBoundary: true })
                     }

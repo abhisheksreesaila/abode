@@ -9,6 +9,22 @@ import type { WorkerRequest, WorkerResponse } from "./workerProtocol";
 
 env.allowLocalModels = false;
 
+// Serve the ONNX runtime from our own bundle (same origin, so it works offline and under
+// the desktop CSP) instead of transformers.js's default of loading it from cdn.jsdelivr.net.
+// The files are referenced by path because onnxruntime-web's package exports hide dist/.
+const ortWasmUrl = new URL(
+  "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
+  import.meta.url,
+).href;
+const ortModuleUrl = new URL(
+  "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs",
+  import.meta.url,
+).href;
+env.useWasmCache = false;
+if (env.backends.onnx.wasm) {
+  env.backends.onnx.wasm.wasmPaths = { wasm: ortWasmUrl, mjs: ortModuleUrl };
+}
+
 let recognizer: Promise<AutomaticSpeechRecognitionPipeline> | null = null;
 // Serializes requests: the model is loaded once and inference is single-threaded anyway.
 let queue: Promise<void> = Promise.resolve();

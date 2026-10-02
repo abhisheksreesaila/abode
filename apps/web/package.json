@@ -49,6 +49,7 @@
     "jsonc-parser": "3.3.1",
     "jszip": "3.10.1",
     "lucide-react": "^0.564.0",
+    "onnxruntime-web": "1.31.0-dev.20260914-8d85527a0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-markdown": "^10.1.0",

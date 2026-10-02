@@ -7,11 +7,20 @@ export interface ActiveRecording {
   discard: () => void;
 }
 
+export const INSECURE_CONTEXT_MESSAGE = "Voice needs HTTPS (use Tailscale HTTPS or localhost).";
+
+export class InsecureContextError extends Error {
+  constructor() {
+    super(INSECURE_CONTEXT_MESSAGE);
+  }
+}
+
 /** One-line, user-facing text for a failed `getUserMedia` call. */
 export function describeMicrophoneError(error: unknown): string {
+  if (error instanceof InsecureContextError) return INSECURE_CONTEXT_MESSAGE;
   const name = error instanceof DOMException ? error.name : "";
   if (name === "NotAllowedError" || name === "SecurityError") {
-    return "Microphone access is blocked. Allow it in your browser or system settings.";
+    return "Microphone blocked. Allow it in system settings.";
   }
   if (name === "NotFoundError" || name === "OverconstrainedError") {
     return "No microphone found.";
@@ -21,23 +30,29 @@ export function describeMicrophoneError(error: unknown): string {
 }
 
 export async function startRecording(): Promise<ActiveRecording> {
-  if (!navigator.mediaDevices?.getUserMedia) {
-    throw new DOMException("Microphone is unavailable here.", "NotFoundError");
-  }
+  // Browsers hide mediaDevices on insecure origins (plain http that is not localhost).
+  if (!navigator.mediaDevices?.getUserMedia) throw new InsecureContextError();
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const recorder = new MediaRecorder(stream);
-  const chunks: Blob[] = [];
-  recorder.addEventListener("dataavailable", (event) => {
-    if (event.data.size > 0) chunks.push(event.data);
-  });
-  const stopped = new Promise<void>((resolve) =>
-    recorder.addEventListener("stop", () => resolve(), { once: true }),
-  );
-  recorder.start();
-
   const release = () => {
     for (const track of stream.getTracks()) track.stop();
   };
+  let recorder: MediaRecorder;
+  const chunks: Blob[] = [];
+  let stopped: Promise<void>;
+  try {
+    recorder = new MediaRecorder(stream);
+    recorder.addEventListener("dataavailable", (event) => {
+      if (event.data.size > 0) chunks.push(event.data);
+    });
+    const active = recorder;
+    stopped = new Promise<void>((resolve) =>
+      active.addEventListener("stop", () => resolve(), { once: true }),
+    );
+    recorder.start();
+  } catch (error) {
+    release();
+    throw error;
+  }
   return {
     discard: () => {
       if (recorder.state !== "inactive") recorder.stop();
