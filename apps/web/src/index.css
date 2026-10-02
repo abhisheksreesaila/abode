@@ -2324,3 +2324,28 @@ html[data-theme-id="abode"]:not([data-theme-id=""]) {
   --glass-saturation: 1;
   --surface-grain: none;
 }
+
+/* Status bar (abode F-030, components/statusBar/AppStatusBar.tsx). The bar is
+   fixed to the window foot at md and up and sets html[data-status-bar] while
+   mounted. Every full-height shell shrinks by its height; the wrapper and the
+   sidebar are sized by viewport units, so they are overridden here instead of
+   edited route by route. */
+:root {
+  --status-bar-height: 0px;
+}
+
+@media (min-width: 768px) {
+  html[data-status-bar="on"] {
+    --status-bar-height: 22px;
+  }
+
+  html[data-status-bar="on"] [data-slot="sidebar-wrapper"],
+  html[data-status-bar="on"] [data-slot="sidebar-inset"] {
+    height: calc(100dvh - var(--status-bar-height)) !important;
+    min-height: 0 !important;
+  }
+
+  html[data-status-bar="on"] [data-slot="sidebar-container"] {
+    height: calc(100svh - var(--status-bar-height));
+  }
+}
