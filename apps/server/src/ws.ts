@@ -134,6 +134,7 @@ import { issueAssetUrl } from "./assets/AssetAccess.ts";
 import { deletePendingAttachment, issueAttachmentUploadUrl } from "./assets/AttachmentUpload.ts";
 import * as PortScanner from "./preview/PortScanner.ts";
 import * as WorkspaceEntries from "./workspace/WorkspaceEntries.ts";
+import * as Customizations from "./customizations/Customizations.ts";
 import * as WorkspaceFileSystem from "./workspace/WorkspaceFileSystem.ts";
 import { readWorkflowScript } from "./orchestration/workflowScriptQuery.ts";
 import * as WorkspacePaths from "./workspace/WorkspacePaths.ts";
@@ -583,6 +584,7 @@ const makeWsRpcLayer = (
       const startup = yield* ServerRuntimeStartup.ServerRuntimeStartup;
       const workspaceEntries = yield* WorkspaceEntries.WorkspaceEntries;
       const workspaceFileSystem = yield* WorkspaceFileSystem.WorkspaceFileSystem;
+      const customizations = yield* Customizations.Customizations;
       const canReplayPersistedRange = Effect.fnUntraced(function* (
         afterSequence: number,
         headSequence: number,
@@ -3414,6 +3416,28 @@ const makeWsRpcLayer = (
             ),
             { "rpc.aggregate": "workspace" },
           ),
+        [WS_METHODS.customizationsList]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.customizationsList,
+            customizations.list(input).pipe(Effect.mapError(Customizations.toCustomizationsError)),
+            { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.customizationsReadFile]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.customizationsReadFile,
+            customizations
+              .readFile(input)
+              .pipe(Effect.mapError(Customizations.toCustomizationsError)),
+            { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.customizationsWriteFile]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.customizationsWriteFile,
+            customizations
+              .writeFile(input)
+              .pipe(Effect.mapError(Customizations.toCustomizationsError)),
+            { "rpc.aggregate": "workspace" },
+          ),
         [WS_METHODS.shellOpenInEditor]: (input) =>
           observeRpcEffect(WS_METHODS.shellOpenInEditor, externalLauncher.launchEditor(input), {
             "rpc.aggregate": "workspace",
@@ -4151,6 +4175,7 @@ export const websocketRpcRouteLayer = Layer.unwrap(
               Layer.provideMerge(RpcSerialization.layerJson),
               Layer.provide(Layer.succeed(SqlClient.SqlClient, sql)),
               Layer.provide(AgentSessionScanner.layer),
+              Layer.provide(Customizations.layer),
               Layer.provide(ProviderMaintenanceRunner.layer),
               Layer.provide(Layer.succeed(ServerSelfUpdate.ServerSelfUpdate, serverSelfUpdate)),
               // One server-lifetime service means clients share the same PR caches, and a WS
