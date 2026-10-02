@@ -99,7 +99,7 @@ export const ActivityBar = memo(function ActivityBar({
         ...(reserveTitlebar ? { paddingTop: "var(--workspace-topbar-height)" } : {}),
       }}
       className={cn(
-        "sticky top-0 hidden h-dvh shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar md:flex",
+        "sticky top-0 hidden h-full shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar md:flex",
       )}
     >
       {reserveTitlebar ? (
