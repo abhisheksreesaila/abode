@@ -6,6 +6,8 @@ import { StageBackdropButtonArt, useSidebarStageBackdropVariant } from "../Sideb
 import { Button } from "../ui/button";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Spinner } from "../ui/spinner";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { useSendTooltip } from "../../delights/Delights";
 import { composerFloatingLayerProps } from "./composerEventScope";
 
 interface PendingActionState {
@@ -87,6 +89,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
     environmentIdentificationMode === "artwork",
   );
 
+  const sendTip = useSendTooltip();
   const renderStopGenerationButton = (insidePendingAction: boolean) => (
     <button
       type="button"
@@ -265,8 +268,17 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
     </button>
   );
 
+  // Friday afternoons the Send tooltip is "Ship it". The tooltip is always
+  // mounted and only disabled otherwise, so the button never remounts.
+  const sendControl = (
+    <Tooltip disabled={sendTip === null}>
+      <TooltipTrigger render={sendButton} />
+      <TooltipPopup side="top">{sendTip}</TooltipPopup>
+    </Tooltip>
+  );
+
   if (!isRunning) {
-    return sendButton;
+    return sendControl;
   }
 
   // While a turn runs, a sendable draft queues for the next tool boundary, so
@@ -274,7 +286,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   return (
     <>
       {renderStopGenerationButton(false)}
-      {hasSendableContent ? sendButton : null}
+      {hasSendableContent ? sendControl : null}
     </>
   );
 });

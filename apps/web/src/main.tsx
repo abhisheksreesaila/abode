@@ -2,6 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createHashHistory, createBrowserHistory } from "@tanstack/react-router";
 
+// Bundled variable fonts for the abode theme (Inter UI, JetBrains Mono code):
+// same on every platform, no network needed.
+import "@fontsource-variable/inter/wght.css";
+import "@fontsource-variable/jetbrains-mono/wght.css";
 import "./index.css";
 
 import { prepareProviderAuthDelivery } from "./providerAuthDelivery";

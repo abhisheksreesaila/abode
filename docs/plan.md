@@ -403,14 +403,15 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
 
 ### F-034: Delight and fonts
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Fonts: Inter (UI) and JetBrains Mono (code), bundled and OFL-licensed, so they're the same on every platform and work offline.
   - Whimsy, every piece one-shot and never looping, respecting reduced-motion, with Settings → Appearance → "Little delights" to turn it off:
     - a ☕ in the status bar at 3pm with a one-time steam puff;
     - a time-of-day greeting on the project welcome;
     - a small sparkle when an autonomous run ends with done;
-    - "ship it 🚢" on Fridays.
+    - "ship it 🚢" on Friday afternoons (from 15:00);
+    - an "All done ✨" toast when an autonomous run finishes.
 - **Acceptance:**
   - [ ] Nothing animates continuously.
   - [ ] The toggle turns all of it off.

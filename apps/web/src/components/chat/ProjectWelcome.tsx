@@ -9,6 +9,7 @@ import { useEnvironments } from "~/state/environments";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { useEnvironmentQuery } from "~/state/query";
 import { vcsEnvironment } from "~/state/vcs";
+import { useFridayShipIt, useWelcomeGreeting } from "../../delights/Delights";
 import { useComposerHandleContext } from "../../composerHandleContext";
 import { resolveBranchToolbarValue, resolveEffectiveEnvMode } from "../BranchToolbar.logic";
 import { buildThreadRouteParams } from "../../threadRoutes";
@@ -122,12 +123,15 @@ export function ProjectWelcome(props: {
     requestAnimationFrame(() => composerHandle?.current?.focusAtEnd());
   };
   const accent = color?.color ?? "var(--chip-blue)";
+  const greeting = useWelcomeGreeting();
+  const shipIt = useFridayShipIt();
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-2 text-center sm:gap-3">
       <div aria-hidden="true" className="shorter:hidden text-4xl leading-none">
         {readme?.emoji ?? pickProjectEmoji(project.title)}
       </div>
+      {greeting ? <p className="text-muted-foreground text-sm">{greeting}</p> : null}
       <h1
         aria-label={`What should we build in ${project.title} today?`}
         className="font-semibold text-2xl text-foreground tracking-tight sm:text-3xl [text-wrap:balance]"
@@ -154,6 +158,7 @@ export function ProjectWelcome(props: {
         </MetaChip>
         {environmentLabel ? <MetaChip>🖥 {environmentLabel}</MetaChip> : null}
         {branch ? <MetaChip>⎇ {branch}</MetaChip> : null}
+        {shipIt ? <MetaChip>🚢 Ship it Friday</MetaChip> : null}
         <MetaChip>
           {summary.total === 0
             ? "No threads yet"

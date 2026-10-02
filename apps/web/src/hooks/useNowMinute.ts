@@ -61,6 +61,17 @@ function getSnapshot(): string {
   return nowMinute;
 }
 
+/** Re-renders only when `select(minute)` changes; it must return a primitive. */
+export function useNowMinuteSelector<T extends string | number | boolean | null>(
+  select: (nowMinute: string) => T,
+): T {
+  return useSyncExternalStore(
+    subscribe,
+    () => select(getSnapshot()),
+    () => select(getSnapshot()),
+  );
+}
+
 export function useNowMinute(): string {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

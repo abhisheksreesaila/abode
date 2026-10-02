@@ -130,6 +130,7 @@ import {
   resolveTerminalFontSizePreference,
   TYPOGRAPHY_ADVANCED_STORAGE_KEY,
 } from "../../appearanceFonts";
+import { setDelightsEnabled, useDelightsEnabled } from "../../delights/delightsSetting";
 import { CodeFontPreview, PromptFontPreview, TerminalFontPreview } from "./SettingsFontPreviews";
 import { discoverInstalledFonts, FontFamilyPicker, useFontEnumeration } from "./FontFamilyPicker";
 import {
@@ -1483,6 +1484,7 @@ export function AppearanceSettingsPanel() {
             ) : null
           }
         />
+        <LittleDelightsRow />
       </SettingsSection>
 
       <TypographySection />
@@ -1677,6 +1679,28 @@ function FontSmoothingRow() {
           checked={settings.fontSmoothing}
           onCheckedChange={(checked) => updateSettings({ fontSmoothing: Boolean(checked) })}
           aria-label="Font smoothing"
+        />
+      }
+    />
+  );
+}
+
+function LittleDelightsRow() {
+  const enabled = useDelightsEnabled();
+  return (
+    <SettingsRow
+      {...searchableSetting("little-delights")}
+      description="Small one-time touches: a time-of-day greeting, a 3pm coffee, a sparkle when an autonomous run finishes, and Friday's ship-it. Stored on this device."
+      resetAction={
+        enabled ? null : (
+          <SettingResetButton label="little delights" onClick={() => setDelightsEnabled(true)} />
+        )
+      }
+      control={
+        <Switch
+          checked={enabled}
+          onCheckedChange={(checked) => setDelightsEnabled(Boolean(checked))}
+          aria-label="Little delights"
         />
       }
     />

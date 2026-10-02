@@ -97,7 +97,7 @@ html[data-theme-id="abode"] {
   }
 
   [data-fluent="step-text"] code {
-    font-family: Consolas, "Cascadia Code", "JetBrains Mono", monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
     color: #cccccc;
   }
