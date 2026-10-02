@@ -174,6 +174,7 @@ import {
   type AssistantCitationRequest,
   type AssistantCitationTarget,
 } from "./AssistantCitationSource";
+import { toastManager } from "../ui/toast";
 import { AskAboutMessageButton } from "./AskAboutMessageButton";
 import { findLastEditableMessage, onEditLastMessageRequest } from "./editLastMessage";
 import { useAssistantCitationTarget, type CitationHistoryPage } from "./useAssistantCitationTarget";
@@ -286,6 +287,7 @@ interface TimelineRowSharedState {
   onCiteAssistantText:
     | ((citation: AssistantCitation, sourceAnchor: AssistantCitationSourceAnchor) => boolean)
     | undefined;
+  onQuoteAssistantMessage: ((citation: AssistantCitation) => boolean) | undefined;
   onUseArtifactTemplate: (template: CodexArtifactTemplate) => void;
   onRunShellCommand: ((command: string) => void) | undefined;
   onImageExpand: (preview: ExpandedImagePreview) => void;
@@ -409,6 +411,7 @@ interface MessagesTimelineProps {
     citation: AssistantCitation,
     sourceAnchor: AssistantCitationSourceAnchor,
   ) => boolean;
+  onQuoteAssistantMessage?: (citation: AssistantCitation) => boolean;
   agentPanelModel?: AgentPanelModel;
   onOpenAgents?: () => void;
   isWorking: boolean;
@@ -485,6 +488,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   citationRequest = null,
   citationHistoryLoading = false,
   onCiteAssistantText,
+  onQuoteAssistantMessage,
   isWorking,
   worktreeSetup = null,
   onCancelWorktreeSetup,
@@ -1162,9 +1166,18 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     () =>
       onEditLastMessageRequest(() => {
         const target = findLastEditableMessage(rowsRef.current);
-        if (target) onRevertToTurnCount(target.turnCount, target.messageId);
+        if (target) {
+          onRevertToTurnCount(target.turnCount, target.messageId);
+          return;
+        }
+        toastManager.add({
+          type: "warning",
+          title: supportsConversationRollback
+            ? "Nothing to edit yet"
+            : "This provider can't rewind",
+        });
       }),
-    [onRevertToTurnCount],
+    [onRevertToTurnCount, supportsConversationRollback],
   );
 
   const sharedState = useMemo<TimelineRowSharedState>(
@@ -1182,6 +1195,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       activeThreadEnvironmentId,
       onRevertToTurnCount,
       onCiteAssistantText,
+      onQuoteAssistantMessage,
       onUseArtifactTemplate,
       onRunShellCommand,
       onImageExpand,
@@ -1219,6 +1233,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
       activeThreadEnvironmentId,
       onRevertToTurnCount,
       onCiteAssistantText,
+      onQuoteAssistantMessage,
       onUseArtifactTemplate,
       onRunShellCommand,
       onImageExpand,
@@ -2417,6 +2432,16 @@ function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "mess
     <>
       <div className="relative min-w-0 px-1 py-0.5">
         <MessageAuthorHeading>T3 Code</MessageAuthorHeading>
+        {!row.message.streaming && ctx.onQuoteAssistantMessage && ctx.threadRef ? (
+          <div className="absolute end-1 top-0 opacity-0 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover/assistant:opacity-100">
+            <AskAboutMessageButton
+              messageId={row.message.id}
+              threadRef={ctx.threadRef}
+              text={row.message.text}
+              onQuote={ctx.onQuoteAssistantMessage}
+            />
+          </div>
+        ) : null}
         <AssistantCitationSource
           messageId={row.message.id}
           {...(ctx.threadRef ? { threadRef: ctx.threadRef } : {})}
@@ -2504,13 +2529,6 @@ function AssistantMessageMeta({
         showCopyButton={showCopyButton}
         streaming={copyStreaming}
       />
-      {!message.streaming && ctx.onCiteAssistantText && ctx.threadRef ? (
-        <AskAboutMessageButton
-          messageId={message.id}
-          threadRef={ctx.threadRef}
-          onCite={ctx.onCiteAssistantText}
-        />
-      ) : null}
       {!message.streaming && (
         <Tooltip>
           <TooltipTrigger render={<p className="text-muted-foreground text-xs tabular-nums" />}>

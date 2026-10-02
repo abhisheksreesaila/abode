@@ -1,54 +1,53 @@
-import {
-  ASSISTANT_CITATION_MAX_TEXT_LENGTH,
-  MessageId,
-  type AssistantCitation,
-  type ScopedThreadRef,
-} from "@t3tools/contracts";
+import { MessageId, type AssistantCitation, type ScopedThreadRef } from "@t3tools/contracts";
 import { MessageCircleQuestionIcon } from "lucide-react";
-import {
-  captureAssistantMessageText,
-  type AssistantCitationSourceAnchor,
-} from "~/lib/assistantTextSelection";
+import { buildAssistantMessageQuote } from "~/lib/assistantMessageQuote";
 import { toastManager } from "../ui/toast";
 import { Button } from "../ui/button";
 
 /**
  * Hover action on an agent message: quotes the whole message into the composer
- * as the same removable citation chip that selecting text produces.
+ * as the same removable citation chip that selecting text produces. It reads
+ * the message data, not the DOM, and always reports a failure.
  */
 export function AskAboutMessageButton({
   messageId,
   threadRef,
-  onCite,
+  text,
+  onQuote,
 }: {
   messageId: MessageId;
   threadRef: ScopedThreadRef;
-  onCite: (citation: AssistantCitation, sourceAnchor: AssistantCitationSourceAnchor) => boolean;
+  text: string;
+  onQuote: (citation: AssistantCitation) => boolean;
 }) {
   return (
     <Button
       type="button"
       size="xs"
-      variant="ghost"
+      variant="glass"
       aria-label="Ask about this message"
-      onClick={(event) => {
-        const viewport = event.currentTarget.closest<HTMLElement>(
-          "[data-assistant-citation-viewport]",
-        );
-        const captured = viewport ? captureAssistantMessageText(viewport, messageId) : null;
-        if (!viewport || !captured) return;
-        if (captured.selector.text.length > ASSISTANT_CITATION_MAX_TEXT_LENGTH) {
+      onClick={() => {
+        const quote = buildAssistantMessageQuote({ threadRef, messageId, text });
+        if (!quote.ok) {
           toastManager.add({
             type: "warning",
-            title: "This message is too long to quote whole",
-            description: "Select the part you want to ask about instead.",
+            title:
+              quote.reason === "empty"
+                ? "There is nothing to quote in this message"
+                : "This message is too long to quote whole",
+            ...(quote.reason === "too-long"
+              ? { description: "Select the part you want to ask about instead." }
+              : {}),
           });
           return;
         }
-        onCite(
-          { version: 1, ...threadRef, messageId, ...captured.selector },
-          { source: captured.source, range: captured.range, viewport },
-        );
+        if (!onQuote(quote.citation)) {
+          toastManager.add({
+            type: "warning",
+            title: "The composer is not ready",
+            description: "Try again in a moment.",
+          });
+        }
       }}
     >
       <MessageCircleQuestionIcon aria-hidden="true" className="size-3" />
