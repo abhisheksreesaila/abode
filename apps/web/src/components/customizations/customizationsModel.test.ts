@@ -99,6 +99,10 @@ describe("paths", () => {
     expect(at("/w/CLAUDE.md")).toBe(true);
     expect(at("/w/.mcp.json")).toBe(true);
     expect(at("/w/.claude/skills/x/SKILL.md")).toBe(true);
+    expect(at("/w/AGENTS.md")).toBe(true);
+    expect(at("/home/a/.codex/skills/x/SKILL.md")).toBe(true);
+    expect(at("/home/a/.codex/prompts/p.md")).toBe(true);
+    expect(at("/w/packages/x/AGENTS.md")).toBe(false);
     expect(at("/w/src/index.ts")).toBe(false);
     expect(at("/w/packages/x/CLAUDE.md")).toBe(false);
     expect(at("/w/.claude/worktrees/t/CLAUDE.md")).toBe(false);

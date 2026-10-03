@@ -13,6 +13,10 @@ export type CustomizationKind = typeof CustomizationKind.Type;
 export const CustomizationScope = Schema.Literals(["user", "workspace"]);
 export type CustomizationScope = typeof CustomizationScope.Type;
 
+/** Which agent harness reads the file. Optional on the wire: absent means Claude. */
+export const CustomizationHarness = Schema.Literals(["claude", "codex"]);
+export type CustomizationHarness = typeof CustomizationHarness.Type;
+
 export const CustomizationItem = Schema.Struct({
   kind: CustomizationKind,
   name: TrimmedNonEmptyString,
@@ -22,6 +26,7 @@ export const CustomizationItem = Schema.Struct({
   scope: CustomizationScope,
   /** True when the file can be read but never written back (`~/.claude.json`). */
   readOnly: Schema.Boolean,
+  harness: Schema.optional(CustomizationHarness),
 });
 export type CustomizationItem = typeof CustomizationItem.Type;
 
@@ -59,6 +64,8 @@ export const CustomizationsWriteFileInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
   path: TrimmedNonEmptyString,
   contents: Schema.String,
+  /** Fail with `already_exists` instead of overwriting. Absent means overwrite. */
+  createOnly: Schema.optional(Schema.Boolean),
 });
 export type CustomizationsWriteFileInput = typeof CustomizationsWriteFileInput.Type;
 
@@ -73,6 +80,7 @@ export const CustomizationsFailure = Schema.Literals([
   "path_not_allowed",
   "read_only",
   "file_too_large",
+  "already_exists",
   "operation_failed",
 ]);
 export type CustomizationsFailure = typeof CustomizationsFailure.Type;

@@ -297,8 +297,7 @@ function Sidebar({
             "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) md:flex",
             "[[data-panel-animations=true]_&]:transition-[left,right,width] [[data-panel-animations=true]_&]:[transition-duration:var(--panel-animation-duration)] [[data-panel-animations=true]_&]:ease-out",
             side === "left"
-              ? // --activity-bar-width (abode F-028) is the rail the layout shell puts left of the sidebar.
-                "left-[var(--activity-bar-width,0px)] group-data-[collapsible=offcanvas]:left-[calc((var(--sidebar-width)+var(--activity-bar-width,0px))*-1)]"
+              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
             // Adjust the padding for floating and inset variants.
             variant === "floating" || variant === "inset"

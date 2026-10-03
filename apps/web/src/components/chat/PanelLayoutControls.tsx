@@ -39,7 +39,9 @@ export function SidebarToggleControl() {
   const shortcut = shortcutLabelForCommand(keybindings, "sidebar.toggle");
   return (
     <Tooltip>
-      <TooltipTrigger render={<span className="hidden shrink-0 md:flex" />}>
+      <TooltipTrigger
+        render={<span className="hidden shrink-0 md:flex" data-header-sidebar-toggle="" />}
+      >
         <Toggle
           className="shrink-0 [-webkit-app-region:no-drag]"
           pressed={open}

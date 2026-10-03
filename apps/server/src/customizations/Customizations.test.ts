@@ -46,17 +46,23 @@ const makeSandbox = Effect.gen(function* () {
   yield* fileSystem.makeDirectory(workspace, { recursive: true });
   yield* fileSystem.makeDirectory(outside, { recursive: true });
 
+  const codexDir = path.join(realRoot, "codex-home");
+  yield* fileSystem.makeDirectory(codexDir, { recursive: true });
   const previous = process.env.CLAUDE_CONFIG_DIR;
+  const previousCodex = process.env.CODEX_HOME;
   process.env.CLAUDE_CONFIG_DIR = configDir;
+  process.env.CODEX_HOME = codexDir;
   registeredRoots.add(workspace);
   yield* Effect.addFinalizer(() =>
     Effect.sync(() => {
       registeredRoots.delete(workspace);
       if (previous === undefined) delete process.env.CLAUDE_CONFIG_DIR;
       else process.env.CLAUDE_CONFIG_DIR = previous;
+      if (previousCodex === undefined) delete process.env.CODEX_HOME;
+      else process.env.CODEX_HOME = previousCodex;
     }),
   );
-  return { path, fileSystem, root: realRoot, configDir, workspace, outside };
+  return { path, fileSystem, root: realRoot, configDir, codexDir, workspace, outside };
 });
 
 const put = (filePath: string, contents: string) =>
@@ -221,6 +227,140 @@ describe("Customizations", () => {
       // Workspace-relative paths resolve against the project root.
       yield* customizations.writeFile({ cwd: workspace, path: "CLAUDE.md", contents: "rel" });
       expect(yield* fileSystem.readFileString(path.join(workspace, "CLAUDE.md"))).toBe("rel");
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect("lists Codex skills, prompts and the workspace AGENTS.md with a codex harness", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, codexDir, workspace } = yield* makeSandbox;
+      yield* put(
+        path.join(codexDir, "skills", "deploy", "SKILL.md"),
+        "---\nname: deploy\ndescription: ships it\n---\nbody",
+      );
+      yield* put(path.join(codexDir, "skills", ".system", "SKILL.md"), "bundled");
+      yield* put(path.join(codexDir, "prompts", "review.md"), "---\ndescription: review\n---\n");
+      yield* put(path.join(codexDir, "prompts", "notes.txt"), "ignored");
+      yield* put(path.join(workspace, "AGENTS.md"), "rules");
+      yield* put(path.join(codexDir, "auth.json"), "{}");
+      yield* put(path.join(codexDir, "config.toml"), "[mcp_servers.x]\ncommand = 'secret'");
+
+      const { items } = yield* customizations.list({ cwd: workspace });
+      const codex = items
+        .filter((item) => item.harness === "codex")
+        .map((item) => `${item.kind}:${item.scope}:${item.name}`)
+        .sort();
+      expect(codex).toEqual([
+        "agent:user:review",
+        "instructions:workspace:AGENTS.md",
+        "mcp:user:config.toml",
+        "skill:user:deploy",
+      ]);
+      expect(items.find((item) => item.name === "config.toml")).toMatchObject({ readOnly: true });
+      expect(items.map((item) => item.description ?? "").join()).not.toContain("secret");
+      expect(items.find((item) => item.name === "deploy")?.description).toBe("ships it");
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect("writes Codex skills, prompts and AGENTS.md, expanding ~/.codex and ~/.claude", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, fileSystem, configDir, codexDir, workspace } = yield* makeSandbox;
+      const skill = yield* customizations.writeFile({
+        cwd: workspace,
+        path: "~/.codex/skills/x/SKILL.md",
+        contents: "s",
+      });
+      expect(skill.path).toBe(path.join(codexDir, "skills", "x", "SKILL.md"));
+      yield* customizations.writeFile({
+        cwd: workspace,
+        path: path.join(codexDir, "prompts", "p.md"),
+        contents: "p",
+      });
+      yield* customizations.writeFile({ cwd: workspace, path: "AGENTS.md", contents: "a" });
+      yield* customizations.writeFile({
+        cwd: workspace,
+        path: "~/.claude/agents/y.md",
+        contents: "y",
+      });
+      expect(yield* fileSystem.readFileString(path.join(codexDir, "skills", "x", "SKILL.md"))).toBe(
+        "s",
+      );
+      expect(yield* fileSystem.readFileString(path.join(configDir, "agents", "y.md"))).toBe("y");
+      expect(yield* fileSystem.readFileString(path.join(workspace, "AGENTS.md"))).toBe("a");
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect("keeps Codex auth and config out of reach and opens config.toml read-only", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, codexDir, workspace } = yield* makeSandbox;
+      yield* put(path.join(codexDir, "config.toml"), "model = 'x'");
+      yield* put(path.join(codexDir, "auth.json"), '{"token":"secret"}');
+      const read = yield* customizations.readFile({ cwd: workspace, path: "~/.codex/config.toml" });
+      expect(read).toMatchObject({ contents: "model = 'x'", readOnly: true });
+      const readOnly = yield* customizations
+        .writeFile({ cwd: workspace, path: "~/.codex/config.toml", contents: "x" })
+        .pipe(Effect.flip);
+      expect(readOnly).toMatchObject({
+        _tag: "CustomizationsPathNotAllowedError",
+        reason: "read_only",
+      });
+      for (const target of [
+        "~/.codex/auth.json",
+        "~/.codex/prompts/sub/deep.md",
+        "~/.codex/prompts/notes.txt",
+        "~/.codex/sessions/a.md",
+        "~/.codex/../escape.md",
+      ]) {
+        for (const result of [
+          yield* customizations
+            .writeFile({ cwd: workspace, path: target, contents: "x" })
+            .pipe(Effect.flip),
+          yield* customizations.readFile({ cwd: workspace, path: target }).pipe(Effect.flip),
+        ]) {
+          expect(result._tag, target).toBe("CustomizationsPathNotAllowedError");
+        }
+      }
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect("createOnly refuses to overwrite and reports already_exists", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, fileSystem, workspace } = yield* makeSandbox;
+      const target = path.join(workspace, ".claude", "agents", "a.md");
+      yield* customizations.writeFile({
+        cwd: workspace,
+        path: target,
+        contents: "one",
+        createOnly: true,
+      });
+      const error = yield* customizations
+        .writeFile({ cwd: workspace, path: target, contents: "two", createOnly: true })
+        .pipe(Effect.flip);
+      expect(error._tag).toBe("CustomizationsFileExistsError");
+      expect(Customizations.toCustomizationsError(error).failure).toBe("already_exists");
+      expect(yield* fileSystem.readFileString(target)).toBe("one");
+      // Without the flag a save still overwrites.
+      yield* customizations.writeFile({ cwd: workspace, path: target, contents: "three" });
+      expect(yield* fileSystem.readFileString(target)).toBe("three");
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported)("writes through a symlinked ~/.codex/skills dir", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, fileSystem, root, codexDir, workspace } = yield* makeSandbox;
+      const dotfiles = path.join(root, "dotfiles-skills");
+      yield* mkdirp(dotfiles);
+      NodeFS.symlinkSync(dotfiles, path.join(codexDir, "skills"));
+      yield* customizations.writeFile({
+        cwd: workspace,
+        path: "~/.codex/skills/s/SKILL.md",
+        contents: "s",
+      });
+      expect(yield* fileSystem.readFileString(path.join(dotfiles, "s", "SKILL.md"))).toBe("s");
     }).pipe(Effect.scoped, Effect.provide(TestLayer)),
   );
 

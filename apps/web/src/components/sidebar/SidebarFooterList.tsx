@@ -78,10 +78,29 @@ export const SidebarFooterList = memo(function SidebarFooterList({
   const openSettings = go(() => void navigate({ to: "/settings" }));
   const goBack = go(() => void navigateToMainApp());
 
+  if (sessions) {
+    // Desktop reaches Pull requests, usage, Phone & Remote and Settings from the top bar
+    // (abode F-044); the phone sheet keeps one Settings row.
+    return (
+      <div className="flex flex-col">
+        <SidebarFooterRow
+          className="md:hidden"
+          color="settings"
+          icon={<SettingsIcon />}
+          title="Settings"
+          onClick={openSettings}
+        />
+        <SidebarMenu>
+          <SidebarUpdatePill />
+        </SidebarMenu>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col">
-      <div className={sessions ? "flex flex-col md:hidden" : "contents"}>
-        {sessions ? null : <SidebarSectionHeader label="Account" />}
+      <div className="contents">
+        <SidebarSectionHeader label="Account" />
         {isOnUtilityPage ? (
           <SidebarMenu>
             <SidebarMenuItem>
@@ -101,18 +120,16 @@ export const SidebarFooterList = memo(function SidebarFooterList({
           />
         ) : null}
         <SidebarUsageStatus onOpenUsagePage={openUsage} />
-        {sessions ? null : (
-          <SidebarFooterRow
-            color="customizations"
-            icon={<SparklesIcon />}
-            title="Customizations"
-            aria-expanded={customizationsExpanded}
-            disabled={!customizationsScope}
-            subtitle={customizationsScope ? undefined : "Open a thread"}
-            end={customizationsScope ? <CustomizationsCount scope={customizationsScope} /> : null}
-            onClick={() => setCustomizationsExpanded((current) => !current)}
-          />
-        )}
+        <SidebarFooterRow
+          color="customizations"
+          icon={<SparklesIcon />}
+          title="Customizations"
+          aria-expanded={customizationsExpanded}
+          disabled={!customizationsScope}
+          subtitle={customizationsScope ? undefined : "Open a thread"}
+          end={customizationsScope ? <CustomizationsCount scope={customizationsScope} /> : null}
+          onClick={() => setCustomizationsExpanded((current) => !current)}
+        />
         <SidebarFooterRow
           color="phone"
           icon={<SmartphoneIcon />}

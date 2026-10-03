@@ -12,7 +12,7 @@ const SQUARE_TONE_CLASS: Record<ThreadSquareTone, string> = {
 };
 
 /**
- * The sidebar's top row (abode F-035): "Sessions", with New, filter and search
+ * The sidebar's top row (abode F-035): "Workspaces", with New, filter and search
  * on the right.
  */
 export function SidebarSessionsHeader({ children }: { readonly children?: ReactNode }) {
@@ -27,11 +27,14 @@ export function SidebarSessionsHeader({ children }: { readonly children?: ReactN
       ) : null}
       <div
         className={cn(
-          "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5",
+          // md:pl-11 clears the floating sidebar toggle (AppSidebarLayout), which sits over the sidebar on desktop.
+          "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5 md:pl-11 md:group-has-[[data-header-sidebar-toggle]]/sidebar-wrapper:pl-3",
           isElectron && "drag-region",
         )}
       >
-        <span className="text-sm font-semibold text-sidebar-foreground">Sessions</span>
+        <span className="text-2xs font-semibold tracking-wide text-sidebar-foreground uppercase">
+          Workspaces
+        </span>
         <div className="flex items-center gap-0.5">{children}</div>
       </div>
     </>
