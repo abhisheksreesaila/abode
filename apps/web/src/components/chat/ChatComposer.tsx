@@ -6394,10 +6394,14 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         pendingUserInputs.length > 0 ||
         projectSelectionRequired
       }
+      resetKey={composerDraftTargetKey}
       onProvisionalStart={() => {
         // The editor is hidden while the phone composer is collapsed; open it so the words show.
+        // Its caret means nothing there, so the text goes at the end of the draft.
         if (isComposerCollapsedMobile) expandMobileComposer();
-        composerEditorRef.current?.provisionalDictation.begin();
+        composerEditorRef.current?.provisionalDictation.begin(
+          isComposerCollapsedMobile ? "end" : "selection",
+        );
       }}
       onProvisionalText={(text) => composerEditorRef.current?.provisionalDictation.update(text)}
       onProvisionalEnd={() => {

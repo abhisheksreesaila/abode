@@ -7,6 +7,7 @@ import { splitBlockKeepMarks } from "@tiptap/pm/commands";
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
+  anchorMarkdownOffset,
   beginProvisionalDictation,
   ComposerVoiceProvisionalExtension,
   endProvisionalDictation,
@@ -96,7 +97,7 @@ export interface ComposerPromptEditorHandle {
    * (null when none was active) so the final transcript can land there.
    */
   provisionalDictation: {
-    begin: () => void;
+    begin: (at: "selection" | "end") => void;
     update: (text: string) => void;
     end: () => number | null;
   };
@@ -1268,9 +1269,9 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
         }
       },
       provisionalDictation: {
-        begin: () => {
+        begin: (at) => {
           if (!editor) return;
-          beginProvisionalDictation(editor.view);
+          beginProvisionalDictation(editor.view, at);
         },
         update: (text) => {
           if (!editor) return;
@@ -1282,9 +1283,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
           if (!editor) return null;
           const anchor = endProvisionalDictation(editor.view);
           if (anchor === null) return null;
-          const map = serializeEditorDoc(editor.state.doc);
-          const flat = pmToFlat(map, anchor);
-          return Math.max(0, Math.min(map.value.length, flatToMarkdown(map, flat)));
+          return anchorMarkdownOffset(editor.state.doc, anchor);
         },
       },
       readSnapshot,

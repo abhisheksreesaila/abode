@@ -4,7 +4,7 @@ import { MicIcon, SquareIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../components/ui/tooltip";
 import type { RecordingState } from "./recordingMachine";
-import { previewLabel } from "./previewText";
+import { provisionalTextFor } from "./provisionalDictation";
 import { voiceShortcutLabel } from "./shortcut";
 import { useVoiceDictation } from "./useVoiceDictation";
 import { useVoiceSettings } from "./voiceSettings";
@@ -33,31 +33,15 @@ export function describeVoiceStatus(state: RecordingState, elapsedSeconds = 0): 
     case "idle":
       return null;
     case "recording":
-      return `Listening ${formatElapsed(elapsedSeconds)} · Release to insert · Esc cancel`;
+      return state.downloadProgress === undefined || state.interim
+        ? `Listening ${formatElapsed(elapsedSeconds)} · Release to insert · Esc cancel`
+        : `Downloading voice model ${Math.round(state.downloadProgress * 100)}%…`;
     case "transcribing":
       return state.downloadProgress === null
         ? "Transcribing…"
         : `Downloading speech model… ${Math.round(state.downloadProgress * 100)}%`;
     case "error":
       return state.message;
-  }
-}
-
-/**
- * What the composer should show as provisional text for a recording state: the live words (or
- * the model download), `undefined` to leave the current text as is, `null` when there is none.
- */
-export function provisionalTextFor(state: RecordingState): string | null | undefined {
-  switch (state.status) {
-    case "recording":
-      return previewLabel(state) ?? "";
-    case "transcribing":
-      // Keep the last words on screen until the final text replaces them.
-      return state.downloadProgress === null
-        ? undefined
-        : previewLabel({ downloadProgress: state.downloadProgress });
-    default:
-      return null;
   }
 }
 
@@ -70,8 +54,11 @@ export function ComposerVoiceControl({
   onProvisionalStart,
   onProvisionalText,
   onProvisionalEnd,
+  resetKey,
   disabled = false,
 }: {
+  /** Changes when the composer moves to another draft; an active dictation is cancelled. */
+  resetKey: string;
   /** Recording began: pin the insertion point. */
   onProvisionalStart: () => void;
   /** The live text to show (empty string for none yet). Called at most once per interim tick. */
@@ -86,7 +73,7 @@ export function ComposerVoiceControl({
   const { settings } = useVoiceSettings();
   // Only when the composer cannot take the text is it shown here, so it is never lost.
   const [fallbackText, setFallbackText] = useState<string | null>(null);
-  const { state, toggle } = useVoiceDictation({
+  const { state, toggle, cancel } = useVoiceDictation({
     enabled: settings.enabled,
     canStart: !disabled,
     shortcut: settings.shortcut,
@@ -100,6 +87,13 @@ export function ComposerVoiceControl({
   useEffect(() => {
     handlersRef.current = { onProvisionalStart, onProvisionalText, onProvisionalEnd };
   });
+  const resetKeyRef = useRef(resetKey);
+  useEffect(() => {
+    if (resetKeyRef.current === resetKey) return;
+    resetKeyRef.current = resetKey;
+    cancel();
+    setFallbackText(null);
+  }, [cancel, resetKey]);
   const previousStatusRef = useRef(state.status);
   useEffect(() => {
     const handlers = handlersRef.current;
@@ -128,13 +122,14 @@ export function ComposerVoiceControl({
           className="absolute right-0 bottom-full mb-2 flex w-72 max-w-[70vw] items-start gap-2 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs text-muted-foreground shadow-sm"
         >
           <p className="min-w-0 flex-1 select-text break-words">{fallbackText}</p>
-          <button
+          <Button
             type="button"
-            className="shrink-0 underline"
+            variant="ghost"
+            size="compact"
             onClick={() => setFallbackText(null)}
           >
             Dismiss
-          </button>
+          </Button>
         </div>
       ) : null}
       {status ? (
