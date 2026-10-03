@@ -43,7 +43,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-001: Voice spike, deciding whether in-app speech is good enough
 
-- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
+- **Status:** done (verified by Abhishek with a real mic, 2026-10-03)
 - **What:**
   - Throwaway prototype: Whisper (base.en or small.en) and Moonshine via transformers.js, running in the desktop app's renderer on this laptop. Use WebGPU if it's available, otherwise WASM.
   - Record five real prompts, say 5–20 seconds each, with project names and code words like "worktree", "fh-saas" or "pixi".
@@ -55,7 +55,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-002: Dictate into the composer
 
-- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
+- **Status:** done (verified by Abhishek with a real mic, 2026-10-03)
 - **Depends on:** F-001
 - **What:** a mic button in the composer, plus a hold-to-talk key. The speech is transcribed locally and inserted at the cursor; nothing is sent until Abhishek presses Enter. Works in desktop and web.
 - **Acceptance:**
@@ -68,7 +68,7 @@ Order for the next 24 hours: M-001, then M-002, then F-001 to F-003 (voice), the
 
 ### F-003: Voice settings
 
-- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
+- **Status:** done (verified by Abhishek with a real mic, 2026-10-03)
 - **Depends on:** F-002
 - **What:** a Voice section in Settings with: on/off, the hold-to-talk key (rebindable through the existing keybindings), and the downloaded model's size with a Delete button.
 - **Acceptance:**
@@ -266,7 +266,7 @@ Mockup version 3 shows all of these. Each ticket starts by checking what T3 alre
 
 ### F-023: Live voice transcription
 
-- **Status:** review (reviewer PASS, merged; needs a real-app check with your voice)
+- **Status:** done (verified by Abhishek with a real mic, 2026-10-03)
 - **What:** while recording, show interim text in the composer (muted) as you speak, updated about every second. Release finalizes it.
 - **Acceptance:**
   - [ ] Words appear while speaking.
@@ -596,7 +596,7 @@ North Star: everything here is web-client only, with no contract or server chang
 
 ### F-052: Stream dictation straight into the composer
 
-- **Status:** review (reviewer PASS, merged; needs a real-app check)
+- **Status:** done (verified by Abhishek with a real mic, 2026-10-03)
 - **What:**
   - While recording, interim text is inserted at the cursor as a provisional range: muted styling, replaced in place on each tick.
   - On release it becomes normal text (the final transcription replaces the provisional range). Esc removes the range.
