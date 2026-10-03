@@ -437,6 +437,16 @@ describe("rightPanelStore", () => {
     });
   });
 
+  it("keeps changes as a singleton surface", () => {
+    useRightPanelStore.getState().open(refA, "changes");
+    useRightPanelStore.getState().open(refA, "changes");
+    expect(selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA)).toEqual({
+      isOpen: true,
+      activeSurfaceId: "changes",
+      surfaces: [{ id: "changes", kind: "changes" }],
+    });
+  });
+
   it("keeps files as a singleton surface", () => {
     useRightPanelStore.getState().open(refA, "files");
     useRightPanelStore.getState().open(refA, "files");
