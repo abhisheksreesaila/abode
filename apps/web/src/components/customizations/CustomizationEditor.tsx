@@ -853,6 +853,11 @@ function CreateSession(props: {
     editedRef.current = edited;
   }, [edited]);
   const [existingPath, setExistingPath] = useState<string | null>(null);
+  // Latest-ref: the parent passes a fresh callback each render, which must not re-run the read.
+  const onOpenExistingRef = useRef(onOpenExisting);
+  useEffect(() => {
+    onOpenExistingRef.current = onOpenExisting;
+  });
   const checkPath = plan?.openIfExists ? plan.path : null;
   useEffect(() => {
     setExistingPath(null);
@@ -863,13 +868,13 @@ function CreateSession(props: {
       input: { cwd: scope.cwd, path: checkPath },
     }).then((result) => {
       if (cancelled || result._tag !== "Success") return;
-      if (editedRef.current === null) onOpenExisting(result.value.path);
+      if (editedRef.current === null) onOpenExistingRef.current(result.value.path);
       else setExistingPath(result.value.path);
     });
     return () => {
       cancelled = true;
     };
-  }, [checkPath, onOpenExisting, readFile, scope.cwd, scope.environmentId]);
+  }, [checkPath, readFile, scope.cwd, scope.environmentId]);
 
   // Name edits keep a hand-edited body; Harness and Scope swap the template, so they confirm first.
   const [pendingChange, setPendingChange] = useState<(() => void) | null>(null);

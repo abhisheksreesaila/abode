@@ -21,6 +21,7 @@ interface CustomizationEditorState {
 
 export const useCustomizationEditorStore = create<CustomizationEditorState>((set) => ({
   open: null,
-  openEditor: (request) => set({ open: request }),
+  // An open session is never replaced: that could drop unsaved edits.
+  openEditor: (request) => set((state) => (state.open ? state : { open: request })),
   closeEditor: () => set({ open: null }),
 }));

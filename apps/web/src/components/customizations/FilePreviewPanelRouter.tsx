@@ -1,6 +1,6 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
-import { type ComponentProps, lazy, useEffect } from "react";
+import { type ComponentProps, lazy } from "react";
 
 import { Button } from "~/components/ui/button";
 import { useCustomizationEditorStore } from "~/customizationEditorStore";
@@ -14,8 +14,9 @@ const FilePreviewPanel = lazy(() => import("../files/FilePreviewPanel"));
 type FilePreviewPanelProps = ComponentProps<typeof FilePreviewPanel>;
 
 /**
- * Claude customization files never edit in the side panel: this tab opens the big customization
- * editor (abode F-045), which owns saving, locking and validation, and leaves a way to reopen it.
+ * Claude customization files never edit in the side panel: this tab offers a button that opens the
+ * big customization editor (abode F-045), which owns saving, locking and validation. It never opens
+ * on its own, so restoring a side-panel tab can't pop a dialog.
  */
 function OpenInCustomizationEditor(props: {
   readonly environmentId: EnvironmentId;
@@ -31,12 +32,6 @@ function OpenInCustomizationEditor(props: {
       scope: { environmentId, cwd, projectName, threadRef },
       target: { type: "edit", path },
     });
-  useEffect(() => {
-    openEditor({
-      scope: { environmentId, cwd, projectName, threadRef },
-      target: { type: "edit", path },
-    });
-  }, [cwd, environmentId, openEditor, path, projectName, threadRef]);
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-xs text-muted-foreground">
       <p>This customization file edits in the full editor.</p>
