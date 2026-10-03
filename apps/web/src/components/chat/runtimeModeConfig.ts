@@ -6,7 +6,7 @@ export const runtimeModeConfig: Record<
   { label: string; description: string; icon: LucideIcon }
 > = {
   "approval-required": {
-    label: "Supervised",
+    label: "Ask Before Edits",
     description: "Ask before commands and file changes.",
     icon: LockIcon,
   },

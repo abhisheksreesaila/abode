@@ -252,6 +252,8 @@ import {
 import { useEnvironmentQuery } from "~/state/query";
 import { useDebouncedValue } from "~/state/queries";
 import { ComposerPickerRow } from "./ComposerPickerRow";
+import { ComposerStatusRow } from "./ComposerStatusRow";
+import { resolveComposerOuterRows } from "./composerOuterRows";
 import {
   modelPickerNeedsComposerExpanded,
   shouldShowWorkspaceRow,
@@ -966,7 +968,7 @@ import {
   BotIcon,
   RepeatIcon,
   CircleAlertIcon,
-  PaperclipIcon,
+  PlusIcon,
   PencilRulerIcon,
   PlayIcon,
   ShieldIcon,
@@ -1261,6 +1263,8 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
 });
 
 const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(props: {
+  /** Rendered between the context meter and the send button (the mic). */
+  beforeActions?: ReactNode;
   compact: boolean;
   activeContextWindow: ContextWindowSnapshot | null;
   reserveContextWindowMeter: boolean;
@@ -1304,6 +1308,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
       ) : props.reserveContextWindowMeter ? (
         <ContextWindowMeterPlaceholder variant={props.meterVariant} />
       ) : null}
+      {props.beforeActions}
       <ComposerPrimaryActions
         compact={props.compact}
         pendingAction={props.pendingAction}
@@ -1506,6 +1511,10 @@ export interface ChatComposerProps {
   pullRequestProjectId: ProjectId | null;
   pullRequestRepository: string | null;
   restingControlsHost: HTMLDivElement | null;
+  /** Host above the glass box for the workspace and harness pickers (F-039). */
+  topRowHost?: HTMLDivElement | null;
+  /** Host below the glass box for the plain status row (F-039). */
+  statusRowHost?: HTMLDivElement | null;
   onRestingControlsVisibilityChange: (visible: boolean) => void;
   getTimelineScrollableNode: () => HTMLElement | null;
   isTimelineAtLogicalEnd: () => boolean;
@@ -1637,6 +1646,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     pullRequestProjectId,
     pullRequestRepository,
     restingControlsHost,
+    topRowHost = null,
+    statusRowHost = null,
     onRestingControlsVisibilityChange,
     getTimelineScrollableNode,
     isTimelineAtLogicalEnd,
@@ -4886,6 +4897,13 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     providerUnavailable: showProviderUnavailable,
   });
   const modelPickerInTopRow = modelPickerPlacement === "top-row";
+  const outerRows = resolveComposerOuterRows({
+    showWorkspaceRow: shouldShowWorkspaceRow({ routeKind, hasDraftId: draftId !== null }),
+    controlsInStrip: composerControlsInStrip,
+    isApprovalState: isComposerApprovalState,
+    hasTopHost: topRowHost !== null,
+    hasBottomHost: statusRowHost !== null,
+  });
   const composerControlsHidden = composerControlsInStrip && !restingControlsVisible;
   if (composerControlsHidden && !modelPickerInTopRow && isComposerModelPickerOpen) {
     setIsComposerModelPickerOpen(false);
@@ -5102,6 +5120,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     hasTraits: providerTraitsPicker !== null,
     hasContext: Boolean(contextControls),
     providerUnavailable: showProviderUnavailable,
+    statusRowOwnsControls: outerRows.statusRowOwnsControls,
   });
   const isRestingBlockHidden = (id: ComposerFooterBlockId) =>
     restingBlockIds.indexOf(id) >= restingBlockIds.length - restingHiddenBlockCount;
@@ -6315,6 +6334,57 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     ],
   );
 
+  // Attach lives in the box footer beside the agent and model pickers; the
+  // resting overlay keeps it with the send actions.
+  const attachAction = showComposerAttachAction ? (
+    <>
+      <input
+        ref={attachmentInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          const files = Array.from(event.currentTarget.files ?? []);
+          event.currentTarget.value = "";
+          // Inserting a chip refocuses the editor after the draft renders;
+          // focusing synchronously here would report the editor's stale text
+          // over the prompt that was just written.
+          void addComposerAttachments(files).then((inserted) => {
+            if (!inserted) focusComposer();
+          });
+        }}
+      />
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onPointerDown={(event) => event.preventDefault()}
+              onClick={() => attachmentInputRef.current?.click()}
+              aria-label="Attach files"
+            />
+          }
+        >
+          <PlusIcon />
+        </TooltipTrigger>
+        <TooltipPopup>Attach files</TooltipPopup>
+      </Tooltip>
+    </>
+  ) : null;
+  const voiceAction = (
+    <ComposerVoiceControl
+      disabled={
+        isConnecting ||
+        isComposerApprovalState ||
+        pendingUserInputs.length > 0 ||
+        projectSelectionRequired
+      }
+      onTranscript={(text) => insertComposerText(text, "cursor", { ensureLeadingBoundary: true })}
+    />
+  );
+
   // Render
   // ------------------------------------------------------------------
   return (
@@ -6383,6 +6453,40 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       className="mx-auto w-full min-w-0 max-w-(--chat-max-width)"
       data-chat-composer-form="true"
     >
+      {draftId !== null && shouldShowWorkspaceRow({ routeKind, hasDraftId: true })
+        ? (() => {
+            const pickerRow = (
+              <ComposerPickerRow
+                draftId={draftId}
+                modelPicker={modelPickerInTopRow ? providerModelPicker : null}
+                disabled={providerCatalogPending || isSendBusy}
+              />
+            );
+            // Above the glass box when ChatView provides the host, else in the body.
+            return topRowHost ? createPortal(pickerRow, topRowHost) : pickerRow;
+          })()
+        : null}
+      {outerRows.statusRow && statusRowHost
+        ? createPortal(
+            <ComposerStatusRow
+              start={
+                <ComposerFooterModeControls
+                  showInteractionModeToggle={planModeUiEnabled}
+                  interactionMode={interactionMode}
+                  runtimeMode={runtimeMode}
+                  size="xs"
+                  onToggleInteractionMode={toggleInteractionMode}
+                  onRuntimeModeChange={handleRuntimeModeChange}
+                  autonomous={autonomous}
+                  onAutonomousChange={onAutonomousChange}
+                  doneSparkle={doneSparkle}
+                />
+              }
+              end={contextControls}
+            />,
+            statusRowHost,
+          )
+        : null}
       {composerControlsInStrip && restingControlsHost
         ? createPortal(
             <div
@@ -6653,14 +6757,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 isComposerResting && "py-2 sm:py-2",
               )}
             >
-              {shouldShowWorkspaceRow({ routeKind, hasDraftId: draftId !== null }) &&
-              draftId !== null ? (
-                <ComposerPickerRow
-                  draftId={draftId}
-                  modelPicker={modelPickerInTopRow ? providerModelPicker : null}
-                  disabled={providerCatalogPending || isSendBusy}
-                />
-              ) : null}
               {isStashMenuOpen && !composerMenuOpen && !isComposerApprovalState && (
                 <ComposerCommandMenuLayer anchor={composerMenuAnchor}>
                   <ComposerStashMenu
@@ -7209,7 +7305,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                     isComposerResting && "hidden",
                   )}
                 >
-                  {composerControlsInStrip ? null : composerControls}
+                  {composerControlsInStrip ? null : (
+                    <>
+                      {attachAction}
+                      {composerControls}
+                    </>
+                  )}
                 </div>
 
                 {/* Right side: send / stop button */}
@@ -7221,63 +7322,15 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   }
                   className="flex shrink-0 flex-nowrap items-center justify-end gap-2"
                 >
-                  <ComposerVoiceControl
-                    disabled={
-                      isConnecting ||
-                      isComposerApprovalState ||
-                      pendingUserInputs.length > 0 ||
-                      projectSelectionRequired
-                    }
-                    onTranscript={(text) =>
-                      insertComposerText(text, "cursor", { ensureLeadingBoundary: true })
-                    }
-                  />
-                  {showComposerAttachAction ? (
-                    <>
-                      <input
-                        ref={attachmentInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={(event) => {
-                          const files = Array.from(event.currentTarget.files ?? []);
-                          event.currentTarget.value = "";
-                          // Inserting a chip refocuses the editor after the draft renders;
-                          // focusing synchronously here would report the editor's stale text
-                          // over the prompt that was just written.
-                          void addComposerAttachments(files).then((inserted) => {
-                            if (!inserted) focusComposer();
-                          });
-                        }}
-                      />
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              onPointerDown={(event) => event.preventDefault()}
-                              onClick={() => attachmentInputRef.current?.click()}
-                              aria-label="Attach files"
-                            />
-                          }
-                        >
-                          <PaperclipIcon />
-                        </TooltipTrigger>
-                        <TooltipPopup>Attach files</TooltipPopup>
-                      </Tooltip>
-                    </>
-                  ) : null}
+                  {isComposerResting ? attachAction : null}
                   <ComposerFooterPrimaryActions
+                    beforeActions={voiceAction}
                     compact={isComposerResting || isComposerPrimaryActionsCompact}
                     activeContextWindow={
                       settings.contextWindowMeterEnabled ? activeContextWindow : null
                     }
                     reserveContextWindowMeter={reserveContextWindowMeter}
-                    meterVariant={
-                      isComposerFooterCompact || isComposerPrimaryActionsCompact ? "ring" : "bar"
-                    }
+                    meterVariant="ring"
                     activeThreadModelDisplayName={activeThreadModelDisplayName}
                     pendingAction={pendingPrimaryAction}
                     isRunning={phase === "running"}

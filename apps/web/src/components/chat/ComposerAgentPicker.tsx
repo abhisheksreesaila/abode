@@ -124,7 +124,14 @@ export function ComposerAgentMenuContent({ agent }: { agent: ComposerAgentState 
             <span className="flex min-w-0 flex-col">
               <span className="truncate">{formatAgentName(choice.name)}</span>
               {choice.description ? (
-                <span className="truncate text-muted-foreground text-xs">{choice.description}</span>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={<span className="line-clamp-2 text-muted-foreground text-xs" />}
+                  >
+                    {choice.description}
+                  </TooltipTrigger>
+                  <TooltipPopup side="right">{choice.description}</TooltipPopup>
+                </Tooltip>
               ) : null}
             </span>
           </MenuRadioItem>

@@ -435,9 +435,16 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
                         </span>
                       </span>
                       {option.description ? (
-                        <span className="max-w-56 text-pretty text-muted-foreground/80 text-xs">
-                          {option.description}
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <span className="line-clamp-2 max-w-56 text-pretty text-muted-foreground/80 text-xs" />
+                            }
+                          >
+                            {option.description}
+                          </TooltipTrigger>
+                          <TooltipPopup side="right">{option.description}</TooltipPopup>
+                        </Tooltip>
                       ) : null}
                     </span>
                   </MenuRadioItem>

@@ -505,6 +505,13 @@ describe("resolveComposerFooterBlockIds", () => {
     expect(resolveComposerFooterBlockIds(all)).toEqual(["agent", "traits", "mode", "context"]);
   });
 
+  it("leaves only agent and traits in the footer when the status row owns the rest", () => {
+    expect(resolveComposerFooterBlockIds({ ...all, statusRowOwnsControls: true })).toEqual([
+      "agent",
+      "traits",
+    ]);
+  });
+
   it("keeps the workspace chips when no provider is available", () => {
     expect(resolveComposerFooterBlockIds({ ...all, providerUnavailable: true })).toEqual([
       "context",
