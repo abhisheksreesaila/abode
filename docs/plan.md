@@ -596,7 +596,7 @@ North Star: everything here is web-client only, with no contract or server chang
 
 ### F-052: Stream dictation straight into the composer
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - While recording, interim text is inserted at the cursor as a provisional range: muted styling, replaced in place on each tick.
   - On release it becomes normal text (the final transcription replaces the provisional range). Esc removes the range.
