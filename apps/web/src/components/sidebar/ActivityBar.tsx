@@ -1,12 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import {
-  MessagesSquareIcon,
-  RadioTowerIcon,
-  SearchIcon,
-  SettingsIcon,
-  SparklesIcon,
-} from "lucide-react";
-import { memo, type ComponentProps, type ReactElement, type ReactNode } from "react";
+import { MessagesSquareIcon, SearchIcon, SettingsIcon, SmartphoneIcon } from "lucide-react";
+import { memo } from "react";
 
 import { useAtomValue } from "@effect/atom-react";
 import { shortcutLabelForCommand } from "../../keybindings";
@@ -15,57 +9,17 @@ import { useEnvironments } from "../../state/environments";
 import { cn } from "../../lib/utils";
 import { PullRequestGlyph } from "../pullRequest/pullRequestIcons";
 import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
-import {
-  useActiveCustomizationsScope,
-  useCustomizationsExpanded,
-} from "../customizations/CustomizationsSection";
 import { CommandDialogTrigger } from "../ui/command";
 import { useSidebar, useSidebarVisibility } from "../ui/sidebar";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { ACTIVITY_BAR_WIDTH_PX, resolveActiveActivityItem } from "./activityBar";
-
-const CELL_CLASS =
-  "relative flex size-12 shrink-0 cursor-pointer items-center justify-center text-sidebar-muted-foreground outline-hidden transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default disabled:opacity-40 disabled:hover:text-sidebar-muted-foreground data-[active=true]:text-white data-[active=true]:before:absolute data-[active=true]:before:inset-y-0 data-[active=true]:before:left-0 data-[active=true]:before:w-0.5 data-[active=true]:before:bg-primary [&>svg]:size-[22px]";
-
-/** One 48x48 cell with a tooltip. `render` swaps the button, e.g. for the palette trigger. */
-function ActivityBarButton({
-  label,
-  active,
-  icon,
-  render,
-  ...props
-}: Omit<ComponentProps<"button">, "children" | "render"> & {
-  readonly label: string;
-  readonly active?: boolean;
-  readonly icon: ReactNode;
-  readonly render?: ReactElement;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          render ?? (
-            <button
-              type="button"
-              aria-label={label}
-              data-active={active === true}
-              className={CELL_CLASS}
-              {...props}
-            />
-          )
-        }
-      >
-        {icon}
-      </TooltipTrigger>
-      <TooltipPopup side="right">{label}</TooltipPopup>
-    </Tooltip>
-  );
-}
+import { ActivityBarButton, CELL_CLASS } from "./ActivityBarButton";
+import { ActivityBarUsage } from "./ActivityBarUsage";
+import { isSidebarUtilityPage, useNavigateToMainApp } from "./mainAppLocation";
 
 /**
- * The 48px rail left of the sidebar (abode F-028). Every button leads somewhere
- * the footer or sidebar already did. Phone widths keep the sheet sidebar and
- * hide the rail.
+ * The 48px rail left of the sidebar (abode F-028, F-036). Top: logo, Sessions, Search.
+ * Bottom: Pull requests, Claude usage, Phone & Remote, Settings. Phone widths hide the
+ * rail and reach the same items from the sheet's account rows.
  */
 export const ActivityBar = memo(function ActivityBar({
   reserveTitlebar = false,
@@ -76,9 +30,9 @@ export const ActivityBar = memo(function ActivityBar({
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
   const { toggleSidebar, setOpen } = useSidebar();
+  const navigateToMainApp = useNavigateToMainApp();
   const sidebarOpen = useSidebarVisibility();
   const active = resolveActiveActivityItem({ pathname, sidebarOpen });
-  const customizationsScope = useActiveCustomizationsScope();
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const searchShortcut = shortcutLabelForCommand(keybindings, "commandPalette.toggle");
   const { environments } = useEnvironments();
@@ -86,9 +40,6 @@ export const ActivityBar = memo(function ActivityBar({
   const pullRequestsSupported = environments.some(
     (environment) => environment.serverConfig?.environment.capabilities.pullRequests === true,
   );
-  // The customizations list lives in the thread sidebar, which Settings swaps out.
-  const onSettings = active === "settings" || active === "connections";
-  const [customizationsExpanded, setCustomizationsExpanded] = useCustomizationsExpanded();
 
   return (
     <nav
@@ -118,11 +69,19 @@ export const ActivityBar = memo(function ActivityBar({
           ab
         </Link>
         <ActivityBarButton
-          label="Agents"
-          active={active === "agents"}
+          label="Sessions"
+          active={active === "sessions"}
           icon={<MessagesSquareIcon />}
           aria-expanded={sidebarOpen}
-          onClick={toggleSidebar}
+          onClick={() => {
+            // On Settings, Usage or Pull requests the sidebar is not the session list: go back to it.
+            if (isSidebarUtilityPage(pathname)) {
+              setOpen(true);
+              void navigateToMainApp();
+              return;
+            }
+            toggleSidebar();
+          }}
         />
         <ActivityBarButton
           label={searchShortcut ? `Search (${searchShortcut})` : "Search"}
@@ -140,6 +99,8 @@ export const ActivityBar = memo(function ActivityBar({
             />
           }
         />
+      </div>
+      <div className="flex flex-col">
         {pullRequestsSupported ? (
           <ActivityBarButton
             label="Pull requests"
@@ -150,27 +111,14 @@ export const ActivityBar = memo(function ActivityBar({
             }
           />
         ) : null}
-        <ActivityBarButton
-          label={customizationsScope ? "Customizations" : "Customizations (open a thread)"}
-          icon={<SparklesIcon />}
-          disabled={!customizationsScope || onSettings}
-          aria-expanded={customizationsExpanded && sidebarOpen}
-          onClick={() => {
-            // The list lives in the sidebar, so a closed sidebar opens it rather than toggling.
-            if (!sidebarOpen) {
-              setOpen(true);
-              setCustomizationsExpanded(true);
-            } else {
-              setCustomizationsExpanded((current) => !current);
-            }
-          }}
+        <ActivityBarUsage
+          active={active === "usage"}
+          onOpenUsagePage={() => void navigate({ to: "/usage" })}
         />
-      </div>
-      <div className="flex flex-col">
         <ActivityBarButton
-          label="Connections"
+          label="Phone & Remote"
           active={active === "connections"}
-          icon={<RadioTowerIcon />}
+          icon={<SmartphoneIcon />}
           onClick={() => void navigate({ to: "/settings/connections" })}
         />
         <ActivityBarButton
