@@ -76,3 +76,17 @@ export const CHIP_TINT_CLASS_NAMES: Readonly<Record<ChipTint, string>> = {
   worktree:
     "border-[color-mix(in_srgb,var(--chip-teal)_38%,transparent)] bg-[color-mix(in_srgb,var(--chip-teal)_12%,transparent)] text-(--chip-teal-fg) hover:bg-[color-mix(in_srgb,var(--chip-teal)_12%,transparent)] hover:text-(--chip-teal-fg) hover:border-[color-mix(in_srgb,var(--chip-teal)_63%,transparent)]",
 };
+
+/**
+ * Text-only tint for the plain status row under the composer: the risk colors
+ * stay readable without a chip, everything else remains muted.
+ */
+const PLAIN_TINT_CLASS_NAMES: Partial<Readonly<Record<ChipTint, string>>> = {
+  danger: "font-medium text-(--chip-danger-fg) hover:text-(--chip-danger-fg)",
+  caution: "text-(--chip-caution-fg) hover:text-(--chip-caution-fg)",
+  safe: "text-(--chip-safe-fg) hover:text-(--chip-safe-fg)",
+};
+
+export function plainTintClassName(tint: ChipTint): string {
+  return PLAIN_TINT_CLASS_NAMES[tint] ?? "";
+}

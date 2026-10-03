@@ -222,11 +222,14 @@ export function resolveComposerFooterBlockIds(input: {
   hasTraits: boolean;
   hasContext: boolean;
   providerUnavailable: boolean;
+  /** The status row under the composer shows access mode and the workspace chips instead. */
+  statusRowOwnsControls?: boolean;
 }): ComposerFooterBlockId[] {
+  const inFooter = !input.statusRowOwnsControls;
   return [
     ...(input.hasAgent && !input.providerUnavailable ? (["agent"] as const) : []),
     ...(input.hasTraits && !input.providerUnavailable ? (["traits"] as const) : []),
-    ...(input.providerUnavailable ? [] : (["mode"] as const)),
-    ...(input.hasContext ? (["context"] as const) : []),
+    ...(input.providerUnavailable || !inFooter ? [] : (["mode"] as const)),
+    ...(input.hasContext && inFooter ? (["context"] as const) : []),
   ];
 }

@@ -97,7 +97,7 @@ export const CompactComposerControlsMenu = memo(function CompactComposerControls
         >
           <ComposerControlIcon icon={EllipsisIcon} size={size} />
         </MenuTrigger>
-        <MenuPopup align="start" {...composerFloatingLayerProps}>
+        <MenuPopup align="start" size="compact" {...composerFloatingLayerProps}>
           {props.agentMenuContent ? (
             <>
               {props.agentMenuContent}
@@ -136,7 +136,7 @@ export const CompactComposerControlsMenu = memo(function CompactComposerControls
                   props.onRuntimeModeChange(value as RuntimeMode);
                 }}
               >
-                <MenuRadioItem value="approval-required">Supervised</MenuRadioItem>
+                <MenuRadioItem value="approval-required">Ask Before Edits</MenuRadioItem>
                 <MenuRadioItem value="auto-accept-edits">Auto-accept edits</MenuRadioItem>
                 <MenuRadioItem value="auto">Auto</MenuRadioItem>
                 <MenuRadioItem value="full-access">Full access</MenuRadioItem>
