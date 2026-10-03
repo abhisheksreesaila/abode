@@ -115,6 +115,17 @@ function harnessForPath(path: string): CustomizationHarness {
   return /\/\.codex\//.test(path.replaceAll("\\", "/")) ? "codex" : "claude";
 }
 
+/** Whether keyboard focus sits in a text field inside a shadow root: the editor's find widget. */
+function isFocusInShadowInput(): boolean {
+  let active: Element | null = document.activeElement;
+  let crossedShadow = false;
+  while (active?.shadowRoot?.activeElement) {
+    active = active.shadowRoot.activeElement;
+    crossedShadow = true;
+  }
+  return crossedShadow && (active?.tagName === "INPUT" || active?.tagName === "TEXTAREA");
+}
+
 function notify(type: "success" | "error", title: string, description?: string) {
   toastManager.add(
     stackedThreadToast({ type, title, ...(description ? { description } : {}), timeout: 3500 }),
@@ -156,6 +167,17 @@ export function CustomizationEditorDialog({
   const [dirty, setDirty] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
+  // Esc inside the editor's find widget closes the widget only. The widget lives in a shadow root,
+  // and it may close itself before the dialog's own key handler runs, so look at Esc on capture.
+  const escapeInFind = useRef(false);
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") escapeInFind.current = isFocusInShadowInput();
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, []);
+
   const requestClose = useCallback(
     (viaEscape: boolean) => {
       const decision = decideClose({ dirty, maximized, viaEscape });
@@ -179,7 +201,10 @@ export function CustomizationEditorDialog({
       <Dialog
         open
         onOpenChange={(next, details) => {
-          if (!next) requestClose(details.reason === "escape-key");
+          if (next) return;
+          const viaEscape = details.reason === "escape-key";
+          if (viaEscape && escapeInFind.current) return;
+          requestClose(viaEscape);
         }}
       >
         <DialogPopup
@@ -188,7 +213,9 @@ export function CustomizationEditorDialog({
           bottomStickOnMobile={false}
         >
           <DialogTitle className="sr-only">
-            {mode.type === "create" ? `New ${KIND_NOUN[mode.kind]}` : "Customization editor"}
+            {mode.type === "create"
+              ? `New ${KIND_NOUN[mode.kind]}`
+              : (displayCustomizationPath(mode.path, scope.cwd).split("/").pop() ?? mode.path)}
           </DialogTitle>
           <DialogDescription className="sr-only">{scope.projectName}</DialogDescription>
           {mode.type === "create" ? (
@@ -306,6 +333,8 @@ function EditorShell(props: {
   readonly hints: ReadonlyArray<string>;
 }) {
   const { chrome } = props;
+  // Phones have no room for the one-line hint, so it collapses to a count that opens the list.
+  const [hintsOpen, setHintsOpen] = useState(false);
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-border/60 px-3">
@@ -341,7 +370,26 @@ function EditorShell(props: {
       {props.form}
       {props.banners}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{props.children}</div>
+      {hintsOpen && props.hints.length > 0 ? (
+        <ul className="shrink-0 border-t border-warning/20 bg-warning-surface px-3 py-1.5 text-2xs text-warning-foreground sm:hidden">
+          {props.hints.map((hint) => (
+            <li key={hint}>{hint}</li>
+          ))}
+        </ul>
+      ) : null}
       <footer className="flex h-6 shrink-0 items-center gap-3 border-t border-border/60 bg-card/40 px-3 text-2xs text-muted-foreground">
+        {props.hints.length > 0 ? (
+          <button
+            type="button"
+            aria-expanded={hintsOpen}
+            aria-label={`${props.hints.length} validation warning${props.hints.length === 1 ? "" : "s"}`}
+            onClick={() => setHintsOpen((current) => !current)}
+            className="flex shrink-0 cursor-pointer items-center gap-1 text-warning-foreground sm:hidden"
+          >
+            <AlertTriangleIcon aria-hidden className="size-3" />
+            <span className="tabular-nums">{props.hints.length}</span>
+          </button>
+        ) : null}
         {props.hints.length > 0 ? (
           <Tooltip>
             <TooltipTrigger
@@ -683,7 +731,7 @@ function EditSession(props: {
                     size="compact"
                     disabled={!canUnlock({ readOnly })}
                     aria-pressed={locked}
-                    aria-label={locked ? "Locked: unlock to edit" : "Editing: lock the file"}
+                    aria-label="Lock file"
                     onClick={() => setLockChoice(!locked)}
                   />
                 }
@@ -798,9 +846,40 @@ function CreateSession(props: {
     onDirtyChange(dirty);
   }, [dirty, onDirtyChange]);
 
-  const resetTemplate = () => {
-    setEdited(null);
+  // Instructions and MCP files are open-or-create: when the target already exists, go straight to
+  // editing it. If the user already typed into the template, ask first instead of discarding it.
+  const editedRef = useRef(edited);
+  useEffect(() => {
+    editedRef.current = edited;
+  }, [edited]);
+  const [existingPath, setExistingPath] = useState<string | null>(null);
+  const checkPath = plan?.openIfExists ? plan.path : null;
+  useEffect(() => {
+    setExistingPath(null);
+    if (checkPath === null) return;
+    let cancelled = false;
+    void readFile({
+      environmentId: scope.environmentId,
+      input: { cwd: scope.cwd, path: checkPath },
+    }).then((result) => {
+      if (cancelled || result._tag !== "Success") return;
+      if (editedRef.current === null) onOpenExisting(result.value.path);
+      else setExistingPath(result.value.path);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [checkPath, onOpenExisting, readFile, scope.cwd, scope.environmentId]);
+
+  // Name edits keep a hand-edited body; Harness and Scope swap the template, so they confirm first.
+  const [pendingChange, setPendingChange] = useState<(() => void) | null>(null);
+  const changeTemplateInput = (apply: () => void) => {
     setError(null);
+    if (edited === null) {
+      apply();
+      return;
+    }
+    setPendingChange(() => apply);
   };
 
   const create = useCallback(async () => {
@@ -899,7 +978,7 @@ function CreateSession(props: {
                 value={name}
                 onChange={(event) => {
                   setName(event.target.value);
-                  resetTemplate();
+                  setError(null);
                 }}
               />
             </label>
@@ -912,8 +991,7 @@ function CreateSession(props: {
               onValueChange={(next) => {
                 const value = next[0];
                 if (value === "claude" || value === "codex") {
-                  setHarness(value);
-                  resetTemplate();
+                  changeTemplateInput(() => setHarness(value));
                 }
               }}
             >
@@ -930,8 +1008,7 @@ function CreateSession(props: {
                 onValueChange={(next) => {
                   const value = next[0];
                   if (value === "workspace" || value === "user") {
-                    setScopeChoice(value);
-                    resetTemplate();
+                    changeTemplateInput(() => setScopeChoice(value));
                   }
                 }}
               >
@@ -946,7 +1023,51 @@ function CreateSession(props: {
           {note ? <p className="w-full text-xs text-muted-foreground">{note}</p> : null}
         </div>
       }
-      banners={error ? <ErrorBanner message={error} /> : null}
+      banners={
+        <>
+          {existingPath ? (
+            <div className="flex shrink-0 items-center gap-3 border-b border-warning/20 bg-warning-surface px-3 py-1.5 text-xs text-warning-foreground">
+              <span className="min-w-0 flex-1">
+                This file already exists. Opening it discards what you typed here.
+              </span>
+              <Button size="compact" variant="outline" onClick={() => onOpenExisting(existingPath)}>
+                Open existing
+              </Button>
+            </div>
+          ) : null}
+          {error ? <ErrorBanner message={error} /> : null}
+          <AlertDialog
+            open={pendingChange !== null}
+            onOpenChange={(next) => {
+              if (!next) setPendingChange(null);
+            }}
+          >
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Replace your edits with a new template?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Changing the harness or scope starts from that template again.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="outline" />}>
+                  Keep my edits
+                </AlertDialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    pendingChange?.();
+                    setEdited(null);
+                    setPendingChange(null);
+                  }}
+                >
+                  Replace
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+        </>
+      }
       status={
         <>
           {busy ? <span>Creating…</span> : null}

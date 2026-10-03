@@ -28,10 +28,7 @@ import {
   useActiveCustomizationsScope,
   type CustomizationsScope,
 } from "../customizations/CustomizationsSection";
-import {
-  CustomizationEditorDialog,
-  type CustomizationEditorTarget,
-} from "../customizations/CustomizationEditor";
+import { useCustomizationEditorStore } from "../../customizationEditorStore";
 import { harnessFromProviderInstance } from "../customizations/newCustomization";
 import { Spinner } from "../ui/spinner";
 import { CustomizationsResizeHandle } from "./CustomizationsResizeHandle";
@@ -68,8 +65,6 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
   const failure = result._tag === "Failure" ? Cause.squash(result.cause) : null;
   const groups = useMemo(() => (items ? groupCustomizations(items) : null), [items]);
   const [openKinds, setOpenKinds] = useState<ReadonlySet<CustomizationKind>>(new Set());
-  // One big editor for both opening a file and creating one (abode F-045).
-  const [editing, setEditing] = useState<CustomizationEditorTarget | null>(null);
   const shell = useThreadShell(scope.threadRef);
   const defaultHarness = harnessFromProviderInstance(shell?.modelSelection.instanceId);
 
@@ -78,7 +73,12 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
     if (items) rememberCustomizations(items);
   }, [items]);
 
-  const openFile = useCallback((path: string) => setEditing({ type: "edit", path }), [setEditing]);
+  // The big editor (abode F-045) keeps the scope it opened with, so it survives route changes.
+  const openEditor = useCustomizationEditorStore((state) => state.openEditor);
+  const openFile = useCallback(
+    (path: string) => openEditor({ scope, target: { type: "edit", path } }),
+    [openEditor, scope],
+  );
   const toggle = (kind: CustomizationKind) =>
     setOpenKinds((current) => {
       const next = new Set(current);
@@ -131,7 +131,9 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
               <button
                 type="button"
                 aria-label={`New ${label}`}
-                onClick={() => setEditing({ type: "create", kind, defaultHarness })}
+                onClick={() =>
+                  openEditor({ scope, target: { type: "create", kind, defaultHarness } })
+                }
                 className="mr-1 flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-xs text-muted-foreground outline-hidden ring-ring hover:text-foreground focus-visible:ring-2"
               >
                 <PlusIcon aria-hidden className="size-3.5" />
@@ -151,16 +153,6 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
           </div>
         );
       })}
-      {editing !== null ? (
-        <CustomizationEditorDialog
-          // A fresh session per target, so reopening starts from the file on disk.
-          key={editing.type === "edit" ? editing.path : `new:${editing.kind}`}
-          scope={scope}
-          target={editing}
-          onClose={() => setEditing(null)}
-          onChanged={refresh}
-        />
-      ) : null}
       {failure === null && groups !== null ? (
         <div className="flex justify-end px-2 pb-0.5">
           <RefreshButton onRefresh={refresh} />

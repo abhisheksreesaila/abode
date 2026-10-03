@@ -69,6 +69,15 @@ describe("validateCustomization", () => {
       /not closed/,
     );
   });
+  it("uses the agent noun in the description hint for agents", () => {
+    const hints = validateCustomization({
+      path: "/w/.claude/agents/r.md",
+      contents: "---\nname: r\n---\n",
+    });
+    expect(hints[0]?.message).toBe(
+      "Missing description: Claude uses it to decide when to delegate to this agent",
+    );
+  });
   it("checks agent markdown files but not other markdown", () => {
     const agent = "/w/.claude/agents/reviewer.md";
     expect(validateCustomization({ path: agent, contents: "---\nname: r\n---\n" })).toHaveLength(1);

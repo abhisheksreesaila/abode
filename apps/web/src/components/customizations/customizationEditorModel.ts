@@ -81,7 +81,7 @@ function roleForPath(path: string): FileRole {
   return "other";
 }
 
-function validateFrontmatter(contents: string, noun: string): ValidationHint[] {
+function validateFrontmatter(contents: string, noun: "skill" | "agent"): ValidationHint[] {
   const parsed = parseFrontmatter(contents);
   if (parsed === null) {
     return [
@@ -107,7 +107,9 @@ function validateFrontmatter(contents: string, noun: string): ValidationHint[] {
   if (isBlankValue(parsed.fields.description)) {
     hints.push({
       severity: "warning",
-      message: "Missing description: Claude uses it to decide when to load this skill",
+      message: `Missing description: Claude uses it to decide when to ${
+        noun === "agent" ? "delegate to this agent" : "load this skill"
+      }`,
     });
   }
   return hints;
