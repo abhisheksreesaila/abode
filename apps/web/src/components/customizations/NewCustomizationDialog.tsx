@@ -101,24 +101,23 @@ export function NewCustomizationDialog({
     setError(null);
     try {
       const input = { cwd: scope.cwd, path: plan.path };
-      const existing = await readFile({ environmentId: scope.environmentId, input });
-      if (existing._tag === "Success") {
-        if (!plan.openIfExists) {
-          setError(`${plan.path} already exists. Pick another name.`);
+      // Instructions and MCP files open when they exist; skills and agents are create-only.
+      if (plan.openIfExists) {
+        const existing = await readFile({ environmentId: scope.environmentId, input });
+        if (existing._tag === "Success") {
+          onSaved(existing.value.path);
+          onOpenChange(false);
           return;
         }
-        onSaved(existing.value.path);
-        onOpenChange(false);
-        return;
-      }
-      if (isAtomCommandInterrupted(existing)) return;
-      if (plan.readOnly) {
-        setError(`${plan.path} does not exist yet, and abode can't create it.`);
-        return;
+        if (isAtomCommandInterrupted(existing)) return;
+        if (plan.readOnly) {
+          setError(`${plan.path} does not exist yet, and abode can't create it.`);
+          return;
+        }
       }
       const written = await writeFile({
         environmentId: scope.environmentId,
-        input: { ...input, contents },
+        input: { ...input, contents, ...(plan.openIfExists ? {} : { createOnly: true }) },
       });
       if (written._tag === "Success") {
         onSaved(written.value.path);
@@ -219,7 +218,6 @@ export function NewCustomizationDialog({
                 <span className="text-xs font-medium text-foreground">Template</span>
                 <Textarea
                   aria-label="Template"
-
                   rows={9}
                   value={contents}
                   onChange={(event) => setEdited(event.target.value)}

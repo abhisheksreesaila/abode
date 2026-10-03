@@ -199,7 +199,7 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
 export const SidebarChromeFooter = memo(function SidebarChromeFooter({
   sessions = false,
 }: {
-  /** The Sessions sidebar: account items live in the activity bar (abode F-035). */
+  /** The Sessions sidebar: only a phone-width Settings row and the update pill (abode F-042). */
   readonly sessions?: boolean;
 }) {
   return (

@@ -77,6 +77,15 @@ export class CustomizationsFileTooLargeError extends Schema.TaggedError<Customiz
   }
 }
 
+export class CustomizationsFileExistsError extends Schema.TaggedError<CustomizationsFileExistsError>()(
+  "CustomizationsFileExistsError",
+  { path: Schema.String },
+) {
+  override get message(): string {
+    return `'${this.path}' already exists.`;
+  }
+}
+
 export class CustomizationsFileError extends Schema.TaggedError<CustomizationsFileError>()(
   "CustomizationsFileError",
   {
@@ -94,6 +103,7 @@ export type CustomizationsServiceError =
   | CustomizationsCwdNotRegisteredError
   | CustomizationsPathNotAllowedError
   | CustomizationsFileTooLargeError
+  | CustomizationsFileExistsError
   | CustomizationsFileError;
 
 /** Maps a service failure to the wire error; used by every transport. */
@@ -108,6 +118,8 @@ export function toCustomizationsError(error: CustomizationsServiceError): Custom
       });
     case "CustomizationsFileTooLargeError":
       return new CustomizationsError({ failure: "file_too_large", message: error.message });
+    case "CustomizationsFileExistsError":
+      return new CustomizationsError({ failure: "already_exists", message: error.message });
     case "CustomizationsFileError":
       return new CustomizationsError({
         failure: "operation_failed",
@@ -301,10 +313,13 @@ const make = Effect.gen(function* () {
         .relative(realConfigDir, realTarget)
         .split(path.sep)
         .some((segment) => segment.startsWith(".credentials"));
-    const underCodexSkills = isInside(path.join(realCodexHome, "skills"), realTarget);
+    // The skills and prompts dirs may themselves be symlinks (dotfile managers): compare
+    // against where they really point, as the workspace and config roots are.
+    const realCodexSkills = yield* realPathAllowingMissing(path.join(codexHomeDir(), "skills"));
+    const realCodexPrompts = yield* realPathAllowingMissing(path.join(codexHomeDir(), "prompts"));
+    const underCodexSkills = isInside(realCodexSkills, realTarget);
     const isCodexPrompt =
-      path.dirname(realTarget) === path.join(realCodexHome, "prompts") &&
-      realTarget.endsWith(".md");
+      path.dirname(realTarget) === realCodexPrompts && realTarget.endsWith(".md");
     const allowed =
       !isCredentials &&
       (underConfigDir ||
@@ -532,7 +547,16 @@ const make = Effect.gen(function* () {
     yield* fileSystem
       .makeDirectory(path.dirname(realTarget), { recursive: true })
       .pipe(Effect.mapError(fileError));
-    yield* fileSystem.writeFileString(realTarget, input.contents).pipe(Effect.mapError(fileError));
+    if (input.createOnly === true) {
+      const taken = yield* fileSystem.exists(realTarget).pipe(Effect.orElseSucceed(() => false));
+      if (taken) return yield* new CustomizationsFileExistsError({ path: input.path });
+    }
+    // `wx` also fails if the file appears between the check and the write.
+    yield* fileSystem
+      .writeFileString(realTarget, input.contents, {
+        ...(input.createOnly === true ? { flag: "wx" as const } : {}),
+      })
+      .pipe(Effect.mapError(fileError));
     return { path: resolvedPath, byteLength: Buffer.byteLength(input.contents) };
   });
 

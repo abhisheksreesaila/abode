@@ -27,7 +27,8 @@ export function SidebarSessionsHeader({ children }: { readonly children?: ReactN
       ) : null}
       <div
         className={cn(
-          "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5",
+          // md:pl-11 clears the floating sidebar toggle (AppSidebarLayout), which sits over the sidebar on desktop.
+          "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5 md:pl-11",
           isElectron && "drag-region",
         )}
       >

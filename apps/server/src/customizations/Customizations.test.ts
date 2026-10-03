@@ -325,6 +325,45 @@ describe("Customizations", () => {
     }).pipe(Effect.scoped, Effect.provide(TestLayer)),
   );
 
+  it.effect("createOnly refuses to overwrite and reports already_exists", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, fileSystem, workspace } = yield* makeSandbox;
+      const target = path.join(workspace, ".claude", "agents", "a.md");
+      yield* customizations.writeFile({
+        cwd: workspace,
+        path: target,
+        contents: "one",
+        createOnly: true,
+      });
+      const error = yield* customizations
+        .writeFile({ cwd: workspace, path: target, contents: "two", createOnly: true })
+        .pipe(Effect.flip);
+      expect(error._tag).toBe("CustomizationsFileExistsError");
+      expect(Customizations.toCustomizationsError(error).failure).toBe("already_exists");
+      expect(yield* fileSystem.readFileString(target)).toBe("one");
+      // Without the flag a save still overwrites.
+      yield* customizations.writeFile({ cwd: workspace, path: target, contents: "three" });
+      expect(yield* fileSystem.readFileString(target)).toBe("three");
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported)("writes through a symlinked ~/.codex/skills dir", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, fileSystem, root, codexDir, workspace } = yield* makeSandbox;
+      const dotfiles = path.join(root, "dotfiles-skills");
+      yield* mkdirp(dotfiles);
+      NodeFS.symlinkSync(dotfiles, path.join(codexDir, "skills"));
+      yield* customizations.writeFile({
+        cwd: workspace,
+        path: "~/.codex/skills/s/SKILL.md",
+        contents: "s",
+      });
+      expect(yield* fileSystem.readFileString(path.join(dotfiles, "s", "SKILL.md"))).toBe("s");
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
   it.effect("rejects writes outside the allowed roots", () =>
     Effect.gen(function* () {
       const customizations = yield* Customizations.Customizations;

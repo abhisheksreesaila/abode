@@ -84,6 +84,8 @@ export function describeCustomizationsError(error: unknown): string {
         return "This file is outside the places Claude customizations live.";
       case "read_only":
         return "This file is read-only and can't be saved.";
+      case "already_exists":
+        return "A file with that name already exists. Pick another name.";
       case "file_too_large":
         return "This file is too large to open here.";
       default:

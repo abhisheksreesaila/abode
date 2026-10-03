@@ -64,6 +64,8 @@ export const CustomizationsWriteFileInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
   path: TrimmedNonEmptyString,
   contents: Schema.String,
+  /** Fail with `already_exists` instead of overwriting. Absent means overwrite. */
+  createOnly: Schema.optional(Schema.Boolean),
 });
 export type CustomizationsWriteFileInput = typeof CustomizationsWriteFileInput.Type;
 
@@ -78,6 +80,7 @@ export const CustomizationsFailure = Schema.Literals([
   "path_not_allowed",
   "read_only",
   "file_too_large",
+  "already_exists",
   "operation_failed",
 ]);
 export type CustomizationsFailure = typeof CustomizationsFailure.Type;
