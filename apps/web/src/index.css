@@ -2327,6 +2327,240 @@ html[data-theme-id="abode"] {
   --sidebar-row-content-inset: 0.5rem;
 }
 
+/* abode flat developer buttons (F-050), VS Code style. Buttons expose their
+   variant and size as data-variant / data-size (components/ui/button.tsx), so
+   the theme re-skins the existing variants through these variables and other
+   themes keep their look. Only components/ui Button / Toggle / Select / Input
+   are touched; the composer send arrow is a plain <button> and is left alone.
+   The doubled selector beats the layered Tailwind utilities, shadows included.
+   Radius is --control-radius (2px, docs/design/fluent.md). */
+html[data-theme-id="abode"]:not([data-theme-id=""]) {
+  --abode-btn-border: #3c3c3c;
+  --abode-btn-hover: #2a2d2e;
+  --abode-btn-primary: #0078d4;
+  --abode-btn-primary-hover: #1a85d9;
+  --abode-btn-danger: #f14c4c;
+  --abode-btn-danger-hover: #d93c3c;
+  --abode-btn-danger-tint: rgb(241 76 76 / 0.12);
+  --abode-btn-footer-height: 28px;
+}
+
+/* Variants that get the flat treatment (media-close, link, glass, toolbar etc. do not). */
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"]:is(
+    [data-variant="default"],
+    [data-variant="destructive"],
+    [data-variant="outline"],
+    [data-variant="destructive-outline"],
+    [data-variant="secondary"],
+    [data-variant="warning-outline"],
+    [data-variant="ghost"],
+    [data-variant="ghost-muted"],
+    [data-variant="ghost-destructive"]
+  ) {
+  border-radius: var(--control-radius);
+  font-weight: 400;
+  scale: 1;
+  transition:
+    background-color 80ms,
+    border-color 80ms;
+}
+
+/* No shadows or gradients, on the element and its ::before. */
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is(
+    [data-slot="button"]:is(
+      [data-variant="default"],
+      [data-variant="destructive"],
+      [data-variant="outline"],
+      [data-variant="destructive-outline"],
+      [data-variant="secondary"],
+      [data-variant="warning-outline"],
+      [data-variant="ghost"],
+      [data-variant="ghost-muted"],
+      [data-variant="ghost-destructive"]
+    ),
+    [data-slot="toggle"],
+    [data-slot="select-trigger"],
+    [data-slot="input-control"],
+    [data-slot="textarea-control"]
+  ),
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is(
+    [data-slot="button"]:is(
+      [data-variant="default"],
+      [data-variant="destructive"],
+      [data-variant="outline"],
+      [data-variant="destructive-outline"],
+      [data-variant="secondary"],
+      [data-variant="warning-outline"],
+      [data-variant="ghost"],
+      [data-variant="ghost-muted"],
+      [data-variant="ghost-destructive"]
+    ),
+    [data-slot="toggle"],
+    [data-slot="select-trigger"],
+    [data-slot="input-control"],
+    [data-slot="textarea-control"]
+  )::before {
+  box-shadow: none;
+  background-image: none;
+}
+html[data-theme-id="abode"]:not([data-theme-id=""]) [data-slot="toggle"] {
+  border-radius: var(--control-radius);
+}
+
+/* Outline and secondary: transparent, 1px line-hi border, tint on hover. */
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"]:is(
+    [data-variant="outline"],
+    [data-variant="secondary"],
+    [data-variant="warning-outline"]
+  ) {
+  background: transparent;
+  border-color: var(--abode-btn-border);
+  color: var(--foreground);
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"]:is(
+    [data-variant="ghost"],
+    [data-variant="ghost-muted"],
+    [data-variant="ghost-destructive"]
+  ) {
+  background: transparent;
+  border-color: transparent;
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"]:is(
+    [data-variant="outline"],
+    [data-variant="secondary"],
+    [data-variant="warning-outline"],
+    [data-variant="ghost"],
+    [data-variant="ghost-muted"],
+    [data-variant="ghost-destructive"]
+  ):is(:hover, [data-pressed]):not(:disabled) {
+  background: var(--abode-btn-hover);
+}
+
+/* Primary: flat accent fill, white text. */
+html[data-theme-id="abode"]:not([data-theme-id=""]) [data-slot="button"][data-variant="default"] {
+  background: var(--abode-btn-primary);
+  border-color: var(--abode-btn-primary);
+  color: #fff;
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"][data-variant="default"]:is(:hover, [data-pressed]):not(:disabled) {
+  background: var(--abode-btn-primary-hover);
+  border-color: var(--abode-btn-primary-hover);
+}
+
+/* Destructive: a flat red outline; the solid variant is a confirm-only fill. */
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"][data-variant="destructive-outline"] {
+  background: transparent;
+  border-color: var(--abode-btn-danger);
+  color: var(--abode-btn-danger);
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"][data-variant="destructive-outline"]:is(:hover, [data-pressed]):not(
+    :disabled
+  ) {
+  background: var(--abode-btn-danger-tint);
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"][data-variant="destructive"] {
+  background: var(--abode-btn-danger);
+  border-color: var(--abode-btn-danger);
+  color: #fff;
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"][data-variant="destructive"]:is(:hover, [data-pressed]):not(:disabled) {
+  background: var(--abode-btn-danger-hover);
+  border-color: var(--abode-btn-danger-hover);
+}
+
+/* Selects and inputs: flat with a 1px border; invalid fields keep a red border. */
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is([data-slot="select-trigger"], [data-slot="input-control"], [data-slot="textarea-control"]) {
+  border-radius: var(--control-radius);
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is(
+    [data-slot="select-trigger"],
+    [data-slot="input-control"],
+    [data-slot="textarea-control"]
+  ):not([aria-invalid="true"]):not(:has([aria-invalid="true"])) {
+  border-color: var(--abode-btn-border);
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is([data-slot="select-trigger"], [data-slot="input-control"], [data-slot="textarea-control"]):is(
+    [aria-invalid="true"],
+    :has([aria-invalid="true"])
+  ) {
+  border-color: var(--abode-btn-danger);
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="input-control"]
+  > [data-slot="input"],
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="textarea-control"]
+  > [data-slot="textarea"] {
+  border-radius: inherit;
+}
+
+/* Focus: a 1px accent outline instead of the ring (same variants as above). */
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"]:is(
+    [data-variant="default"],
+    [data-variant="destructive"],
+    [data-variant="outline"],
+    [data-variant="destructive-outline"],
+    [data-variant="secondary"],
+    [data-variant="warning-outline"],
+    [data-variant="ghost"],
+    [data-variant="ghost-muted"],
+    [data-variant="ghost-destructive"]
+  ):focus-visible,
+html[data-theme-id="abode"]:not([data-theme-id=""]) [data-slot="select-trigger"]:focus-visible,
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is([data-slot="input-control"], [data-slot="textarea-control"]):focus-within:not(
+    :has([aria-invalid="true"])
+  ) {
+  box-shadow: none;
+  outline: 1px solid var(--abode-btn-primary);
+  outline-offset: -1px;
+}
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="button"]:is(
+    [data-variant="default"],
+    [data-variant="destructive"],
+    [data-variant="outline"],
+    [data-variant="destructive-outline"],
+    [data-variant="secondary"],
+    [data-variant="warning-outline"],
+    [data-variant="ghost"],
+    [data-variant="ghost-muted"],
+    [data-variant="ghost-destructive"]
+  ):focus-visible,
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="select-trigger"]:not([aria-invalid="true"]):focus-visible,
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is([data-slot="input-control"], [data-slot="textarea-control"]):focus-within:not(
+    :has([aria-invalid="true"])
+  ) {
+  border-color: var(--abode-btn-primary);
+}
+
+/* Dialog footers: text-size buttons share one 28px height (icon and multiline sizes keep theirs). */
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  :is([data-slot="dialog-footer"], [data-slot="alert-dialog-footer"])
+  [data-slot="button"]:not([data-size^="icon"], [data-size$="multiline"]) {
+  height: auto;
+  min-height: var(--abode-btn-footer-height);
+  padding-inline: 0.75rem;
+  font-size: 12px;
+}
+
 /* abode chat surface: an opaque, VS Code editor-like panel (canvas #1f1f1f)
    against the #181818 chrome. T3's glass is a translucent --background mix
    with blur; here every glass consumer (composer, floating controls, menus)
