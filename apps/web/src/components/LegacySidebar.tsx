@@ -2328,6 +2328,10 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       }
 
       if (clicked === "rename") {
+        // From an Automations or Pinned row the thread's folder may be collapsed, or the thread
+        // hidden behind "N older": open both so the inline input is visible.
+        setProjectExpanded(projectPreferenceKeys, true);
+        expandThreadListForProject(project.projectKey);
         startThreadRename(threadKey, thread.title);
         return;
       }
@@ -2401,11 +2405,14 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       copyPathToClipboard,
       copyThreadIdToClipboard,
       deleteThread,
+      expandThreadListForProject,
       handleNewThread,
       isMobile,
       markThreadUnread,
       memberProjectByScopedKey,
       pinThread,
+      projectPreferenceKeys,
+      setProjectExpanded,
       project.projectKey,
       project.workspaceRoot,
       router,
