@@ -418,6 +418,61 @@ It replaces the visual pass where they differ: one-line sidebar rows, the blue b
   - [ ] The toggle turns all of it off.
   - [ ] The fonts load with no network.
 
+## Phase 2g: simplify to the agents-window reference (2026-10-02)
+
+Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current state: `docs/design/current-abode-2026-10-02.png`, `docs/design/current-agent-menu-2026-10-02.png`. Simplify: no extra chrome. Anything that doesn't fit goes under one ⋯ menu or Settings.
+
+### F-035: Sessions sidebar (the default)
+
+- **Status:** doing
+- **What:**
+  - **Header:** "Sessions", with New (Ctrl+N), filter and search.
+  - **Sections:**
+    - Automations (autonomous threads);
+    - Pinned (if T3 supports pinning);
+    - Chats (no-project threads);
+    - then each project as a folder with its sessions: the title, and a meta line of folder icon · time, or +N −M · time.
+  - **Bottom:** an always-visible "Customizations" list (MCP Servers, Skills, Instructions, Agents, Hooks; Plugins if Claude reports them), with counts. Clicking one opens it.
+  - The Account footer is removed.
+  - Abhishek approved (2026-10-02) making the project-grouped sidebar the default. That's a one-line change to an existing contract default (`legacySidebarEnabled`), and only abode clients read it. Re-check it on every upstream merge.
+- **Acceptance:**
+  - [ ] A fresh browser shows this sidebar.
+  - [ ] It matches the reference.
+
+### F-036: The icon bar holds the account items
+
+- **Status:** doing
+- **What:** the left rail has Sessions and Search at the top, and at the bottom Pull requests, Claude Max usage (a meter in the tooltip, with a popover), Phone & Remote, and Settings.
+
+### F-037: Simple top bar
+
+- **Status:** doing
+- **What:**
+  - **Left:** sidebar toggle and back/forward.
+  - **Center:** one box showing the workspace (or "New session"), which opens the palette.
+  - **Next to it:** ▷ run (project actions) and open-in-editor.
+  - **Right:** bottom/right panel toggles, remote, and a ⋯ menu with Simple/Detailed, Add action, Initialize, and Open in….
+  - The breadcrumb and the duplicate search box are removed.
+
+### F-038: Status bar hidden by default
+
+- **Status:** doing
+- **What:** a Settings → Appearance switch "Show status bar", default off. Its info lives in the icon bar and the top bar.
+
+### F-039: Composer like the reference
+
+- **Status:** doing
+- **What:**
+  - Workspace and harness pickers sit above the box.
+  - Inside the box: the input, +, agent and model.
+  - Below the box, as a plain-text row with no box: access mode (Ask Before Edits / Full access in red), New Worktree / worktree, and the branch.
+  - Picker menus are compact: max ~360px, two-line clamped descriptions, anchored to their trigger, never full width.
+
+### F-040: Right drawer with Changes | Files tabs
+
+- **Status:** doing
+- **What:** two top tabs: Changes (F-033's list) and Files (the tree). Browser, Diff and Editor stay as the existing tabs or modes.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
