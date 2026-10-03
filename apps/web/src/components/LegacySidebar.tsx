@@ -3717,9 +3717,9 @@ export default function LegacySidebar() {
       {prewarmedSidebarThreadRefs.map((threadRef) => (
         <SidebarThreadDetailPrewarmer key={scopedThreadKey(threadRef)} threadRef={threadRef} />
       ))}
-      {/* Desktop widths have the activity bar's "ab" and the AGENTS header; the phone
-          sheet keeps the wordmark row and its sidebar trigger. */}
-      {isMobile ? <SidebarChromeHeader isElectron={isElectron} /> : null}
+      {/* The top strip is the top bar's height: the wordmark, and the floating sidebar toggle
+          beside it at desktop widths. The WORKSPACES header starts below it. */}
+      <SidebarChromeHeader isElectron={isElectron} />
 
       <SidebarProjectsContent
         showArm64IntelBuildWarning={showArm64IntelBuildWarning}
