@@ -7,3 +7,4 @@
 - Never add numbered DB migrations in the fork: upstream's next number would collide, and the migrator silently skips ids at or below the latest one recorded. Fork schema changes go in an idempotent "ensure" step that runs after the numbered migrations.
 - The one sanctioned contract-default change: `legacySidebarEnabled` defaults to true (approved by Abhishek 2026-10-02). Re-check it on every upstream merge.
 - Don't delete upstream files the fork stops using (e.g. the inbox Sidebar.tsx). Leave them unused: deleting them causes a modify/delete conflict on every monthly upstream merge.
+- Builders must only edit inside their own worktree. Before each merge, check that the main checkout's `git status` is clean; a builder once leaked an uncommitted edit into main.

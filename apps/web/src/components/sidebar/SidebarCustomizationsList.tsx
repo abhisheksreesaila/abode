@@ -12,7 +12,7 @@ import {
   ServerIcon,
   type LucideIcon,
 } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "../../lib/utils";
 import { useThreadShell } from "../../state/entities";
@@ -34,6 +34,16 @@ import {
 } from "../customizations/CustomizationEditor";
 import { harnessFromProviderInstance } from "../customizations/newCustomization";
 import { Spinner } from "../ui/spinner";
+import { CustomizationsResizeHandle } from "./CustomizationsResizeHandle";
+import {
+  clampCustomizationsFraction,
+  loadCustomizationsFraction,
+  saveCustomizationsFraction,
+} from "./customizationsHeight";
+
+/** The header row, the section's top border and its bottom padding: the collapsed height. */
+const SECTION_ID = "sidebar-customizations";
+const COLLAPSED_HEIGHT_PX = 33;
 
 const FOLDERS: ReadonlyArray<{
   readonly kind: CustomizationKind;
@@ -167,22 +177,93 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
  */
 export const SidebarCustomizationsList = memo(function SidebarCustomizationsList() {
   const scope = useActiveCustomizationsScope();
+  const sectionRef = useRef<HTMLElement>(null);
+  // null: not resized, so the section sizes to its content (up to 40%).
+  const [fraction, setFraction] = useState<number | null>(loadCustomizationsFraction);
+  // The share the content-sized section takes now, for the handle's aria-valuenow.
+  const [autoFraction, setAutoFraction] = useState(0.2);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const container = section?.parentElement;
+    if (!section || !container || fraction !== null || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      // A drag is writing the height directly; the share is stale until it commits.
+      if (section.style.height !== "" || container.clientHeight <= 0) return;
+      const share = clampCustomizationsFraction(section.offsetHeight / container.clientHeight);
+      setAutoFraction(Math.round(share * 100) / 100);
+    });
+    observer.observe(section);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [fraction]);
+
+  const getContainerHeight = useCallback(
+    () => sectionRef.current?.parentElement?.clientHeight ?? 0,
+    [],
+  );
+  // Written straight to the element while dragging; React state follows on release.
+  const preview = useCallback((next: number) => {
+    const section = sectionRef.current;
+    if (!section) return;
+    section.style.height = `${next * 100}%`;
+    section.style.minHeight = `${COLLAPSED_HEIGHT_PX}px`;
+    section.style.maxHeight = "none";
+  }, []);
+  const commit = useCallback((next: number) => {
+    setFraction(next);
+    saveCustomizationsFraction(next);
+  }, []);
+  const reset = useCallback(() => {
+    const section = sectionRef.current;
+    if (section) {
+      section.style.height = "";
+      section.style.minHeight = "";
+      section.style.maxHeight = "";
+    }
+    setFraction(null);
+    saveCustomizationsFraction(null);
+  }, []);
+
   return (
-    <section
-      aria-label="Customizations"
-      data-testid="customizations-section"
-      className="flex max-h-[40%] min-h-0 shrink-0 flex-col overflow-y-auto border-t border-sidebar-border px-1 pb-1"
-    >
-      <div className="flex h-7 shrink-0 items-center px-2 text-xs font-semibold text-sidebar-foreground">
-        Customizations
-      </div>
-      {scope ? (
-        <CustomizationFolders scope={scope} />
-      ) : (
-        <div className="px-2 pb-1 text-3xs text-secondary-label">
-          Open a session to see its tools
+    <>
+      <CustomizationsResizeHandle
+        fraction={fraction ?? autoFraction}
+        controls={SECTION_ID}
+        getContainerHeight={getContainerHeight}
+        onPreview={preview}
+        onCommit={commit}
+        onReset={reset}
+      />
+      <section
+        ref={sectionRef}
+        id={SECTION_ID}
+        aria-label="Customizations"
+        data-testid="customizations-section"
+        className={cn(
+          "flex min-h-0 flex-col overflow-y-auto border-t border-sidebar-border px-1 pb-1",
+          // Once sized, the section may shrink so the footer stays visible on short windows.
+          fraction === null ? "max-h-[40%] shrink-0" : "shrink",
+        )}
+        style={
+          fraction === null
+            ? undefined
+            : { height: `${fraction * 100}%`, minHeight: COLLAPSED_HEIGHT_PX }
+        }
+      >
+        <div className="flex h-7 shrink-0 items-center px-2 text-xs font-semibold text-sidebar-foreground">
+          Customizations
         </div>
-      )}
-    </section>
+        {scope ? (
+          <CustomizationFolders scope={scope} />
+        ) : (
+          <div className="px-2 pb-1 text-3xs text-secondary-label">
+            Open a session to see its tools
+          </div>
+        )}
+      </section>
+    </>
   );
 });
