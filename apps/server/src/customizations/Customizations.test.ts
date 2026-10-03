@@ -243,6 +243,7 @@ describe("Customizations", () => {
       yield* put(path.join(codexDir, "prompts", "notes.txt"), "ignored");
       yield* put(path.join(workspace, "AGENTS.md"), "rules");
       yield* put(path.join(codexDir, "auth.json"), "{}");
+      yield* put(path.join(codexDir, "config.toml"), "[mcp_servers.x]\ncommand = 'secret'");
 
       const { items } = yield* customizations.list({ cwd: workspace });
       const codex = items
@@ -252,8 +253,11 @@ describe("Customizations", () => {
       expect(codex).toEqual([
         "agent:user:review",
         "instructions:workspace:AGENTS.md",
+        "mcp:user:config.toml",
         "skill:user:deploy",
       ]);
+      expect(items.find((item) => item.name === "config.toml")).toMatchObject({ readOnly: true });
+      expect(items.map((item) => item.description ?? "").join()).not.toContain("secret");
       expect(items.find((item) => item.name === "deploy")?.description).toBe("ships it");
     }).pipe(Effect.scoped, Effect.provide(TestLayer)),
   );

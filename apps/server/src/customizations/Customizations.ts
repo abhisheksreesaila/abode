@@ -384,6 +384,20 @@ const make = Effect.gen(function* () {
       });
     }
 
+    // Codex declares MCP servers in config.toml; the file opens read-only (values are never parsed).
+    const codexConfigPath = path.join(codexDir, "config.toml");
+    if (yield* exists(codexConfigPath)) {
+      items.push({
+        kind: "mcp",
+        name: "config.toml",
+        description: "Codex MCP servers and settings (read-only)",
+        path: codexConfigPath,
+        scope: "user",
+        readOnly: true,
+        harness: "codex",
+      });
+    }
+
     const agentRoots: ReadonlyArray<readonly [string, CustomizationScope]> = [
       [path.join(configDir, "agents"), "user"],
       [path.join(workspaceRoot, ".claude", "agents"), "workspace"],

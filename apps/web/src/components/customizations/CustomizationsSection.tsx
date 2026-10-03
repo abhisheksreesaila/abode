@@ -303,7 +303,7 @@ export function ItemRow({
       >
         <span className="min-w-0 flex-1 truncate">{item.name}</span>
         <Badge size="sm" variant="outline">
-          Claude
+          {item.harness === "codex" ? "Codex" : "Claude"}
         </Badge>
         <Badge size="sm" variant={item.scope === "user" ? "info" : "secondary"}>
           {item.scope}

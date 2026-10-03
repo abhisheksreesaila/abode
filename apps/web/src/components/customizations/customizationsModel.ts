@@ -93,8 +93,8 @@ export function describeCustomizationsError(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong.";
 }
 
-const HOME_CLAUDE_SEGMENT = /\/\.claude(?:\.json|\/)/;
-const WORKSPACE_ROOT_FILES = new Set(["CLAUDE.md", "CLAUDE.local.md", ".mcp.json"]);
+const HOME_CLAUDE_SEGMENT = /\/\.(?:claude(?:\.json|\/)|codex\/)/;
+const WORKSPACE_ROOT_FILES = new Set(["CLAUDE.md", "CLAUDE.local.md", ".mcp.json", "AGENTS.md"]);
 
 function normalizeRoot(cwd: string): string {
   return cwd.replaceAll("\\", "/").replace(/\/+$/, "");
@@ -104,7 +104,7 @@ function normalizeRoot(cwd: string): string {
  * Whether a path opens in the customizations editor even when the list has not
  * been loaded this session (a restored side panel tab). Workspace files are only
  * the project root's `CLAUDE.md`, `CLAUDE.local.md`, `.mcp.json` and `.claude/`
- * (never `.claude/worktrees/`); outside the project, only `~/.claude*` paths.
+ * (never `.claude/worktrees/`), `AGENTS.md`; outside the project, only `~/.claude*` and `~/.codex/` paths.
  * `panelCwd` is the thread's own cwd: a worktree's files belong to the normal
  * file panel. The server enforces its own allowlist regardless.
  */
@@ -125,7 +125,7 @@ export function isCustomizationPath(input: {
   return HOME_CLAUDE_SEGMENT.test(path);
 }
 
-/** Workspace files show relative to the workspace; user files show as `~/.claude/...`. */
+/** Workspace files show relative to the workspace; user files show as `~/.claude/...` or `~/.codex/...`. */
 export function displayCustomizationPath(path: string, cwd: string): string {
   const normalized = path.replaceAll("\\", "/");
   const root = normalizeRoot(cwd);
