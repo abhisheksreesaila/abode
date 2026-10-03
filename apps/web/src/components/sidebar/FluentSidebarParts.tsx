@@ -12,23 +12,15 @@ const SQUARE_TONE_CLASS: Record<ThreadSquareTone, string> = {
 };
 
 /**
- * The sidebar's top row (abode F-035): "Workspaces", with New, filter and search
+ * The row under the sidebar's top strip (abode F-035, F-047): "Workspaces", with New, filter and search
  * on the right.
  */
 export function SidebarSessionsHeader({ children }: { readonly children?: ReactNode }) {
   return (
     <>
-      {isElectron ? (
-        <div
-          aria-hidden
-          className="drag-region shrink-0"
-          style={{ height: "var(--titlebar-reserve, 0px)" }}
-        />
-      ) : null}
       <div
         className={cn(
-          // md:pl-11 clears the floating sidebar toggle (AppSidebarLayout), which sits over the sidebar on desktop.
-          "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5 md:pl-11 md:group-has-[[data-header-sidebar-toggle]]/sidebar-wrapper:pl-3",
+          "flex h-[35px] shrink-0 items-center justify-between pl-3 pr-1.5",
           isElectron && "drag-region",
         )}
       >

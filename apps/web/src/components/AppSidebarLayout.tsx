@@ -269,9 +269,6 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   });
   const sidebarProviderStyle = {
     "--sidebar-width": `${sidebarWidth}px`,
-    // macOS window controls overlay the top of the sidebar; headers start below them.
-    "--titlebar-reserve":
-      isMacosDesktop && !isWindowFullscreen ? "var(--workspace-topbar-height)" : "0px",
     "--panel-animation-duration": `${panelAnimationDurationMs}ms`,
     ...(isMacosDesktop && !isWindowFullscreen
       ? { "--workspace-controls-left": MACOS_TRAFFIC_LIGHTS_LEFT_INSET }
