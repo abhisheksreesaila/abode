@@ -1,4 +1,4 @@
-import { ChevronRightIcon } from "lucide-react";
+import { FolderIcon, FolderOpenIcon, MessagesSquareIcon } from "lucide-react";
 import { memo } from "react";
 
 import { cn } from "../../lib/utils";
@@ -12,45 +12,39 @@ const COUNT_PILL_TONE = {
 } as const satisfies Record<Exclude<WorkspacePillKind, "failed">, string>;
 
 /**
- * The inside of a workspace row (abode F-028, Fluent): one line with a chevron,
- * an 8px square color dot, the name, a dim location, and on the right a count
- * pill or a red "failed". The pill stays visible while the workspace is collapsed.
+ * The inside of a workspace row (abode F-035, like the reference): a folder icon
+ * tinted with the workspace color, the name, and on the right a count pill or a red
+ * "failed". The folder opens while expanded; the no-project folder reads "Chats"
+ * with a chat icon. The pill stays visible while collapsed.
  */
 export const WorkspaceHeaderContent = memo(function WorkspaceHeaderContent(props: {
   readonly name: string;
-  readonly location: string;
+  /** The no-project folder. */
+  readonly chats?: boolean;
   readonly color: string | null;
   readonly expanded: boolean;
   readonly pill: WorkspacePill | null;
   readonly groupedProjectCount: number;
 }) {
-  const { name, location, color, expanded, pill, groupedProjectCount } = props;
+  const { name, chats = false, color, expanded, pill, groupedProjectCount } = props;
+  const Icon = chats ? MessagesSquareIcon : expanded ? FolderOpenIcon : FolderIcon;
   const pillView = pill ? workspacePillView(pill) : null;
   return (
     <>
-      <ChevronRightIcon
-        className={cn(
-          "size-3 shrink-0 text-muted-foreground/70 transition-transform duration-150",
-          expanded && "rotate-90",
-        )}
-      />
-      <span
+      <Icon
         aria-hidden
-        className="size-2 shrink-0 rounded-xs bg-muted"
-        style={color ? { backgroundColor: color } : undefined}
+        className="size-3.5 shrink-0 text-sidebar-muted-foreground"
+        style={color && !chats ? { color } : undefined}
       />
       <span className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
         <span className="min-w-0 truncate text-xs font-semibold text-sidebar-foreground">
-          {name}
+          {chats ? "Chats" : name}
         </span>
         {groupedProjectCount > 1 ? (
           <span className="shrink-0 text-secondary-label text-3xs">
             {groupedProjectCount} projects
           </span>
         ) : null}
-        <span className="min-w-0 shrink-100 truncate text-3xs font-normal text-secondary-label">
-          {location}
-        </span>
       </span>
       {pill && pillView ? (
         <Tooltip>

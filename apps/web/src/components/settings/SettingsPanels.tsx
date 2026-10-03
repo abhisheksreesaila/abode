@@ -2175,7 +2175,7 @@ function LegacyFeaturesSection() {
             />
             <SettingsRow
               {...searchableSetting("legacy-sidebar")}
-              description="Restore per-project thread trees instead of the default flat sidebar."
+              description="Group sessions by project (the default). Turn off for the flat inbox sidebar."
               control={
                 <Switch
                   checked={settings.legacySidebarEnabled}

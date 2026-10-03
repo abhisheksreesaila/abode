@@ -196,13 +196,18 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
   );
 });
 
-export const SidebarChromeFooter = memo(function SidebarChromeFooter() {
+export const SidebarChromeFooter = memo(function SidebarChromeFooter({
+  sessions = false,
+}: {
+  /** The Sessions sidebar: account items live in the activity bar (abode F-035). */
+  readonly sessions?: boolean;
+}) {
   return (
     <SidebarFooter>
       <SidebarThreadUndoNotice />
       <SidebarProviderUpdatePill />
       <SidebarUpdateArchitectureWarning />
-      <SidebarFooterList />
+      <SidebarFooterList sessions={sessions} />
     </SidebarFooter>
   );
 });
