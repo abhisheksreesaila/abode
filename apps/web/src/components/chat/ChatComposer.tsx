@@ -5884,7 +5884,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const insertComposerText = useCallback(
     (
       text: string,
-      position: "cursor" | "end",
+      position: "cursor" | "end" | number,
       options?: {
         ensureLeadingBoundary?: boolean;
         citationCommentAnchor?: AssistantCitationSourceAnchor;
@@ -5905,7 +5905,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         text = importPastedComposerText(options.clipboardData, importContextFragment);
       }
       const prompt = promptRef.current;
-      const cursor = position === "cursor" ? readComposerSnapshot().expandedCursor : prompt.length;
+      const cursor =
+        typeof position === "number"
+          ? Math.max(0, Math.min(prompt.length, position))
+          : position === "cursor"
+            ? readComposerSnapshot().expandedCursor
+            : prompt.length;
       const needsLeadingSpace =
         (options?.ensureLeadingBoundary ?? false) &&
         cursor > 0 &&
@@ -6389,7 +6394,20 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         pendingUserInputs.length > 0 ||
         projectSelectionRequired
       }
-      onTranscript={(text) => insertComposerText(text, "cursor", { ensureLeadingBoundary: true })}
+      onProvisionalStart={() => {
+        // The editor is hidden while the phone composer is collapsed; open it so the words show.
+        if (isComposerCollapsedMobile) expandMobileComposer();
+        composerEditorRef.current?.provisionalDictation.begin();
+      }}
+      onProvisionalText={(text) => composerEditorRef.current?.provisionalDictation.update(text)}
+      onProvisionalEnd={() => {
+        composerEditorRef.current?.provisionalDictation.end();
+      }}
+      onTranscript={(text) => {
+        // The final text replaces the provisional range where it was pinned, as one edit.
+        const anchor = composerEditorRef.current?.provisionalDictation.end() ?? null;
+        return insertComposerText(text, anchor ?? "cursor", { ensureLeadingBoundary: true });
+      }}
     />
   );
 

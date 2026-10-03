@@ -2601,3 +2601,11 @@ html[data-theme-id="abode"]:not([data-theme-id=""]) {
     height: calc(100svh - var(--status-bar-height));
   }
 }
+
+/* Live dictation text (voice/provisionalDictation.ts): a widget, never document content. */
+.composer-voice-provisional {
+  color: var(--muted-foreground);
+  font-style: italic;
+  pointer-events: none;
+  user-select: none;
+}

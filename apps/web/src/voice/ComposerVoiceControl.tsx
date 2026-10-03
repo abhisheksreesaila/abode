@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MicIcon, SquareIcon } from "lucide-react";
 
 import { Button } from "../components/ui/button";
@@ -44,25 +44,75 @@ export function describeVoiceStatus(state: RecordingState, elapsedSeconds = 0): 
 }
 
 /**
+ * What the composer should show as provisional text for a recording state: the live words (or
+ * the model download), `undefined` to leave the current text as is, `null` when there is none.
+ */
+export function provisionalTextFor(state: RecordingState): string | null | undefined {
+  switch (state.status) {
+    case "recording":
+      return previewLabel(state) ?? "";
+    case "transcribing":
+      // Keep the last words on screen until the final text replaces them.
+      return state.downloadProgress === null
+        ? undefined
+        : previewLabel({ downloadProgress: state.downloadProgress });
+    default:
+      return null;
+  }
+}
+
+/**
  * Mic button and hold-to-talk key for the composer footer. Transcripts go to `onTranscript`
  * and are never sent; the user still presses Enter. Renders nothing when voice is off.
  */
 export function ComposerVoiceControl({
   onTranscript,
+  onProvisionalStart,
+  onProvisionalText,
+  onProvisionalEnd,
   disabled = false,
 }: {
+  /** Recording began: pin the insertion point. */
+  onProvisionalStart: () => void;
+  /** The live text to show (empty string for none yet). Called at most once per interim tick. */
+  onProvisionalText: (text: string) => void;
+  /** Dictation ended without a transcript (cancelled or failed): drop the provisional text. */
+  onProvisionalEnd: () => void;
   /** Returns false when the composer could not take the text. */
   onTranscript: (text: string) => boolean;
   /** The composer cannot accept text right now (connecting, approval, pending question). */
   disabled?: boolean;
 }) {
   const { settings } = useVoiceSettings();
+  // Only when the composer cannot take the text is it shown here, so it is never lost.
+  const [fallbackText, setFallbackText] = useState<string | null>(null);
   const { state, toggle } = useVoiceDictation({
     enabled: settings.enabled,
     canStart: !disabled,
     shortcut: settings.shortcut,
-    onTranscript,
+    onTranscript: (text) => {
+      const inserted = onTranscript(text);
+      if (!inserted) setFallbackText(text);
+      return inserted;
+    },
   });
+  const handlersRef = useRef({ onProvisionalStart, onProvisionalText, onProvisionalEnd });
+  useEffect(() => {
+    handlersRef.current = { onProvisionalStart, onProvisionalText, onProvisionalEnd };
+  });
+  const previousStatusRef = useRef(state.status);
+  useEffect(() => {
+    const handlers = handlersRef.current;
+    const wasRecording = previousStatusRef.current === "recording";
+    previousStatusRef.current = state.status;
+    if (state.status === "recording" && !wasRecording) {
+      setFallbackText(null);
+      handlers.onProvisionalStart();
+    }
+    const text = provisionalTextFor(state);
+    if (text === null) handlers.onProvisionalEnd();
+    else if (text !== undefined) handlers.onProvisionalText(text);
+  }, [state]);
   const recording = state.status === "recording";
   const elapsed = useElapsedSeconds(recording);
   if (!settings.enabled) return null;
@@ -70,17 +120,22 @@ export function ComposerVoiceControl({
   const status = describeVoiceStatus(state, elapsed);
   const busy = state.status === "transcribing";
   const label = recording ? "Stop dictation" : "Dictate";
-  const preview = state.status === "recording" ? previewLabel(state) : null;
   return (
     <div className="relative flex items-center gap-2">
-      {preview ? (
-        // Muted ghost of what has been heard so far; the real text lands on release.
-        <p
-          data-voice-interim="true"
-          className="pointer-events-none absolute right-0 bottom-full mb-2 w-72 max-w-[70vw] rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs italic text-muted-foreground shadow-sm"
+      {fallbackText ? (
+        <div
+          role="alert"
+          className="absolute right-0 bottom-full mb-2 flex w-72 max-w-[70vw] items-start gap-2 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs text-muted-foreground shadow-sm"
         >
-          {preview}
-        </p>
+          <p className="min-w-0 flex-1 select-text break-words">{fallbackText}</p>
+          <button
+            type="button"
+            className="shrink-0 underline"
+            onClick={() => setFallbackText(null)}
+          >
+            Dismiss
+          </button>
+        </div>
       ) : null}
       {status ? (
         <span

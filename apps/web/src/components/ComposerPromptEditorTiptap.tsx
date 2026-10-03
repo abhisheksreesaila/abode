@@ -6,6 +6,12 @@ import { type Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { splitBlockKeepMarks } from "@tiptap/pm/commands";
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import {
+  beginProvisionalDictation,
+  ComposerVoiceProvisionalExtension,
+  endProvisionalDictation,
+  setProvisionalDictation,
+} from "../voice/provisionalDictation";
 import type {
   AssistantCitation,
   ComposerContextClipboardFragment,
@@ -84,6 +90,16 @@ export interface ComposerPromptEditorHandle {
   focusAtEnd: () => void;
   readSelectionRange: () => { start: number; end: number };
   requestCitationComment: (request: ComposerCitationCommentRequest) => void;
+  /**
+   * Live dictation: a muted widget at the caret, never document content. `begin` pins it,
+   * `update` replaces its text, `end` removes it and returns the markdown offset where it was
+   * (null when none was active) so the final transcript can land there.
+   */
+  provisionalDictation: {
+    begin: () => void;
+    update: (text: string) => void;
+    end: () => number | null;
+  };
   readSnapshot: () => {
     value: string;
     cursor: number;
@@ -677,6 +693,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
   const citationRequestRef = useRef<ComposerCitationCommentRequest | null>(null);
   const [openCitation, setOpenCitation] = useState<OpenCitationComment | null>(null);
   const [isEmpty, setIsEmpty] = useState(value.length === 0);
+  const [hasProvisional, setHasProvisional] = useState(false);
 
   const citationCommentActions = useMemo(
     () => ({
@@ -806,6 +823,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
         ComposerCitationExtension,
         ComposerContextReferenceExtension,
         ComposerMarkersExtension,
+        ComposerVoiceProvisionalExtension,
         ...(richText
           ? [
               ComposerCodeExtension,
@@ -1249,6 +1267,26 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
           });
         }
       },
+      provisionalDictation: {
+        begin: () => {
+          if (!editor) return;
+          beginProvisionalDictation(editor.view);
+        },
+        update: (text) => {
+          if (!editor) return;
+          setProvisionalDictation(editor.view, text);
+          setHasProvisional(text.length > 0);
+        },
+        end: () => {
+          setHasProvisional(false);
+          if (!editor) return null;
+          const anchor = endProvisionalDictation(editor.view);
+          if (anchor === null) return null;
+          const map = serializeEditorDoc(editor.state.doc);
+          const flat = pmToFlat(map, anchor);
+          return Math.max(0, Math.min(map.value.length, flatToMarkdown(map, flat)));
+        },
+      },
       readSnapshot,
       isCaretOnVisualEdge: (edge) => {
         const snapshot = readSnapshot();
@@ -1368,7 +1406,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
               onCopyCapture={(event) => handleCopyCut(event, false)}
               onCutCapture={(event) => handleCopyCut(event, true)}
             />
-            {isEmpty && contextRecords.size === 0 && placeholder ? (
+            {isEmpty && !hasProvisional && contextRecords.size === 0 && placeholder ? (
               <div
                 className={cn(
                   "pointer-events-none absolute inset-0 leading-relaxed text-placeholder/75",
