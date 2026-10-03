@@ -29,6 +29,7 @@ const RIGHT_PANEL_KINDS = [
   "terminal",
   "pull-request",
   "pull-requests",
+  "pull-request-list",
   "agents",
 ] as const;
 export type RightPanelKind = (typeof RIGHT_PANEL_KINDS)[number];
@@ -87,6 +88,8 @@ export type RightPanelSurface =
     }
   /** The thread's linked pull requests, one singleton tab beside any number of `pull-request` tabs. */
   | { id: "pull-requests"; kind: "pull-requests" }
+  /** Client-only (abode F-049): the workspace's pull request list, whose rows open `pull-request` tabs. */
+  | { id: "pull-request-list"; kind: "pull-request-list" }
   | { id: "agents"; kind: "agents" };
 
 const RIGHT_PANEL_STORAGE_KEY = "t3code:right-panel-state:v2";
@@ -207,6 +210,8 @@ export const singletonSurface = (
       return { id: "files", kind };
     case "pull-requests":
       return { id: "pull-requests", kind };
+    case "pull-request-list":
+      return { id: "pull-request-list", kind };
     case "agents":
       return { id: "agents", kind };
     case "device":

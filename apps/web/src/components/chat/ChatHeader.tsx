@@ -32,6 +32,8 @@ import ProjectScriptsControl, {
 import { OpenInPicker } from "./OpenInPicker";
 import { HeaderNavControls } from "./HeaderNavControls";
 import { TopBarAccountControls, TopBarAccountMenuItems } from "./TopBarAccountControls";
+import { usePullRequestsSupported } from "../../hooks/usePullRequestsSupported";
+import { PullRequestGlyph } from "../pullRequest/pullRequestIcons";
 import { TranscriptModeMenuItems } from "./TranscriptModeMenuItems";
 import { useRemoteOpenState, type RemoteOpenMode } from "../../remoteOpen";
 import { usePrimaryEnvironmentId } from "../../state/environments";
@@ -177,6 +179,7 @@ export const ChatHeader = memo(function ChatHeader({
     () => scopeThreadRef(activeThreadEnvironmentId, activeThreadId),
     [activeThreadEnvironmentId, activeThreadId],
   );
+  const pullRequestsSupported = usePullRequestsSupported();
   const updateThreadMetadata = useAtomCommand(threadEnvironment.updateMetadata, {
     reportFailure: false,
   });
@@ -339,7 +342,17 @@ export const ChatHeader = memo(function ChatHeader({
               they must survive the menu closing. */}
           <MenuPopup keepMounted aria-label="Header actions" align="end">
             <TranscriptModeMenuItems />
-            {actionsCollapsed ? <TopBarAccountMenuItems /> : null}
+            {actionsCollapsed ? <TopBarAccountMenuItems includePullRequests={false} /> : null}
+            {pullRequestsSupported ? (
+              <MenuItem
+                onClick={() =>
+                  useRightPanelStore.getState().open(activeThreadRef, "pull-request-list")
+                }
+              >
+                <PullRequestGlyph.pullRequest className="size-4" />
+                <MenuItemLabel>Pull requests</MenuItemLabel>
+              </MenuItem>
+            ) : null}
             {activeProjectName ? (
               <MenuItem
                 onClick={() => useRightPanelStore.getState().open(activeThreadRef, "changes")}

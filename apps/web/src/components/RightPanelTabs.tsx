@@ -129,6 +129,7 @@ interface RightPanelTabsProps {
   onAddFiles: () => void;
   onAddPullRequest: () => void;
   onAddPullRequests: () => void;
+  onAddPullRequestList: () => void;
   onAddAgents: () => void;
   onAddDevice: () => void;
   browserAvailable: boolean;
@@ -137,6 +138,7 @@ interface RightPanelTabsProps {
   filesAvailable: boolean;
   pullRequestAvailable: boolean;
   pullRequestsAvailable: boolean;
+  pullRequestListAvailable: boolean;
   agentsAvailable: boolean;
   deviceAvailable: boolean;
   pullRequestStatusSeeds?: Readonly<Record<string, PullRequestTabStatusSeed>>;
@@ -168,6 +170,7 @@ const SURFACE_DISABLED_REASONS = {
   diff: "Diff is only available for server threads in Git repositories.",
   pullRequest: "This thread's branch has no pull request yet.",
   pullRequests: "No linked pull requests are available for this thread.",
+  pullRequestList: "No connected server can list pull requests.",
   agents: "Subagents are only available from a thread.",
   device: "Devices are only available from a thread.",
 } as const;
@@ -192,6 +195,7 @@ const SURFACE_UNAVAILABLE_HINTS = {
   diff: "Available for Git repositories.",
   pullRequest: "No pull request on this branch yet.",
   pullRequests: "No linked pull requests available.",
+  pullRequestList: "No connected server can list pull requests.",
   agents: "Available from a thread.",
   device: "Available from a thread.",
 } as const;
@@ -332,6 +336,7 @@ function RightPanelEmptyState(props: {
   onAddFiles: () => void;
   onAddPullRequest: () => void;
   onAddPullRequests: () => void;
+  onAddPullRequestList: () => void;
   onAddAgents: () => void;
   onAddDevice: () => void;
   browserAvailable: boolean;
@@ -340,6 +345,7 @@ function RightPanelEmptyState(props: {
   filesAvailable: boolean;
   pullRequestAvailable: boolean;
   pullRequestsAvailable: boolean;
+  pullRequestListAvailable: boolean;
   agentsAvailable: boolean;
   deviceAvailable: boolean;
   liveAgentCount: number;
@@ -355,6 +361,16 @@ function RightPanelEmptyState(props: {
       available: props.browserAvailable,
       disabledReason: SURFACE_UNAVAILABLE_HINTS.browser,
       onClick: props.onAddBrowser,
+      badgeCount: 0,
+    },
+    {
+      label: "Pull requests",
+      description: "Browse pull requests across your workspace.",
+      icon: PullRequestGlyph.pullRequest,
+      shortcut: "R",
+      available: props.pullRequestListAvailable,
+      disabledReason: SURFACE_UNAVAILABLE_HINTS.pullRequestList,
+      onClick: props.onAddPullRequestList,
       badgeCount: 0,
     },
     {
@@ -637,6 +653,8 @@ function surfaceTitle(
     case "pull-request":
       return `#${surface.number}`;
     case "pull-requests":
+      return "Linked PRs";
+    case "pull-request-list":
       return "Pull requests";
     case "agents":
       return "Subagents";
@@ -725,6 +743,8 @@ function SurfaceIcon({
       );
     case "pull-requests":
       return <PullRequestGlyph.link className="size-3 shrink-0" />;
+    case "pull-request-list":
+      return <PullRequestGlyph.pullRequest className="size-3 shrink-0" />;
     case "agents":
       return <Bot className="size-3 shrink-0" />;
     case "device":
@@ -888,6 +908,14 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
       available: props.browserAvailable,
       disabledReason: SURFACE_DISABLED_REASONS.browser,
       onClick: props.onAddBrowser,
+    },
+    {
+      label: "Pull requests",
+      icon: PullRequestGlyph.pullRequest,
+      shortcut: "R",
+      available: props.pullRequestListAvailable,
+      disabledReason: SURFACE_DISABLED_REASONS.pullRequestList,
+      onClick: props.onAddPullRequestList,
     },
     {
       label: "Terminal",
@@ -1426,6 +1454,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
             onAddFiles={props.onAddFiles}
             onAddPullRequest={props.onAddPullRequest}
             onAddPullRequests={props.onAddPullRequests}
+            onAddPullRequestList={props.onAddPullRequestList}
             onAddAgents={props.onAddAgents}
             onAddDevice={props.onAddDevice}
             browserAvailable={props.browserAvailable}
@@ -1434,6 +1463,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
             filesAvailable={props.filesAvailable}
             pullRequestAvailable={props.pullRequestAvailable}
             pullRequestsAvailable={props.pullRequestsAvailable}
+            pullRequestListAvailable={props.pullRequestListAvailable}
             agentsAvailable={props.agentsAvailable}
             deviceAvailable={props.deviceAvailable}
             liveAgentCount={props.liveAgentCount}

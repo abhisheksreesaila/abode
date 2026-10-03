@@ -52,6 +52,5 @@ export function useRouteSectionFade() {
     });
     return () => animation.cancel();
     // Only a path change should start a fade, not a settings change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 }
