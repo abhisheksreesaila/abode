@@ -38,7 +38,16 @@ function CustomizationsCount({ scope }: { readonly scope: CustomizationsScope })
  * strip reached stays reachable: Settings (now in the activity bar), Pull requests, Usage (the usage row's
  * popover links to the page), Back on utility pages, and the update pill.
  */
-export const SidebarFooterList = memo(function SidebarFooterList() {
+export const SidebarFooterList = memo(function SidebarFooterList({
+  sessions = false,
+}: {
+  /**
+   * The Sessions sidebar (abode F-035): the activity bar holds these items, so the account
+   * rows show on phones only, without Customizations (the sidebar lists those itself).
+   * The update pill stays on every width.
+   */
+  readonly sessions?: boolean;
+}) {
   const navigate = useNavigate();
   const navigateToMainApp = useNavigateToMainApp();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -71,50 +80,54 @@ export const SidebarFooterList = memo(function SidebarFooterList() {
 
   return (
     <div className="flex flex-col">
-      <SidebarSectionHeader label="Account" />
-      {isOnUtilityPage ? (
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={goBack}>
-              <ArrowLeftIcon />
-              <span>Back</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      ) : null}
-      {pullRequestsSupported ? (
+      <div className={sessions ? "flex flex-col md:hidden" : "contents"}>
+        {sessions ? null : <SidebarSectionHeader label="Account" />}
+        {isOnUtilityPage ? (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={goBack}>
+                <ArrowLeftIcon />
+                <span>Back</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        ) : null}
+        {pullRequestsSupported ? (
+          <SidebarFooterRow
+            color="pr"
+            icon={<PullRequestGlyph.pullRequest />}
+            title="Pull Requests"
+            onClick={openPullRequests}
+          />
+        ) : null}
+        <SidebarUsageStatus onOpenUsagePage={openUsage} />
+        {sessions ? null : (
+          <SidebarFooterRow
+            color="customizations"
+            icon={<SparklesIcon />}
+            title="Customizations"
+            aria-expanded={customizationsExpanded}
+            disabled={!customizationsScope}
+            subtitle={customizationsScope ? undefined : "Open a thread"}
+            end={customizationsScope ? <CustomizationsCount scope={customizationsScope} /> : null}
+            onClick={() => setCustomizationsExpanded((current) => !current)}
+          />
+        )}
         <SidebarFooterRow
-          color="pr"
-          icon={<PullRequestGlyph.pullRequest />}
-          title="Pull Requests"
-          onClick={openPullRequests}
+          color="phone"
+          icon={<SmartphoneIcon />}
+          title="Phone & Remote"
+          onClick={openConnections}
         />
-      ) : null}
-      <SidebarUsageStatus onOpenUsagePage={openUsage} />
-      <SidebarFooterRow
-        color="customizations"
-        icon={<SparklesIcon />}
-        title="Customizations"
-        aria-expanded={customizationsExpanded}
-        disabled={!customizationsScope}
-        subtitle={customizationsScope ? undefined : "Open a thread"}
-        end={customizationsScope ? <CustomizationsCount scope={customizationsScope} /> : null}
-        onClick={() => setCustomizationsExpanded((current) => !current)}
-      />
-      <SidebarFooterRow
-        color="phone"
-        icon={<SmartphoneIcon />}
-        title="Phone & Remote"
-        onClick={openConnections}
-      />
-      {/* Desktop widths reach Settings from the activity bar; phones have no rail. */}
-      <SidebarFooterRow
-        className="md:hidden"
-        color="settings"
-        icon={<SettingsIcon />}
-        title="Settings"
-        onClick={openSettings}
-      />
+        {/* Desktop widths reach Settings from the activity bar; phones have no rail. */}
+        <SidebarFooterRow
+          className="md:hidden"
+          color="settings"
+          icon={<SettingsIcon />}
+          title="Settings"
+          onClick={openSettings}
+        />
+      </div>
       <SidebarMenu>
         <SidebarUpdatePill />
       </SidebarMenu>

@@ -266,7 +266,7 @@ function GroupRows({
   );
 }
 
-function ItemRow({
+export function ItemRow({
   item,
   disabled,
   onOpen,

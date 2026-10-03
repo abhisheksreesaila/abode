@@ -12,10 +12,10 @@ const SQUARE_TONE_CLASS: Record<ThreadSquareTone, string> = {
 };
 
 /**
- * The sidebar's top row (abode F-028): "AGENTS" with the sidebar's existing
- * actions on the right.
+ * The sidebar's top row (abode F-035): "Sessions", with New, filter and search
+ * on the right.
  */
-export function SidebarAgentsHeader({ children }: { readonly children?: ReactNode }) {
+export function SidebarSessionsHeader({ children }: { readonly children?: ReactNode }) {
   return (
     <>
       {isElectron ? (
@@ -31,9 +31,7 @@ export function SidebarAgentsHeader({ children }: { readonly children?: ReactNod
           isElectron && "drag-region",
         )}
       >
-        <span className="text-3xs font-medium uppercase tracking-wide text-sidebar-muted-foreground">
-          Agents
-        </span>
+        <span className="text-sm font-semibold text-sidebar-foreground">Sessions</span>
         <div className="flex items-center gap-0.5">{children}</div>
       </div>
     </>
@@ -62,7 +60,7 @@ export function SidebarSectionHeader({
   );
 }
 
-/** The 7px square on a thread row. It does not animate: running is green, not a pulse. */
+/** The small dot on a thread row. It does not animate: running is green, not a pulse. */
 export function ThreadStatusSquare({ statusLabel }: { readonly statusLabel: string | null }) {
   const tone = threadSquareTone(statusLabel);
   return (
@@ -70,7 +68,7 @@ export function ThreadStatusSquare({ statusLabel }: { readonly statusLabel: stri
       role="img"
       aria-label={statusLabel ?? "Idle"}
       data-status-tone={tone}
-      className={cn("size-[7px] shrink-0 rounded-xs", SQUARE_TONE_CLASS[tone])}
+      className={cn("size-1.5 shrink-0 rounded-full", SQUARE_TONE_CLASS[tone])}
     />
   );
 }
