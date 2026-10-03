@@ -39,6 +39,7 @@ export function ComposerPickerRow(props: {
   return (
     <div
       data-chat-composer-picker-row="true"
+      data-composer-context-control
       className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5"
     >
       {picker.shouldShowProjectMenu ? (

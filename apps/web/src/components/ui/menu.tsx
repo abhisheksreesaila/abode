@@ -17,9 +17,16 @@ function MenuTrigger({ className, children, ...props }: MenuPrimitive.Trigger.Pr
   );
 }
 
+const menuPopupSizeClassName = {
+  default: "max-w-[calc(100vw-2rem)]",
+  // Pickers: never wider than ~360px, so long descriptions clamp instead of stretching the menu.
+  compact: "max-w-[min(22.5rem,calc(100vw-2rem))]",
+} as const;
+
 function MenuPopup({
   children,
   className,
+  size = "default",
   sideOffset = 4,
   align = "center",
   alignOffset,
@@ -34,6 +41,7 @@ function MenuPopup({
   side?: MenuPrimitive.Positioner.Props["side"];
   anchor?: MenuPrimitive.Positioner.Props["anchor"];
   keepMounted?: boolean;
+  size?: keyof typeof menuPopupSizeClassName;
 }) {
   return (
     <MenuPrimitive.Portal keepMounted={keepMounted}>
@@ -54,7 +62,8 @@ function MenuPopup({
             // the topmost row would stay unhoverable without this opt-out.
             "[-webkit-app-region:no-drag]",
             // Menus size to their content from one minimum, never past the viewport.
-            "min-w-[min(10rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)]",
+            "min-w-[min(10rem,calc(100vw-2rem))]",
+            menuPopupSizeClassName[size],
             className,
           )}
           data-slot="menu-popup"

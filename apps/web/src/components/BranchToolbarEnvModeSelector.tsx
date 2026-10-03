@@ -19,8 +19,12 @@ import {
 } from "./ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 
-import { ComposerSelectControl } from "./chat/ComposerControl";
-import { CHIP_TINT_CLASS_NAMES, resolveWorkspaceTint } from "./chat/chipTint";
+import {
+  ComposerSelectControl,
+  composerTintClassName,
+  type ComposerControlLook,
+} from "./chat/ComposerControl";
+import { resolveWorkspaceTint } from "./chat/chipTint";
 import { cn } from "~/lib/utils";
 
 const PREVIOUS_WORKTREE_SELECT_VALUE = "previous-worktree";
@@ -34,6 +38,7 @@ interface BranchToolbarEnvModeSelectorProps {
   previousWorktreeLabel?: string | null;
   previousWorktreeBranch?: string | null;
   onUsePreviousWorktree?: () => void;
+  look?: ComposerControlLook;
 }
 
 export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSelector({
@@ -45,6 +50,7 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
   previousWorktreeLabel,
   previousWorktreeBranch = null,
   onUsePreviousWorktree,
+  look = "default",
 }: BranchToolbarEnvModeSelectorProps) {
   const composerFloatingLayerProps = useComposerMenuProps();
   const workspaceTint = resolveWorkspaceTint(
@@ -69,7 +75,7 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
           render={<span />}
           className={cn(
             "inline-flex h-7 min-w-0 items-center gap-1 rounded-md border border-transparent px-1.75 font-normal text-muted-foreground/70 text-xs sm:h-6",
-            CHIP_TINT_CLASS_NAMES[workspaceTint],
+            composerTintClassName(look, workspaceTint),
           )}
           data-composer-context-control
         >
@@ -113,6 +119,7 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
           render={
             <ComposerSelectControl
               size="xs"
+              look={look}
               tint={workspaceTint}
               className="min-w-0 shrink"
               aria-label="Workspace"
@@ -142,6 +149,7 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
       </Tooltip>
       <SelectPopup
         alignItemWithTrigger={false}
+        size="compact"
         className={showPreviousWorktree ? "w-[min(21rem,calc(100vw-2rem))]" : undefined}
         {...composerFloatingLayerProps}
       >

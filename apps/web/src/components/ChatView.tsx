@@ -1681,6 +1681,10 @@ export default function ChatView(props: ChatViewProps) {
   useStatusBarComposerControls(composerRef);
   const branchToolbarRef = useRef<BranchToolbarHandle>(null);
   const pasteAsTextShortcutUntilRef = useRef(0);
+  // Hosts above and below the composer's glass box for its picker row and plain
+  // status row; the composer portals into them.
+  const [composerTopRowHost, setComposerTopRowHost] = useState<HTMLDivElement | null>(null);
+  const [composerStatusRowHost, setComposerStatusRowHost] = useState<HTMLDivElement | null>(null);
   const [restingComposerControlsHost, setRestingComposerControlsHost] =
     useState<HTMLDivElement | null>(null);
   const [restingComposerControlsVisible, setRestingComposerControlsVisible] = useState(false);
@@ -10119,6 +10123,7 @@ export default function ChatView(props: ChatViewProps) {
                         : undefined
                     }
                   >
+                    <div ref={setComposerTopRowHost} data-chat-composer-top-row-host="true" />
                     <ComposerSurface.Shell contextStrip={showComposerContextStrip}>
                       <ComposerSurface.Host>
                         <div ref={attachDraftHeroComposerAnchorRef} className="relative z-10">
@@ -10213,10 +10218,16 @@ export default function ChatView(props: ChatViewProps) {
                               supportsPullRequests ? activeProjectRepository : null
                             }
                             restingControlsHost={restingComposerControlsHost}
+                            topRowHost={composerTopRowHost}
+                            statusRowHost={composerStatusRowHost}
                             {...(hasComposerContextControls
                               ? {
-                                  contextControls: (
-                                    <BranchToolbar ref={branchToolbarRef} {...branchToolbarProps} />
+                                  contextControls: (look) => (
+                                    <BranchToolbar
+                                      ref={branchToolbarRef}
+                                      look={look}
+                                      {...branchToolbarProps}
+                                    />
                                   ),
                                   contextControlsShortcuts,
                                   contextControlsMenu: (
@@ -10304,6 +10315,11 @@ export default function ChatView(props: ChatViewProps) {
                         </div>
                       </div>
                     </ComposerSurface.Shell>
+                    <div
+                      ref={setComposerStatusRowHost}
+                      data-chat-composer-status-row-host="true"
+                      className="@container/composer-surface"
+                    />
                     <div
                       aria-hidden
                       className="h-[calc(env(safe-area-inset-bottom)+1rem)] sm:h-[calc(env(safe-area-inset-bottom)+1.25rem)]"
