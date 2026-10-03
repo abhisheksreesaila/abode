@@ -8,3 +8,4 @@
 - The one sanctioned contract-default change: `legacySidebarEnabled` defaults to true (approved by Abhishek 2026-10-02). Re-check it on every upstream merge.
 - Don't delete upstream files the fork stops using (e.g. the inbox Sidebar.tsx). Leave them unused: deleting them causes a modify/delete conflict on every monthly upstream merge.
 - Builders must only edit inside their own worktree. Before each merge, check that the main checkout's `git status` is clean; a builder once leaked an uncommitted edit into main.
+- Upstream Orchestration V2 (protocol 2) refuses V1 peers in both directions. Before pulling upstream, check `ORCHESTRATION_PROTOCOL_VERSION` and the official mobile app's version. A protocol bump breaks the phone until abode follows.

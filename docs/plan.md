@@ -576,6 +576,24 @@ North Star: everything here is web-client only, with no contract or server chang
   - The primary send arrow is unchanged.
   - Done through variants and theme tokens, not className restyles.
 
+## Phase 3b: move abode onto upstream Orchestration V2 (after the trip)
+
+### F-051: Rebase abode onto Orchestration V2
+
+- **Status:** todo
+- **Why:** upstream #2829 (merged 2026-10-02) rewrote orchestration with protocol version 2. V2 servers and clients refuse V1 peers. Once the official iPhone app ships V2, it stops connecting to a V1 abode.
+- **Size:** 1,907 files upstream; a dry-run merge with abode showed 62 conflicting files.
+- **Approach:** start from upstream V2 and re-apply abode's features, which are mostly new files plus small hooks:
+  - voice;
+  - theme and fonts;
+  - the sidebar and Customizations;
+  - the editor;
+  - the top bar and composer;
+  - the drawer;
+  - delights.
+    Rebuild Autonomous mode on V2's task/delegation API (some of it may already exist upstream).
+- **Until then:** keep iPhone automatic updates off for T3 Code.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
