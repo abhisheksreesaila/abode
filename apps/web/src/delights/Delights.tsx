@@ -2,13 +2,7 @@ import { memo } from "react";
 
 import { useNowMinuteSelector } from "../hooks/useNowMinute";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../components/ui/tooltip";
-import {
-  greetingForHour,
-  isCoffeeTime,
-  isFridayShipTime,
-  minuteToDate,
-  sendTooltip,
-} from "./delights.logic";
+import { greetingForHour, isCoffeeTime, minuteToDate, sendTooltip } from "./delights.logic";
 import { useDelightsEnabled } from "./delightsSetting";
 
 /**
@@ -57,13 +51,6 @@ export function useWelcomeGreeting(): string | null {
     greetingForHour(minuteToDate(minute).getHours()),
   );
   return enabled ? greeting : null;
-}
-
-/** True on Friday afternoons, with delights on. */
-export function useFridayShipIt(): boolean {
-  const enabled = useDelightsEnabled();
-  const friday = useNowMinuteSelector((minute) => isFridayShipTime(minuteToDate(minute)));
-  return enabled && friday;
 }
 
 /** The Send tooltip text for right now, or null for no tooltip. */

@@ -1,11 +1,6 @@
 import type { DraftId } from "~/composerDraftStore";
 import type { ScopedProjectRef } from "@t3tools/contracts";
-import { useAtomValue } from "@effect/atom-react";
 
-import { shortcutLabelForCommand } from "~/keybindings";
-import { primaryServerKeybindingsAtom } from "~/state/server";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { InlineButton } from "../ui/button";
 import { useDraftProjectPicker } from "./DraftProjectPicker";
 import { ProjectWelcome } from "./ProjectWelcome";
 
@@ -26,14 +21,10 @@ export function DraftHeroHeadline({
     hasResolvedProject,
     isScratchDraft,
     openAddProject,
-    scratchWorkspaceRoot,
     shouldShowProjectMenu,
-    startScratch,
     activeProject,
     activeProjectDisplayName,
   } = picker;
-  const keybindings = useAtomValue(primaryServerKeybindingsAtom);
-
   // The composer's picker row owns choosing the workspace; the headline only
   // names it. With nothing to choose from, it still offers to add a project.
   const projectSelector = shouldShowProjectMenu ? (
@@ -60,35 +51,6 @@ export function DraftHeroHeadline({
         ? `${activeProjectDisplayName ?? "Choose a project"} to start`
         : "Add a project to start";
 
-  // One click out of the project, phrased as the alternative to the question
-  // above it. Focus moves to the project picker once this line has gone.
-  const noProjectShortcut = shortcutLabelForCommand(keybindings, "chat.newWithoutProject");
-  const orStartWithoutProject =
-    scratchWorkspaceRoot !== null && !isScratchDraft && (hasResolvedProject || canChooseProject) ? (
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <InlineButton
-              tone="muted"
-              className="pointer-events-auto"
-              onClick={() =>
-                void startScratch().then((started) => {
-                  if (started) {
-                    document
-                      .querySelector<HTMLElement>("[data-composer-workspace-picker]")
-                      ?.focus();
-                  }
-                })
-              }
-            />
-          }
-        >
-          or start without a project
-        </TooltipTrigger>
-        {noProjectShortcut ? <TooltipPopup side="bottom">{noProjectShortcut}</TooltipPopup> : null}
-      </Tooltip>
-    ) : null;
-
   const plainHeadline = (
     <h1
       aria-label={headingLabel}
@@ -110,16 +72,10 @@ export function DraftHeroHeadline({
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center">
       {hasResolvedProject && !isScratchDraft && activeProject ? (
         <ProjectWelcome
-          draftId={draftId}
           project={{ ...activeProject, title: activeProjectDisplayName ?? activeProject.title }}
         />
       ) : (
         plainHeadline
-      )}
-      {/* Reserved whenever threads can skip a project, so the heading does not
-          move. Holds the "start without a project" link. */}
-      {scratchWorkspaceRoot === null ? null : (
-        <p className="mt-2 flex h-6 items-center text-sm">{orStartWithoutProject}</p>
       )}
     </div>
   );
