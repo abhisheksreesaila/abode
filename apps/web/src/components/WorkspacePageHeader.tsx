@@ -2,6 +2,7 @@ import type { ComponentPropsWithoutRef } from "react";
 
 import { cn } from "../lib/utils";
 import { TopBarAccountControls, TopBarAccountOverflowMenu } from "./chat/TopBarAccountControls";
+import { UtilityBackButton } from "./UtilityBackButton";
 import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "../workspaceTitlebar";
 
 /** Shared workspace top-bar geometry. */
@@ -15,7 +16,7 @@ export function WorkspacePageHeader({
 }: ComponentPropsWithoutRef<"header"> & {
   readonly electron?: boolean;
   readonly reserveNativeControls?: boolean;
-  /** Pull requests, usage, Phone & Remote and Settings at the right end (F-044). */
+  /** Usage and Settings at the right end (F-044, trimmed in F-049). */
   readonly accountControls?: boolean;
 }) {
   return (
@@ -29,6 +30,7 @@ export function WorkspacePageHeader({
       )}
       {...props}
     >
+      <UtilityBackButton />
       {children}
       {accountControls ? (
         <div className="ms-auto flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
