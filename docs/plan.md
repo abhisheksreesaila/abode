@@ -473,6 +473,55 @@ Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current 
 - **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** two top tabs: Changes (F-033's list) and Files (the tree). Browser, Diff and Editor stay as the existing tabs or modes.
 
+## Phase 2h: final simplification (2026-10-02 late)
+
+Screenshot: `docs/design/current-abode-2026-10-02-late.png`. Reference: `docs/design/ref-agents-window.png`.
+
+**Vocabulary:** a workspace is a project folder; a session (T3 calls it a thread) is a conversation inside a workspace.
+
+### F-041: Clean canvas
+
+- **Status:** doing
+- **What:**
+  - A new session in a workspace shows only the title "What should we build in <workspace>?" (the greeting line may stay, small).
+  - Removed:
+    - the starter cards;
+    - the path, host and branch chips;
+    - the "Ship it Friday" chip;
+    - the thread count;
+    - "or start without a project".
+  - Nothing overlaps the top bar.
+
+### F-042: One sidebar: workspaces with their sessions
+
+- **Status:** doing
+- **What:**
+  - Always render the workspace-grouped Sessions sidebar: remove the inbox mode and its setting from the UI. The contract field stays and is ignored.
+  - The header reads "WORKSPACES".
+  - Remove the left icon rail and the ACCOUNT footer.
+
+### F-043: Customizations as folders, with +
+
+- **Status:** doing
+- **What:**
+  - The always-open Customizations section has folders: Skills, Agents, Instructions, MCP Servers.
+  - Click a file to open it in the editor.
+  - Click + on a folder to open a dialog:
+    - name;
+    - harness (Claude / Codex);
+    - scope (this workspace / all workspaces);
+    - a pre-filled template with the right front matter.
+  - Save writes the file to that harness's real location and opens it.
+  - Codex locations (`~/.codex/skills/<name>/SKILL.md`, `~/.codex/prompts/<name>.md`, `AGENTS.md`) need an add-only extension of the server write allowlist.
+
+### F-044: Quiet top bar with account icons
+
+- **Status:** doing
+- **What:**
+  - Remove the search button (the centre box and Ctrl+K stay).
+  - Top-right small flat icons: Pull requests, Claude Max usage (popover), Phone & Remote, Settings.
+  - VS Code-like flat icon buttons: no borders, 16px icons, subtle hover.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
