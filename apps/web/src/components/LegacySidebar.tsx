@@ -79,6 +79,7 @@ import { isMacPlatform } from "../lib/utils";
 import { useSidebarPendingFileDropStore } from "../sidebarPendingFileDropStore";
 import { makeWorkspaceFileDropHandlers } from "./chat/workspaceFileDrop";
 import {
+  readEnvironmentSupportsPinning,
   readThreadShell,
   useProjects,
   useThreadShells,
@@ -196,9 +197,10 @@ import { useSessionDiffStore } from "./sidebar/sessionDiffStore";
 import {
   chatsProjectsFirst,
   formatSessionMeta,
-  sumCheckpointDiff,
+  netCheckpointDiff,
 } from "./sidebar/sessionsSections";
 import { useIsChatsProject } from "./sidebar/useChatsProjectPredicate";
+import { registerThreadContextMenu } from "./sidebar/threadContextMenuRegistry";
 import { SessionMetaLine } from "./sidebar/SessionMetaLine";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useIsMobile } from "~/hooks/useMediaQuery";
@@ -260,10 +262,14 @@ function SidebarThreadDetailPrewarmer({ threadRef }: { readonly threadRef: Scope
   const state = useEnvironmentThread(threadRef.environmentId, threadRef.threadId);
   const checkpoints = Option.getOrNull(state.data)?.checkpoints;
   const setSessionDiff = useSessionDiffStore((store) => store.set);
+  const clearSessionDiff = useSessionDiffStore((store) => store.clear);
+  const diffThreadKey = scopedThreadKey(threadRef);
   // Session rows show +N −M for the threads whose detail is already loaded here.
   useEffect(() => {
-    if (checkpoints) setSessionDiff(scopedThreadKey(threadRef), sumCheckpointDiff(checkpoints));
-  }, [checkpoints, setSessionDiff, threadRef]);
+    setSessionDiff(diffThreadKey, checkpoints ? netCheckpointDiff(checkpoints) : null);
+  }, [checkpoints, setSessionDiff, diffThreadKey]);
+  // Once this thread is no longer watched the numbers would go stale: drop them.
+  useEffect(() => () => clearSessionDiff(diffThreadKey), [clearSessionDiff, diffThreadKey]);
   return null;
 }
 
@@ -990,6 +996,8 @@ interface SidebarProjectThreadListProps {
   orderedProjectThreadKeys: readonly string[];
   renderedThreads: readonly SidebarThreadSummary[];
   showEmptyThreadState: boolean;
+  /** The no-project folder: its empty row reads "No chats". */
+  isChats: boolean;
   shouldShowThreadPanel: boolean;
   activeRouteThreadKey: string | null;
   openPullRequestsInRightPanel: boolean;
@@ -1046,6 +1054,7 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
     orderedProjectThreadKeys,
     renderedThreads,
     showEmptyThreadState,
+    isChats,
     shouldShowThreadPanel,
     activeRouteThreadKey,
     openPullRequestsInRightPanel,
@@ -1089,7 +1098,7 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
             data-thread-selection-safe
             className="flex h-[22px] w-full translate-x-0 items-center px-2 text-left text-xs text-sidebar-muted-foreground/75"
           >
-            <span>No threads yet</span>
+            <span>{isChats ? "No chats" : "No threads yet"}</span>
           </div>
         </SidebarMenuSubItem>
       ) : null}
@@ -1286,6 +1295,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
     },
   });
   const openPrLink = useOpenPrLink();
+  const { pinThread, confirmAndUnpinThread } = useThreadActions();
   const sidebarThreads = useThreadShellsForProjectRefs(project.memberProjectRefs);
   const sidebarThreadByKey = useMemo(
     () =>
@@ -1768,8 +1778,12 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
 
         const clicked = await api.contextMenu.show(
           [
-            buildTargetedItem("rename", "Rename"),
-            buildTargetedItem("grouping", "Group into..."),
+            ...(isChatsProject
+              ? []
+              : [
+                  buildTargetedItem("rename", "Rename"),
+                  buildTargetedItem("grouping", "Group into..."),
+                ]),
             buildTargetedItem("copy-path", "Copy Path"),
             buildWorkspaceColorMenuItem(),
             { id: "project-settings", label: "Project settings", icon: "settings" },
@@ -2264,6 +2278,13 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
             ? [{ id: "new-thread-on-branch", label: `New thread on ${thread.branch}` }]
             : []),
           { id: "rename", label: "Rename thread" },
+          ...(readEnvironmentSupportsPinning(thread.environmentId)
+            ? [
+                thread.pinnedAt
+                  ? { id: "unpin", label: "Unpin thread" }
+                  : { id: "pin", label: "Pin thread" },
+              ]
+            : []),
           { id: "mark-unread", label: "Mark unread" },
           { id: "copy-path", label: "Copy Path" },
           { id: "copy-thread-id", label: "Copy Thread ID" },
@@ -2308,6 +2329,22 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
 
       if (clicked === "rename") {
         startThreadRename(threadKey, thread.title);
+        return;
+      }
+
+      if (clicked === "pin" || clicked === "unpin") {
+        const result =
+          clicked === "pin" ? await pinThread(threadRef) : await confirmAndUnpinThread(threadRef);
+        if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+          const error = squashAtomCommandFailure(result);
+          toastManager.add(
+            stackedThreadToast({
+              type: "error",
+              title: clicked === "pin" ? "Failed to pin thread" : "Failed to unpin thread",
+              description: error instanceof Error ? error.message : "An error occurred.",
+            }),
+          );
+        }
         return;
       }
 
@@ -2360,6 +2397,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
     },
     [
       appSettingsConfirmThreadDelete,
+      confirmAndUnpinThread,
       copyPathToClipboard,
       copyThreadIdToClipboard,
       deleteThread,
@@ -2367,12 +2405,22 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       isMobile,
       markThreadUnread,
       memberProjectByScopedKey,
+      pinThread,
       project.projectKey,
       project.workspaceRoot,
       router,
       setOpenMobile,
       startThreadRename,
     ],
+  );
+  // The Automations and Pinned rows open this same menu for threads that live here.
+  useEffect(
+    () =>
+      registerThreadContextMenu(
+        project.memberProjectRefs.map((ref) => scopedProjectKey(ref)),
+        handleThreadContextMenu,
+      ),
+    [handleThreadContextMenu, project.memberProjectRefs],
   );
 
   return (
@@ -2430,6 +2478,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         orderedProjectThreadKeys={orderedProjectThreadKeys}
         renderedThreads={renderedThreads}
         showEmptyThreadState={showEmptyThreadState}
+        isChats={isChatsProject}
         shouldShowThreadPanel={shouldShowThreadPanel}
         activeRouteThreadKey={activeRouteThreadKey}
         openPullRequestsInRightPanel={openPullRequestsInRightPanel}
@@ -2684,7 +2733,7 @@ function ProjectSortMenu({
         >
           <ListFilterIcon className="size-3.5" />
         </TooltipTrigger>
-        <TooltipPopup side="bottom">Filter and sort</TooltipPopup>
+        <TooltipPopup side="bottom">Filter, sort and add project</TooltipPopup>
       </Tooltip>
       <MenuPopup align="end" side="bottom">
         <MenuGroup>
@@ -3420,14 +3469,27 @@ export default function LegacySidebar() {
     () => getSidebarThreadIdsToPrewarm(visibleSidebarThreadKeys),
     [visibleSidebarThreadKeys],
   );
-  const prewarmedSidebarThreadRefs = useMemo(
-    () =>
-      prewarmedSidebarThreadKeys.flatMap((threadKey) => {
-        const ref = parseScopedThreadKey(threadKey);
-        return ref ? [ref] : [];
-      }),
-    [prewarmedSidebarThreadKeys],
-  );
+  const prewarmedSidebarThreadRefs = useMemo(() => {
+    const refs = prewarmedSidebarThreadKeys.flatMap((threadKey) => {
+      const ref = parseScopedThreadKey(threadKey);
+      return ref ? [ref] : [];
+    });
+    // The open thread is always watched, so its row's diff stays current too.
+    const activeKey = routeThreadRef ? scopedThreadKey(routeThreadRef) : null;
+    if (
+      routeThreadRef &&
+      activeKey !== null &&
+      !prewarmedSidebarThreadKeys.includes(activeKey) &&
+      sidebarThreads.some(
+        (thread) =>
+          thread.environmentId === routeThreadRef.environmentId &&
+          thread.id === routeThreadRef.threadId,
+      )
+    ) {
+      refs.push(routeThreadRef);
+    }
+    return refs;
+  }, [prewarmedSidebarThreadKeys, routeThreadRef, sidebarThreads]);
 
   useEffect(() => {
     updateThreadJumpHintsVisibility(shouldShowThreadJumpHintsNow);

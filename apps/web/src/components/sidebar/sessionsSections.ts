@@ -58,21 +58,25 @@ export interface DiffStat {
   readonly deletions: number;
 }
 
-/** Lines changed across a thread's ready checkpoints; null when nothing changed. */
-export function sumCheckpointDiff(
+/**
+ * The thread's net change (+N −M against its base), or null when the client cannot tell.
+ * A checkpoint's files are that turn's diff, so they only equal the net change while the
+ * thread has a single ready checkpoint; across turns the same lines are rewritten and
+ * summing would overstate the change, so no counts show then.
+ */
+export function netCheckpointDiff(
   checkpoints: ReadonlyArray<{
     readonly status: string;
     readonly files: ReadonlyArray<{ readonly additions: number; readonly deletions: number }>;
   }>,
 ): DiffStat | null {
+  const ready = checkpoints.filter((checkpoint) => checkpoint.status === "ready");
+  if (ready.length !== 1) return null;
   let additions = 0;
   let deletions = 0;
-  for (const checkpoint of checkpoints) {
-    if (checkpoint.status !== "ready") continue;
-    for (const file of checkpoint.files) {
-      additions += file.additions;
-      deletions += file.deletions;
-    }
+  for (const file of ready[0]!.files) {
+    additions += file.additions;
+    deletions += file.deletions;
   }
   return additions === 0 && deletions === 0 ? null : { additions, deletions };
 }

@@ -4,8 +4,9 @@ import {
   chatsProjectsFirst,
   formatSessionMeta,
   groupSessionSections,
-  sumCheckpointDiff,
+  netCheckpointDiff,
 } from "./sessionsSections";
+import { useSessionDiffStore } from "./sessionDiffStore";
 
 const thread = (
   id: string,
@@ -63,19 +64,45 @@ describe("chatsProjectsFirst", () => {
   });
 });
 
-describe("sumCheckpointDiff", () => {
-  it("adds up ready checkpoints only", () => {
+describe("netCheckpointDiff", () => {
+  it("reports a single ready checkpoint, whose diff is the net change", () => {
     expect(
-      sumCheckpointDiff([
-        { status: "ready", files: [{ additions: 3, deletions: 1 }] },
-        { status: "ready", files: [{ additions: 2, deletions: 0 }] },
+      netCheckpointDiff([
+        {
+          status: "ready",
+          files: [
+            { additions: 3, deletions: 1 },
+            { additions: 2, deletions: 0 },
+          ],
+        },
         { status: "error", files: [{ additions: 100, deletions: 100 }] },
       ]),
     ).toEqual({ additions: 5, deletions: 1 });
   });
+  it("omits the counts across several turns instead of summing churn", () => {
+    expect(
+      netCheckpointDiff([
+        { status: "ready", files: [{ additions: 3, deletions: 1 }] },
+        { status: "ready", files: [{ additions: 2, deletions: 0 }] },
+      ]),
+    ).toBeNull();
+  });
   it("is null when nothing changed", () => {
-    expect(sumCheckpointDiff([])).toBeNull();
-    expect(sumCheckpointDiff([{ status: "ready", files: [] }])).toBeNull();
+    expect(netCheckpointDiff([])).toBeNull();
+    expect(netCheckpointDiff([{ status: "ready", files: [] }])).toBeNull();
+  });
+});
+
+describe("session diff store", () => {
+  it("forgets a thread once it is no longer watched", () => {
+    const { set, clear } = useSessionDiffStore.getState();
+    set("env:t1", { additions: 4, deletions: 2 });
+    expect(useSessionDiffStore.getState().byThreadKey["env:t1"]).toEqual({
+      additions: 4,
+      deletions: 2,
+    });
+    clear("env:t1");
+    expect(useSessionDiffStore.getState().byThreadKey["env:t1"]).toBeUndefined();
   });
 });
 

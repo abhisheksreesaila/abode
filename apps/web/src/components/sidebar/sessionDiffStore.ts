@@ -5,6 +5,8 @@ import type { DiffStat } from "./sessionsSections";
 interface SessionDiffState {
   readonly byThreadKey: Readonly<Record<string, DiffStat | null>>;
   readonly set: (threadKey: string, stat: DiffStat | null) => void;
+  /** Forget a thread once its detail is no longer watched, so its row cannot go stale. */
+  readonly clear: (threadKey: string) => void;
 }
 
 /**
@@ -27,5 +29,11 @@ export const useSessionDiffStore = create<SessionDiffState>((set) => ({
         return state;
       }
       return { byThreadKey: { ...state.byThreadKey, [threadKey]: stat } };
+    }),
+  clear: (threadKey) =>
+    set((state) => {
+      if (!(threadKey in state.byThreadKey)) return state;
+      const { [threadKey]: _removed, ...rest } = state.byThreadKey;
+      return { byThreadKey: rest };
     }),
 }));

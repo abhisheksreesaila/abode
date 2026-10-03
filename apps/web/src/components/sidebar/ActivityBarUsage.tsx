@@ -10,7 +10,7 @@ import { environmentPresentations } from "../../state/presentation";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { formatUsageTooltip } from "./activityBar";
 import { ActivityBarButton, CELL_CLASS } from "./ActivityBarButton";
-import { UsageLimitsPanel } from "./SidebarUsageStatus";
+import { accountTitle, UsageLimitsPanel } from "./SidebarUsageStatus";
 import {
   compactWindowLabel,
   formatResetAbsolute,
@@ -64,7 +64,7 @@ export const ActivityBarUsage = memo(function ActivityBarUsage({
     : null;
   const label = closest
     ? formatUsageTooltip({
-        accountLabel: closest.account.plan ?? closest.account.displayName ?? "Usage",
+        accountLabel: accountTitle(closest.account),
         usedPercent: closest.window.usedPercent,
         windowLabel: compactWindowLabel(closest.window),
         reset,
@@ -96,7 +96,11 @@ export const ActivityBarUsage = memo(function ActivityBarUsage({
             render={
               <button
                 type="button"
-                aria-label="Usage limits"
+                aria-label={
+                  closest
+                    ? `Usage limits, ${Math.round(closest.window.usedPercent)}% used`
+                    : "Usage limits"
+                }
                 data-testid="activity-bar-usage"
                 data-active={active}
                 data-tone={tone}

@@ -118,32 +118,18 @@ export function CustomizationsSection() {
 }
 
 /**
- * The expanded list. The footer's count reads the same cached query, so the list is
- * already fetched (and kept fresh) whenever a workspace is active.
+ * Creates the first skill or agent file in a workspace, refreshes the list and opens the file.
+ * Shared by the Customizations section and the sidebar's always-visible list.
  */
-function CustomizationsBody({ scope }: { readonly scope: CustomizationsScope }) {
-  const atom = customizationsEnvironment.list({
-    environmentId: scope.environmentId,
-    input: { cwd: scope.cwd },
-  });
-  const result = useAtomValue(atom);
-  const refresh = useAtomRefresh(atom);
+export function useCreateCustomization(input: {
+  readonly scope: CustomizationsScope;
+  readonly items: ReadonlyArray<CustomizationItem> | null;
+  readonly refresh: () => void;
+  readonly openItem: (path: string) => void;
+}) {
+  const { scope, items, refresh, openItem } = input;
   const writeFile = useAtomCommand(customizationsEnvironment.writeFile, { reportFailure: false });
-  const items = Option.getOrNull(AsyncResult.value(result))?.items ?? null;
-  const failure = result._tag === "Failure" ? Cause.squash(result.cause) : null;
-
-  useEffect(() => {
-    if (items) rememberCustomizations(items);
-  }, [items]);
-
-  const openItem = useCallback(
-    (path: string) => {
-      if (scope.threadRef) useRightPanelStore.getState().openFile(scope.threadRef, path);
-    },
-    [scope.threadRef],
-  );
-
-  const createFirst = useCallback(
+  return useCallback(
     async (kind: NewCustomizationKind) => {
       const { name, path } = nextNewCustomization(
         kind,
@@ -170,6 +156,34 @@ function CustomizationsBody({ scope }: { readonly scope: CustomizationsScope }) 
     },
     [items, openItem, refresh, scope.cwd, scope.environmentId, writeFile],
   );
+}
+
+/**
+ * The expanded list. The footer's count reads the same cached query, so the list is
+ * already fetched (and kept fresh) whenever a workspace is active.
+ */
+function CustomizationsBody({ scope }: { readonly scope: CustomizationsScope }) {
+  const atom = customizationsEnvironment.list({
+    environmentId: scope.environmentId,
+    input: { cwd: scope.cwd },
+  });
+  const result = useAtomValue(atom);
+  const refresh = useAtomRefresh(atom);
+  const items = Option.getOrNull(AsyncResult.value(result))?.items ?? null;
+  const failure = result._tag === "Failure" ? Cause.squash(result.cause) : null;
+
+  useEffect(() => {
+    if (items) rememberCustomizations(items);
+  }, [items]);
+
+  const openItem = useCallback(
+    (path: string) => {
+      if (scope.threadRef) useRightPanelStore.getState().openFile(scope.threadRef, path);
+    },
+    [scope.threadRef],
+  );
+
+  const createFirst = useCreateCustomization({ scope, items, refresh, openItem });
 
   const groups = useMemo(() => (items ? groupCustomizations(items) : null), [items]);
 
@@ -204,7 +218,7 @@ function CustomizationsBody({ scope }: { readonly scope: CustomizationsScope }) 
   );
 }
 
-function RefreshButton({ onRefresh }: { readonly onRefresh: () => void }) {
+export function RefreshButton({ onRefresh }: { readonly onRefresh: () => void }) {
   return (
     <button
       type="button"

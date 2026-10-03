@@ -30,7 +30,11 @@ import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../termina
 import { resolveThreadRouteRef } from "../threadRoutes";
 import { cn, isMacPlatform } from "../lib/utils";
 import { primaryServerKeybindingsAtom } from "../state/server";
-import { useEnvironmentIdentificationMode, useLegacySidebarEnabled } from "../hooks/useSettings";
+import {
+  useClientSettingsHydrated,
+  useEnvironmentIdentificationMode,
+  useLegacySidebarEnabled,
+} from "../hooks/useSettings";
 import { useIsMobile } from "../hooks/useMediaQuery";
 import {
   PanelAnimationSuppressionProvider,
@@ -234,6 +238,9 @@ function ProjectProjectionRetention() {
 export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const legacySidebarEnabled = useLegacySidebarEnabled();
+  // Until settings hydrate the sidebar choice is only the schema default: show the empty
+  // shell rather than mount one sidebar and swap it (abode F-035).
+  const settingsHydrated = useClientSettingsHydrated();
   const { active: panelAnimationsActive, durationMs: panelAnimationDurationMs } =
     usePanelAnimationSettings();
   // Settings routes show the settings nav in place of whichever thread
@@ -355,7 +362,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
               <SidebarChromeHeader isElectron={isElectron} />
               <SettingsSidebarNav pathname={pathname} />
             </>
-          ) : legacySidebarEnabled ? (
+          ) : !settingsHydrated ? null : legacySidebarEnabled ? (
             <LegacyThreadSidebar />
           ) : (
             <ThreadSidebar />

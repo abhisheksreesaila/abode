@@ -17,6 +17,7 @@ import { ThreadStatusSquare } from "./FluentSidebarParts";
 import { SessionMetaLine } from "./SessionMetaLine";
 import { useSessionDiffStore } from "./sessionDiffStore";
 import { formatSessionMeta, groupSessionSections } from "./sessionsSections";
+import { showRegisteredThreadContextMenu } from "./threadContextMenuRegistry";
 
 /** Icon and label, the look of the reference's Automations and Pinned headers. */
 function SectionHeader({ icon, label }: { readonly icon: ReactNode; readonly label: string }) {
@@ -53,6 +54,14 @@ const SessionRow = memo(function SessionRow(props: {
       data-testid={`session-row-${thread.id}`}
       data-active={isActive}
       onClick={() => onOpen(threadRef)}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        void showRegisteredThreadContextMenu(
+          scopedProjectKey(scopeProjectRef(thread.environmentId, thread.projectId)),
+          threadRef,
+          { x: event.clientX, y: event.clientY },
+        );
+      }}
       className={cn(
         "flex w-full min-w-0 cursor-pointer items-start gap-2 rounded-xs px-2 py-1 text-left outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
         isActive
