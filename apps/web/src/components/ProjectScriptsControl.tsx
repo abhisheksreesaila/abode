@@ -44,7 +44,13 @@ export type { NewProjectScriptInput, ProjectScriptActionResult };
 const NO_FILE_SCRIPTS: ReadonlyArray<T3ProjectFileScript> = [];
 
 interface ProjectScriptsControlProps {
-  presentation?: "toolbar" | "menu";
+  /**
+   * "manage" is the overflow-menu form: a single "Add action" entry, for a
+   * header whose toolbar already shows the run button (abode F-037).
+   */
+  presentation?: "toolbar" | "menu" | "manage";
+  /** Icon-only toolbar buttons: the labels never reveal at wide widths. */
+  compact?: boolean;
   onRequestMenuClose?: () => void;
   scripts: ReadonlyArray<ProjectScript>;
   /** Scripts declared in the project's checked-in t3.json, offered for import. */
@@ -62,6 +68,7 @@ interface ProjectScriptsControlProps {
 
 export default function ProjectScriptsControl({
   presentation = "toolbar",
+  compact = false,
   onRequestMenuClose,
   scripts,
   fileScripts = NO_FILE_SCRIPTS,
@@ -226,9 +233,19 @@ export default function ProjectScriptsControl({
     </>
   );
 
+  const labelClass = compact
+    ? "sr-only"
+    : "sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5";
+  const buttonWidthClass = compact ? "w-7 sm:w-6" : "w-7 sm:w-6 @3xl/header-actions:w-auto!";
+
   return (
     <>
-      {presentation === "menu" ? (
+      {presentation === "manage" ? (
+        <MenuItem onClick={openAddDialog}>
+          <PlusIcon className="size-4" />
+          <MenuItemLabel>Add action</MenuItemLabel>
+        </MenuItem>
+      ) : presentation === "menu" ? (
         <>
           {primaryScript && (
             <MenuItem
@@ -273,7 +290,7 @@ export default function ProjectScriptsControl({
                 <Button
                   size="xs"
                   variant="outline"
-                  className="w-7 sm:w-6 @3xl/header-actions:w-auto!"
+                  className={buttonWidthClass}
                   aria-label={`Run ${primaryScript.name}`}
                   // The tooltip wrapper replaces data-slot="button", so themed
                   // toolbar styling needs its own hook.
@@ -283,13 +300,11 @@ export default function ProjectScriptsControl({
               }
             >
               <ScriptIcon icon={primaryScript.icon} />
-              <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
-                {primaryScript.name}
-              </span>
+              <span className={labelClass}>{primaryScript.name}</span>
             </TooltipTrigger>
             <TooltipPopup side="top">Run {primaryScript.name}</TooltipPopup>
           </Tooltip>
-          <GroupSeparator className="hidden @3xl/header-actions:block" />
+          <GroupSeparator className={compact ? "hidden" : "hidden @3xl/header-actions:block"} />
           <Menu
             open={actionsMenuOpen.scripts}
             onOpenChange={(open) =>
@@ -313,9 +328,7 @@ export default function ProjectScriptsControl({
         >
           <MenuTrigger render={<Button size="xs" variant="outline" aria-label="Project actions" />}>
             <PlusIcon className="size-3.5" />
-            <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
-              Add action
-            </span>
+            <span className={labelClass}>Add action</span>
             <ChevronDownIcon className="size-3.5" />
           </MenuTrigger>
           <MenuPopup align="end">
@@ -333,7 +346,7 @@ export default function ProjectScriptsControl({
               <Button
                 size="xs"
                 variant="outline"
-                className="w-7 sm:w-6 @3xl/header-actions:w-auto!"
+                className={buttonWidthClass}
                 aria-label="Add action"
                 // The tooltip wrapper replaces data-slot="button", so themed
                 // toolbar styling needs its own hook.
@@ -343,9 +356,7 @@ export default function ProjectScriptsControl({
             }
           >
             <PlusIcon className="size-3.5" />
-            <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
-              Add action
-            </span>
+            <span className={labelClass}>Add action</span>
           </TooltipTrigger>
           <TooltipPopup side="top">Add action</TooltipPopup>
         </Tooltip>

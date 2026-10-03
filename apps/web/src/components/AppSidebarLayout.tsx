@@ -44,6 +44,7 @@ import { ActivityBar } from "./sidebar/ActivityBar";
 import { ACTIVITY_BAR_WIDTH_PX } from "./sidebar/activityBar";
 import { SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import { AppStatusBar } from "./statusBar/AppStatusBar";
+import { useStatusBarEnabled } from "./statusBar/statusBarSetting";
 import { MainAppLocationTracker } from "./sidebar/mainAppLocation";
 import { useSidebarStageBackdropVariant } from "./SidebarStageBackdrop";
 import { useProjects } from "../state/entities";
@@ -233,6 +234,7 @@ function ProjectProjectionRetention() {
 
 export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const statusBarEnabled = useStatusBarEnabled();
   const legacySidebarEnabled = useLegacySidebarEnabled();
   const { active: panelAnimationsActive, durationMs: panelAnimationDurationMs } =
     usePanelAnimationSettings();
@@ -366,7 +368,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
         <SidebarControl />
         <NavigationHistoryShortcuts />
         <MainAppLocationTracker />
-        <AppStatusBar />
+        {statusBarEnabled ? <AppStatusBar /> : null}
       </SidebarProvider>
     </PanelAnimationSuppressionProvider>
   );

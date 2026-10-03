@@ -7,11 +7,12 @@ import { useProjects } from "~/state/entities";
 import { useEnvironmentQuery } from "~/state/query";
 import { vcsEnvironment } from "~/state/vcs";
 
-import { changedFileRows, type ChangedFileRow } from "./changesList";
+import { changesPanelState, type ChangedFileRow } from "./changesList";
 
 /**
- * Files changed in the workspace's working tree, from the VCS status the git
- * controls already subscribe to (no extra polling). Hidden when nothing changed.
+ * The drawer's Changes tab (abode F-040): files changed in the workspace's
+ * working tree, from the VCS status the git controls already subscribe to (no
+ * extra polling), filling the drawer's height. Empty state when nothing changed.
  */
 export function ChangesList(props: {
   environmentId: EnvironmentId;
@@ -20,7 +21,7 @@ export function ChangesList(props: {
   threadRef?: ScopedThreadRef | null | undefined;
   onOpenFile: (relativePath: string) => void;
 }) {
-  const { data: status } = useEnvironmentQuery(
+  const { data: status, error } = useEnvironmentQuery(
     props.cwd
       ? vcsEnvironment.status({ environmentId: props.environmentId, input: { cwd: props.cwd } })
       : null,
@@ -35,9 +36,9 @@ export function ChangesList(props: {
       )?.repositoryIdentity?.rootPath,
     [projects, props.cwd, props.environmentId],
   );
-  const summary = useMemo(
-    () => changedFileRows(status, { workspaceRoot: props.cwd, repositoryRoot }),
-    [status, props.cwd, repositoryRoot],
+  const state = useMemo(
+    () => changesPanelState(status, error, { workspaceRoot: props.cwd, repositoryRoot }),
+    [status, error, props.cwd, repositoryRoot],
   );
   const { threadRef, onOpenFile } = props;
   const openRow = (row: ChangedFileRow) => {
@@ -50,12 +51,28 @@ export function ChangesList(props: {
     }
     onOpenFile(row.path);
   };
-  if (summary.rows.length === 0) return null;
+  if (state.kind !== "changes") {
+    return (
+      <ChangesMessage
+        tone={state.kind === "error" ? "error" : "quiet"}
+        text={
+          state.kind === "loading"
+            ? "Checking for changes…"
+            : state.kind === "error"
+              ? `Could not read changes: ${state.message}`
+              : state.kind === "not-repo"
+                ? "Not a git repository"
+                : "No changes"
+        }
+      />
+    );
+  }
+  const { summary } = state;
 
   return (
-    <details open className="shrink-0 border-b border-border/60" data-changes-list>
-      <summary className="flex h-7 cursor-pointer select-none items-center gap-2 px-3 text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-        <span>Changes</span>
+    <div className="flex min-h-0 flex-1 flex-col" data-changes-list>
+      <div className="flex h-7 shrink-0 items-center gap-2 border-b border-border/60 px-3 text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span>Changed files</span>
         <span className="rounded-full bg-muted px-1.5 text-2xs font-bold normal-case">
           {summary.rows.length}
         </span>
@@ -63,8 +80,8 @@ export function ChangesList(props: {
           <span className="text-success">+{summary.insertions}</span>{" "}
           <span className="text-destructive">-{summary.deletions}</span>
         </span>
-      </summary>
-      <ul className="max-h-48 overflow-y-auto pb-1">
+      </div>
+      <ul className="min-h-0 flex-1 overflow-y-auto py-1">
         {summary.rows.map((row) => (
           <li key={row.path}>
             <button
@@ -102,6 +119,20 @@ export function ChangesList(props: {
           </li>
         ))}
       </ul>
-    </details>
+    </div>
+  );
+}
+
+/** The Changes tab's one-line states: loading, error, not a repository, no changes. */
+export function ChangesMessage(props: { text: string; tone?: "quiet" | "error" }) {
+  return (
+    <div
+      className={`flex min-h-0 flex-1 items-center justify-center px-4 text-center text-sm ${
+        props.tone === "error" ? "text-destructive" : "text-muted-foreground"
+      }`}
+      data-changes-list
+    >
+      {props.text}
+    </div>
   );
 }

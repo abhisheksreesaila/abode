@@ -131,6 +131,7 @@ import {
   TYPOGRAPHY_ADVANCED_STORAGE_KEY,
 } from "../../appearanceFonts";
 import { setDelightsEnabled, useDelightsEnabled } from "../../delights/delightsSetting";
+import { setStatusBarEnabled, useStatusBarEnabled } from "../statusBar/statusBarSetting";
 import { CodeFontPreview, PromptFontPreview, TerminalFontPreview } from "./SettingsFontPreviews";
 import { discoverInstalledFonts, FontFamilyPicker, useFontEnumeration } from "./FontFamilyPicker";
 import {
@@ -1485,6 +1486,7 @@ export function AppearanceSettingsPanel() {
           }
         />
         <LittleDelightsRow />
+        <ShowStatusBarRow />
       </SettingsSection>
 
       <TypographySection />
@@ -1679,6 +1681,28 @@ function FontSmoothingRow() {
           checked={settings.fontSmoothing}
           onCheckedChange={(checked) => updateSettings({ fontSmoothing: Boolean(checked) })}
           aria-label="Font smoothing"
+        />
+      }
+    />
+  );
+}
+
+function ShowStatusBarRow() {
+  const enabled = useStatusBarEnabled();
+  return (
+    <SettingsRow
+      {...searchableSetting("show-status-bar")}
+      description="The strip at the foot of the window with the branch, running sessions, model, context and usage. Off by default; the same info lives in the icon bar and top bar. Stored on this device."
+      resetAction={
+        enabled ? (
+          <SettingResetButton label="show status bar" onClick={() => setStatusBarEnabled(false)} />
+        ) : null
+      }
+      control={
+        <Switch
+          checked={enabled}
+          onCheckedChange={(checked) => setStatusBarEnabled(Boolean(checked))}
+          aria-label="Show status bar"
         />
       }
     />

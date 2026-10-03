@@ -78,10 +78,8 @@ export function formatUsageStatus(closest: StatusWindow | null): string | null {
   return `${accountPlanName(closest.account)} ${Math.round(closest.window.usedPercent)}%`;
 }
 
-/** The title-bar search box text: `project — thread`, or a plain prompt with neither. */
-export function formatTitleSearchLabel(project: string | null, thread: string | null): string {
-  const parts = [project, thread].filter(
-    (part): part is string => !!part && part.trim().length > 0,
-  );
-  return parts.length > 0 ? parts.join(" — ") : "Search";
+/** The top-bar box text: the workspace name, or "New session" when there is none. */
+export function formatTitleSearchLabel(project: string | null): string {
+  const name = project?.trim();
+  return name ? name : "New session";
 }

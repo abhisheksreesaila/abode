@@ -212,6 +212,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["whimsy greetings coffee sparkle friday animations fun"],
   },
   {
+    id: "show-status-bar",
+    title: "Show status bar",
+    to: "/settings/appearance",
+    searchTerms: ["footer bottom branch model usage context running"],
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/appearance",

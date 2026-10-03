@@ -22,6 +22,7 @@ export const WORKSPACE_DRAWER_STORAGE_KEY = "abode:workspace-drawer:v1";
 const WORKSPACE_DRAWER_MAX_RECORDS = 100;
 
 export type WorkspaceDrawerTab =
+  | { kind: "changes" }
   | { kind: "files" }
   | { kind: "diff" }
   | { kind: "preview" }
@@ -47,6 +48,7 @@ function tabOfSurface(
 ): WorkspaceDrawerTab | null {
   if (!surface) return null;
   switch (surface.kind) {
+    case "changes":
     case "files":
     case "diff":
     case "preview":
