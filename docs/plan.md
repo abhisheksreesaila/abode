@@ -461,7 +461,7 @@ Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current 
 
 ### F-039: Composer like the reference
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Workspace and harness pickers sit above the box.
   - Inside the box: the input, +, agent and model.
