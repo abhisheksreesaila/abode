@@ -96,6 +96,7 @@ function Button({ className, variant, size, render, ...props }: ButtonProps) {
     "data-toolbar": variant === "toolbar" ? "" : undefined,
     // Theme hook: abode's flat developer buttons key off the variant (index.css).
     "data-variant": variant ?? "default",
+    "data-size": size ?? "default",
     type: typeValue,
   };
 
