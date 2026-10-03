@@ -45,8 +45,8 @@ export function SidebarToggleControl() {
           pressed={open}
           onPressedChange={toggleSidebar}
           aria-label="Toggle sidebar"
-          variant="ghost"
-          size="sm"
+          variant="toolbar"
+          size="toolbar"
         >
           <PanelLeftIcon className="size-4" />
         </Toggle>
@@ -84,8 +84,8 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
               pressed={terminalOpen}
               onPressedChange={onToggleTerminal}
               aria-label="Toggle terminal drawer"
-              variant="ghost"
-              size="sm"
+              variant="toolbar"
+              size="toolbar"
               disabled={!terminalAvailable}
             >
               <PanelBottomIcon className="size-4" />
@@ -109,8 +109,8 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
                 ? `Toggle right panel, ${liveAgentCount} ${liveAgentCount === 1 ? "subagent" : "subagents"} working`
                 : "Toggle right panel"
             }
-            variant="ghost"
-            size="sm"
+            variant="toolbar"
+            size="toolbar"
             disabled={!rightPanelAvailable}
           >
             <PanelRightIcon className="size-4" />
@@ -155,8 +155,8 @@ export const RightPanelMaximizeControl = memo(function RightPanelMaximizeControl
             pressed={maximized}
             onPressedChange={onToggle}
             aria-label={label}
-            variant="ghost"
-            size="sm"
+            variant="toolbar"
+            size="toolbar"
           >
             {maximized ? (
               <Minimize2Icon className="size-4" />

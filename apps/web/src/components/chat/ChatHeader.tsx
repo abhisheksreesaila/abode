@@ -31,6 +31,7 @@ import ProjectScriptsControl, {
 } from "../ProjectScriptsControl";
 import { OpenInPicker } from "./OpenInPicker";
 import { HeaderNavControls } from "./HeaderNavControls";
+import { TopBarAccountControls, TopBarAccountMenuItems } from "./TopBarAccountControls";
 import { TranscriptModeMenuItems } from "./TranscriptModeMenuItems";
 import { useRemoteOpenState, type RemoteOpenMode } from "../../remoteOpen";
 import { usePrimaryEnvironmentId } from "../../state/environments";
@@ -294,8 +295,9 @@ export const ChatHeader = memo(function ChatHeader({
         className={cn(
           "flex shrink-0 items-center justify-end gap-1",
           // Reserve two panel toggles plus their 4px gaps and 1px edge inset.
-          // The page header adds 8px more right padding at sm.
-          rightPanelOpen ? "pr-0" : "pr-18.25 sm:pr-14.25",
+          // The page header adds 8px more right padding at sm. From md the
+          // account icons (4 x 28px, 4px gaps) sit before the toggles.
+          rightPanelOpen ? "pr-0" : "pr-18.25 sm:pr-14.25 md:pr-46.25",
           "[[data-panel-animations=true]_&]:motion-safe:transition-[padding-right] [[data-panel-animations=true]_&]:motion-safe:duration-(--panel-animation-duration) [[data-panel-animations=true]_&]:motion-safe:ease-out",
         )}
       >
@@ -328,7 +330,9 @@ export const ChatHeader = memo(function ChatHeader({
         </div>
         <Menu open={actionsOpen} onOpenChange={setActionsOpen}>
           <MenuTrigger
-            render={<Button size="icon-sm" variant="ghost" aria-label="More header actions" />}
+            render={
+              <Button size="icon-toolbar" variant="toolbar" aria-label="More header actions" />
+            }
           >
             <EllipsisIcon className="size-4" />
           </MenuTrigger>
@@ -336,6 +340,7 @@ export const ChatHeader = memo(function ChatHeader({
               they must survive the menu closing. */}
           <MenuPopup keepMounted aria-label="Header actions" align="end">
             <TranscriptModeMenuItems />
+            {isMobile ? <TopBarAccountMenuItems /> : null}
             {activeProjectName ? (
               <MenuItem
                 onClick={() => useRightPanelStore.getState().open(activeThreadRef, "changes")}
@@ -381,6 +386,7 @@ export const ChatHeader = memo(function ChatHeader({
             ) : null}
           </MenuPopup>
         </Menu>
+        <TopBarAccountControls />
       </div>
     </div>
   );
