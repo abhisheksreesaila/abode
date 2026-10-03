@@ -2489,13 +2489,13 @@ html[data-theme-id="abode"]:not([data-theme-id=""])
     [data-slot="select-trigger"],
     [data-slot="input-control"],
     [data-slot="textarea-control"]
-  ):not([aria-invalid]):not(:has([aria-invalid])) {
+  ):not([aria-invalid="true"]):not(:has([aria-invalid="true"])) {
   border-color: var(--abode-btn-border);
 }
 html[data-theme-id="abode"]:not([data-theme-id=""])
   :is([data-slot="select-trigger"], [data-slot="input-control"], [data-slot="textarea-control"]):is(
-    [aria-invalid],
-    :has([aria-invalid])
+    [aria-invalid="true"],
+    :has([aria-invalid="true"])
   ) {
   border-color: var(--abode-btn-danger);
 }
@@ -2524,17 +2524,29 @@ html[data-theme-id="abode"]:not([data-theme-id=""])
 html[data-theme-id="abode"]:not([data-theme-id=""]) [data-slot="select-trigger"]:focus-visible,
 html[data-theme-id="abode"]:not([data-theme-id=""])
   :is([data-slot="input-control"], [data-slot="textarea-control"]):focus-within:not(
-    :has([aria-invalid])
+    :has([aria-invalid="true"])
   ) {
   box-shadow: none;
   outline: 1px solid var(--abode-btn-primary);
   outline-offset: -1px;
 }
 html[data-theme-id="abode"]:not([data-theme-id=""])
-  :is([data-slot="button"], [data-slot="select-trigger"]):not([aria-invalid]):focus-visible,
+  [data-slot="button"]:is(
+    [data-variant="default"],
+    [data-variant="destructive"],
+    [data-variant="outline"],
+    [data-variant="destructive-outline"],
+    [data-variant="secondary"],
+    [data-variant="warning-outline"],
+    [data-variant="ghost"],
+    [data-variant="ghost-muted"],
+    [data-variant="ghost-destructive"]
+  ):focus-visible,
+html[data-theme-id="abode"]:not([data-theme-id=""])
+  [data-slot="select-trigger"]:not([aria-invalid="true"]):focus-visible,
 html[data-theme-id="abode"]:not([data-theme-id=""])
   :is([data-slot="input-control"], [data-slot="textarea-control"]):focus-within:not(
-    :has([aria-invalid])
+    :has([aria-invalid="true"])
   ) {
   border-color: var(--abode-btn-primary);
 }
