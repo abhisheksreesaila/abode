@@ -31,13 +31,19 @@ import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import { parse as parseYamlDocument } from "yaml";
 
+import { expandHomePathWith } from "../pathExpansion.ts";
 import { discoverClaudeSkills } from "../provider/Drivers/ClaudeSkills.ts";
 import { resolveClaudeHomePath } from "../provider/Drivers/ClaudeHome.ts";
 import * as ProjectionSnapshotQuery from "../orchestration/Services/ProjectionSnapshotQuery.ts";
 
 const CUSTOMIZATIONS_READ_MAX_BYTES = 1024 * 1024;
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
-const WORKSPACE_WRITABLE_FILES = [".mcp.json", "CLAUDE.md", "CLAUDE.local.md"] as const;
+const WORKSPACE_WRITABLE_FILES = [
+  ".mcp.json",
+  "CLAUDE.md",
+  "CLAUDE.local.md",
+  "AGENTS.md",
+] as const;
 
 export class CustomizationsCwdNotRegisteredError extends Schema.TaggedError<CustomizationsCwdNotRegisteredError>()(
   "CustomizationsCwdNotRegisteredError",
@@ -161,6 +167,32 @@ const make = Effect.gen(function* () {
     Effect.provideService(Path.Path, path),
   );
 
+  /** Codex reads `CODEX_HOME` when set, `~/.codex` otherwise. */
+  const codexHomeDir = () => {
+    const configured = process.env.CODEX_HOME?.trim() ?? "";
+    return configured.length > 0
+      ? path.resolve(expandHomePathWith(configured, path))
+      : path.join(NodeOS.homedir(), ".codex");
+  };
+
+  /**
+   * `~/.claude/...` and `~/.codex/...` name the user-scope folders without the client knowing
+   * the home directory; they map onto the same dirs the lists use (so `CLAUDE_CONFIG_DIR` and
+   * `CODEX_HOME` are honored). Any other path is returned unchanged.
+   */
+  const expandUserScopePath = (requested: string, configDir: string) => {
+    for (const [prefix, root] of [
+      ["~/.claude", configDir],
+      ["~/.codex", codexHomeDir()],
+    ] as const) {
+      if (requested === prefix) return root;
+      if (requested.startsWith(`${prefix}/`)) {
+        return path.join(root, requested.slice(prefix.length + 1));
+      }
+    }
+    return requested;
+  };
+
   /**
    * Claude keeps its global state file inside `CLAUDE_CONFIG_DIR` when that is
    * set, and next to it (`~/.claude.json`) otherwise.
@@ -229,8 +261,11 @@ const make = Effect.gen(function* () {
    *
    * Writable: anything under the Claude config dir (except `.credentials*` and
    * the global state file) and, in the workspace, `.claude/`, `.mcp.json`,
-   * `CLAUDE.md` and `CLAUDE.local.md`. The global state file is readable but
+   * `CLAUDE.md`, `CLAUDE.local.md` and `AGENTS.md`. The global state file is readable but
    * never writable, since it also holds private state.
+   *
+   * Codex: only `<codex home>/skills/**` and `<codex home>/prompts/*.md` are writable;
+   * `config.toml` opens read-only, and everything else there (`auth.json` included) is denied.
    */
   const resolveTarget = Effect.fn("Customizations.resolveTarget")(function* (
     input: { readonly cwd: string; readonly path: string },
@@ -242,16 +277,21 @@ const make = Effect.gen(function* () {
       new CustomizationsPathNotAllowedError({ path: requested, reason });
 
     if (requested.split(/[\\/]/).includes("..")) return yield* denied();
-    const absolutePath = path.resolve(workspaceRoot, requested);
-
     const configDir = yield* resolveConfigDir;
+    const expanded = expandUserScopePath(requested, configDir);
+    const absolutePath = path.resolve(workspaceRoot, expanded);
+    // A `~/` request is answered with the absolute path, so clients can open what they wrote.
+    const resolvedPath = expanded === requested ? input.path : absolutePath;
     const realConfigDir = yield* realPathAllowingMissing(configDir);
     const realWorkspaceRoot = yield* realPathAllowingMissing(workspaceRoot);
     const realClaudeJson = yield* realPathAllowingMissing(claudeJsonPathFor(configDir));
     const realTarget = yield* realPathAllowingMissing(absolutePath);
+    const realCodexHome = yield* realPathAllowingMissing(codexHomeDir());
 
-    if (realTarget === realClaudeJson) {
-      return mode === "read" ? { realTarget, readOnly: true } : yield* denied("read_only");
+    if (realTarget === realClaudeJson || realTarget === path.join(realCodexHome, "config.toml")) {
+      return mode === "read"
+        ? { realTarget, readOnly: true, resolvedPath }
+        : yield* denied("read_only");
     }
 
     const underConfigDir = isInside(realConfigDir, realTarget);
@@ -261,13 +301,19 @@ const make = Effect.gen(function* () {
         .relative(realConfigDir, realTarget)
         .split(path.sep)
         .some((segment) => segment.startsWith(".credentials"));
+    const underCodexSkills = isInside(path.join(realCodexHome, "skills"), realTarget);
+    const isCodexPrompt =
+      path.dirname(realTarget) === path.join(realCodexHome, "prompts") &&
+      realTarget.endsWith(".md");
     const allowed =
       !isCredentials &&
       (underConfigDir ||
+        underCodexSkills ||
+        isCodexPrompt ||
         isInside(path.join(realWorkspaceRoot, ".claude"), realTarget) ||
         WORKSPACE_WRITABLE_FILES.some((file) => realTarget === path.join(realWorkspaceRoot, file)));
     if (!allowed) return yield* denied();
-    return { realTarget, readOnly: false };
+    return { realTarget, readOnly: false, resolvedPath };
   });
 
   const list = Effect.fn("Customizations.list")(function* (input: CustomizationsListInput) {
@@ -292,6 +338,49 @@ const make = Effect.gen(function* () {
         path: skill.path,
         scope: skill.scope === "user" ? "user" : "workspace",
         readOnly: false,
+        harness: "claude",
+      });
+    }
+
+    // Codex: skills are `<codex home>/skills/<name>/SKILL.md`; custom prompts are
+    // `<codex home>/prompts/<name>.md`, listed with the agents.
+    const codexDir = codexHomeDir();
+    const skillDirs = yield* fileSystem
+      .readDirectory(path.join(codexDir, "skills"))
+      .pipe(Effect.orElseSucceed((): ReadonlyArray<string> => []));
+    for (const entry of [...skillDirs].sort()) {
+      if (entry.startsWith(".")) continue;
+      const skillPath = path.join(codexDir, "skills", entry, "SKILL.md");
+      const contents = yield* readText(skillPath);
+      if (contents === undefined) continue;
+      const frontmatter = parseFrontmatter(contents);
+      items.push({
+        kind: "skill",
+        name: frontmatter.name ?? entry,
+        ...(frontmatter.description ? { description: frontmatter.description } : {}),
+        path: skillPath,
+        scope: "user",
+        readOnly: false,
+        harness: "codex",
+      });
+    }
+    const promptFiles = yield* fileSystem
+      .readDirectory(path.join(codexDir, "prompts"))
+      .pipe(Effect.orElseSucceed((): ReadonlyArray<string> => []));
+    for (const entry of [...promptFiles].sort()) {
+      if (!entry.endsWith(".md") || entry.startsWith(".")) continue;
+      const promptPath = path.join(codexDir, "prompts", entry);
+      const contents = yield* readText(promptPath);
+      if (contents === undefined) continue;
+      const frontmatter = parseFrontmatter(contents);
+      items.push({
+        kind: "agent",
+        name: entry.slice(0, -".md".length),
+        ...(frontmatter.description ? { description: frontmatter.description } : {}),
+        path: promptPath,
+        scope: "user",
+        readOnly: false,
+        harness: "codex",
       });
     }
 
@@ -316,6 +405,7 @@ const make = Effect.gen(function* () {
           path: agentPath,
           scope,
           readOnly: false,
+          harness: "claude",
         });
       }
     }
@@ -327,7 +417,7 @@ const make = Effect.gen(function* () {
       readOnly: boolean,
     ) => {
       for (const name of names) {
-        items.push({ kind: "mcp", name, path: filePath, scope, readOnly });
+        items.push({ kind: "mcp", name, path: filePath, scope, readOnly, harness: "claude" });
       }
     };
     const parseJson = (text: string | undefined): unknown => {
@@ -363,8 +453,26 @@ const make = Effect.gen(function* () {
     ];
     for (const [filePath, name, scope] of instructionFiles) {
       if (yield* exists(filePath)) {
-        items.push({ kind: "instructions", name, path: filePath, scope, readOnly: false });
+        items.push({
+          kind: "instructions",
+          name,
+          path: filePath,
+          scope,
+          readOnly: false,
+          harness: "claude",
+        });
       }
+    }
+    const agentsMdPath = path.join(workspaceRoot, "AGENTS.md");
+    if (yield* exists(agentsMdPath)) {
+      items.push({
+        kind: "instructions",
+        name: "AGENTS.md",
+        path: agentsMdPath,
+        scope: "workspace",
+        readOnly: false,
+        harness: "codex",
+      });
     }
 
     // Claude Code lets the most specific settings file name the main agent.
@@ -387,7 +495,7 @@ const make = Effect.gen(function* () {
   const readFile = Effect.fn("Customizations.readFile")(function* (
     input: CustomizationsReadFileInput,
   ) {
-    const { realTarget, readOnly } = yield* resolveTarget(input, "read");
+    const { realTarget, readOnly, resolvedPath } = yield* resolveTarget(input, "read");
     const fileError = (cause: unknown) =>
       new CustomizationsFileError({ path: input.path, operation: "read", cause });
     const info = yield* fileSystem.stat(realTarget).pipe(Effect.mapError(fileError));
@@ -398,20 +506,20 @@ const make = Effect.gen(function* () {
       });
     }
     const contents = yield* fileSystem.readFileString(realTarget).pipe(Effect.mapError(fileError));
-    return { path: input.path, contents, readOnly };
+    return { path: resolvedPath, contents, readOnly };
   });
 
   const writeFile = Effect.fn("Customizations.writeFile")(function* (
     input: CustomizationsWriteFileInput,
   ) {
-    const { realTarget } = yield* resolveTarget(input, "write");
+    const { realTarget, resolvedPath } = yield* resolveTarget(input, "write");
     const fileError = (cause: unknown) =>
       new CustomizationsFileError({ path: input.path, operation: "write", cause });
     yield* fileSystem
       .makeDirectory(path.dirname(realTarget), { recursive: true })
       .pipe(Effect.mapError(fileError));
     yield* fileSystem.writeFileString(realTarget, input.contents).pipe(Effect.mapError(fileError));
-    return { path: input.path, byteLength: Buffer.byteLength(input.contents) };
+    return { path: resolvedPath, byteLength: Buffer.byteLength(input.contents) };
   });
 
   return Customizations.of({ list, readFile, writeFile });
