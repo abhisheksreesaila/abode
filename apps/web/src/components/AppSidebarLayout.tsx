@@ -30,22 +30,14 @@ import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../termina
 import { resolveThreadRouteRef } from "../threadRoutes";
 import { cn, isMacPlatform } from "../lib/utils";
 import { primaryServerKeybindingsAtom } from "../state/server";
-import {
-  useClientSettingsHydrationStatus,
-  useEnvironmentIdentificationMode,
-  useLegacySidebarEnabled,
-} from "../hooks/useSettings";
-import { useIsMobile } from "../hooks/useMediaQuery";
+import { useEnvironmentIdentificationMode } from "../hooks/useSettings";
 import {
   PanelAnimationSuppressionProvider,
   usePanelAnimationSettings,
   usePanelNavigationSuppression,
 } from "../panelAnimations";
 import LegacyThreadSidebar from "./LegacySidebar";
-import ThreadSidebar from "./Sidebar";
 import { SettingsSidebarNav } from "./settings/SettingsSidebarNav";
-import { ActivityBar } from "./sidebar/ActivityBar";
-import { ACTIVITY_BAR_WIDTH_PX } from "./sidebar/activityBar";
 import { SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import { AppStatusBar } from "./statusBar/AppStatusBar";
 import { useStatusBarEnabled } from "./statusBar/statusBarSetting";
@@ -80,20 +72,15 @@ function readViewportWidth(): number {
   return window.innerWidth;
 }
 
-/** Width left for sidebar plus chat once the activity bar (md and up) takes its 48px. */
-function readUsableViewportWidth(): number {
-  return window.innerWidth - (window.innerWidth >= 768 ? ACTIVITY_BAR_WIDTH_PX : 0);
-}
-
 function readInitialThreadSidebarWidth(): number {
   try {
     return resolveInitialThreadSidebarWidth(
       getLocalStorageItem(THREAD_SIDEBAR_WIDTH_STORAGE_KEY, Schema.Finite),
-      readUsableViewportWidth(),
+      readViewportWidth(),
     );
   } catch (error) {
     console.error("Could not read persisted thread sidebar width.", error);
-    return resolveInitialThreadSidebarWidth(null, readUsableViewportWidth());
+    return resolveInitialThreadSidebarWidth(null, readViewportWidth());
   }
 }
 
@@ -239,11 +226,6 @@ function ProjectProjectionRetention() {
 export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const statusBarEnabled = useStatusBarEnabled();
-  const legacySidebarEnabled = useLegacySidebarEnabled();
-  // Until settings hydrate the sidebar choice is only the schema default: show the empty
-  // shell rather than mount one sidebar and swap it (abode F-035).
-  // A failed read keeps the schema default, which is the Sessions sidebar.
-  const settingsStatus = useClientSettingsHydrationStatus();
   const { active: panelAnimationsActive, durationMs: panelAnimationDurationMs } =
     usePanelAnimationSettings();
   // Settings routes show the settings nav in place of whichever thread
@@ -265,10 +247,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   // and a clamped drag ends with an unchanged width, which skips the re-render
   // that would otherwise refresh a render-time snapshot.
   const rawViewportWidth = useSyncExternalStore(subscribeToViewportWidth, readViewportWidth);
-  // The activity bar (F-028) sits left of the sidebar on desktop widths; phones keep the sheet.
-  const isPhone = useIsMobile();
-  const activityBarWidth = isPhone ? 0 : ACTIVITY_BAR_WIDTH_PX;
-  const viewportWidth = rawViewportWidth - activityBarWidth;
+  const viewportWidth = rawViewportWidth;
   const sidebarMaximumWidth = resolveThreadSidebarMaximumWidth(viewportWidth);
   const resetSidebarWidth = () => {
     try {
@@ -286,7 +265,6 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   });
   const sidebarProviderStyle = {
     "--sidebar-width": `${sidebarWidth}px`,
-    "--activity-bar-width": `${activityBarWidth}px`,
     // macOS window controls overlay the top of the sidebar; headers start below them.
     "--titlebar-reserve":
       isMacosDesktop && !isWindowFullscreen ? "var(--workspace-topbar-height)" : "0px",
@@ -343,7 +321,6 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
         style={sidebarProviderStyle}
       >
         <ProjectProjectionRetention />
-        <ActivityBar reserveTitlebar={isMacosDesktop && !isWindowFullscreen} />
         <Sidebar
           side="left"
           collapsible="offcanvas"
@@ -355,7 +332,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
             minWidth: THREAD_SIDEBAR_MIN_WIDTH,
             shouldAcceptWidth: ({ currentWidth, nextWidth, wrapper }) =>
               nextWidth <= currentWidth ||
-              wrapper.clientWidth - activityBarWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
+              wrapper.clientWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
             storageKey: THREAD_SIDEBAR_WIDTH_STORAGE_KEY,
             onResize: setSidebarWidth,
           }}
@@ -365,12 +342,9 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
               <SidebarChromeHeader isElectron={isElectron} />
               <SettingsSidebarNav pathname={pathname} />
             </>
-          ) : settingsStatus === "pending" ||
-            settingsStatus === "retrying" ? null : legacySidebarEnabled ||
-            settingsStatus === "failed" ? (
-            <LegacyThreadSidebar />
           ) : (
-            <ThreadSidebar />
+            // abode always shows the workspace-grouped sidebar; `legacySidebarEnabled` is ignored.
+            <LegacyThreadSidebar />
           )}
           <SidebarRail onDoubleClick={resetSidebarWidth} />
         </Sidebar>
