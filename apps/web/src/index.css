@@ -5,10 +5,6 @@
 @custom-variant light (&:not(.dark, .dark *));
 /* Window Controls Overlay: active when Electron exposes native titlebar control geometry. */
 @custom-variant wco (&:is(.wco, .wco *));
-/* Short windows: the welcome hero drops its cards first, then its extras. */
-@custom-variant short (@media (max-height: 40rem));
-@custom-variant shorter (@media (max-height: 30rem));
-
 /* On mobile, morph the expanded hero composer into the compact docked
    composer while it moves; the rest of the app remains visually stationary. */
 html[data-mobile-composer-route-transition="true"]::view-transition-old(root),
@@ -1342,8 +1338,8 @@ html[data-theme-id] [data-chat-header] {
   color: var(--contrast-toolbar-foreground);
 }
 
-html[data-theme-id] [data-chat-header] [data-slot="button"],
-html[data-theme-id] [data-chat-header] [data-slot="menu-trigger"],
+html[data-theme-id] [data-chat-header] [data-slot="button"]:not([data-toolbar]),
+html[data-theme-id] [data-chat-header] [data-slot="menu-trigger"]:not([data-toolbar]),
 html[data-theme-id] [data-chat-header] [data-toolbar-control] {
   --control-icon-color: var(--contrast-toolbar-control-foreground);
   background-color: var(--toolbar-control);

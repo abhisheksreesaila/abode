@@ -23,6 +23,9 @@ const buttonVariants = cva(
         "icon-lg": "size-10 sm:size-9",
         "icon-micro":
           "size-5 rounded-sm p-0 before:rounded-[calc(var(--radius-sm)-1px)] [&_svg:not([class*='size-'])]:size-3",
+        /** 28px square hit area with a 16px icon: the top bar's VS Code-like buttons. */
+        "icon-toolbar":
+          "size-7 p-0 rounded-md before:rounded-[calc(var(--radius-md)-1px)] [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-4",
         "icon-tiny": "size-4 p-0 [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8 sm:size-7",
         "icon-xl":
@@ -47,6 +50,9 @@ const buttonVariants = cva(
           "border-input bg-popover not-dark:bg-clip-padding text-destructive-foreground shadow-xs/5 not-disabled:not-active:not-data-pressed:before:shadow-[0_1px_--theme(--color-black/4%)] dark:bg-input/32 dark:not-disabled:before:shadow-[0_-1px_--theme(--color-white/2%)] dark:not-disabled:not-active:not-data-pressed:before:shadow-[0_-1px_--theme(--color-white/6%)] [:disabled,:active,[data-pressed]]:shadow-none [:hover,[data-pressed]]:border-destructive/32 [:hover,[data-pressed]]:bg-destructive/4",
         ghost:
           "[--control-icon-color:var(--contrast-muted-foreground)] border-transparent text-foreground data-pressed:bg-accent [:hover,[data-pressed]]:bg-accent",
+        /** Flat top-bar icon button: no border, muted icon, subtle hover background. */
+        toolbar:
+          "[--control-icon-color:currentColor] border-transparent bg-transparent text-muted-foreground shadow-none [&:active:not([aria-haspopup])]:scale-100 data-pressed:bg-accent/70 data-pressed:text-foreground [:hover,[data-pressed]]:bg-accent/60 [:hover,[data-pressed]]:text-foreground",
         "ghost-muted":
           "[--control-icon-color:currentColor] border-transparent text-muted-foreground data-pressed:bg-accent [:hover,[data-pressed]]:bg-accent [:hover,[data-pressed]]:text-foreground",
         "ghost-destructive":
@@ -86,6 +92,8 @@ function Button({ className, variant, size, render, ...props }: ButtonProps) {
   const defaultProps = {
     className: cn(buttonVariants({ className, size, variant })),
     "data-slot": "button",
+    // Lets themed chrome rules leave the flat toolbar buttons alone.
+    "data-toolbar": variant === "toolbar" ? "" : undefined,
     type: typeValue,
   };
 

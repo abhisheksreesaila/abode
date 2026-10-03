@@ -138,8 +138,10 @@ function SidebarControl() {
     // The right-side layout controls carry mr-px (border compensation inside
     // the panel), so the trigger mirrors it: both clusters sit one extra pixel
     // off their edge and the titlebar reads symmetric.
+    // At md and up this is the toggle for pages without a header toggle; a page whose header
+    // renders SidebarToggleControl (data-header-sidebar-toggle) hides it, so one toggle shows.
     <div
-      className="pointer-events-none fixed left-[var(--workspace-controls-left)] top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center"
+      className="pointer-events-none fixed left-[var(--workspace-controls-left)] md:group-has-[[data-header-sidebar-toggle]]/sidebar-wrapper:hidden top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center"
       data-sidebar-control=""
     >
       <Tooltip>
