@@ -594,6 +594,19 @@ North Star: everything here is web-client only, with no contract or server chang
     Rebuild Autonomous mode on V2's task/delegation API (some of it may already exist upstream).
 - **Until then:** keep iPhone automatic updates off for T3 Code.
 
+### F-052: Stream dictation straight into the composer
+
+- **Status:** doing
+- **What:**
+  - While recording, interim text is inserted at the cursor as a provisional range: muted styling, replaced in place on each tick.
+  - On release it becomes normal text (the final transcription replaces the provisional range). Esc removes the range.
+  - The preview bubble is removed. Download progress shows in the mic tooltip or status instead.
+- **Acceptance:**
+  - [ ] Words appear in the composer while speaking.
+  - [ ] Text typed before or after the range is never touched.
+  - [ ] Undo after release removes the dictated text in one step.
+  - [ ] It works on phone width.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
