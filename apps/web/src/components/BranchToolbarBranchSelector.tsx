@@ -59,7 +59,7 @@ import {
   useLinkedThreadPullRequest,
 } from "./ThreadStatusIndicators";
 import { Button } from "./ui/button";
-import { ComposerControl } from "./chat/ComposerControl";
+import { ComposerControl, type ComposerControlLook } from "./chat/ComposerControl";
 import { resolveBranchTint } from "./chat/chipTint";
 import { useTheme } from "../hooks/useTheme";
 import { ABODE_THEME_ID } from "@t3tools/shared/themePalettes";
@@ -87,6 +87,7 @@ interface BranchToolbarBranchSelectorProps {
   forceNewWorktree?: boolean;
   ref?: Ref<BranchToolbarBranchSelectorHandle>;
   className?: string;
+  look?: ComposerControlLook;
   environmentId: EnvironmentId;
   threadId: ThreadId;
   draftId?: DraftId;
@@ -109,7 +110,10 @@ function resolveVisibleAnchor(chip: HTMLElement | null): Element | null {
   const isShown = (element: Element) =>
     element.checkVisibility({ visibilityProperty: true }) && element.closest("[inert]") === null;
   if (isShown(chip)) return null;
-  const shell = chip.closest('[data-slot="composer-shell"]') ?? document;
+  const shell =
+    chip.closest("[data-chat-composer-stack]") ??
+    chip.closest('[data-slot="composer-shell"]') ??
+    document;
   return (
     Array.from(shell.querySelectorAll('[data-composer-more-trigger="true"]')).find(isShown) ?? null
   );
@@ -123,6 +127,7 @@ export function BranchToolbarBranchSelector({
   forceNewWorktree = false,
   ref,
   className,
+  look = "default",
   environmentId,
   threadId,
   draftId,
@@ -817,7 +822,7 @@ export function BranchToolbarBranchSelector({
         data-composer-context-control
       >
         <ThreadPullRequestBadgeControl
-          render={<ComposerControl size="xs" />}
+          render={<ComposerControl size="xs" look={look} />}
           badge={prBadge}
           number={prNumber}
           url={prUrl}
@@ -838,6 +843,7 @@ export function BranchToolbarBranchSelector({
             render={
               <ComposerControl
                 size="xs"
+                look={look}
                 tint={resolveBranchTint(resolvedActiveBranch, { brand: isAbodeTheme })}
               />
             }
