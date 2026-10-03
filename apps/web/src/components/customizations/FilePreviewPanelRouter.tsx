@@ -1,21 +1,51 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
+import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { type ComponentProps, lazy } from "react";
 
+import { Button } from "~/components/ui/button";
+import { useCustomizationEditorStore } from "~/customizationEditorStore";
 import { useProject, useThreadShell } from "~/state/entities";
 import { resolvePathLinkTarget } from "~/terminal-links";
 
 import { findKnownCustomization, isCustomizationPath } from "./customizationsModel";
 
 const FilePreviewPanel = lazy(() => import("../files/FilePreviewPanel"));
-const CustomizationFilePanel = lazy(() => import("./CustomizationFilePanel"));
 
 type FilePreviewPanelProps = ComponentProps<typeof FilePreviewPanel>;
 
 /**
- * The side panel's file surface. Claude customization files (including ones
- * outside the workspace, like `~/.claude/...`) open in the customizations
- * editor, which reads and writes through the customizations RPCs. Every other
- * file keeps the workspace file panel.
+ * Claude customization files never edit in the side panel: this tab offers a button that opens the
+ * big customization editor (abode F-045), which owns saving, locking and validation. It never opens
+ * on its own, so restoring a side-panel tab can't pop a dialog.
+ */
+function OpenInCustomizationEditor(props: {
+  readonly environmentId: EnvironmentId;
+  readonly cwd: string;
+  readonly projectName: string;
+  readonly path: string;
+  readonly threadRef: ScopedThreadRef;
+}) {
+  const { environmentId, cwd, projectName, path, threadRef } = props;
+  const openEditor = useCustomizationEditorStore((state) => state.openEditor);
+  const open = () =>
+    openEditor({
+      scope: { environmentId, cwd, projectName, threadRef },
+      target: { type: "edit", path },
+    });
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-xs text-muted-foreground">
+      <p>This customization file edits in the full editor.</p>
+      <Button size="compact" variant="outline" onClick={open}>
+        Open editor
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * The side panel's file surface. Customization files (including ones outside the workspace, like
+ * `~/.claude/...`) open in the big customization editor; every other file keeps the workspace
+ * file panel.
  */
 export default function FilePreviewPanelRouter(props: FilePreviewPanelProps) {
   const { attachment, cwd, relativePath } = props;
@@ -30,10 +60,11 @@ export default function FilePreviewPanelRouter(props: FilePreviewPanelProps) {
       isCustomizationPath({ path: absolutePath, projectRoot: projectCwd, panelCwd: cwd })
     ) {
       return (
-        <CustomizationFilePanel
+        <OpenInCustomizationEditor
           key={`${props.environmentId}:${absolutePath}`}
           environmentId={props.environmentId}
           cwd={projectCwd}
+          projectName={project?.title ?? ""}
           path={absolutePath}
           threadRef={props.threadRef}
         />
