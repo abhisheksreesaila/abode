@@ -472,7 +472,7 @@ describe("rightPanelStore", () => {
     store.closeSurface(refA, "files");
     expect(
       selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA).activeSurfaceId,
-    ).toBe("file:README.md");
+    ).toBe("changes");
     store.openFile(refA, ".");
     expect(
       selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA).activeSurfaceId,
