@@ -1,17 +1,22 @@
 import type { ComponentPropsWithoutRef } from "react";
 
 import { cn } from "../lib/utils";
+import { TopBarAccountControls, TopBarAccountOverflowMenu } from "./chat/TopBarAccountControls";
 import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "../workspaceTitlebar";
 
 /** Shared workspace top-bar geometry. */
 export function WorkspacePageHeader({
   electron = false,
   reserveNativeControls = electron,
+  accountControls = false,
   className,
+  children,
   ...props
 }: ComponentPropsWithoutRef<"header"> & {
   readonly electron?: boolean;
   readonly reserveNativeControls?: boolean;
+  /** Pull requests, usage, Phone & Remote and Settings at the right end (F-044). */
+  readonly accountControls?: boolean;
 }) {
   return (
     <header
@@ -23,6 +28,14 @@ export function WorkspacePageHeader({
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {accountControls ? (
+        <div className="ms-auto flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
+          <TopBarAccountControls />
+          <TopBarAccountOverflowMenu />
+        </div>
+      ) : null}
+    </header>
   );
 }

@@ -1,7 +1,7 @@
 import { useAtomValue } from "@effect/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 import { collectLimitAccounts } from "@t3tools/shared/usageLimits";
-import { GaugeIcon, SettingsIcon, SmartphoneIcon } from "lucide-react";
+import { EllipsisIcon, GaugeIcon, SettingsIcon, SmartphoneIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 
 import { useNowMinute } from "../../hooks/useNowMinute";
@@ -22,7 +22,7 @@ import {
   type UsageTone,
 } from "../sidebar/usageStatus";
 import { Button } from "../ui/button";
-import { MenuItem, MenuItemLabel } from "../ui/menu";
+import { Menu, MenuItem, MenuItemLabel, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
@@ -220,5 +220,31 @@ export function TopBarAccountMenuItems() {
         <MenuItemLabel>Settings</MenuItemLabel>
       </MenuItem>
     </>
+  );
+}
+
+/**
+ * The phone-width account entries for pages whose header has no ⋯ menu of its
+ * own: one ⋯ button, hidden from md up where the icons show instead.
+ */
+export function TopBarAccountOverflowMenu() {
+  return (
+    <Menu>
+      <MenuTrigger
+        render={
+          <Button
+            size="icon-toolbar"
+            variant="toolbar"
+            aria-label="Account and navigation"
+            className="md:hidden [-webkit-app-region:no-drag]"
+          />
+        }
+      >
+        <EllipsisIcon />
+      </MenuTrigger>
+      <MenuPopup aria-label="Account and navigation" align="end">
+        <TopBarAccountMenuItems />
+      </MenuPopup>
+    </Menu>
   );
 }
