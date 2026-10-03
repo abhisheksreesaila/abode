@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import {
   canSave,
@@ -34,11 +34,11 @@ describe("parseFrontmatter", () => {
     const parsed = parseFrontmatter(
       "---\nname: a\n# tools: x\ndescription: >\n  folded\n  text\ntools:\n  - Read\n---\n",
     );
-    expect((parsed as { badLines: number[] }).badLines).toEqual([]);
+    expect((parsed as { badLines: ReadonlyArray<number> }).badLines).toEqual([]);
   });
   it("flags lines that are not key: value", () => {
     const parsed = parseFrontmatter("---\nname: a\nnot yaml here\n---\n");
-    expect((parsed as { badLines: number[] }).badLines).toEqual([3]);
+    expect((parsed as { badLines: ReadonlyArray<number> }).badLines).toEqual([3]);
   });
 });
 

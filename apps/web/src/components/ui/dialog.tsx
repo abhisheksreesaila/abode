@@ -66,17 +66,26 @@ function DialogPopup({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
   bottomStickOnMobile?: boolean;
-  variant?: "default" | "media";
+  /**
+   * `editor` is a large work surface (80vw by 80vh, full screen on phones) and `editor-full` fills
+   * the window. Both lay out their own header and footer, so pair them with `showCloseButton={false}`.
+   */
+  variant?: "default" | "media" | "editor" | "editor-full";
 }) {
   return (
     <DialogPortal>
       {/* Media opens from inside other overlays (a composer chip, a popover), so it sits above them. */}
-      <DialogBackdrop className={variant === "media" ? "z-[60]" : undefined} variant={variant} />
+      <DialogBackdrop
+        className={variant === "media" ? "z-[60]" : undefined}
+        variant={variant === "media" ? "media" : "default"}
+      />
       <DialogViewport
         className={cn(
           bottomStickOnMobile && "max-sm:grid-rows-[1fr_auto] max-sm:p-0 max-sm:pt-12",
           variant === "media" &&
             "z-[60] grid-rows-1 place-items-center px-4 py-6 [-webkit-app-region:no-drag]",
+          variant === "editor" && "grid-rows-1 place-items-center p-4 max-sm:p-0",
+          variant === "editor-full" && "grid-rows-1 p-0",
         )}
       >
         <DialogPrimitive.Popup
@@ -84,6 +93,10 @@ function DialogPopup({
             variant === "media" ? DIALOG_MEDIA_POPUP_CLASS : DIALOG_POPUP_CLASS,
             "row-start-2 text-popover-foreground",
             variant === "default" && "max-h-full max-w-lg",
+            variant === "editor" &&
+              "row-start-1 h-[80vh] w-[80vw] max-w-none overflow-hidden rounded-lg max-sm:h-full max-sm:w-full max-sm:rounded-none max-sm:border-0",
+            variant === "editor-full" &&
+              "row-start-1 h-full w-full max-w-none overflow-hidden rounded-none border-0",
             bottomStickOnMobile && DIALOG_MOBILE_SHEET_CLASS,
             className,
           )}

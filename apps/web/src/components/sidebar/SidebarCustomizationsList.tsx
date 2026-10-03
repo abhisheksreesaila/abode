@@ -15,7 +15,6 @@ import {
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { cn } from "../../lib/utils";
-import { useRightPanelStore } from "../../rightPanelStore";
 import { useThreadShell } from "../../state/entities";
 import { customizationsEnvironment } from "../../state/customizations";
 import {
@@ -29,7 +28,10 @@ import {
   useActiveCustomizationsScope,
   type CustomizationsScope,
 } from "../customizations/CustomizationsSection";
-import { NewCustomizationDialog } from "../customizations/NewCustomizationDialog";
+import {
+  CustomizationEditorDialog,
+  type CustomizationEditorTarget,
+} from "../customizations/CustomizationEditor";
 import { harnessFromProviderInstance } from "../customizations/newCustomization";
 import { Spinner } from "../ui/spinner";
 
@@ -56,7 +58,8 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
   const failure = result._tag === "Failure" ? Cause.squash(result.cause) : null;
   const groups = useMemo(() => (items ? groupCustomizations(items) : null), [items]);
   const [openKinds, setOpenKinds] = useState<ReadonlySet<CustomizationKind>>(new Set());
-  const [creating, setCreating] = useState<CustomizationKind | null>(null);
+  // One big editor for both opening a file and creating one (abode F-045).
+  const [editing, setEditing] = useState<CustomizationEditorTarget | null>(null);
   const shell = useThreadShell(scope.threadRef);
   const defaultHarness = harnessFromProviderInstance(shell?.modelSelection.instanceId);
 
@@ -65,12 +68,7 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
     if (items) rememberCustomizations(items);
   }, [items]);
 
-  const openFile = useCallback(
-    (path: string) => {
-      if (scope.threadRef) useRightPanelStore.getState().openFile(scope.threadRef, path);
-    },
-    [scope.threadRef],
-  );
+  const openFile = useCallback((path: string) => setEditing({ type: "edit", path }), [setEditing]);
   const toggle = (kind: CustomizationKind) =>
     setOpenKinds((current) => {
       const next = new Set(current);
@@ -123,7 +121,7 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
               <button
                 type="button"
                 aria-label={`New ${label}`}
-                onClick={() => setCreating(kind)}
+                onClick={() => setEditing({ type: "create", kind, defaultHarness })}
                 className="mr-1 flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-xs text-muted-foreground outline-hidden ring-ring hover:text-foreground focus-visible:ring-2"
               >
                 <PlusIcon aria-hidden className="size-3.5" />
@@ -136,31 +134,21 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
                 </div>
               ) : (
                 group.items.map((item) => (
-                  <ItemRow
-                    key={item.path}
-                    item={item}
-                    disabled={scope.threadRef === null}
-                    onOpen={openFile}
-                  />
+                  <ItemRow key={item.path} item={item} disabled={false} onOpen={openFile} />
                 ))
               )
             ) : null}
           </div>
         );
       })}
-      {creating !== null ? (
-        <NewCustomizationDialog
+      {editing !== null ? (
+        <CustomizationEditorDialog
+          // A fresh session per target, so reopening starts from the file on disk.
+          key={editing.type === "edit" ? editing.path : `new:${editing.kind}`}
           scope={scope}
-          kind={creating}
-          defaultHarness={defaultHarness}
-          open
-          onOpenChange={(next) => {
-            if (!next) setCreating(null);
-          }}
-          onSaved={(path) => {
-            refresh();
-            openFile(path);
-          }}
+          target={editing}
+          onClose={() => setEditing(null)}
+          onChanged={refresh}
         />
       ) : null}
       {failure === null && groups !== null ? (
@@ -175,7 +163,7 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
 /**
  * The Customizations folders at the foot of the sidebar (abode F-035, F-043): Skills, Agents,
  * Instructions and MCP Servers, always open. A folder expands to its files, a file opens in the
- * side panel, and the folder's "+" creates a new one. Counts load once a session's workspace is active.
+ * big customization editor, and the folder's "+" creates a new one. Counts load once a session's workspace is active.
  */
 export const SidebarCustomizationsList = memo(function SidebarCustomizationsList() {
   const scope = useActiveCustomizationsScope();
