@@ -829,6 +829,7 @@ export function useSettingsRestore(onRestored?: () => void) {
     clearThemeHalves,
     onRestored,
     setFollowSystem,
+    setMotionMs,
     setTheme,
     setThemeHalf,
     theme,

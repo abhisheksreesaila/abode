@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { type PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 
-import { useMediaQuery } from "./hooks/useMediaQuery";
-import { useClientSettings } from "./hooks/useSettings";
 import { useEffectiveMotionMs } from "./routeMotion";
 
 const PanelAnimationSuppressionContext = createContext(false);
