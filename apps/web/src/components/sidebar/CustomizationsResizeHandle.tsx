@@ -10,7 +10,7 @@ import {
 
 /**
  * The horizontal handle above the Customizations section (abode F-046). Drag up to grow the
- * section, down to shrink it; arrow keys step it, double-click resets.
+ * section, down to shrink it; arrow keys step it, double-click or Enter resets.
  *
  * While dragging, pointer moves are coalesced to one `onPreview` per animation frame (the
  * parent writes the height straight to the element, so React does not re-render per frame);
@@ -18,12 +18,15 @@ import {
  */
 export function CustomizationsResizeHandle({
   fraction,
+  controls,
   getContainerHeight,
   onPreview,
   onCommit,
   onReset,
 }: {
   readonly fraction: number;
+  /** The id of the section this handle resizes. */
+  readonly controls: string;
   readonly getContainerHeight: () => number;
   readonly onPreview: (fraction: number) => void;
   readonly onCommit: (fraction: number) => void;
@@ -35,6 +38,7 @@ export function CustomizationsResizeHandle({
     startY: number;
     containerHeight: number;
     latest: number;
+    moved: boolean;
     frame: number | null;
   } | null>(null);
 
@@ -49,6 +53,7 @@ export function CustomizationsResizeHandle({
       startY: event.clientY,
       containerHeight: getContainerHeight(),
       latest: fraction,
+      moved: false,
       frame: null,
     };
     event.preventDefault();
@@ -56,7 +61,8 @@ export function CustomizationsResizeHandle({
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const state = drag.current;
-    if (!state) return;
+    if (!state || event.buttons === 0) return;
+    state.moved = true;
     state.latest = fractionFromDrag({
       startFraction: state.startFraction,
       startY: state.startY,
@@ -80,10 +86,19 @@ export function CustomizationsResizeHandle({
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    // A click, or the first half of a double-click, must not freeze the size.
+    if (!state.moved) return;
+    onPreview(state.latest);
+    announce(state.latest);
     onCommit(state.latest);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onReset();
+      return;
+    }
     const next = fractionFromKey(fraction, event.key);
     if (next === null) return;
     event.preventDefault();
@@ -94,6 +109,7 @@ export function CustomizationsResizeHandle({
     <div
       ref={handleRef}
       role="separator"
+      aria-controls={controls}
       aria-orientation="horizontal"
       aria-label="Resize Customizations"
       aria-valuemin={Math.round(CUSTOMIZATIONS_MIN_FRACTION * 100)}
@@ -110,6 +126,7 @@ export function CustomizationsResizeHandle({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onLostPointerCapture={endDrag}
       onDoubleClick={onReset}
       onKeyDown={onKeyDown}
     />

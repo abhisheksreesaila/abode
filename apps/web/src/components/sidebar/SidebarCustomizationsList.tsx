@@ -39,8 +39,9 @@ import {
   saveCustomizationsFraction,
 } from "./customizationsHeight";
 
-/** The header row plus the section's top border: the collapsed height. */
-const COLLAPSED_HEIGHT_PX = 29;
+/** The header row, the section's top border and its bottom padding: the collapsed height. */
+const SECTION_ID = "sidebar-customizations";
+const COLLAPSED_HEIGHT_PX = 33;
 
 const FOLDERS: ReadonlyArray<{
   readonly kind: CustomizationKind;
@@ -201,7 +202,8 @@ export const SidebarCustomizationsList = memo(function SidebarCustomizationsList
       return;
     }
     const observer = new ResizeObserver(() => {
-      if (container.clientHeight <= 0) return;
+      // A drag is writing the height directly; the share is stale until it commits.
+      if (section.style.height !== "" || container.clientHeight <= 0) return;
       const share = clampCustomizationsFraction(section.offsetHeight / container.clientHeight);
       setAutoFraction(Math.round(share * 100) / 100);
     });
@@ -241,6 +243,7 @@ export const SidebarCustomizationsList = memo(function SidebarCustomizationsList
     <>
       <CustomizationsResizeHandle
         fraction={fraction ?? autoFraction}
+        controls={SECTION_ID}
         getContainerHeight={getContainerHeight}
         onPreview={preview}
         onCommit={commit}
@@ -248,11 +251,13 @@ export const SidebarCustomizationsList = memo(function SidebarCustomizationsList
       />
       <section
         ref={sectionRef}
+        id={SECTION_ID}
         aria-label="Customizations"
         data-testid="customizations-section"
         className={cn(
-          "flex min-h-0 shrink-0 flex-col overflow-y-auto border-t border-sidebar-border px-1 pb-1",
-          fraction === null && "max-h-[40%]",
+          "flex min-h-0 flex-col overflow-y-auto border-t border-sidebar-border px-1 pb-1",
+          // Once sized, the section may shrink so the footer stays visible on short windows.
+          fraction === null ? "max-h-[40%] shrink-0" : "shrink",
         )}
         style={
           fraction === null
