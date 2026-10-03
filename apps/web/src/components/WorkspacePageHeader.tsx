@@ -32,7 +32,9 @@ export function WorkspacePageHeader({
       {children}
       {accountControls ? (
         <div className="ms-auto flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
-          <TopBarAccountControls />
+          <div className="hidden md:flex">
+            <TopBarAccountControls />
+          </div>
           <TopBarAccountOverflowMenu />
         </div>
       ) : null}

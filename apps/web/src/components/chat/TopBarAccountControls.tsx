@@ -13,7 +13,7 @@ import { environmentPresentations } from "../../state/presentation";
 import { primaryServerKeybindingsAtom } from "../../state/server";
 import { PullRequestGlyph } from "../pullRequest/pullRequestIcons";
 import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
-import { accountTitle, UsageLimitsPanel } from "../sidebar/SidebarUsageStatus";
+import { accountTitle, UsageLimitsPanel } from "../usage/UsageLimitsPanel";
 import {
   compactWindowLabel,
   formatResetAbsolute,
@@ -168,15 +168,15 @@ const UsageToolbarButton = memo(function UsageToolbarButton({
 
 /**
  * Top-right account icons (abode F-044), just before the panel toggles:
- * Pull requests, Claude usage, Phone & Remote, Settings. Desktop only; phones
- * reach the same places from the ⋯ menu (see TopBarAccountMenuItems).
+ * Pull requests, Claude usage, Phone & Remote, Settings. Narrow headers fold
+ * them into the ⋯ menu (see TopBarAccountMenuItems).
  */
 export const TopBarAccountControls = memo(function TopBarAccountControls() {
   const pullRequestsSupported = usePullRequestsSupported();
   const nav = useAccountNavigation();
   return (
     <div
-      className="mr-1 hidden shrink-0 items-center gap-1 md:flex [-webkit-app-region:no-drag]"
+      className="flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]"
       data-top-bar-account-controls
     >
       {pullRequestsSupported ? (
