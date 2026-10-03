@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveMotionDurationMs, routeSection, shouldFadeRoute } from "./routeMotion";
+import {
+  resolveMotionDurationMs,
+  seedMotionMs,
+  routeSection,
+  shouldFadeRoute,
+} from "./routeMotion";
 
-describe("resolveMotionDurationMs", () => {
-  it("falls back to 180ms when the stored setting is the contract default of 0", () => {
-    expect(resolveMotionDurationMs(0, false)).toBe(180);
-  });
-  it("keeps an explicit duration", () => {
+describe("motion duration", () => {
+  it("keeps the chosen duration, and 0 stays Off", () => {
     expect(resolveMotionDurationMs(250, false)).toBe(250);
+    expect(resolveMotionDurationMs(0, false)).toBe(0);
   });
   it("is off under reduced motion", () => {
     expect(resolveMotionDurationMs(250, true)).toBe(0);
-    expect(resolveMotionDurationMs(0, true)).toBe(0);
+  });
+  it("seeds from a chosen upstream duration, else 175", () => {
+    expect(seedMotionMs(300)).toBe(300);
+    expect(seedMotionMs(0)).toBe(175);
   });
 });
 

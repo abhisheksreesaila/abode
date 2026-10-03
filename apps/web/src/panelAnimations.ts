@@ -3,7 +3,7 @@ import { type PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { useClientSettings } from "./hooks/useSettings";
-import { resolveMotionDurationMs } from "./routeMotion";
+import { useEffectiveMotionMs } from "./routeMotion";
 
 const PanelAnimationSuppressionContext = createContext(false);
 
@@ -73,14 +73,9 @@ export function usePanelAnimationSettings(): {
   active: boolean;
   durationMs: PanelAnimationDurationMs;
 } {
-  const settingMs = useClientSettings((settings) => settings.panelAnimationDurationMs);
-  const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const suppressed = useContext(PanelAnimationSuppressionContext);
-  // abode: a stored 0 means the 180ms default; reduced motion is the off switch.
-  const durationMs = resolveMotionDurationMs(
-    settingMs,
-    prefersReducedMotion,
-  ) as PanelAnimationDurationMs;
+  // abode: one stored duration (Settings > Motion), forced to 0 by reduced motion.
+  const durationMs = useEffectiveMotionMs() as PanelAnimationDurationMs;
   return { active: durationMs > 0 && !suppressed, durationMs };
 }
 

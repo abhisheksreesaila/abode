@@ -112,18 +112,9 @@ describe("UsagePage Escape navigation", () => {
     });
   }
 
-  it("returns to the previous page on Escape", () => {
+  it("returns to the last main app page on Escape", () => {
     document.body.dispatchEvent(escape());
-    expect(back).toHaveBeenCalledOnce();
-    expect(testState.navigate).not.toHaveBeenCalled();
-  });
-
-  it("returns home when there is no previous app page", async () => {
-    testState.canGoBack = false;
-    await act(() => renderer.render(<UsagePage />));
-
-    document.body.dispatchEvent(escape());
-    expect(testState.navigate).toHaveBeenCalledWith({ to: "/" });
+    expect(testState.navigate).toHaveBeenCalledWith({ href: "/" });
     expect(back).not.toHaveBeenCalled();
   });
 
@@ -136,10 +127,10 @@ describe("UsagePage Escape navigation", () => {
       document.activeElement!.dispatchEvent(escape());
     });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(back).not.toHaveBeenCalled();
+    expect(testState.navigate).not.toHaveBeenCalled();
 
     document.body.dispatchEvent(escape());
-    expect(back).toHaveBeenCalledOnce();
+    expect(testState.navigate).toHaveBeenCalledWith({ href: "/" });
   });
 
   it.each([{ repeat: true }, { isComposing: true }])("ignores Escape with %j", (properties) => {

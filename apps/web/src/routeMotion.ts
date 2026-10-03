@@ -1,20 +1,41 @@
-import { useEffect } from "react";
+import * as Schema from "effect/Schema";
+import { useLayoutEffect } from "react";
 import { useLocation } from "@tanstack/react-router";
 
 import { useClientSettings } from "./hooks/useSettings";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { isSidebarUtilityPage } from "./components/sidebar/mainAppLocation";
 
-/** abode's one-shot panel and route motion: 180ms ease-out, never looping. */
-export const ABODE_MOTION_DURATION_MS = 180;
+/** abode's one-shot panel and route motion: ease-out, never looping. 0 means Off. */
+export const ABODE_MOTION_DEFAULT_MS = 175;
+export const ABODE_MOTION_MAX_MS = 400;
+export const ABODE_MOTION_STORAGE_KEY = "abode:motion:v1";
+
+/** Reduced motion always wins over the chosen duration. */
+export function resolveMotionDurationMs(motionMs: number, reducedMotion: boolean): number {
+  return reducedMotion ? 0 : motionMs;
+}
 
 /**
- * The contract defaults the panel-motion setting to 0 ("off") and cannot change in this fork,
- * so a stored 0 means "use abode's default". Reduced motion is the off switch.
+ * The first value: an upstream panel-animation duration someone already chose (> 0) carries
+ * over; otherwise abode's default.
  */
-export function resolveMotionDurationMs(settingMs: number, reducedMotion: boolean): number {
-  if (reducedMotion) return 0;
-  return settingMs > 0 ? settingMs : ABODE_MOTION_DURATION_MS;
+export function seedMotionMs(legacyPanelAnimationMs: number): number {
+  return legacyPanelAnimationMs > 0 ? legacyPanelAnimationMs : ABODE_MOTION_DEFAULT_MS;
+}
+
+/** The stored choice (client-only, never sent to a server), seeded once from the upstream setting. */
+export function useAbodeMotionMs() {
+  const legacyMs = useClientSettings((settings) => settings.panelAnimationDurationMs);
+  return useLocalStorage(ABODE_MOTION_STORAGE_KEY, seedMotionMs(legacyMs), Schema.Int);
+}
+
+/** The one resolver behind every abode transition: stored choice, forced to 0 by reduced motion. */
+export function useEffectiveMotionMs(): number {
+  const [motionMs] = useAbodeMotionMs();
+  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  return resolveMotionDurationMs(motionMs, reducedMotion);
 }
 
 type RouteSection = "session" | "utility";
@@ -36,13 +57,12 @@ let previousPathname: string | null = null;
  */
 export function useRouteSectionFade() {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const settingMs = useClientSettings((settings) => settings.panelAnimationDurationMs);
-  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const durationMs = useEffectiveMotionMs();
 
-  useEffect(() => {
+  // Layout effect: the fade must start before the new page's first paint.
+  useLayoutEffect(() => {
     const previous = previousPathname;
     previousPathname = pathname;
-    const durationMs = resolveMotionDurationMs(settingMs, reducedMotion);
     if (durationMs === 0 || !shouldFadeRoute(previous, pathname)) return;
     const inset = document.querySelector<HTMLElement>("[data-slot='sidebar-inset']");
     if (!inset || typeof inset.animate !== "function") return;

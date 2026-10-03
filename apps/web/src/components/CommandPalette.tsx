@@ -85,6 +85,7 @@ import { useAtomValue } from "@effect/atom-react";
 import { isDesktopLocalConnectionTarget } from "../connection/desktopLocal";
 import { useDesktopLocalBootstraps } from "../connection/useDesktopLocalBootstraps";
 import { useHandleNewThread } from "../hooks/useHandleNewThread";
+import { usePullRequestsSupported } from "../hooks/usePullRequestsSupported";
 import { useOpenPanelPullRequestUrl } from "../hooks/useOpenPanelPullRequestUrl";
 import { writeTextToClipboard } from "../hooks/useCopyToClipboard";
 import { useClientSettings } from "../hooks/useSettings";
@@ -770,6 +771,7 @@ function OpenCommandPaletteDialog(props: {
         ? scopeThreadRef(activeThread.environmentId, activeThread.id)
         : null;
   const openPanelPullRequestUrl = useOpenPanelPullRequestUrl(referenceThreadRef);
+  const pullRequestsSupported = usePullRequestsSupported();
   const activeThreadServerConfig = useServerConfigs().get(
     activeThread?.environmentId ?? ("" as EnvironmentId),
   );
@@ -1968,6 +1970,18 @@ function OpenCommandPaletteDialog(props: {
         openLinkPullRequestDialog(threadRef);
       },
     });
+    if (pullRequestsSupported) {
+      actionItems.push({
+        kind: "action",
+        value: "action:open-pull-requests-side-panel",
+        searchTerms: ["pull requests", "prs", "drawer", "side panel", "list"],
+        title: "Open pull requests in side panel",
+        icon: <PullRequestGlyph.pullRequest className={ITEM_ICON_CLASS} />,
+        run: async () => {
+          useRightPanelStore.getState().open(threadRef, "pull-request-list");
+        },
+      });
+    }
     if (activeThreadServerConfig?.environment.capabilities.threadPullRequests === true) {
       actionItems.push({
         kind: "action",

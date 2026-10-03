@@ -29,7 +29,6 @@ import {
   MAX_CODE_FONT_SIZE,
   MAX_GLASS_OPACITY,
   MAX_INTERFACE_FONT_SIZE,
-  MAX_PANEL_ANIMATION_DURATION_MS,
   MAX_PROMPT_FONT_SIZE,
   MAX_SIDEBAR_AUTO_SETTLE_AFTER_DAYS,
   MAX_TERMINAL_FONT_SIZE,
@@ -37,7 +36,6 @@ import {
   MIN_APPEARANCE_CONTRAST,
   MIN_GLASS_OPACITY,
   MIN_INTERFACE_FONT_SIZE,
-  MIN_PANEL_ANIMATION_DURATION_MS,
   MIN_PROMPT_FONT_SIZE,
   MIN_SIDEBAR_AUTO_SETTLE_AFTER_DAYS,
   type ResponseStreamingMode,
@@ -74,6 +72,7 @@ import {
   useTheme,
 } from "../../hooks/useTheme";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { ABODE_MOTION_DEFAULT_MS, ABODE_MOTION_MAX_MS, useAbodeMotionMs } from "../../routeMotion";
 import {
   useScopedSettings,
   useScopedSettingsMixed,
@@ -1185,9 +1184,8 @@ export function AppearanceSettingsPanel() {
     "--settings-slider-progress": `${appearanceContrastRatio * 100}%`,
     "--settings-slider-fill-offset": `${0.5 - appearanceContrastRatio}rem`,
   } as CSSProperties;
-  const panelAnimationDurationRatio =
-    (settings.panelAnimationDurationMs - MIN_PANEL_ANIMATION_DURATION_MS) /
-    (MAX_PANEL_ANIMATION_DURATION_MS - MIN_PANEL_ANIMATION_DURATION_MS);
+  const [motionMs, setMotionMs] = useAbodeMotionMs();
+  const panelAnimationDurationRatio = motionMs / ABODE_MOTION_MAX_MS;
   const panelAnimationDurationSliderStyle = {
     "--settings-slider-progress": `${panelAnimationDurationRatio * 100}%`,
     "--settings-slider-fill-offset": `${0.5 - panelAnimationDurationRatio}rem`,
@@ -1439,48 +1437,43 @@ export function AppearanceSettingsPanel() {
           description="Set how fast panels open and close."
           control={
             <div className="grid w-full grid-cols-[5rem_minmax(0,1fr)] items-center gap-3 sm:w-auto sm:grid-cols-[7rem_13rem] sm:gap-4">
-              <PanelAnimationsPreview durationMs={settings.panelAnimationDurationMs} />
+              <PanelAnimationsPreview durationMs={motionMs} />
               <div className="flex w-full items-center gap-3">
                 <output
                   className="min-w-16 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
                   htmlFor="panel-animation-duration"
                 >
-                  {settings.panelAnimationDurationMs} ms
+                  {motionMs === 0 ? "Off" : `${motionMs} ms`}
                 </output>
                 <input
                   aria-label="Panel animation duration"
                   className="settings-slider min-w-0 flex-1"
                   id="panel-animation-duration"
-                  max={MAX_PANEL_ANIMATION_DURATION_MS}
-                  min={MIN_PANEL_ANIMATION_DURATION_MS}
+                  max={ABODE_MOTION_MAX_MS}
+                  min={0}
                   onChange={(event) => {
                     const panelAnimationDurationMs = Number(event.currentTarget.value);
                     if (
                       Number.isInteger(panelAnimationDurationMs) &&
-                      panelAnimationDurationMs >= MIN_PANEL_ANIMATION_DURATION_MS &&
-                      panelAnimationDurationMs <= MAX_PANEL_ANIMATION_DURATION_MS
+                      panelAnimationDurationMs >= 0 &&
+                      panelAnimationDurationMs <= ABODE_MOTION_MAX_MS
                     ) {
-                      updateSettings({ panelAnimationDurationMs });
+                      setMotionMs(panelAnimationDurationMs);
                     }
                   }}
                   step={25}
                   style={panelAnimationDurationSliderStyle}
                   type="range"
-                  value={settings.panelAnimationDurationMs}
+                  value={motionMs}
                 />
               </div>
             </div>
           }
           resetAction={
-            settings.panelAnimationDurationMs !==
-            DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs ? (
+            motionMs !== ABODE_MOTION_DEFAULT_MS ? (
               <SettingResetButton
                 label="panel animations"
-                onClick={() =>
-                  updateSettings({
-                    panelAnimationDurationMs: DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs,
-                  })
-                }
+                onClick={() => setMotionMs(ABODE_MOTION_DEFAULT_MS)}
               />
             ) : null
           }
