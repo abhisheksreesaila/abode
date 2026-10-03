@@ -429,16 +429,6 @@ export function hasEnvironmentReconnectWarningGraceElapsed(
   return activeEnvironmentId !== null && activeEnvironmentId === elapsedEnvironmentId;
 }
 
-export function startNewThreadForProject(
-  projectRef: ScopedProjectRef | null,
-  handleNewThread: (projectRef: ScopedProjectRef) => Promise<unknown>,
-): boolean {
-  if (projectRef === null) return false;
-  void handleNewThread(projectRef);
-
-  return true;
-}
-
 export function resolveThreadMetadataUpdateForNextTurn(input: {
   currentModelSelection: ModelSelection;
   nextModelSelection?: ModelSelection;

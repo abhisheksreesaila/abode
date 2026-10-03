@@ -72,6 +72,21 @@ describe("restoreWorkspaceDrawer", () => {
     expect(panel.activeSurfaceId).toBe("files");
   });
 
+  it("adds Changes to a thread that has Files but no Changes tab", async () => {
+    useRightPanelStore.getState().applyWorkspaceDrawer(ref, {
+      isOpen: true,
+      ensure: [{ id: "files", kind: "files" }],
+      activate: "files",
+    });
+    const { deps } = harness({
+      record: record({ activeTab: { kind: "changes" }, browserOpen: false }),
+    });
+    await restoreWorkspaceDrawer(deps);
+    const panel = selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, ref);
+    expect(panel.surfaces.map((surface) => surface.id)).toEqual(["files", "changes"]);
+    expect(panel.activeSurfaceId).toBe("changes");
+  });
+
   it("selects the Changes tab when that is the remembered one", async () => {
     const { deps } = harness({ record: record({ activeTab: { kind: "changes" } }) });
     await restoreWorkspaceDrawer(deps);

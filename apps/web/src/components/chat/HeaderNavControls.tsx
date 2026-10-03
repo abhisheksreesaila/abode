@@ -1,6 +1,8 @@
+import { useCanGoBack } from "@tanstack/react-router";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { memo } from "react";
 
+import { useCanGoForward } from "~/hooks/useCanGoForward";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { SidebarToggleControl } from "./PanelLayoutControls";
@@ -10,6 +12,8 @@ import { SidebarToggleControl } from "./PanelLayoutControls";
  * the same browser history the navigation.back/forward keybindings use.
  */
 export const HeaderNavControls = memo(function HeaderNavControls() {
+  const canGoBack = useCanGoBack();
+  const canGoForward = useCanGoForward();
   return (
     <div className="flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
       <SidebarToggleControl />
@@ -20,6 +24,7 @@ export const HeaderNavControls = memo(function HeaderNavControls() {
               size="icon-sm"
               variant="ghost"
               aria-label="Go back"
+              disabled={!canGoBack}
               className="hidden md:inline-flex"
               onClick={() => window.history.back()}
             />
@@ -36,6 +41,7 @@ export const HeaderNavControls = memo(function HeaderNavControls() {
               size="icon-sm"
               variant="ghost"
               aria-label="Go forward"
+              disabled={!canGoForward}
               className="hidden md:inline-flex"
               onClick={() => window.history.forward()}
             />

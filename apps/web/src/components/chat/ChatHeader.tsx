@@ -11,7 +11,7 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { EllipsisIcon } from "lucide-react";
+import { EllipsisIcon, GitCompareIcon } from "lucide-react";
 import {
   memo,
   useCallback,
@@ -43,7 +43,9 @@ import { TitleSearchBox } from "./TitleSearchBox";
 import { cn } from "~/lib/utils";
 import { useIsMobile } from "~/hooks/useMediaQuery";
 import { Button } from "../ui/button";
-import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
+import { Menu, MenuItem, MenuItemLabel, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
+import { useRightPanelStore } from "../../rightPanelStore";
+import { CoffeeStatus } from "../../delights/Delights";
 
 interface ChatHeaderProps {
   activeThreadEnvironmentId: EnvironmentId;
@@ -83,6 +85,21 @@ export function resolveRenameCommit(input: {
   if (trimmed.length === 0) return { action: "reject-empty" };
   if (trimmed === input.originalTitle) return { action: "noop" };
   return { action: "commit", title: trimmed };
+}
+
+/**
+ * Where the header's run and open-in-editor controls live. The toolbar copies
+ * stay mounted at every width (CSS hides them when narrow) so an open dialog
+ * never loses state; the ⋯ menu copies carry the narrow layout. Exactly one
+ * OpenInPicker owns the open-in-editor keyboard shortcut.
+ */
+export function resolveHeaderControlPlacement(actionsCollapsed: boolean) {
+  return {
+    toolbarHidden: actionsCollapsed,
+    toolbarOwnsShortcut: !actionsCollapsed,
+    menuOwnsShortcut: actionsCollapsed,
+    scriptsMenuPresentation: actionsCollapsed ? ("menu" as const) : ("manage" as const),
+  };
 }
 
 export function shouldShowOpenInPicker(input: {
@@ -243,6 +260,7 @@ export const ChatHeader = memo(function ChatHeader({
     },
     [commitRename],
   );
+  const placement = resolveHeaderControlPlacement(actionsCollapsed);
   const hasMenuContent = Boolean(activeProjectScripts || showOpenInPicker || gitCwd);
   return (
     <div
@@ -269,6 +287,8 @@ export const ChatHeader = memo(function ChatHeader({
           <TitleSearchBox projectName={activeProjectName ?? null} />
         </div>
       )}
+      {/* The 3pm coffee lives here too: the status bar that also shows it is off by default. */}
+      <CoffeeStatus />
       <div
         data-chat-header-actions
         className={cn(
@@ -279,30 +299,33 @@ export const ChatHeader = memo(function ChatHeader({
           "[[data-panel-animations=true]_&]:motion-safe:transition-[padding-right] [[data-panel-animations=true]_&]:motion-safe:duration-(--panel-animation-duration) [[data-panel-animations=true]_&]:motion-safe:ease-out",
         )}
       >
-        {!actionsCollapsed && activeProjectScripts ? (
-          <ProjectScriptsControl
-            presentation="toolbar"
-            compact
-            scripts={activeProjectScripts}
-            fileScripts={fileScripts}
-            keybindings={keybindings}
-            preferredScriptId={preferredScriptId}
-            onRunScript={onRunProjectScript}
-            onAddScript={onAddProjectScript}
-            onUpdateScript={onUpdateProjectScript}
-            onDeleteScript={onDeleteProjectScript}
-          />
-        ) : null}
-        {!actionsCollapsed && showOpenInPicker ? (
-          <OpenInPicker
-            presentation="toolbar"
-            compact
-            environmentId={activeThreadEnvironmentId}
-            keybindings={keybindings}
-            availableEditors={availableEditors}
-            openInCwd={openInCwd}
-          />
-        ) : null}
+        <div className={cn("flex items-center gap-1", placement.toolbarHidden && "hidden")}>
+          {activeProjectScripts ? (
+            <ProjectScriptsControl
+              presentation="toolbar"
+              compact
+              scripts={activeProjectScripts}
+              fileScripts={fileScripts}
+              keybindings={keybindings}
+              preferredScriptId={preferredScriptId}
+              onRunScript={onRunProjectScript}
+              onAddScript={onAddProjectScript}
+              onUpdateScript={onUpdateProjectScript}
+              onDeleteScript={onDeleteProjectScript}
+            />
+          ) : null}
+          {showOpenInPicker ? (
+            <OpenInPicker
+              presentation="toolbar"
+              compact
+              enableShortcut={placement.toolbarOwnsShortcut}
+              environmentId={activeThreadEnvironmentId}
+              keybindings={keybindings}
+              availableEditors={availableEditors}
+              openInCwd={openInCwd}
+            />
+          ) : null}
+        </div>
         <Menu open={actionsOpen} onOpenChange={setActionsOpen}>
           <MenuTrigger
             render={<Button size="icon-sm" variant="ghost" aria-label="More header actions" />}
@@ -313,11 +336,19 @@ export const ChatHeader = memo(function ChatHeader({
               they must survive the menu closing. */}
           <MenuPopup keepMounted aria-label="Header actions" align="end">
             <TranscriptModeMenuItems />
+            {activeProjectName ? (
+              <MenuItem
+                onClick={() => useRightPanelStore.getState().open(activeThreadRef, "changes")}
+              >
+                <GitCompareIcon className="size-4" />
+                <MenuItemLabel>Changes</MenuItemLabel>
+              </MenuItem>
+            ) : null}
             {hasMenuContent ? <MenuSeparator /> : null}
             {activeProjectScripts ? (
               <ProjectScriptsControl
                 onRequestMenuClose={() => setActionsOpen(false)}
-                presentation={actionsCollapsed ? "menu" : "manage"}
+                presentation={placement.scriptsMenuPresentation}
                 scripts={activeProjectScripts}
                 fileScripts={fileScripts}
                 keybindings={keybindings}
@@ -332,7 +363,7 @@ export const ChatHeader = memo(function ChatHeader({
               <OpenInPicker
                 presentation="menu"
                 // One instance owns the keyboard shortcut: the toolbar's, unless folded away.
-                enableShortcut={actionsCollapsed}
+                enableShortcut={placement.menuOwnsShortcut}
                 environmentId={activeThreadEnvironmentId}
                 keybindings={keybindings}
                 availableEditors={availableEditors}

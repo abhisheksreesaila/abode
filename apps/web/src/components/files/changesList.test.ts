@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { changedFileRows } from "./changesList";
+import { changedFileRows, changesPanelState } from "./changesList";
 
 type File = { path: string; insertions: number; deletions: number; deleted?: boolean };
 const status = (files: File[]) => ({
@@ -88,5 +88,31 @@ describe("changedFileRows", () => {
         ?.path,
     ).toBe("src/a.ts");
     expect(changedFileRows(status(files), { workspaceRoot: "/wt" }).rows[0]?.path).toBe("src/a.ts");
+  });
+});
+
+describe("changesPanelState", () => {
+  it("is loading until the status answers, and an error when the query failed", () => {
+    expect(changesPanelState(undefined, null)).toEqual({ kind: "loading" });
+    expect(changesPanelState(null, null)).toEqual({ kind: "loading" });
+    expect(changesPanelState(undefined, "boom")).toEqual({ kind: "error", message: "boom" });
+  });
+
+  it("says not a repository when the status says so", () => {
+    expect(changesPanelState({ isRepo: false, workingTree: status([]).workingTree }, null)).toEqual(
+      {
+        kind: "not-repo",
+      },
+    );
+  });
+
+  it("is clean only for a known-empty status, and lists rows otherwise", () => {
+    expect(changesPanelState(status([]), null)).toEqual({ kind: "clean" });
+    const state = changesPanelState(status([{ path: "a.ts", insertions: 1, deletions: 0 }]), null);
+    expect(state.kind).toBe("changes");
+  });
+
+  it("keeps showing known data when a refresh fails", () => {
+    expect(changesPanelState(status([]), "boom")).toEqual({ kind: "clean" });
   });
 });

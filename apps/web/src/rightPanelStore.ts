@@ -597,7 +597,11 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
         set((state) =>
           userAction(state, scopedThreadKey(ref), (current) => {
             if (requestedPath === ".") {
-              return upsertSurface(current, singletonSurface("files"));
+              // Same pair as the drawer's Files action: Changes leads Files.
+              return upsertSurface(
+                upsertSurface(current, singletonSurface("changes"), false),
+                singletonSurface("files"),
+              );
             }
             // Workspace entry paths use '/', including on Windows.
             const relativePath = /^[A-Za-z]:\/+$/.test(requestedPath)

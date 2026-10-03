@@ -59,3 +59,25 @@ export function changedFileRows(
     deletions: rows.reduce((sum, row) => sum + row.deletions, 0),
   };
 }
+
+export type ChangesPanelState =
+  | { kind: "loading" }
+  | { kind: "error"; message: string }
+  | { kind: "not-repo" }
+  | { kind: "clean" }
+  | { kind: "changes"; summary: ChangesSummary };
+
+/**
+ * What the Changes tab shows. "clean" is only for a status we know is empty:
+ * an unanswered or failed query must not read as "No changes".
+ */
+export function changesPanelState(
+  status: Pick<VcsStatusResult, "isRepo" | "workingTree"> | null | undefined,
+  error: string | null,
+  scope: { workspaceRoot?: string | undefined; repositoryRoot?: string | undefined } = {},
+): ChangesPanelState {
+  if (!status) return error !== null ? { kind: "error", message: error } : { kind: "loading" };
+  if (!status.isRepo) return { kind: "not-repo" };
+  const summary = changedFileRows(status, scope);
+  return summary.rows.length === 0 ? { kind: "clean" } : { kind: "changes", summary };
+}

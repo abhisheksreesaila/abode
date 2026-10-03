@@ -7,7 +7,7 @@ import { useProjects } from "~/state/entities";
 import { useEnvironmentQuery } from "~/state/query";
 import { vcsEnvironment } from "~/state/vcs";
 
-import { changedFileRows, type ChangedFileRow } from "./changesList";
+import { changesPanelState, type ChangedFileRow } from "./changesList";
 
 /**
  * The drawer's Changes tab (abode F-040): files changed in the workspace's
@@ -21,7 +21,7 @@ export function ChangesList(props: {
   threadRef?: ScopedThreadRef | null | undefined;
   onOpenFile: (relativePath: string) => void;
 }) {
-  const { data: status } = useEnvironmentQuery(
+  const { data: status, error } = useEnvironmentQuery(
     props.cwd
       ? vcsEnvironment.status({ environmentId: props.environmentId, input: { cwd: props.cwd } })
       : null,
@@ -36,9 +36,9 @@ export function ChangesList(props: {
       )?.repositoryIdentity?.rootPath,
     [projects, props.cwd, props.environmentId],
   );
-  const summary = useMemo(
-    () => changedFileRows(status, { workspaceRoot: props.cwd, repositoryRoot }),
-    [status, props.cwd, repositoryRoot],
+  const state = useMemo(
+    () => changesPanelState(status, error, { workspaceRoot: props.cwd, repositoryRoot }),
+    [status, error, props.cwd, repositoryRoot],
   );
   const { threadRef, onOpenFile } = props;
   const openRow = (row: ChangedFileRow) => {
@@ -51,16 +51,23 @@ export function ChangesList(props: {
     }
     onOpenFile(row.path);
   };
-  if (summary.rows.length === 0) {
+  if (state.kind !== "changes") {
     return (
-      <div
-        className="flex min-h-0 flex-1 items-center justify-center text-sm text-muted-foreground"
-        data-changes-list
-      >
-        No changes
-      </div>
+      <ChangesMessage
+        tone={state.kind === "error" ? "error" : "quiet"}
+        text={
+          state.kind === "loading"
+            ? "Checking for changes…"
+            : state.kind === "error"
+              ? `Could not read changes: ${state.message}`
+              : state.kind === "not-repo"
+                ? "Not a git repository"
+                : "No changes"
+        }
+      />
     );
   }
+  const { summary } = state;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-changes-list>
@@ -112,6 +119,20 @@ export function ChangesList(props: {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** The Changes tab's one-line states: loading, error, not a repository, no changes. */
+export function ChangesMessage(props: { text: string; tone?: "quiet" | "error" }) {
+  return (
+    <div
+      className={`flex min-h-0 flex-1 items-center justify-center px-4 text-center text-sm ${
+        props.tone === "error" ? "text-destructive" : "text-muted-foreground"
+      }`}
+      data-changes-list
+    >
+      {props.text}
     </div>
   );
 }

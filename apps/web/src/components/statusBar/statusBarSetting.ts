@@ -59,6 +59,19 @@ export function setStatusBarEnabled(enabled: boolean): void {
   store.set(enabled);
 }
 
+/** Also follows changes made in another tab or window. */
+function subscribeIncludingOtherTabs(listener: () => void): () => void {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === null || event.key === STATUS_BAR_STORAGE_KEY) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  const unsubscribe = store.subscribe(listener);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    unsubscribe();
+  };
+}
+
 export function useStatusBarEnabled(): boolean {
-  return useSyncExternalStore(store.subscribe, store.get, () => false);
+  return useSyncExternalStore(subscribeIncludingOtherTabs, store.get, () => false);
 }

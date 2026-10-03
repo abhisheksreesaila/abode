@@ -381,7 +381,7 @@ import type { AssistantCitationRequest } from "./chat/AssistantCitationSource";
 import { resolveTimelineIsAtEnd, worktreeSetupAgentStarted } from "./chat/MessagesTimeline.logic";
 import { resolveComposerTimelineInset, resolveScrollToEndClearance } from "./composerFooterLayout";
 import { ChatHeader } from "./chat/ChatHeader";
-import { ChangesList } from "./files/ChangesList";
+import { ChangesList, ChangesMessage } from "./files/ChangesList";
 import { PanelLayoutControls, RightPanelMaximizeControl } from "./chat/PanelLayoutControls";
 import {
   usePublishStatusBarActiveThread,
@@ -9723,13 +9723,17 @@ export default function ChatView(props: ChatViewProps) {
           }}
         />
       </Suspense>
-    ) : renderedRightPanelSurface?.kind === "changes" && activeProject && activeWorkspaceRoot ? (
-      <ChangesList
-        environmentId={activeThread.environmentId}
-        cwd={activeWorkspaceRoot}
-        threadRef={activeThreadRef}
-        onOpenFile={openFileSurface}
-      />
+    ) : renderedRightPanelSurface?.kind === "changes" ? (
+      activeProject && activeWorkspaceRoot ? (
+        <ChangesList
+          environmentId={activeThread.environmentId}
+          cwd={activeWorkspaceRoot}
+          threadRef={activeThreadRef}
+          onOpenFile={openFileSurface}
+        />
+      ) : (
+        <ChangesMessage text="Open a project to see changes" />
+      )
     ) : (renderedRightPanelSurface?.kind === "files" ||
         renderedRightPanelSurface?.kind === "file") &&
       ((activeProject && activeWorkspaceRoot) ||
