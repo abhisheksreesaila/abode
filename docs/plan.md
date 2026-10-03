@@ -424,7 +424,7 @@ Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current 
 
 ### F-035: Sessions sidebar (the default)
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - **Header:** "Sessions", with New (Ctrl+N), filter and search.
   - **Sections:**
@@ -441,7 +441,7 @@ Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current 
 
 ### F-036: The icon bar holds the account items
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** the left rail has Sessions and Search at the top, and at the bottom Pull requests, Claude Max usage (a meter in the tooltip, with a popover), Phone & Remote, and Settings.
 
 ### F-037: Simple top bar
