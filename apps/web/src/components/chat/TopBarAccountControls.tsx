@@ -1,14 +1,14 @@
 import { useAtomValue } from "@effect/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 import { collectLimitAccounts } from "@t3tools/shared/usageLimits";
-import { EllipsisIcon, GaugeIcon, SettingsIcon, SmartphoneIcon } from "lucide-react";
+import { EllipsisIcon, GaugeIcon, SettingsIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 
 import { useNowMinute } from "../../hooks/useNowMinute";
 import { usePrimarySettings } from "../../hooks/useSettings";
 import { shortcutLabelForCommand } from "../../keybindings";
 import { cn } from "../../lib/utils";
-import { useEnvironments } from "../../state/environments";
+import { usePullRequestsSupported } from "../../hooks/usePullRequestsSupported";
 import { environmentPresentations } from "../../state/presentation";
 import { primaryServerKeybindingsAtom } from "../../state/server";
 import { PullRequestGlyph } from "../pullRequest/pullRequestIcons";
@@ -32,14 +32,6 @@ const BADGE_TONE: Record<UsageTone, string> = {
   critical: "text-destructive",
 };
 
-/** The same check the pull request page uses: one connected server offering them is enough. */
-function usePullRequestsSupported() {
-  const { environments } = useEnvironments();
-  return environments.some(
-    (environment) => environment.serverConfig?.environment.capabilities.pullRequests === true,
-  );
-}
-
 /** Navigation shared by the top-bar icons and the phone's ⋯ menu entries. */
 function useAccountNavigation() {
   const navigate = useNavigate();
@@ -47,7 +39,6 @@ function useAccountNavigation() {
     openPullRequests: () =>
       void navigate({ to: "/pull-requests", search: readPullRequestListPreferences() }),
     openUsage: () => void navigate({ to: "/usage" }),
-    openConnections: () => void navigate({ to: "/settings/connections" }),
     openSettings: () => void navigate({ to: "/settings" }),
   };
 }
@@ -168,26 +159,18 @@ const UsageToolbarButton = memo(function UsageToolbarButton({
 
 /**
  * Top-right account icons (abode F-044), just before the panel toggles:
- * Pull requests, Claude usage, Phone & Remote, Settings. Narrow headers fold
- * them into the ⋯ menu (see TopBarAccountMenuItems).
+ * Claude usage and Settings (F-049 moved Pull requests into the right drawer and left Phone &
+ * Remote to Settings → Connections). Narrow headers fold them into the ⋯ menu (see
+ * TopBarAccountMenuItems).
  */
 export const TopBarAccountControls = memo(function TopBarAccountControls() {
-  const pullRequestsSupported = usePullRequestsSupported();
   const nav = useAccountNavigation();
   return (
     <div
       className="flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]"
       data-top-bar-account-controls
     >
-      {pullRequestsSupported ? (
-        <ToolbarIconButton label="Pull requests" onClick={nav.openPullRequests}>
-          <PullRequestGlyph.pullRequest />
-        </ToolbarIconButton>
-      ) : null}
       <UsageToolbarButton onOpenUsagePage={nav.openUsage} />
-      <ToolbarIconButton label="Phone & Remote" onClick={nav.openConnections}>
-        <SmartphoneIcon />
-      </ToolbarIconButton>
       <ToolbarIconButton label="Settings" onClick={nav.openSettings}>
         <SettingsIcon />
       </ToolbarIconButton>
@@ -195,13 +178,21 @@ export const TopBarAccountControls = memo(function TopBarAccountControls() {
   );
 });
 
-/** The phone-width copy of the account icons: entries in the header's ⋯ menu. */
-export function TopBarAccountMenuItems() {
+/**
+ * The phone-width copy of the account icons: entries in the header's ⋯ menu. Pull requests only
+ * shows where there is no right drawer to hold it (pages without a thread), where it opens the
+ * page; a thread header passes `includePullRequests={false}` and offers the drawer tab instead.
+ */
+export function TopBarAccountMenuItems({
+  includePullRequests = true,
+}: {
+  readonly includePullRequests?: boolean;
+}) {
   const pullRequestsSupported = usePullRequestsSupported();
   const nav = useAccountNavigation();
   return (
     <>
-      {pullRequestsSupported ? (
+      {includePullRequests && pullRequestsSupported ? (
         <MenuItem onClick={nav.openPullRequests}>
           <PullRequestGlyph.pullRequest className="size-4" />
           <MenuItemLabel>Pull requests</MenuItemLabel>
@@ -210,10 +201,6 @@ export function TopBarAccountMenuItems() {
       <MenuItem onClick={nav.openUsage}>
         <GaugeIcon className="size-4" />
         <MenuItemLabel>Usage</MenuItemLabel>
-      </MenuItem>
-      <MenuItem onClick={nav.openConnections}>
-        <SmartphoneIcon className="size-4" />
-        <MenuItemLabel>Phone & Remote</MenuItemLabel>
       </MenuItem>
       <MenuItem onClick={nav.openSettings}>
         <SettingsIcon className="size-4" />

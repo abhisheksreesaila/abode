@@ -28,9 +28,14 @@ export function MainAppLocationTracker() {
   return null;
 }
 
+/** Where Back goes: the last main app URL, or the thread list when none was seen. */
+export function resolveMainAppHref(remembered: string | null): string {
+  return remembered ?? "/";
+}
+
 // Leaves a utility page for the last main app URL, or the thread list when
 // the app was opened directly on a utility page.
 export function useNavigateToMainApp() {
   const navigate = useNavigate();
-  return useCallback(() => navigate({ href: mainAppHref ?? "/" }), [navigate]);
+  return useCallback(() => navigate({ href: resolveMainAppHref(mainAppHref) }), [navigate]);
 }

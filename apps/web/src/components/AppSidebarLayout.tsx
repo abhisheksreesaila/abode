@@ -42,6 +42,7 @@ import { SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import { AppStatusBar } from "./statusBar/AppStatusBar";
 import { useStatusBarEnabled } from "./statusBar/statusBarSetting";
 import { MainAppLocationTracker } from "./sidebar/mainAppLocation";
+import { useRouteSectionFade } from "../routeMotion";
 import { useSidebarStageBackdropVariant } from "./SidebarStageBackdrop";
 import { useProjects } from "../state/entities";
 import {
@@ -233,6 +234,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   // Settings routes show the settings nav in place of whichever thread
   // sidebar is active.
   const pathname = useLocation({ select: (location) => location.pathname });
+  useRouteSectionFade();
   const panelAnimationsSuppressed = usePanelNavigationSuppression(pathname);
   const routePanelAnimationsActive = panelAnimationsActive && !panelAnimationsSuppressed;
   const isOnSettings = pathname === "/settings" || pathname.startsWith("/settings/");

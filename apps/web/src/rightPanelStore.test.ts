@@ -422,6 +422,17 @@ describe("rightPanelStore", () => {
     ).toHaveLength(2);
   });
 
+  it("opens the client-only pull request list as one singleton tab", () => {
+    useRightPanelStore.getState().open(refA, "pull-request-list");
+    useRightPanelStore.getState().open(refA, "pull-request-list");
+
+    expect(selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA)).toEqual({
+      isOpen: true,
+      activeSurfaceId: "pull-request-list",
+      surfaces: [{ id: "pull-request-list", kind: "pull-request-list" }],
+    });
+  });
+
   it("reopening an inactive singleton activates its existing surface", () => {
     useRightPanelStore.getState().open(refA, "diff");
     useRightPanelStore.getState().open(refA, "agents");
