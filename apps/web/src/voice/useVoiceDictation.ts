@@ -14,10 +14,13 @@ import { transcribe } from "./transcriberClient";
 
 /** Shorter than this is an accidental tap, not speech. */
 const MIN_SAMPLES = SPEECH_SAMPLE_RATE * 0.3;
-/** How often the audio so far is re-transcribed for the live preview. */
+/** How often the audio so far is re-transcribed for the live text. */
 const INTERIM_INTERVAL_MS = 1_000;
-/** Keeps preview latency flat on long dictations: only the last few seconds are re-read. */
-const INTERIM_WINDOW_SAMPLES = SPEECH_SAMPLE_RATE * 12;
+/**
+ * The live text re-reads everything said so far, up to this long. Beyond it only the tail is
+ * read and the interim loop prefixes "…", so the first words are never silently dropped.
+ */
+const INTERIM_WINDOW_SAMPLES = SPEECH_SAMPLE_RATE * 30;
 const INTERIM_MIN_SAMPLES = SPEECH_SAMPLE_RATE * 0.5;
 const ERROR_VISIBLE_MS = 6_000;
 const INSERT_FAILED_MESSAGE = "Can't insert right now.";
@@ -31,6 +34,8 @@ export interface VoiceDictation {
   state: RecordingState;
   /** Tap behavior for the mic button: start, or stop and transcribe. */
   toggle: () => void;
+  /** Abandons any dictation in flight without inserting anything. */
+  cancel: () => void;
 }
 
 /**
@@ -212,5 +217,5 @@ export function useVoiceDictation(input: {
   // Release the mic if the composer unmounts mid-recording.
   useEffect(() => cancel, [cancel]);
 
-  return { state, toggle };
+  return { state, toggle, cancel };
 }

@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MicIcon, SquareIcon } from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../components/ui/tooltip";
 import type { RecordingState } from "./recordingMachine";
-import { previewLabel } from "./previewText";
+import { provisionalTextFor } from "./provisionalDictation";
 import { voiceShortcutLabel } from "./shortcut";
 import { useVoiceDictation } from "./useVoiceDictation";
 import { useVoiceSettings } from "./voiceSettings";
@@ -33,7 +33,9 @@ export function describeVoiceStatus(state: RecordingState, elapsedSeconds = 0): 
     case "idle":
       return null;
     case "recording":
-      return `Listening ${formatElapsed(elapsedSeconds)} · Release to insert · Esc cancel`;
+      return state.downloadProgress === undefined || state.interim
+        ? `Listening ${formatElapsed(elapsedSeconds)} · Release to insert · Esc cancel`
+        : `Downloading voice model ${Math.round(state.downloadProgress * 100)}%…`;
     case "transcribing":
       return state.downloadProgress === null
         ? "Transcribing…"
@@ -49,20 +51,62 @@ export function describeVoiceStatus(state: RecordingState, elapsedSeconds = 0): 
  */
 export function ComposerVoiceControl({
   onTranscript,
+  onProvisionalStart,
+  onProvisionalText,
+  onProvisionalEnd,
+  resetKey,
   disabled = false,
 }: {
+  /** Changes when the composer moves to another draft; an active dictation is cancelled. */
+  resetKey: string;
+  /** Recording began: pin the insertion point. */
+  onProvisionalStart: () => void;
+  /** The live text to show (empty string for none yet). Called at most once per interim tick. */
+  onProvisionalText: (text: string) => void;
+  /** Dictation ended without a transcript (cancelled or failed): drop the provisional text. */
+  onProvisionalEnd: () => void;
   /** Returns false when the composer could not take the text. */
   onTranscript: (text: string) => boolean;
   /** The composer cannot accept text right now (connecting, approval, pending question). */
   disabled?: boolean;
 }) {
   const { settings } = useVoiceSettings();
-  const { state, toggle } = useVoiceDictation({
+  // Only when the composer cannot take the text is it shown here, so it is never lost.
+  const [fallbackText, setFallbackText] = useState<string | null>(null);
+  const { state, toggle, cancel } = useVoiceDictation({
     enabled: settings.enabled,
     canStart: !disabled,
     shortcut: settings.shortcut,
-    onTranscript,
+    onTranscript: (text) => {
+      const inserted = onTranscript(text);
+      if (!inserted) setFallbackText(text);
+      return inserted;
+    },
   });
+  const handlersRef = useRef({ onProvisionalStart, onProvisionalText, onProvisionalEnd });
+  useEffect(() => {
+    handlersRef.current = { onProvisionalStart, onProvisionalText, onProvisionalEnd };
+  });
+  const resetKeyRef = useRef(resetKey);
+  useEffect(() => {
+    if (resetKeyRef.current === resetKey) return;
+    resetKeyRef.current = resetKey;
+    cancel();
+    setFallbackText(null);
+  }, [cancel, resetKey]);
+  const previousStatusRef = useRef(state.status);
+  useEffect(() => {
+    const handlers = handlersRef.current;
+    const wasRecording = previousStatusRef.current === "recording";
+    previousStatusRef.current = state.status;
+    if (state.status === "recording" && !wasRecording) {
+      setFallbackText(null);
+      handlers.onProvisionalStart();
+    }
+    const text = provisionalTextFor(state);
+    if (text === null) handlers.onProvisionalEnd();
+    else if (text !== undefined) handlers.onProvisionalText(text);
+  }, [state]);
   const recording = state.status === "recording";
   const elapsed = useElapsedSeconds(recording);
   if (!settings.enabled) return null;
@@ -70,17 +114,23 @@ export function ComposerVoiceControl({
   const status = describeVoiceStatus(state, elapsed);
   const busy = state.status === "transcribing";
   const label = recording ? "Stop dictation" : "Dictate";
-  const preview = state.status === "recording" ? previewLabel(state) : null;
   return (
     <div className="relative flex items-center gap-2">
-      {preview ? (
-        // Muted ghost of what has been heard so far; the real text lands on release.
-        <p
-          data-voice-interim="true"
-          className="pointer-events-none absolute right-0 bottom-full mb-2 w-72 max-w-[70vw] rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs italic text-muted-foreground shadow-sm"
+      {fallbackText ? (
+        <div
+          role="alert"
+          className="absolute right-0 bottom-full mb-2 flex w-72 max-w-[70vw] items-start gap-2 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs text-muted-foreground shadow-sm"
         >
-          {preview}
-        </p>
+          <p className="min-w-0 flex-1 select-text break-words">{fallbackText}</p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="compact"
+            onClick={() => setFallbackText(null)}
+          >
+            Dismiss
+          </Button>
+        </div>
       ) : null}
       {status ? (
         <span
