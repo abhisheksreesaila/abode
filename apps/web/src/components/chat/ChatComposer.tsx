@@ -254,6 +254,7 @@ import { useDebouncedValue } from "~/state/queries";
 import { ComposerPickerRow } from "./ComposerPickerRow";
 import { ComposerStatusRow } from "./ComposerStatusRow";
 import { resolveComposerOuterRows } from "./composerOuterRows";
+import { findComposerControlTrigger } from "./composerControlTrigger";
 import {
   modelPickerNeedsComposerExpanded,
   shouldShowWorkspaceRow,
@@ -282,6 +283,7 @@ import {
   ComposerControl,
   ComposerControlIcon,
   ComposerControlSeparator,
+  type ComposerControlLook,
   ComposerSelectControl,
 } from "./ComposerControl";
 import { resolveComposerMenuActiveItemId } from "./composerMenuHighlight";
@@ -1116,6 +1118,8 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
   interactionMode: ProviderInteractionMode;
   runtimeMode: RuntimeMode;
   size?: "sm" | "xs";
+  /** `plain` is the status row under the box: no separators, controls as muted text. */
+  look?: ComposerControlLook;
   hidden?: boolean;
   onToggleInteractionMode: () => void;
   onRuntimeModeChange: (mode: RuntimeMode) => void;
@@ -1125,6 +1129,8 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
   doneSparkle?: number;
 }) {
   const size = props.size ?? "sm";
+  const look = props.look ?? "default";
+  const separator = look === "plain" ? null : <ComposerControlSeparator size={size} />;
   const composerFloatingLayerProps = useComposerMenuProps();
   const [open, setOpen] = useComposerMenuState(props.hidden);
   const runtimeModeOption = runtimeModeConfig[props.runtimeMode];
@@ -1139,12 +1145,13 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
   const autonomousChip = resolveAutonomousChip(props.autonomous, props.runtimeMode);
   const autonomousToggle = props.onAutonomousChange ? (
     <>
-      <ComposerControlSeparator size={size} />
+      {separator}
       <Tooltip>
         <TooltipTrigger
           render={
             <ComposerControl
               size={size}
+              look={look}
               className="shrink-0 whitespace-nowrap"
               aria-pressed={autonomousChip.on}
               aria-label="Autonomous mode"
@@ -1167,12 +1174,13 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
 
   const interactionModeToggle = props.showInteractionModeToggle ? (
     <>
-      <ComposerControlSeparator size={size} />
+      {separator}
       <Tooltip>
         <TooltipTrigger
           render={
             <ComposerControl
               size={size}
+              look={look}
               className="shrink-0 whitespace-nowrap"
               aria-pressed={props.interactionMode === "plan"}
               type="button"
@@ -1205,7 +1213,7 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
 
   return (
     <>
-      <ComposerControlSeparator size={size} />
+      {separator}
 
       <Tooltip>
         <Select
@@ -1219,6 +1227,7 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
               <ComposerSelectControl
                 data-composer-shortcut="composer.mode"
                 size={size}
+                look={look}
                 aria-label="Runtime mode"
                 tint={resolveRuntimeModeTint(props.runtimeMode)}
               />
@@ -1231,7 +1240,7 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
             />
             <SelectValue data-composer-control-label>{runtimeModeOption.label}</SelectValue>
           </TooltipTrigger>
-          <SelectPopup alignItemWithTrigger={false} {...composerFloatingLayerProps}>
+          <SelectPopup alignItemWithTrigger={false} size="compact" {...composerFloatingLayerProps}>
             {runtimeModeOptions.map((mode) => {
               const option = runtimeModeConfig[mode];
               const OptionIcon = option.icon;
@@ -1504,16 +1513,16 @@ export interface ChatComposerProps {
    * same controls as menu entries for when the footer is too narrow. Absent
    * when the thread has none to show.
    */
-  contextControls?: ReactNode;
+  contextControls?: (look: ComposerControlLook) => ReactNode;
   contextControlsMenu?: ReactNode;
   /** The `composer.host` / `composer.workspace` commands the context controls offer. */
   contextControlsShortcuts?: string;
   pullRequestProjectId: ProjectId | null;
   pullRequestRepository: string | null;
   restingControlsHost: HTMLDivElement | null;
-  /** Host above the glass box for the workspace and harness pickers (F-039). */
+  /** Host above the glass box for the workspace and harness pickers. */
   topRowHost?: HTMLDivElement | null;
-  /** Host below the glass box for the plain status row (F-039). */
+  /** Host below the glass box for the plain status row. */
   statusRowHost?: HTMLDivElement | null;
   onRestingControlsVisibilityChange: (visible: boolean) => void;
   getTimelineScrollableNode: () => HTMLElement | null;
@@ -4900,6 +4909,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const outerRows = resolveComposerOuterRows({
     showWorkspaceRow: shouldShowWorkspaceRow({ routeKind, hasDraftId: draftId !== null }),
     controlsInStrip: composerControlsInStrip,
+    isCollapsedMobile: isComposerCollapsedMobile,
     isApprovalState: isComposerApprovalState,
     hasTopHost: topRowHost !== null,
     hasBottomHost: statusRowHost !== null,
@@ -5184,7 +5194,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             content: (
               <>
                 <ComposerControlSeparator size={composerControlsInStrip ? "xs" : "sm"} />
-                {contextControls}
+                {contextControls?.("default")}
               </>
             ),
           },
@@ -6019,10 +6029,13 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       if (isInsideRestingComposerControlScope(activeElement)) {
         return;
       }
+      // The stack also holds the picker row above and the status row below the box.
+      const composerStack = composerForm?.closest("[data-chat-composer-stack]") ?? null;
       if (
         activeElement instanceof Node &&
         ((composerSurface && composerSurface.contains(activeElement)) ||
-          (composerForm && composerForm.contains(activeElement)))
+          (composerForm && composerForm.contains(activeElement)) ||
+          (composerStack && composerStack.contains(activeElement)))
       ) {
         return;
       }
@@ -6175,14 +6188,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           setIsComposerScrollCollapsed(false);
           setIsComposerFocused(true);
         });
-        const shell = composerFormRef.current?.closest('[data-slot="composer-shell"]');
-        const trigger = Array.from(
-          shell?.querySelectorAll<HTMLButtonElement>(
-            `button[data-composer-shortcut~="${command}"]:not(:disabled)`,
-          ) ?? [],
-        ).find(
-          (element) =>
-            !element.closest("[inert]") && element.checkVisibility({ visibilityProperty: true }),
+        const trigger = findComposerControlTrigger<HTMLButtonElement>(
+          composerFormRef.current,
+          command,
         );
         if (!trigger) return;
         trigger.focus({ preventScroll: true });
@@ -6453,7 +6461,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       className="mx-auto w-full min-w-0 max-w-(--chat-max-width)"
       data-chat-composer-form="true"
     >
-      {draftId !== null && shouldShowWorkspaceRow({ routeKind, hasDraftId: true })
+      {draftId !== null &&
+      (outerRows.topRow ||
+        (topRowHost === null && shouldShowWorkspaceRow({ routeKind, hasDraftId: true })))
         ? (() => {
             const pickerRow = (
               <ComposerPickerRow
@@ -6463,7 +6473,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
               />
             );
             // Above the glass box when ChatView provides the host, else in the body.
-            return topRowHost ? createPortal(pickerRow, topRowHost) : pickerRow;
+            return outerRows.topRow && topRowHost ? createPortal(pickerRow, topRowHost) : pickerRow;
           })()
         : null}
       {outerRows.statusRow && statusRowHost
@@ -6475,6 +6485,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   interactionMode={interactionMode}
                   runtimeMode={runtimeMode}
                   size="xs"
+                  look="plain"
                   onToggleInteractionMode={toggleInteractionMode}
                   onRuntimeModeChange={handleRuntimeModeChange}
                   autonomous={autonomous}
@@ -6482,7 +6493,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   doneSparkle={doneSparkle}
                 />
               }
-              end={contextControls}
+              end={contextControls?.("plain")}
             />,
             statusRowHost,
           )

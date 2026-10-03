@@ -10,11 +10,13 @@
 export function resolveComposerOuterRows(input: {
   readonly showWorkspaceRow: boolean;
   readonly controlsInStrip: boolean;
+  /** The phone composer is collapsed to its one-line form. */
+  readonly isCollapsedMobile: boolean;
   readonly isApprovalState: boolean;
   readonly hasTopHost: boolean;
   readonly hasBottomHost: boolean;
 }): {
-  /** The workspace and harness pickers render above the box. */
+  /** The workspace and harness pickers render above the box; hidden while the phone composer is collapsed. */
   readonly topRow: boolean;
   /** The status row renders below the box. */
   readonly statusRow: boolean;
@@ -23,7 +25,7 @@ export function resolveComposerOuterRows(input: {
 } {
   const statusRowOwnsControls = input.hasBottomHost && !input.controlsInStrip;
   return {
-    topRow: input.showWorkspaceRow && input.hasTopHost,
+    topRow: input.showWorkspaceRow && input.hasTopHost && !input.isCollapsedMobile,
     statusRow: statusRowOwnsControls && !input.isApprovalState,
     statusRowOwnsControls,
   };

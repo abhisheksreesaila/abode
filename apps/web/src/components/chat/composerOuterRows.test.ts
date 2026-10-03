@@ -5,6 +5,7 @@ import { resolveComposerOuterRows } from "./composerOuterRows";
 const expanded = {
   showWorkspaceRow: true,
   controlsInStrip: false,
+  isCollapsedMobile: false,
   isApprovalState: false,
   hasTopHost: true,
   hasBottomHost: true,
@@ -23,7 +24,13 @@ describe("resolveComposerOuterRows", () => {
     expect(resolveComposerOuterRows({ ...expanded, showWorkspaceRow: false }).topRow).toBe(false);
   });
 
-  it("keeps the controls in the strip while resting or collapsed", () => {
+  it("hides the picker row while the phone composer is collapsed", () => {
+    expect(
+      resolveComposerOuterRows({ ...expanded, controlsInStrip: true, isCollapsedMobile: true }),
+    ).toEqual({ topRow: false, statusRow: false, statusRowOwnsControls: false });
+  });
+
+  it("keeps the controls in the strip while resting", () => {
     expect(resolveComposerOuterRows({ ...expanded, controlsInStrip: true })).toEqual({
       topRow: true,
       statusRow: false,

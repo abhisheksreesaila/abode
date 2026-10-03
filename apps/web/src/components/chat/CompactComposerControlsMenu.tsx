@@ -97,7 +97,7 @@ export const CompactComposerControlsMenu = memo(function CompactComposerControls
         >
           <ComposerControlIcon icon={EllipsisIcon} size={size} />
         </MenuTrigger>
-        <MenuPopup align="start" {...composerFloatingLayerProps}>
+        <MenuPopup align="start" size="compact" {...composerFloatingLayerProps}>
           {props.agentMenuContent ? (
             <>
               {props.agentMenuContent}

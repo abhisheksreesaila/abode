@@ -30,8 +30,12 @@ import {
 import { BranchToolbarEnvironmentSelector } from "./BranchToolbarEnvironmentSelector";
 import { BranchToolbarEnvModeSelector } from "./BranchToolbarEnvModeSelector";
 import { PreviousWorktreeItemContent } from "./PreviousWorktreeItemContent";
-import { ComposerControl } from "./chat/ComposerControl";
-import { CHIP_TINT_CLASS_NAMES, resolveWorkspaceTint } from "./chat/chipTint";
+import {
+  ComposerControl,
+  composerTintClassName,
+  type ComposerControlLook,
+} from "./chat/ComposerControl";
+import { resolveWorkspaceTint } from "./chat/chipTint";
 import {
   Menu,
   MenuGroup,
@@ -57,6 +61,8 @@ export interface BranchToolbarHandle {
 
 interface BranchToolbarProps {
   forceNewWorktree?: boolean;
+  /** `plain` renders every chip as muted text, for the status row under the composer. */
+  look?: ComposerControlLook;
   ref?: Ref<BranchToolbarHandle>;
   environmentId: EnvironmentId;
   threadId: ThreadId;
@@ -80,6 +86,7 @@ interface BranchToolbarProps {
 
 interface MobileRunContextSelectorProps {
   forceNewWorktree: boolean;
+  look: ComposerControlLook;
   autoEnvironmentLabel?: string | undefined;
   onAutoEnvironment?: (() => void) | undefined;
   envLocked: boolean;
@@ -97,7 +104,10 @@ interface MobileRunContextSelectorProps {
   onUsePreviousWorktree: () => void;
 }
 
-type RunContextMenuGroupsProps = Omit<MobileRunContextSelectorProps, "showEnvironmentIndicator"> & {
+type RunContextMenuGroupsProps = Omit<
+  MobileRunContextSelectorProps,
+  "showEnvironmentIndicator" | "look"
+> & {
   /** Off when the thread has no workspace to switch (a non-Git project). */
   showWorkspace: boolean;
 };
@@ -213,6 +223,7 @@ function RunContextMenuGroups({
 
 const MobileRunContextSelector = memo(function MobileRunContextSelector({
   forceNewWorktree,
+  look,
   autoEnvironmentLabel,
   onAutoEnvironment,
   envLocked,
@@ -298,7 +309,7 @@ const MobileRunContextSelector = memo(function MobileRunContextSelector({
       <span
         className={cn(
           "inline-flex h-7 min-w-0 flex-initial items-center justify-start gap-1 rounded-md border border-transparent px-1.75 font-normal text-muted-foreground/70 text-xs sm:h-6",
-          CHIP_TINT_CLASS_NAMES[workspaceTint],
+          composerTintClassName(look, workspaceTint),
         )}
         data-composer-context-control
       >
@@ -310,7 +321,7 @@ const MobileRunContextSelector = memo(function MobileRunContextSelector({
   return (
     <Menu>
       <MenuTrigger
-        render={<ComposerControl size="xs" tint={workspaceTint} />}
+        render={<ComposerControl size="xs" look={look} tint={workspaceTint} />}
         className="min-w-0 flex-initial justify-start"
         data-composer-context-control
         data-composer-shortcut={[
@@ -324,6 +335,7 @@ const MobileRunContextSelector = memo(function MobileRunContextSelector({
       <MenuPopup
         align="start"
         side="top"
+        size="compact"
         className={previousWorktreeLabel ? "w-[min(21rem,calc(100vw-2rem))]" : undefined}
         {...composerFloatingLayerProps}
       >
@@ -462,6 +474,7 @@ function useBranchToolbarModel({
 export const BranchToolbar = memo(function BranchToolbar(props: BranchToolbarProps) {
   const {
     forceNewWorktree = false,
+    look = "default",
     ref,
     environmentId,
     threadId,
@@ -514,6 +527,7 @@ export const BranchToolbar = memo(function BranchToolbar(props: BranchToolbarPro
         <div className="contents @3xl/composer-surface:hidden">
           <MobileRunContextSelector
             forceNewWorktree={forceNewWorktree}
+            look={look}
             autoEnvironmentLabel={autoEnvironmentLabel}
             onAutoEnvironment={onAutoEnvironment}
             envLocked={envLocked}
@@ -542,6 +556,7 @@ export const BranchToolbar = memo(function BranchToolbar(props: BranchToolbarPro
           {model.showEnvironmentIndicator && availableEnvironments && (
             <>
               <BranchToolbarEnvironmentSelector
+                look={look}
                 autoEnvironmentLabel={autoEnvironmentLabel}
                 onAutoEnvironment={onAutoEnvironment}
                 envLocked={envLocked}
@@ -563,6 +578,7 @@ export const BranchToolbar = memo(function BranchToolbar(props: BranchToolbarPro
           {showGitControls ? (
             <BranchToolbarEnvModeSelector
               forceNewWorktree={forceNewWorktree}
+              look={look}
               envLocked={model.envModeLocked}
               effectiveEnvMode={model.effectiveEnvMode}
               activeWorktreePath={model.activeWorktreePath}
@@ -578,6 +594,7 @@ export const BranchToolbar = memo(function BranchToolbar(props: BranchToolbarPro
       {showGitControls ? (
         <BranchToolbarBranchSelector
           forceNewWorktree={forceNewWorktree}
+          look={look}
           ref={branchSelectorRef}
           className="min-w-0 flex-initial"
           environmentId={environmentId}

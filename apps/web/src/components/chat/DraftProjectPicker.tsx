@@ -299,7 +299,7 @@ export function DraftProjectMenu({
           <TooltipPopup side="top">{activeProjectDisplayName}</TooltipPopup>
         ) : null}
       </Tooltip>
-      <MenuPopup align={align} className="max-h-80 overflow-y-auto">
+      <MenuPopup align={align} size="compact" className="max-h-80 overflow-y-auto">
         <MenuRadioGroup
           value={isScratchDraft ? NO_PROJECT_VALUE : activeProjectKey}
           onValueChange={(value) => {

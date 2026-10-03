@@ -4,6 +4,7 @@ import { memo, useMemo } from "react";
 
 import type { EnvironmentOption } from "./BranchToolbar.logic";
 import { EnvironmentMachineIcon } from "./EnvironmentMachineIcon";
+import { ComposerSelectControl, type ComposerControlLook } from "./chat/ComposerControl";
 import { useComposerMenuProps } from "./chat/composerEventScope";
 import {
   Select,
@@ -25,6 +26,7 @@ interface BranchToolbarEnvironmentSelectorProps {
   // Absent when there is only one environment to show: the indicator still
   // renders (as a static label) so remote projects are always identifiable.
   onEnvironmentChange?: (environmentId: EnvironmentId) => void;
+  look?: ComposerControlLook;
 }
 
 export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvironmentSelector({
@@ -34,6 +36,7 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
   environmentId,
   availableEnvironments,
   onEnvironmentChange,
+  look = "default",
 }: BranchToolbarEnvironmentSelectorProps) {
   const composerFloatingLayerProps = useComposerMenuProps();
   const activeEnvironment = useMemo(() => {
@@ -90,14 +93,25 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
       <Tooltip>
         <TooltipTrigger
           render={
-            <SelectTrigger
-              variant="ghost"
-              size="xs"
-              className="min-w-0 max-w-full"
-              aria-label="Run on"
-              data-composer-shortcut="composer.host"
-              data-composer-context-control
-            />
+            look === "plain" ? (
+              <ComposerSelectControl
+                size="xs"
+                look="plain"
+                className="min-w-0 max-w-full"
+                aria-label="Run on"
+                data-composer-shortcut="composer.host"
+                data-composer-context-control
+              />
+            ) : (
+              <SelectTrigger
+                variant="ghost"
+                size="xs"
+                className="min-w-0 max-w-full"
+                aria-label="Run on"
+                data-composer-shortcut="composer.host"
+                data-composer-context-control
+              />
+            )
           }
         >
           {autoEnvironmentLabel ? (
@@ -116,7 +130,7 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
         </TooltipTrigger>
         <TooltipPopup>{autoEnvironmentLabel ?? activeEnvironment?.label ?? "Run on"}</TooltipPopup>
       </Tooltip>
-      <SelectPopup alignItemWithTrigger={false} {...composerFloatingLayerProps}>
+      <SelectPopup alignItemWithTrigger={false} size="compact" {...composerFloatingLayerProps}>
         <SelectGroup>
           <SelectGroupLabel>Run on</SelectGroupLabel>
           {onAutoEnvironment && (

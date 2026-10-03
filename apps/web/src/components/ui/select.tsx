@@ -100,9 +100,16 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
   );
 }
 
+const selectPopupSizeClassName = {
+  default: "",
+  // Pickers: never wider than ~360px, so long descriptions clamp instead of stretching the menu.
+  compact: "max-w-[min(22.5rem,calc(100vw-2rem))]",
+} as const;
+
 function SelectPopup({
   className,
   children,
+  size = "default",
   side = "bottom",
   sideOffset = 4,
   align = "start",
@@ -119,6 +126,7 @@ function SelectPopup({
   alignItemWithTrigger?: SelectPrimitive.Positioner.Props["alignItemWithTrigger"];
   matchTriggerWidth?: boolean;
   anchor?: SelectPrimitive.Positioner.Props["anchor"];
+  size?: keyof typeof selectPopupSizeClassName;
 }) {
   return (
     <SelectPrimitive.Portal>
@@ -145,8 +153,9 @@ function SelectPopup({
           </SelectPrimitive.ScrollUpArrow>
           <div
             className={cn(
-              "dropdown-glass relative h-full max-w-[min(22.5rem,calc(100vw-2rem))] rounded-lg shadow-[0_16px_40px_-18px_rgb(0_0_0/55%)] dark:shadow-[0_18px_44px_-18px_rgb(0_0_0/80%)]",
+              "dropdown-glass relative h-full rounded-lg shadow-[0_16px_40px_-18px_rgb(0_0_0/55%)] dark:shadow-[0_18px_44px_-18px_rgb(0_0_0/80%)]",
               matchTriggerWidth && "min-w-(--anchor-width)",
+              selectPopupSizeClassName[size],
             )}
           >
             <SelectPrimitive.List

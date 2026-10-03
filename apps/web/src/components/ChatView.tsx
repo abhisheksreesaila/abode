@@ -10222,8 +10222,12 @@ export default function ChatView(props: ChatViewProps) {
                             statusRowHost={composerStatusRowHost}
                             {...(hasComposerContextControls
                               ? {
-                                  contextControls: (
-                                    <BranchToolbar ref={branchToolbarRef} {...branchToolbarProps} />
+                                  contextControls: (look) => (
+                                    <BranchToolbar
+                                      ref={branchToolbarRef}
+                                      look={look}
+                                      {...branchToolbarProps}
+                                    />
                                   ),
                                   contextControlsShortcuts,
                                   contextControlsMenu: (

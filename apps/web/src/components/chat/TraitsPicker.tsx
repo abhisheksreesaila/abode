@@ -32,6 +32,7 @@ import { getProviderModelCapabilities } from "../../providerModels";
 import { cn } from "~/lib/utils";
 import { Badge } from "../ui/badge";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { ClampedDescription } from "./ClampedDescription";
 import {
   ComposerControl,
   ComposerControlChevron,
@@ -435,16 +436,9 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
                         </span>
                       </span>
                       {option.description ? (
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <span className="line-clamp-2 max-w-56 text-pretty text-muted-foreground/80 text-xs" />
-                            }
-                          >
-                            {option.description}
-                          </TooltipTrigger>
-                          <TooltipPopup side="right">{option.description}</TooltipPopup>
-                        </Tooltip>
+                        <ClampedDescription className="max-w-56 text-pretty text-muted-foreground/80 text-xs">
+                          {option.description}
+                        </ClampedDescription>
                       ) : null}
                     </span>
                   </MenuRadioItem>
@@ -691,7 +685,11 @@ export const TraitsPicker = memo(function TraitsPicker({
         </TooltipTrigger>
         <TooltipPopup side="top">{accessibleLabel}</TooltipPopup>
       </Tooltip>
-      <MenuPopup align="start" {...(isComposerOwned ? composerFloatingLayerProps : {})}>
+      <MenuPopup
+        align="start"
+        size="compact"
+        {...(isComposerOwned ? composerFloatingLayerProps : {})}
+      >
         <TraitsMenuContent
           provider={provider}
           {...(instanceId ? { instanceId } : {})}

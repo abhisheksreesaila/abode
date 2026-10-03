@@ -79,7 +79,7 @@ export const CHIP_TINT_CLASS_NAMES: Readonly<Record<ChipTint, string>> = {
 
 /**
  * Text-only tint for the plain status row under the composer: the risk colors
- * (F-027) stay readable without a chip, everything else remains muted.
+ * stay readable without a chip, everything else remains muted.
  */
 const PLAIN_TINT_CLASS_NAMES: Partial<Readonly<Record<ChipTint, string>>> = {
   danger: "font-medium text-(--chip-danger-fg) hover:text-(--chip-danger-fg)",
