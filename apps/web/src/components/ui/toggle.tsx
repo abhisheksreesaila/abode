@@ -22,9 +22,15 @@ const toggleVariants = cva(
           "h-6 min-w-0 rounded-md px-2.5 text-xs before:rounded-[calc(var(--radius-md)-1px)]",
         sm: "h-8 min-w-8 px-[calc(--spacing(1.5)-1px)] sm:h-7 sm:min-w-7",
         xs: "h-7 min-w-7 px-[calc(--spacing(1)-1px)] sm:h-6 sm:min-w-6 rounded-md",
+        /** 28px square with a 16px icon, matching Button's icon-toolbar. */
+        toolbar:
+          "size-7 min-w-7 rounded-md p-0 before:rounded-[calc(var(--radius-md)-1px)] [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-4",
       },
       variant: {
         default: "border-transparent",
+        /** Flat top-bar toggle: no border, muted icon, subtle hover and pressed backgrounds. */
+        toolbar:
+          "border-transparent text-muted-foreground shadow-none before:shadow-none hover:bg-accent/60 hover:text-foreground data-pressed:bg-accent/70 data-pressed:text-foreground disabled:opacity-40 [&_svg]:opacity-100",
         pill: "border-transparent rounded-full px-3 font-normal text-muted-foreground data-pressed:text-foreground",
         ghost:
           "border-transparent text-foreground shadow-none [:disabled,:active,[data-pressed]]:shadow-none before:shadow-none data-pressed:bg-accent data-pressed:text-accent-foreground disabled:opacity-100 disabled:text-muted-foreground disabled:[&_svg]:opacity-100",

@@ -288,13 +288,10 @@ export default function ProjectScriptsControl({
             <TooltipTrigger
               render={
                 <Button
-                  size="xs"
-                  variant="outline"
+                  size={compact ? "icon-toolbar" : "xs"}
+                  variant="toolbar"
                   className={buttonWidthClass}
                   aria-label={`Run ${primaryScript.name}`}
-                  // The tooltip wrapper replaces data-slot="button", so themed
-                  // toolbar styling needs its own hook.
-                  data-toolbar-control=""
                   onClick={() => onRunScript(primaryScript)}
                 />
               }
@@ -312,7 +309,7 @@ export default function ProjectScriptsControl({
             }
           >
             <MenuTrigger
-              render={<Button size="icon-xs" variant="outline" aria-label="Script actions" />}
+              render={<Button size="icon-toolbar" variant="toolbar" aria-label="Script actions" />}
             >
               <ChevronDownIcon className="size-4" />
             </MenuTrigger>
@@ -326,7 +323,7 @@ export default function ProjectScriptsControl({
             setActionsMenuOpen({ presentation, scripts: false, imports: open })
           }
         >
-          <MenuTrigger render={<Button size="xs" variant="outline" aria-label="Project actions" />}>
+          <MenuTrigger render={<Button size="xs" variant="toolbar" aria-label="Project actions" />}>
             <PlusIcon className="size-3.5" />
             <span className={labelClass}>Add action</span>
             <ChevronDownIcon className="size-3.5" />
@@ -344,13 +341,10 @@ export default function ProjectScriptsControl({
           <TooltipTrigger
             render={
               <Button
-                size="xs"
-                variant="outline"
+                size={compact ? "icon-toolbar" : "xs"}
+                variant="toolbar"
                 className={buttonWidthClass}
                 aria-label="Add action"
-                // The tooltip wrapper replaces data-slot="button", so themed
-                // toolbar styling needs its own hook.
-                data-toolbar-control=""
                 onClick={openAddDialog}
               />
             }

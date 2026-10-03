@@ -2470,9 +2470,11 @@ function PullRequestsColumn({
           the route level, whose box spans the panel too, so the toggle keeps one
           fixed top-right anchor. */}
       <WorkspacePageHeader
+        accountControls
         electron={isElectron}
         reserveNativeControls={!rightPanelOpen}
-        className="relative bg-background"
+        // A closed panel leaves the toggle strip over the header's right end.
+        className={cn("relative bg-background", !rightPanelOpen && "md:pe-16")}
       >
         {titlebarControls}
         {condensed ? (

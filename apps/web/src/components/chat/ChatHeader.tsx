@@ -31,6 +31,7 @@ import ProjectScriptsControl, {
 } from "../ProjectScriptsControl";
 import { OpenInPicker } from "./OpenInPicker";
 import { HeaderNavControls } from "./HeaderNavControls";
+import { TopBarAccountControls, TopBarAccountMenuItems } from "./TopBarAccountControls";
 import { TranscriptModeMenuItems } from "./TranscriptModeMenuItems";
 import { useRemoteOpenState, type RemoteOpenMode } from "../../remoteOpen";
 import { usePrimaryEnvironmentId } from "../../state/environments";
@@ -328,7 +329,9 @@ export const ChatHeader = memo(function ChatHeader({
         </div>
         <Menu open={actionsOpen} onOpenChange={setActionsOpen}>
           <MenuTrigger
-            render={<Button size="icon-sm" variant="ghost" aria-label="More header actions" />}
+            render={
+              <Button size="icon-toolbar" variant="toolbar" aria-label="More header actions" />
+            }
           >
             <EllipsisIcon className="size-4" />
           </MenuTrigger>
@@ -336,6 +339,7 @@ export const ChatHeader = memo(function ChatHeader({
               they must survive the menu closing. */}
           <MenuPopup keepMounted aria-label="Header actions" align="end">
             <TranscriptModeMenuItems />
+            {actionsCollapsed ? <TopBarAccountMenuItems /> : null}
             {activeProjectName ? (
               <MenuItem
                 onClick={() => useRightPanelStore.getState().open(activeThreadRef, "changes")}
@@ -381,6 +385,7 @@ export const ChatHeader = memo(function ChatHeader({
             ) : null}
           </MenuPopup>
         </Menu>
+        {actionsCollapsed ? null : <TopBarAccountControls />}
       </div>
     </div>
   );

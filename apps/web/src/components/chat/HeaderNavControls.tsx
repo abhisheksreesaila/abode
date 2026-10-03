@@ -21,8 +21,8 @@ export const HeaderNavControls = memo(function HeaderNavControls() {
         <TooltipTrigger
           render={
             <Button
-              size="icon-sm"
-              variant="ghost"
+              size="icon-toolbar"
+              variant="toolbar"
               aria-label="Go back"
               disabled={!canGoBack}
               className="hidden md:inline-flex"
@@ -38,8 +38,8 @@ export const HeaderNavControls = memo(function HeaderNavControls() {
         <TooltipTrigger
           render={
             <Button
-              size="icon-sm"
-              variant="ghost"
+              size="icon-toolbar"
+              variant="toolbar"
               aria-label="Go forward"
               disabled={!canGoForward}
               className="hidden md:inline-flex"

@@ -10,7 +10,7 @@ import { environmentPresentations } from "../../state/presentation";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { formatUsageTooltip } from "./activityBar";
 import { ActivityBarButton, CELL_CLASS } from "./ActivityBarButton";
-import { accountTitle, UsageLimitsPanel } from "./SidebarUsageStatus";
+import { accountTitle, UsageLimitsPanel } from "../usage/UsageLimitsPanel";
 import {
   compactWindowLabel,
   formatResetAbsolute,
