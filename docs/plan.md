@@ -481,7 +481,7 @@ Screenshot: `docs/design/current-abode-2026-10-02-late.png`. Reference: `docs/de
 
 ### F-041: Clean canvas
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - A new session in a workspace shows only the title "What should we build in <workspace>?" (the greeting line may stay, small).
   - Removed:
@@ -494,7 +494,7 @@ Screenshot: `docs/design/current-abode-2026-10-02-late.png`. Reference: `docs/de
 
 ### F-042: One sidebar: workspaces with their sessions
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Always render the workspace-grouped Sessions sidebar: remove the inbox mode and its setting from the UI. The contract field stays and is ignored.
   - The header reads "WORKSPACES".
@@ -502,7 +502,7 @@ Screenshot: `docs/design/current-abode-2026-10-02-late.png`. Reference: `docs/de
 
 ### F-043: Customizations as folders, with +
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - The always-open Customizations section has folders: Skills, Agents, Instructions, MCP Servers.
   - Click a file to open it in the editor.
@@ -516,7 +516,7 @@ Screenshot: `docs/design/current-abode-2026-10-02-late.png`. Reference: `docs/de
 
 ### F-044: Quiet top bar with account icons
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Remove the search button (the centre box and Ctrl+K stay).
   - Top-right small flat icons: Pull requests, Claude Max usage (popover), Phone & Remote, Settings.
