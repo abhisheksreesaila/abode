@@ -28,6 +28,7 @@ import {
   ChevronRight,
   FileDiff,
   Files,
+  GitCompare,
   Globe2,
   Plus,
   TerminalSquare,
@@ -620,6 +621,8 @@ function surfaceTitle(
   switch (surface.kind) {
     case "diff":
       return "Diff";
+    case "changes":
+      return "Changes";
     case "files":
       return "Files";
     case "file":
@@ -697,6 +700,8 @@ function SurfaceIcon({
     }
     case "diff":
       return <FileDiff className="size-3 shrink-0" />;
+    case "changes":
+      return <GitCompare className="size-3 shrink-0" />;
     case "files":
       return <Files className="size-3 shrink-0" />;
     case "file":

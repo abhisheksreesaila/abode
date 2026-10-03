@@ -48,6 +48,7 @@ import { ActivityBar } from "./sidebar/ActivityBar";
 import { ACTIVITY_BAR_WIDTH_PX } from "./sidebar/activityBar";
 import { SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import { AppStatusBar } from "./statusBar/AppStatusBar";
+import { useStatusBarEnabled } from "./statusBar/statusBarSetting";
 import { MainAppLocationTracker } from "./sidebar/mainAppLocation";
 import { useSidebarStageBackdropVariant } from "./SidebarStageBackdrop";
 import { useProjects } from "../state/entities";
@@ -237,6 +238,7 @@ function ProjectProjectionRetention() {
 
 export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const statusBarEnabled = useStatusBarEnabled();
   const legacySidebarEnabled = useLegacySidebarEnabled();
   // Until settings hydrate the sidebar choice is only the schema default: show the empty
   // shell rather than mount one sidebar and swap it (abode F-035).
@@ -376,7 +378,7 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
         <SidebarControl />
         <NavigationHistoryShortcuts />
         <MainAppLocationTracker />
-        <AppStatusBar />
+        {statusBarEnabled ? <AppStatusBar /> : null}
       </SidebarProvider>
     </PanelAnimationSuppressionProvider>
   );

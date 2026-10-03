@@ -21,6 +21,7 @@ import { resolveStorage } from "./lib/storage";
 
 const RIGHT_PANEL_KINDS = [
   "diff",
+  "changes",
   "files",
   "file",
   "preview",
@@ -52,6 +53,7 @@ export type RightPanelSurface =
       splitDirection?: "horizontal" | "vertical";
     }
   | { id: "diff"; kind: "diff" }
+  | { id: "changes"; kind: "changes" }
   | { id: "files"; kind: "files" }
   | {
       id: `file:${string}` | `attachment:${string}`;
@@ -199,6 +201,8 @@ export const singletonSurface = (
   switch (kind) {
     case "diff":
       return { id: "diff", kind };
+    case "changes":
+      return { id: "changes", kind };
     case "files":
       return { id: "files", kind };
     case "pull-requests":
@@ -593,7 +597,11 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
         set((state) =>
           userAction(state, scopedThreadKey(ref), (current) => {
             if (requestedPath === ".") {
-              return upsertSurface(current, singletonSurface("files"));
+              // Same pair as the drawer's Files action: Changes leads Files.
+              return upsertSurface(
+                upsertSurface(current, singletonSurface("changes"), false),
+                singletonSurface("files"),
+              );
             }
             // Workspace entry paths use '/', including on Windows.
             const relativePath = /^[A-Za-z]:\/+$/.test(requestedPath)

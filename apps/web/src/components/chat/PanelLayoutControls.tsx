@@ -15,6 +15,8 @@ import { Toggle } from "../ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
 interface PanelLayoutControlsProps {
+  /** False when the surface's own top bar already hosts the sidebar toggle (F-037). */
+  showSidebarControl?: boolean;
   showTerminalControl?: boolean;
   terminalAvailable: boolean;
   terminalOpen: boolean;
@@ -30,7 +32,7 @@ interface PanelLayoutControlsProps {
 }
 
 /** The sidebar toggle of the title-bar cluster (md and up); the same toggle as Ctrl+B. */
-function SidebarToggleControl() {
+export function SidebarToggleControl() {
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const { toggleSidebar } = useSidebar();
   const open = useSidebarVisibility();
@@ -55,6 +57,7 @@ function SidebarToggleControl() {
 }
 
 export const PanelLayoutControls = memo(function PanelLayoutControls({
+  showSidebarControl = true,
   showTerminalControl = true,
   terminalAvailable,
   terminalOpen,
@@ -72,7 +75,7 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
       className="flex h-full shrink-0 items-center gap-1 [-webkit-app-region:no-drag]"
       data-panel-layout-controls
     >
-      <SidebarToggleControl />
+      {showSidebarControl ? <SidebarToggleControl /> : null}
       {showTerminalControl ? (
         <Tooltip>
           <TooltipTrigger render={<span className="flex shrink-0" />}>

@@ -60,7 +60,9 @@ export async function restoreWorkspaceDrawer(
   if (deps.sheetLayout) return { applied: false };
 
   const ensure: RightPanelSurface[] = [];
-  if (plan.ensureFiles) ensure.push(singletonSurface("files"));
+  // Changes leads Files, the pair the drawer opens with.
+  if (plan.ensureFiles) ensure.push(singletonSurface("changes"), singletonSurface("files"));
+  else if (plan.activate?.kind === "changes") ensure.push(singletonSurface("changes"));
   if (plan.activate?.kind === "file") ensure.push(fileSurface(plan.activate.relativePath, null, 0));
 
   if (plan.openBrowser) {

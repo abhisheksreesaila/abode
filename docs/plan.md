@@ -446,7 +446,7 @@ Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current 
 
 ### F-037: Simple top bar
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - **Left:** sidebar toggle and back/forward.
   - **Center:** one box showing the workspace (or "New session"), which opens the palette.
@@ -456,7 +456,7 @@ Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current 
 
 ### F-038: Status bar hidden by default
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** a Settings → Appearance switch "Show status bar", default off. Its info lives in the icon bar and the top bar.
 
 ### F-039: Composer like the reference
@@ -470,7 +470,7 @@ Reference: `docs/design/ref-agents-window.png` (VS Code agents window). Current 
 
 ### F-040: Right drawer with Changes | Files tabs
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** two top tabs: Changes (F-033's list) and Files (the tree). Browser, Diff and Editor stay as the existing tabs or modes.
 
 ### F-012: A week of daily use

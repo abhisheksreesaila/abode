@@ -103,6 +103,24 @@ describe("recordFromThread", () => {
     expect(recordFromThread(same, snapshot({ panel: filesPanel }), 99)).toBe(same);
   });
 
+  it("remembers the Changes tab as the active one", () => {
+    const next = recordFromThread(
+      record(),
+      snapshot({
+        panel: panel({
+          isOpen: true,
+          activeSurfaceId: "changes",
+          surfaces: [
+            { id: "changes", kind: "changes" },
+            { id: "files", kind: "files" },
+          ],
+        }),
+      }),
+      4,
+    );
+    expect(next.activeTab).toEqual({ kind: "changes" });
+  });
+
   it("remembers a closed drawer", () => {
     const next = recordFromThread(
       record(),

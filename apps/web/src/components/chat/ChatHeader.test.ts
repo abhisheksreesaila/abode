@@ -1,7 +1,11 @@
 import { EnvironmentId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveRenameCommit, shouldShowOpenInPicker } from "./ChatHeader";
+import {
+  resolveHeaderControlPlacement,
+  resolveRenameCommit,
+  shouldShowOpenInPicker,
+} from "./ChatHeader";
 
 describe("shouldShowOpenInPicker", () => {
   const primaryEnvironmentId = EnvironmentId.make("environment-primary");
@@ -80,5 +84,23 @@ describe("resolveRenameCommit", () => {
     expect(resolveRenameCommit({ title: " Old ", originalTitle: "Old" })).toEqual({
       action: "noop",
     });
+  });
+});
+
+describe("resolveHeaderControlPlacement", () => {
+  it("hands the open-in-editor shortcut to exactly one picker at either width", () => {
+    for (const collapsed of [false, true]) {
+      const placement = resolveHeaderControlPlacement(collapsed);
+      expect(
+        [placement.toolbarOwnsShortcut, placement.menuOwnsShortcut].filter(Boolean),
+      ).toHaveLength(1);
+      expect(placement.menuOwnsShortcut).toBe(collapsed);
+      expect(placement.toolbarHidden).toBe(collapsed);
+    }
+  });
+
+  it("uses the single Add action entry in the menu when the toolbar shows run", () => {
+    expect(resolveHeaderControlPlacement(false).scriptsMenuPresentation).toBe("manage");
+    expect(resolveHeaderControlPlacement(true).scriptsMenuPresentation).toBe("menu");
   });
 });

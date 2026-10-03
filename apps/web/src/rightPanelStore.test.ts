@@ -437,6 +437,16 @@ describe("rightPanelStore", () => {
     });
   });
 
+  it("keeps changes as a singleton surface", () => {
+    useRightPanelStore.getState().open(refA, "changes");
+    useRightPanelStore.getState().open(refA, "changes");
+    expect(selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA)).toEqual({
+      isOpen: true,
+      activeSurfaceId: "changes",
+      surfaces: [{ id: "changes", kind: "changes" }],
+    });
+  });
+
   it("keeps files as a singleton surface", () => {
     useRightPanelStore.getState().open(refA, "files");
     useRightPanelStore.getState().open(refA, "files");
@@ -454,11 +464,15 @@ describe("rightPanelStore", () => {
     store.openFile(refA, ".");
     const state = selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA);
     expect(state.activeSurfaceId).toBe("files");
-    expect(state.surfaces.map((surface) => surface.id)).toEqual(["file:README.md", "files"]);
+    expect(state.surfaces.map((surface) => surface.id)).toEqual([
+      "file:README.md",
+      "changes",
+      "files",
+    ]);
     store.closeSurface(refA, "files");
     expect(
       selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA).activeSurfaceId,
-    ).toBe("file:README.md");
+    ).toBe("changes");
     store.openFile(refA, ".");
     expect(
       selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA).activeSurfaceId,
