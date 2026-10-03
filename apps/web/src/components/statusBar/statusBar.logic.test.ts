@@ -111,8 +111,9 @@ describe("status bar labels", () => {
   });
 
   it("labels the title search with project and thread", () => {
-    expect(formatTitleSearchLabel("abode", "Fix the drawer")).toBe("abode — Fix the drawer");
-    expect(formatTitleSearchLabel("abode", null)).toBe("abode");
-    expect(formatTitleSearchLabel(null, " ")).toBe("Search");
+    expect(formatTitleSearchLabel("abode")).toBe("abode");
+    expect(formatTitleSearchLabel(" abode ")).toBe("abode");
+    expect(formatTitleSearchLabel(null)).toBe("New session");
+    expect(formatTitleSearchLabel(" ")).toBe("New session");
   });
 });

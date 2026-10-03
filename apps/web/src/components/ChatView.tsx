@@ -486,7 +486,6 @@ import {
   revokeBlobPreviewUrl,
   revokeUserMessagePreviewUrls,
   shouldWriteThreadErrorToCurrentServerThread,
-  startNewThreadForProject,
   codexArtifactTemplatePromptToAppend,
   waitForStartedServerThread,
   shouldRefocusComposerOnWindowFocus,
@@ -2293,9 +2292,6 @@ export default function ChatView(props: ChatViewProps) {
     runProjectCloneAction,
   ]);
   const activeProjectDefaultModelSelection = activeProjectSettings.settings.defaultModelSelection;
-  const handleNewThreadInActiveProject = useCallback(() => {
-    startNewThreadForProject(activeProjectRef, handleNewThread);
-  }, [activeProjectRef, handleNewThread]);
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
   const activeDraftLogicalProjectKey =
     !isServerThread && activeProject
@@ -9562,6 +9558,7 @@ export default function ChatView(props: ChatViewProps) {
 
   const panelToggleControls = (
     <PanelLayoutControls
+      showSidebarControl={false}
       terminalAvailable={activeProject !== null}
       terminalOpen={terminalUiState.terminalOpen}
       terminalShortcutLabel={shortcutLabelForCommand(keybindings, "terminal.toggle")}
@@ -9899,7 +9896,6 @@ export default function ChatView(props: ChatViewProps) {
             availableEditors={availableEditors}
             rightPanelOpen={rightPanelOpen}
             gitCwd={gitCwd}
-            onNewThreadInProject={handleNewThreadInActiveProject}
             {...(activeDraftLogicalProjectKey
               ? { onOpenProjectSettings: handleOpenDraftProjectSettings }
               : {})}
