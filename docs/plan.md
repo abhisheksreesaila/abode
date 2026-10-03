@@ -522,6 +522,60 @@ Screenshot: `docs/design/current-abode-2026-10-02-late.png`. Reference: `docs/de
   - Top-right small flat icons: Pull requests, Claude Max usage (popover), Phone & Remote, Settings.
   - VS Code-like flat icon buttons: no borders, 16px icons, subtle hover.
 
+## Phase 2i: polish (2026-10-02 night)
+
+North Star: everything here is web-client only, with no contract or server changes, so the official mobile app is untouched.
+
+### F-045: Professional customization editor
+
+- **Status:** doing
+- **What:**
+  - The "+" dialog becomes a large editor, about 80vw × 80vh and resizable to full-screen.
+  - Opening any customization file (skill, agent, instructions, `.mcp.json`) uses the same large editor:
+    - a code editor with line numbers, syntax highlighting (md, yaml frontmatter, json, toml), soft wrap and find;
+    - a markdown preview toggle;
+    - a header with the path breadcrumb, harness and scope badges, and Lock, Save and Close buttons;
+    - a dirty indicator and Ctrl+S;
+    - frontmatter validation hints (a missing name or description);
+    - JSON validation for `.mcp.json`.
+  - VS Code-quality polish.
+
+### F-046: Resizable Customizations section
+
+- **Status:** doing
+- **What:** a drag handle between the workspaces list and Customizations. It's resizable from collapsed up to most of the sidebar, persisted, and double-click resets it.
+
+### F-047: Logo row aligned with the top bar
+
+- **Status:** doing
+- **What:**
+  - The sidebar's top strip is the same height as the top bar and holds the abode wordmark (with "ab" highlighted).
+  - The WORKSPACES header and Chats start below it.
+
+### F-048: Back navigation and smooth transitions
+
+- **Status:** doing
+- **What:**
+  - Settings, Usage and other utility pages get a clear "← Back" at the top-left of their header, returning to the last session.
+  - Drawer open/close (sidebar, right panel, bottom terminal) and page changes get short (150–200ms) eased transitions.
+  - Each is one-shot, never continuous, and respects reduced-motion.
+
+### F-049: Top bar cleanup and PRs in the drawer
+
+- **Status:** doing
+- **What:**
+  - Remove the Phone & Remote icon (it's in Settings → Connections).
+  - Remove the Pull requests top-bar icon. Pull requests becomes a right-drawer tab after Browser, using the existing PR panel surfaces.
+  - The /pull-requests page stays reachable from the palette.
+
+### F-050: Flatter, developer-style buttons
+
+- **Status:** doing
+- **What:**
+  - In the abode theme, secondary and ghost buttons in menus, popovers, dialogs and toolbars are flat or outline: 1px border or none, no fills or shadows, 3px radius, a subtle hover tint.
+  - The primary send arrow is unchanged.
+  - Done through variants and theme tokens, not className restyles.
+
 ### F-012: A week of daily use
 
 - **Status:** todo
