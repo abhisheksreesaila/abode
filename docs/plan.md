@@ -528,7 +528,7 @@ North Star: everything here is web-client only, with no contract or server chang
 
 ### F-045: Professional customization editor
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - The "+" dialog becomes a large editor, about 80vw × 80vh and resizable to full-screen.
   - Opening any customization file (skill, agent, instructions, `.mcp.json`) uses the same large editor:
@@ -542,19 +542,19 @@ North Star: everything here is web-client only, with no contract or server chang
 
 ### F-046: Resizable Customizations section
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:** a drag handle between the workspaces list and Customizations. It's resizable from collapsed up to most of the sidebar, persisted, and double-click resets it.
 
 ### F-047: Logo row aligned with the top bar
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - The sidebar's top strip is the same height as the top bar and holds the abode wordmark (with "ab" highlighted).
   - The WORKSPACES header and Chats start below it.
 
 ### F-048: Back navigation and smooth transitions
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Settings, Usage and other utility pages get a clear "← Back" at the top-left of their header, returning to the last session.
   - Drawer open/close (sidebar, right panel, bottom terminal) and page changes get short (150–200ms) eased transitions.
@@ -562,7 +562,7 @@ North Star: everything here is web-client only, with no contract or server chang
 
 ### F-049: Top bar cleanup and PRs in the drawer
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - Remove the Phone & Remote icon (it's in Settings → Connections).
   - Remove the Pull requests top-bar icon. Pull requests becomes a right-drawer tab after Browser, using the existing PR panel surfaces.
@@ -570,7 +570,7 @@ North Star: everything here is web-client only, with no contract or server chang
 
 ### F-050: Flatter, developer-style buttons
 
-- **Status:** doing
+- **Status:** review (reviewer PASS, merged; needs a real-app check)
 - **What:**
   - In the abode theme, secondary and ghost buttons in menus, popovers, dialogs and toolbars are flat or outline: 1px border or none, no fills or shadows, 3px radius, a subtle hover tint.
   - The primary send arrow is unchanged.
