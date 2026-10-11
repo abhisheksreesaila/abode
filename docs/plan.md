@@ -87,7 +87,12 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 - **Status:** todo
 - **Depends on:** A-005
-- **What:** first compare upstream's current composer and transcript with the first fork's (F-009, F-013, F-014, F-015, F-017, F-022, F-027, F-029, F-039) and list what upstream already covers. Port only the gaps that Abhishek still wants, as abode components with small hooks.
+- **Gap check (2026-10-11):** upstream nightly already has the context meter with compact (F-014), usage limits and the /usage page (F-015), edit from here and cite selection (F-016), Changes/Files/PR/preview tabs in the right panel (F-040, F-049). Don't port those.
+- **What, in order:**
+  1. Simple/Detailed transcript toggle (F-013), M.
+  2. Composer layout like the reference with the branch/worktree info inside the footer and colored chips for access mode, branch kind and worktree (F-022, F-039, F-027), M.
+  3. Cheap wins: visible Back button on utility pages (F-048), README tagline and starter cards on the project welcome (F-026), provider tint on the picker (F-017). Each S.
+  - Only if Abhishek still wants them: status bar (F-030), picking a Claude agent type (F-021), delights (F-034).
 
 ### A-008: Switch the host to abode-next
 
