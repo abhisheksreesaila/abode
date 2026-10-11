@@ -50,7 +50,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-004: Voice dictation
 
-- **Status:** todo
+- **Status:** review (reviewer PASS, merged; needs Abhishek with a real mic)
 - **What:** port voice from the first fork (`git show main:apps/web/src/voice/...`, tickets F-002, F-003, F-023, F-052) into `apps/web/src/abode/voice/`. Mic button in the composer and a hold-to-talk key; local Moonshine/Whisper via transformers.js in a worker; text streams into the composer and nothing is sent until Enter. Voice settings appear in Settings.
 - **Upstream files it may touch:** `apps/web/src/components/chat/ChatComposer.tsx` (one slot for the mic control), the settings panel that hosts the voice section, `apps/web/package.json`.
 - **Acceptance:**

@@ -20,6 +20,9 @@ allowBuilds:
   node-pty: true
   # Ships N-API prebuilds; its install script only rebuilds from source.
   objc-js: false
+  # abode:voice onnxruntime-web (voice) pulls these in; neither needs a build.
+  onnxruntime-node: false
+  protobufjs: false
   sharp: true
   utf-8-validate: false
   workerd: false

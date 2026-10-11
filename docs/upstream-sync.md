@@ -18,23 +18,26 @@ abode is rebuilt on branch `abode-next`, starting from upstream nightly `v0.0.46
    - `apps/server/src/abode/` for server services (only Customizations today);
    - `packages/contracts/src/abode*.ts` for new RPC types.
 3. **Colors are a theme, not CSS overrides.** The VS Code look ships as a built-in theme in upstream's theme system (`packages/shared/src/themePalettes.ts` format). Structural CSS (density, radii, fonts) lives in `apps/web/src/abode/abode.css`.
-4. **Hooks into upstream files are small and marked.** Each one is a few lines, tagged with an `abode:` comment, and listed in the table below. `scripts/abode/hook-report.sh` prints every upstream file abode changed and fails if the total goes over budget (**400 changed lines**, not counting lockfiles).
+4. **Hooks into upstream files are small and marked.** Each one is a few lines, tagged with an `abode:` comment, and listed below. `scripts/abode/hook-report.sh` prints every upstream file abode changed and fails if the total goes over budget (**400 changed lines**, not counting lockfiles).
 5. **No numbered DB migrations, no contract default changes, no protocol changes** (see `docs/lessons.md`).
 6. **Don't delete upstream files** abode stops using; leave them unused.
 
-## Hook points (keep this table current)
+## Hook points (keep this list current)
 
-| Upstream file                                         | What abode hooks there                                                |
-| ----------------------------------------------------- | --------------------------------------------------------------------- |
-| `apps/web/src/components/AppSidebarLayout.tsx`        | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar    |
-| `apps/web/src/main.tsx`                               | imports `abode/abode.css` and registers the abode theme               |
-| `packages/shared/src/themePalettes.ts`                | adds the abode theme to the built-in list                             |
-| `packages/contracts/src/rpc.ts`, `index.ts`           | three `customizations.*` RPCs (add-only)                              |
-| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`   | wires the Customizations service (add-only)                           |
-| `apps/server/src/observability/RpcInstrumentation.ts` | span aggregate names for the three `customizations.*` RPCs (add-only) |
-| `apps/web/src/components/chat/ChatComposer.tsx`       | mic button slot for voice                                             |
+One bullet per hook (a list, not a table, so adding a row never re-aligns the others).
 
-Tickets add rows here when they add a hook.
+- `apps/web/src/components/AppSidebarLayout.tsx`: renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar
+- `apps/web/src/main.tsx`: imports `abode/abode.css` and registers the abode theme
+- `packages/shared/src/themePalettes.ts`: adds the abode theme to the built-in list
+- `packages/contracts/src/rpc.ts`, `index.ts`: three `customizations.*` RPCs (add-only)
+- `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`: wires the Customizations service (add-only)
+- `apps/server/src/observability/RpcInstrumentation.ts`: span aggregate names for the three `customizations.*` RPCs (add-only)
+- `apps/web/src/components/chat/ChatComposer.tsx`: voice: `beforeActions` slot in the footer, `voiceAction` element, `insertComposerText` accepts a numeric offset
+- `apps/web/src/components/ComposerPromptEditorTiptap.tsx`: voice: registers the provisional-dictation extension, exposes `provisionalDictation` on the editor handle, hides placeholder while dictating
+- `apps/web/src/components/settings/SettingsPanels.tsx`: voice: renders `VoiceSettingsSection` in General settings
+- `apps/web/package.json`, `pnpm-workspace.yaml`: voice: `@huggingface/transformers`, `onnxruntime-web` (pinned to transformers.js's version); `allowBuilds` entries for their optional native deps
+
+Tickets add a bullet here when they add a hook.
 
 ## Pulling upstream (each nightly, or whenever upstream ships something good)
 
