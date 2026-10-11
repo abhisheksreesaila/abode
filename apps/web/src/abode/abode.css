@@ -47,3 +47,16 @@ html[data-theme-id="abode-azure"] {
   --ws-7: #9cdcfe;
   --ws-8: #d7ba7d;
 }
+
+/* Light mode: deeper versions of the same hues, so the stripes and the "ab" logo stay readable. */
+html:not(.dark)[data-theme-id="abode"],
+html:not(.dark)[data-theme-id="abode-azure"] {
+  --ws-1: #0067b8;
+  --ws-2: #8e3a8a;
+  --ws-3: #7a6a00;
+  --ws-4: #0f7b6c;
+  --ws-5: #b4361f;
+  --ws-6: #4b7a2a;
+  --ws-7: #1c6e9e;
+  --ws-8: #8a5a14;
+}

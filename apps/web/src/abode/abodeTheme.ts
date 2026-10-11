@@ -149,7 +149,7 @@ export const ABODE_THEME: ThemeDefinition = {
 
 export const ABODE_AZURE_THEME_ID = "abode-azure";
 
-/** Flat Azure (Fluent): Azure blue on neutral greys. Its square, shadowless shape is in abode.css. */
+/** Flat Azure (Fluent): Azure blue on neutral greys. Its square corners and Segoe-style type are in abode.css. */
 export const ABODE_AZURE_LIGHT_THEME_COLORS: ThemeColors = {
   canvas: "#ffffff",
   chrome: "#f3f2f1",
