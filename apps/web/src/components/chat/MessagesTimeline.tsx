@@ -196,6 +196,7 @@ import {
   type AssistantCitationTarget,
 } from "./AssistantCitationSource";
 import { useAssistantCitationTarget, type CitationHistoryPage } from "./useAssistantCitationTarget";
+import { useSimpleRows } from "../../abode/transcript/useSimpleRows"; // abode: A-007
 import {
   computeStableMessagesTimelineRows,
   deriveMessagesTimelineRowsWithState,
@@ -943,7 +944,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
     supportsConversationRollback,
     worktreeSetup,
   ]);
-  const rows = useStableRows(rawRows, listIdentityKey);
+  const rows = useStableRows(useSimpleRows(rawRows, timelineEntries), listIdentityKey); // abode: A-007 Simple/Detailed
   // Run status/timestamps churn on every stream event; the shared row context
   // must not change with them or every timeline row re-renders per event.
   const runs = useStableHandoffRuns(runsProp);

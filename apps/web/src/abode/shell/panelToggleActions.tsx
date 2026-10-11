@@ -4,6 +4,7 @@ import { isCommandPaletteOpen } from "~/commandPaletteBus";
 import { ITEM_ICON_CLASS, type CommandPaletteActionItem } from "~/components/CommandPalette.logic";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { primaryServerKeybindingsAtom } from "~/state/server";
+import { abodeTranscriptAction } from "../transcript/transcriptMenu";
 import {
   panelTogglesForRoute,
   pressOnBody,
@@ -34,7 +35,7 @@ function afterPaletteCloses(action: () => void, framesLeft = 60): void {
 export function abodePanelToggleActions(input: {
   readonly hasThreadView: boolean;
 }): CommandPaletteActionItem[] {
-  return panelTogglesForRoute(input).map((toggle): CommandPaletteActionItem => {
+  const toggles = panelTogglesForRoute(input).map((toggle): CommandPaletteActionItem => {
     const Icon = ICONS[toggle.id];
     return {
       kind: "action",
@@ -54,4 +55,6 @@ export function abodePanelToggleActions(input: {
       },
     };
   });
+  // The transcript mode switch rides along: one palette hook covers both.
+  return input.hasThreadView ? [...toggles, abodeTranscriptAction()] : toggles;
 }

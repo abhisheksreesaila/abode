@@ -28,7 +28,8 @@ export type ThreadActionMenuId =
   | "copy-branch"
   | "copy-thread-id"
   | "archive"
-  | "delete";
+  | "delete"
+  | `abode:${string}`; // abode: transcript mode submenu
 
 export type DraftActionMenuId =
   | "copy"
