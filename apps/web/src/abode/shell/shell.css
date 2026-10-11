@@ -1,0 +1,256 @@
+/*
+ * abode shell: layout glue and the dense VS Code row metrics (22px lines, 7px
+ * status squares, 11px meta) that sit between Tailwind's scale steps. Every
+ * color is a theme variable; nothing here is a literal color. The abode theme
+ * (A-002) and the user's own theme both reach this file through those variables.
+ */
+
+:root {
+  /* The rail only exists from Tailwind's `md` breakpoint up, like upstream's sidebar. */
+  --abode-activity-bar-width: 0px;
+  --abode-row-height: 22px;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --abode-activity-bar-width: 3rem;
+  }
+}
+
+/*
+ * Upstream positions its sidebar with `fixed left-0`. With the rail in the
+ * flow before it, the open sidebar moves right of the rail. A collapsed one
+ * keeps upstream's off-screen offset so the slide-away animation is unchanged.
+ */
+[data-slot="sidebar-wrapper"]:has(> [data-abode-activity-bar])
+  [data-slot="sidebar"][data-side="left"]:not([data-collapsible="offcanvas"])
+  > [data-slot="sidebar-container"] {
+  left: var(--abode-activity-bar-width);
+}
+
+/* Activity bar */
+[data-abode~="activity-item"] {
+  position: relative;
+  display: flex;
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--contrast-sidebar-muted-foreground);
+  outline: none;
+}
+[data-abode~="activity-item"]:hover,
+[data-abode~="activity-item"][data-active="true"] {
+  color: var(--contrast-sidebar-foreground);
+}
+[data-abode~="activity-item"]:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+/* The lit item gets VS Code's 2px accent bar on the left edge. */
+[data-abode~="activity-item"][data-active="true"] {
+  box-shadow: inset 2px 0 0 0 var(--primary);
+}
+[data-abode~="activity-item"] svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Rows: a workspace header, a session, a draft, a subagent */
+[data-abode~="row"] {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: var(--abode-row-height);
+  align-items: center;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  color: var(--contrast-sidebar-muted-foreground);
+}
+[data-abode~="row"]:hover {
+  background: var(--sidebar-row-hover);
+  color: var(--contrast-sidebar-foreground);
+}
+[data-abode~="row"]:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+/* The open session: selection fill plus a 1px accent ring. */
+[data-abode~="row"][data-active="true"] {
+  background: var(--sidebar-row-active);
+  color: var(--contrast-sidebar-foreground);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+[data-abode~="thread"] {
+  padding-left: 2rem;
+}
+[data-abode~="subagent"] {
+  height: 20px;
+  gap: 0.375rem;
+  padding-left: 2.75rem;
+  font-size: 12px;
+}
+[data-abode~="meta"] {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+/* "+N more" under a session's subagents. */
+[data-abode~="note"] {
+  padding-left: 2.75rem;
+  font-size: 11px;
+  color: var(--contrast-sidebar-muted-foreground);
+}
+[data-abode~="action"] {
+  position: absolute;
+  top: 0;
+  right: 0.25rem;
+  display: none;
+  height: var(--abode-row-height);
+  align-items: center;
+  padding: 0 0.25rem;
+  color: var(--contrast-sidebar-muted-foreground);
+}
+[data-abode~="action"]:hover {
+  color: var(--contrast-sidebar-foreground);
+}
+[data-abode~="row"]:hover [data-abode~="action"],
+[data-abode~="row"]:focus-within [data-abode~="action"],
+[data-abode~="action"]:focus-visible {
+  display: flex;
+}
+/* A button that sits in the row's flow and appears on hover (the workspace's "+"). */
+[data-abode~="inline-action"] {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  color: var(--contrast-sidebar-muted-foreground);
+  opacity: 0;
+  outline: none;
+}
+[data-abode~="inline-action"]:hover {
+  color: var(--contrast-sidebar-foreground);
+}
+[data-abode~="row"]:hover [data-abode~="inline-action"],
+[data-abode~="inline-action"]:focus-visible {
+  opacity: 1;
+}
+/* The action replaces the age while the row is hovered or focused. */
+[data-abode~="row"]:hover [data-abode~="yields"],
+[data-abode~="row"]:focus-within [data-abode~="yields"] {
+  visibility: hidden;
+}
+
+/* The 7px status square (and the 5px live dot under a subagent). */
+[data-abode~="square"] {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 1px;
+}
+[data-abode~="dot"] {
+  width: 5px;
+  height: 5px;
+}
+[data-abode~="square"][data-tone="running"] {
+  background: var(--success);
+}
+[data-abode~="square"][data-tone="needs-you"] {
+  background: var(--warning);
+}
+[data-abode~="square"][data-tone="failed"] {
+  background: var(--error);
+}
+[data-abode~="square"][data-tone="idle"] {
+  background: color-mix(in srgb, var(--contrast-sidebar-muted-foreground) 40%, transparent);
+}
+[data-abode~="square"][data-tone="done"] {
+  border: 1px solid var(--contrast-sidebar-muted-foreground);
+}
+
+/* Workspace header: tinted row with a 3px bar in the workspace color. */
+[data-abode~="workspace-header"] {
+  gap: 0.375rem;
+  padding-left: 0.25rem;
+  border-left: 3px solid var(--workspace-color);
+  background: color-mix(in srgb, var(--workspace-color) 12%, transparent);
+  color: var(--contrast-sidebar-foreground);
+}
+[data-abode~="workspace-header"]:hover {
+  background: color-mix(in srgb, var(--workspace-color) 20%, transparent);
+}
+[data-abode~="workspace-dot"] {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: var(--workspace-color);
+}
+[data-abode~="workspace-location"] {
+  font-size: 11px;
+  color: var(--contrast-sidebar-muted-foreground);
+}
+[data-abode~="workspace-pill"] {
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--sidebar-row-hover);
+  color: var(--contrast-sidebar-muted-foreground);
+}
+[data-abode~="workspace-pill"][data-tone="needs-you"] {
+  background: color-mix(in srgb, var(--warning) 25%, transparent);
+  color: var(--warning-foreground);
+}
+[data-abode~="workspace-pill"][data-tone="running"] {
+  background: color-mix(in srgb, var(--success) 25%, transparent);
+  color: var(--success-foreground);
+}
+/* Threads and subagents hang off a guide line in the workspace color. */
+[data-abode~="guide"] {
+  margin: 0 0 0 11px;
+  padding: 0;
+  border-left: 1px solid color-mix(in srgb, var(--workspace-color) 35%, transparent);
+}
+
+/* Sidebar section strips */
+[data-abode~="strip"] {
+  display: flex;
+  height: var(--abode-row-height);
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.5rem;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--contrast-sidebar-muted-foreground);
+}
+[data-abode~="title-strip"] {
+  display: flex;
+  height: var(--workspace-topbar-height);
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem 0 0.75rem;
+}
+@media (min-width: 48rem) {
+  [data-abode~="title-strip"] {
+    padding-left: var(--workspace-titlebar-content-left);
+  }
+}

@@ -12,7 +12,7 @@ import {
   type ThreadId,
 } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
   buildThreadActionMenuItems,
@@ -127,6 +127,23 @@ export function useAbodeThreadActions() {
     [archiveThread],
   );
 
+  /** The row's archive button and the menu's Archive item share this confirmation. */
+  const archiveWithConfirm = useCallback(
+    async (threadRef: ScopedThreadRef, title: string) => {
+      if (!checkOperatePermission(threadRef.environmentId)) return;
+      if (confirmThreadArchive) {
+        const api = readLocalApi();
+        if (!api) return;
+        const confirmed = await settlePromise(() =>
+          api.dialogs.confirm(`Archive thread "${title}"?`),
+        );
+        if (confirmed._tag === "Failure" || !confirmed.value) return;
+      }
+      await attemptArchive(threadRef);
+    },
+    [attemptArchive, confirmThreadArchive],
+  );
+
   const showThreadMenu = useCallback(
     async (request: ThreadMenuRequest) => {
       const api = readLocalApi();
@@ -216,16 +233,9 @@ export function useAbodeThreadActions() {
           }
           return;
         }
-        case "archive": {
-          if (confirmThreadArchive) {
-            const confirmed = await settlePromise(() =>
-              api.dialogs.confirm(`Archive thread "${thread.title}"?`),
-            );
-            if (confirmed._tag === "Failure" || !confirmed.value) return;
-          }
-          await attemptArchive(threadRef);
+        case "archive":
+          await archiveWithConfirm(threadRef, thread.title);
           return;
-        }
         case "delete": {
           if (confirmThreadDelete) {
             const confirmed = await settlePromise(() =>
@@ -250,8 +260,7 @@ export function useAbodeThreadActions() {
       }
     },
     [
-      attemptArchive,
-      confirmThreadArchive,
+      archiveWithConfirm,
       confirmThreadDelete,
       copyBranch,
       copyPath,
@@ -265,5 +274,8 @@ export function useAbodeThreadActions() {
     ],
   );
 
-  return { attemptArchive, renameThread, showThreadMenu };
+  return useMemo(
+    () => ({ archiveWithConfirm, renameThread, showThreadMenu }),
+    [archiveWithConfirm, renameThread, showThreadMenu],
+  );
 }

@@ -74,7 +74,9 @@ export function useWorkspaceColorIndex(projectKey: string | null | undefined): n
 export function useEnsureWorkspaceColors(projectKeys: ReadonlyArray<string>): void {
   const signature = projectKeys.join("\u0000");
   useLayoutEffect(() => {
-    useWorkspaceColorStore.getState().syncProjects(projectKeys);
-    // The signature stands in for the list identity.
+    // The signature stands in for the list identity, so the effect rebuilds the keys from it.
+    useWorkspaceColorStore
+      .getState()
+      .syncProjects(signature === "" ? [] : signature.split("\u0000"));
   }, [signature]);
 }

@@ -140,6 +140,7 @@ import {
   resolveProjectPathForDispatch,
 } from "../lib/projectPaths";
 import { onOpenCommandPalette } from "../commandPaletteBus";
+import { abodePanelToggleActions } from "../abode/shell/panelToggleActions";
 import { isPreviewFocused } from "../lib/previewFocus";
 import { isTerminalFocused } from "../lib/terminalFocus";
 import {
@@ -2167,6 +2168,8 @@ function OpenCommandPaletteDialog(props: {
       await navigate({ to: "/settings" });
     },
   });
+
+  actionItems.push(...abodePanelToggleActions()); // abode: sidebar, terminal, side panel toggles
 
   // Target the active thread or draft's project, falling back to the first sidebar group.
   const contextualProjectGroup =

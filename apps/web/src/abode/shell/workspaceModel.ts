@@ -1,3 +1,6 @@
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
+
 /**
  * Pure grouping for the abode sidebar. Upstream already builds the project
  * groups (`buildSidebarProjectSnapshots`) and sorts them; this only decides
@@ -11,6 +14,11 @@ export interface ProjectRefLike {
 
 export function projectRefKey(ref: ProjectRefLike): string {
   return `${ref.environmentId}:${ref.projectId}`;
+}
+
+/** Upstream's scoped key for a thread shell: what routes, selection and visit tracking use. */
+export function threadShellKey(thread: { environmentId: EnvironmentId; id: ThreadId }): string {
+  return scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id));
 }
 
 export function groupThreadsByWorkspace<TThread extends ProjectRefLike>(

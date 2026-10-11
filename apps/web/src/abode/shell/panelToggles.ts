@@ -89,6 +89,7 @@ export function runPanelToggle(id: PanelToggleId, deps: RunPanelToggleDeps): boo
   return true;
 }
 
-export function pressOnWindow(init: KeyboardEventInit): void {
-  window.dispatchEvent(new KeyboardEvent("keydown", init));
+/** Dispatched on the body so handlers see an element target, as with a real key press. */
+export function pressOnBody(init: KeyboardEventInit): void {
+  document.body.dispatchEvent(new KeyboardEvent("keydown", init));
 }
