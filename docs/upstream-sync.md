@@ -28,13 +28,14 @@ One bullet per hook (a list, not a table, so adding a row never re-aligns the ot
 
 `t3 theme set abode` does not work by design: abode stays out of `BUILT_IN_THEME_IDS` so the mobile app's theme ids are unchanged.
 
-- `apps/web/src/components/AppSidebarLayout.tsx`: renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar
+- `apps/web/src/components/AppSidebarLayout.tsx`: renders `ActivityBar` + `AbodeSidebar` instead of `LegacySidebar`/`Sidebar` (A-005); spreads `abodeShellProviderStyle` into the provider style, before the macOS inset. Those two sidebar files stay in the tree, unused
 - `apps/web/src/main.tsx`: imports the bundled fonts and `abode/abode.css`
 - `apps/web/src/themePalette.ts`: adds `ABODE_THEME` to the web built-in definitions (not shared `BUILT_IN_THEMES`: mobile mirrors it)
 - `packages/shared/src/themePalettes.ts`: reserves the id `abode` (one line)
 - `apps/web/src/hooks/useTheme.ts`: default theme and default appearance for a fresh profile
 - `apps/web/index.html`, `src/themeBoot.test.ts`: boot splash palette for abode; nothing stored boots as abode
 - `ThemeSettings.tsx`, `CommandPalette.tsx`: list the abode theme card / command
+- `apps/web/src/components/CommandPalette.tsx`: A-005: one line, `actionItems.push(...abodePanelToggleActions())`, adds Toggle sidebar / terminal / side panel
 - `packages/contracts/src/rpc.ts`, `index.ts`: three `customizations.*` RPCs (add-only)
 - `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`: wires the Customizations service (add-only)
 - `apps/server/src/observability/RpcInstrumentation.ts`: span aggregate names for the three `customizations.*` RPCs (add-only)
@@ -45,6 +46,17 @@ One bullet per hook (a list, not a table, so adding a row never re-aligns the ot
 - `third-party-licenses.config.json`: voice: generated notices for onnxruntime, guid-typescript and sharp-libvips (the production build fails without them)
 
 Tickets add a bullet here when they add a hook.
+
+### What the abode shell reads from upstream (check these when a sync breaks the build)
+
+`apps/web/src/abode/shell/` replaces upstream's two thread sidebars, so it depends on their building blocks instead of copying them. A type error after a sync usually points at one of these:
+
+- `components/Sidebar.logic.ts`: `resolveThreadStatusPill`, `resolveSidebarThreadStatus`, `sortSidebarV2ProjectGroups`, `orderItemsByPreferredIds`, `useSidebarRowSubscriptionLease`, thread-jump and traversal helpers.
+- `components/threadActionMenu.logic.ts` (`buildThreadActionMenuItems`), `components/ThreadStatusIndicators.tsx` (PR state), `components/sidebar/*` (update pills, undo notice).
+- `sidebarProjectGrouping.ts`, `logicalProject.ts`, `uiStateStore.ts` (expansion and project order), `composerDraftStore.ts` (drafts), `hooks/useThreadActions.ts`, `hooks/useHandleNewThread.ts`.
+- Subagents are ordinary V2 threads (`lineage.relationshipToParent === "subagent"`), nested by `subagentNesting.ts`.
+- The three panel toggles press upstream's own `sidebar.toggle`, `terminal.toggle` and `rightPanel.toggle` shortcuts (`panelToggles.ts`); nothing in the shell keeps panel state of its own.
+- The bottom of the sidebar holds an empty `<div data-abode-slot="customizations">` for A-006.
 
 ## Pulling upstream (each nightly, or whenever upstream ships something good)
 
