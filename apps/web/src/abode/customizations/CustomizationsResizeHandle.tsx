@@ -1,6 +1,6 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from "react";
 
-import { cn } from "../../lib/utils";
+import { cn } from "~/lib/utils";
 import {
   CUSTOMIZATIONS_MAX_FRACTION,
   CUSTOMIZATIONS_MIN_FRACTION,

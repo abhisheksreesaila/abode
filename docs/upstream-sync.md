@@ -42,6 +42,7 @@ One bullet per hook (a list, not a table, so adding a row never re-aligns the ot
 - `apps/web/src/components/chat/ChatComposer.tsx`: voice: `beforeActions` slot in the footer, `voiceAction` element, `insertComposerText` accepts a numeric offset
 - `apps/web/src/components/ComposerPromptEditorTiptap.tsx`: voice: registers the provisional-dictation extension, exposes `provisionalDictation` on the editor handle, hides placeholder while dictating
 - `apps/web/src/components/settings/SettingsPanels.tsx`: voice: renders `VoiceSettingsSection` in General settings
+- `apps/web/src/components/ChatView.tsx`: A-006: the lazy `FilePreviewPanel` import points at `abode/customizations/FilePreviewPanelRouter`, which opens customization files (skills, agents, `~/.claude/...`) in abode's editor and passes every other file to upstream's panel (2 lines)
 - `apps/web/package.json`, `pnpm-workspace.yaml`: voice: `@huggingface/transformers`, `onnxruntime-web` (pinned to transformers.js's version); `allowBuilds` entries for their optional native deps
 - `third-party-licenses.config.json`: voice: generated notices for onnxruntime, guid-typescript and sharp-libvips (the production build fails without them)
 
@@ -56,7 +57,7 @@ Tickets add a bullet here when they add a hook.
 - `sidebarProjectGrouping.ts`, `logicalProject.ts`, `uiStateStore.ts` (expansion and project order), `composerDraftStore.ts` (drafts), `hooks/useThreadActions.ts`, `hooks/useHandleNewThread.ts`.
 - Subagents are ordinary V2 threads (`lineage.relationshipToParent === "subagent"`), nested by `subagentNesting.ts`.
 - The three panel toggles press upstream's own `sidebar.toggle`, `terminal.toggle` and `rightPanel.toggle` shortcuts (`panelToggles.ts`); nothing in the shell keeps panel state of its own.
-- The bottom of the sidebar holds an empty `<div data-abode-slot="customizations">` for A-006.
+- The bottom of the sidebar holds `<div data-abode-slot="customizations">` (A-006, `display: contents`) with the Customizations section. It reads `useRightPanelStore.openFile` (absolute paths open as file tabs), the thread shell and project for the workspace root, and `FilePreviewPanel`'s props (the router forwards them unchanged).
 
 ## Pulling upstream (each nightly, or whenever upstream ships something good)
 

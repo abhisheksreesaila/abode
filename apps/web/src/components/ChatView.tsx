@@ -711,7 +711,8 @@ const selectAutoShowFloatingPreview = (settings: { browserAutoShowFloatingPrevie
 const DevicePanel = lazy(() =>
   import("./device/DevicePanel").then((module) => ({ default: module.DevicePanel })),
 );
-const FilePreviewPanel = lazy(() => import("./files/FilePreviewPanel"));
+// abode: A-006: routes customization files to the abode editor, everything else to upstream's panel
+const FilePreviewPanel = lazy(() => import("../abode/customizations/FilePreviewPanelRouter"));
 const EMPTY_PENDING_FILE_SURFACE_IDS: ReadonlySet<string> = new Set();
 const TYPE_TO_FOCUS_EDITABLE_SELECTOR = [
   "input",
