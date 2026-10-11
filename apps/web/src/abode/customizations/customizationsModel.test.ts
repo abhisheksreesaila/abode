@@ -10,6 +10,7 @@ import {
   findKnownCustomization,
   groupCustomizations,
   isAlreadyExistsError,
+  skillRefreshInstanceIds,
   isCustomizationPath,
   rememberCustomizations,
   resolveLocked,
@@ -135,5 +136,23 @@ describe("isAlreadyExistsError", () => {
     expect(isAlreadyExistsError(failure("already_exists"))).toBe(true);
     expect(isAlreadyExistsError(failure("file_too_large"))).toBe(false);
     expect(isAlreadyExistsError(new Error("x"))).toBe(false);
+  });
+});
+
+describe("skillRefreshInstanceIds", () => {
+  const providers = [
+    { instanceId: "claudeAgent", driver: "claudeAgent", enabled: true, installed: true },
+    { instanceId: "codex", driver: "codex", enabled: true, installed: true },
+    { instanceId: "codex-work", driver: "codex", enabled: false, installed: true },
+    { instanceId: "cursor", driver: "cursor", enabled: true, installed: true },
+    { instanceId: "claude-2", driver: "claudeAgent", enabled: true, installed: false },
+  ];
+
+  it("rescans only the thread's provider", () => {
+    expect(skillRefreshInstanceIds("codex", providers)).toEqual(["codex"]);
+  });
+
+  it("rescans every usable Claude and Codex instance on a draft", () => {
+    expect(skillRefreshInstanceIds(undefined, providers)).toEqual(["claudeAgent", "codex"]);
   });
 });

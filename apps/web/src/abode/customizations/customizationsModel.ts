@@ -162,3 +162,27 @@ export function rememberCustomizations(items: ReadonlyArray<CustomizationItem>):
 export function findKnownCustomization(path: string): CustomizationItem | undefined {
   return knownItems.get(path);
 }
+
+/** The providers whose skills Customizations edits. */
+const SKILL_DRIVERS: ReadonlySet<string> = new Set(["claudeAgent", "codex"]);
+
+/**
+ * Which provider instances rescan skills after a skill file changes: the thread's own provider,
+ * or on a new-thread draft (no provider chosen yet) every enabled, installed Claude and Codex one.
+ */
+export function skillRefreshInstanceIds<Id extends string>(
+  threadInstanceId: Id | undefined,
+  providers: ReadonlyArray<{
+    readonly instanceId: Id;
+    readonly driver: string;
+    readonly enabled: boolean;
+    readonly installed: boolean;
+  }>,
+): ReadonlyArray<Id> {
+  if (threadInstanceId) return [threadInstanceId];
+  return providers
+    .filter(
+      (provider) => SKILL_DRIVERS.has(provider.driver) && provider.enabled && provider.installed,
+    )
+    .map((provider) => provider.instanceId);
+}

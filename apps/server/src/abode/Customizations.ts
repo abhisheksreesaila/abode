@@ -366,6 +366,12 @@ const make = Effect.gen(function* () {
         .relative(workspaceClaude, realTarget)
         .split(path.sep)
         .some((segment) => segment.startsWith(".credentials"));
+    // Refused whichever rule below would allow it: a linked skill can point back at the folder
+    // that holds these.
+    const isSecret =
+      realTarget.split(path.sep).some((segment) => segment.startsWith(".credentials")) ||
+      (isInside(realCodexHome, realTarget) && !underCodexSkills && !isCodexPrompt);
+    if (isSecret) return yield* denied();
     const allowed =
       !isCredentials &&
       !isWorkspaceCredentials &&
@@ -374,13 +380,20 @@ const make = Effect.gen(function* () {
         isCodexPrompt ||
         isInside(path.join(realWorkspaceRoot, ".claude"), realTarget) ||
         WORKSPACE_WRITABLE_FILES.some((file) => realTarget === path.join(realWorkspaceRoot, file)));
-    if (
-      !allowed &&
-      !(yield* insideLinkedEntry(absolutePath, realTarget, configDir, workspaceRoot))
-    ) {
+    if (allowed) return { realTarget, readOnly: false, resolvedPath };
+    if (!(yield* insideLinkedEntry(absolutePath, realTarget, configDir, workspaceRoot))) {
       return yield* denied();
     }
-    return { realTarget, readOnly: false, resolvedPath };
+    // A link can point into a folder the user can't write to (a skill shipped by the OS).
+    const exists = yield* fileSystem.exists(realTarget).pipe(Effect.orElseSucceed(() => false));
+    const writable = yield* fileSystem
+      .access(exists ? realTarget : path.dirname(realTarget), { writable: true })
+      .pipe(
+        Effect.as(true),
+        Effect.orElseSucceed(() => false),
+      );
+    if (!writable && mode === "write") return yield* denied("read_only");
+    return { realTarget, readOnly: !writable, resolvedPath };
   });
 
   const list = Effect.fn("Customizations.list")(function* (input: CustomizationsListInput) {

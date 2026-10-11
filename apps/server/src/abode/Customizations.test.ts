@@ -440,6 +440,76 @@ describe("Customizations", () => {
   );
 
   it.effect.skipIf(!symlinksSupported)(
+    "never opens credentials through a linked skill, even one pointing at the config dir",
+    () =>
+      Effect.gen(function* () {
+        const customizations = yield* Customizations.Customizations;
+        const { path, fileSystem, configDir, codexDir, workspace } = yield* makeSandbox;
+        yield* put(path.join(configDir, ".credentials.json"), "claude-secret");
+        yield* put(path.join(codexDir, "auth.json"), "codex-secret");
+        yield* put(path.join(codexDir, "history.jsonl"), "history");
+        yield* put(path.join(workspace, ".claude", ".credentials.json"), "ws-secret");
+        yield* mkdirp(path.join(configDir, "skills"));
+        yield* mkdirp(path.join(codexDir, "skills"));
+        NodeFS.symlinkSync(configDir, path.join(configDir, "skills", "home"));
+        NodeFS.symlinkSync(codexDir, path.join(codexDir, "skills", "home"));
+        yield* mkdirp(path.join(workspace, ".claude", "skills"));
+        NodeFS.symlinkSync(
+          path.join(workspace, ".claude"),
+          path.join(workspace, ".claude", "skills", "home"),
+        );
+
+        for (const target of [
+          path.join(configDir, "skills", "home", ".credentials.json"),
+          path.join(codexDir, "skills", "home", "auth.json"),
+          path.join(codexDir, "skills", "home", "history.jsonl"),
+          path.join(workspace, ".claude", "skills", "home", ".credentials.json"),
+        ]) {
+          const read = yield* customizations
+            .readFile({ cwd: workspace, path: target })
+            .pipe(Effect.flip);
+          expect(read._tag, target).toBe("CustomizationsPathNotAllowedError");
+          const write = yield* customizations
+            .writeFile({ cwd: workspace, path: target, contents: "pwned" })
+            .pipe(Effect.flip);
+          expect(write._tag, target).toBe("CustomizationsPathNotAllowedError");
+        }
+        expect(yield* fileSystem.readFileString(path.join(configDir, ".credentials.json"))).toBe(
+          "claude-secret",
+        );
+        expect(yield* fileSystem.readFileString(path.join(codexDir, "auth.json"))).toBe(
+          "codex-secret",
+        );
+      }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported || process.getuid?.() === 0)(
+    "opens a linked skill in a folder the user can't write to as read-only",
+    () =>
+      Effect.gen(function* () {
+        const customizations = yield* Customizations.Customizations;
+        const { path, root, configDir, workspace } = yield* makeSandbox;
+        const system = path.join(root, "system-skills", "crash");
+        yield* put(path.join(system, "SKILL.md"), "system");
+        NodeFS.chmodSync(path.join(system, "SKILL.md"), 0o444);
+        NodeFS.chmodSync(system, 0o555);
+        yield* Effect.addFinalizer(() =>
+          Effect.sync(() => {
+            NodeFS.chmodSync(system, 0o755);
+            NodeFS.chmodSync(path.join(system, "SKILL.md"), 0o644);
+          }),
+        );
+        yield* mkdirp(path.join(configDir, "skills"));
+        NodeFS.symlinkSync(system, path.join(configDir, "skills", "crash"));
+        const target = path.join(configDir, "skills", "crash", "SKILL.md");
+        expect(yield* customizations.readFile({ cwd: workspace, path: target })).toMatchObject({
+          contents: "system",
+          readOnly: true,
+        });
+      }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported)(
     "rejects a workspace skill that links outside the workspace",
     () =>
       Effect.gen(function* () {
