@@ -18,6 +18,7 @@ import {
   useUiStateStore,
 } from "~/uiStateStore";
 import type { SidebarProjectGroupMember } from "~/sidebarProjectGrouping";
+import type { SidebarThreadSummary } from "~/types";
 import { useAbodeActiveRoute } from "./sidebarContext";
 import { ThreadRow } from "./ThreadRow";
 import { deriveWorkspaceThreadState } from "./threadState";
@@ -33,6 +34,9 @@ import {
   workspacePillView,
 } from "./workspaceList";
 import { threadShellKey } from "./workspaceModel";
+
+// A shared empty list keeps ThreadRow's memo intact for sessions without subagents.
+const NO_SUBAGENTS: ReadonlyArray<SidebarThreadSummary> = [];
 
 function expansionPreferenceKeys(group: WorkspaceGroup): string[] {
   const { project } = group;
@@ -233,6 +237,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
           </span>
         ) : pillView ? (
           <span
+            role="img"
             aria-label={pill?.detail}
             data-tone={pillView.tone}
             data-testid="workspace-pill"
@@ -269,7 +274,8 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
               workspaceRoot={firstMember?.workspaceRoot ?? null}
               isActive={threadShellKey(thread) === activeThreadKey}
               runningSubagents={
-                group.runningSubagentsByParentKey.get(`${thread.environmentId}:${thread.id}`) ?? []
+                group.runningSubagentsByParentKey.get(`${thread.environmentId}:${thread.id}`) ??
+                NO_SUBAGENTS
               }
             />
           ))}

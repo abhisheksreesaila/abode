@@ -24,16 +24,28 @@ abode is rebuilt on branch `abode-next`, starting from upstream nightly `v0.0.46
 
 ## Hook points (keep this table current)
 
-| Upstream file                                       | What abode hooks there                                             |
-| --------------------------------------------------- | ------------------------------------------------------------------ |
-| `apps/web/src/components/AppSidebarLayout.tsx`      | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar |
-| `apps/web/src/main.tsx`                             | imports `abode/abode.css` and registers the abode theme            |
-| `packages/shared/src/themePalettes.ts`              | adds the abode theme to the built-in list                          |
-| `packages/contracts/src/rpc.ts`, `index.ts`         | three `customizations.*` RPCs (add-only)                           |
-| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts` | wires the Customizations service (add-only)                        |
-| `apps/web/src/components/chat/ChatComposer.tsx`     | mic button slot for voice                                          |
+| Upstream file                                       | What abode hooks there                                                                                                                                                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/web/src/components/AppSidebarLayout.tsx`      | renders `ActivityBar` + `AbodeSidebar` instead of `LegacySidebar`/`Sidebar` (A-005); spreads `abodeShellProviderStyle` into the provider style, before the macOS inset. Those two sidebar files stay in the tree, unused |
+| `apps/web/src/components/CommandPalette.tsx`        | one line: `actionItems.push(...abodePanelToggleActions())` adds Toggle sidebar / terminal / side panel (A-005)                                                                                                           |
+| `apps/web/src/main.tsx`                             | imports `abode/abode.css` and registers the abode theme                                                                                                                                                                  |
+| `packages/shared/src/themePalettes.ts`              | adds the abode theme to the built-in list                                                                                                                                                                                |
+| `packages/contracts/src/rpc.ts`, `index.ts`         | three `customizations.*` RPCs (add-only)                                                                                                                                                                                 |
+| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts` | wires the Customizations service (add-only)                                                                                                                                                                              |
+| `apps/web/src/components/chat/ChatComposer.tsx`     | mic button slot for voice                                                                                                                                                                                                |
 
 Tickets add rows here when they add a hook.
+
+### What the abode shell reads from upstream (check these when a sync breaks the build)
+
+`apps/web/src/abode/shell/` replaces upstream's two thread sidebars, so it depends on their building blocks instead of copying them. A type error after a sync usually points at one of these:
+
+- `components/Sidebar.logic.ts`: `resolveThreadStatusPill`, `resolveSidebarThreadStatus`, `sortSidebarV2ProjectGroups`, `orderItemsByPreferredIds`, `useSidebarRowSubscriptionLease`, thread-jump and traversal helpers.
+- `components/threadActionMenu.logic.ts` (`buildThreadActionMenuItems`), `components/ThreadStatusIndicators.tsx` (PR state), `components/sidebar/*` (update pills, undo notice).
+- `sidebarProjectGrouping.ts`, `logicalProject.ts`, `uiStateStore.ts` (expansion and project order), `composerDraftStore.ts` (drafts), `hooks/useThreadActions.ts`, `hooks/useHandleNewThread.ts`.
+- Subagents are ordinary V2 threads (`lineage.relationshipToParent === "subagent"`), nested by `subagentNesting.ts`.
+- The three panel toggles press upstream's own `sidebar.toggle`, `terminal.toggle` and `rightPanel.toggle` shortcuts (`panelToggles.ts`); nothing in the shell keeps panel state of its own.
+- The bottom of the sidebar holds an empty `<div data-abode-slot="customizations">` for A-006.
 
 ## Pulling upstream (each nightly, or whenever upstream ships something good)
 
