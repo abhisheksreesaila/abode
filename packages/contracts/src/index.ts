@@ -64,3 +64,5 @@ export * from "./rpc.ts";
 export * from "./worktreeSetup.ts";
 export * from "./secretRequest.ts";
 export * from "./clientRpcPermissions.ts";
+// abode: customizations contract
+export * from "./abodeCustomizations.ts";

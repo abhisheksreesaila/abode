@@ -138,6 +138,10 @@ const RPC_AGGREGATES = {
   [WS_METHODS.projectsWriteFile]: "workspace",
   [WS_METHODS.projectsEnsureScratch]: "orchestration",
   [WS_METHODS.projectsCreateNew]: "orchestration",
+  // abode: customizations RPCs
+  [WS_METHODS.customizationsList]: "workspace",
+  [WS_METHODS.customizationsReadFile]: "workspace",
+  [WS_METHODS.customizationsWriteFile]: "workspace",
   [WS_METHODS.shellOpenInEditor]: "workspace",
   [WS_METHODS.filesystemBrowse]: "workspace",
   [WS_METHODS.filesystemGetMetadata]: "workspace",

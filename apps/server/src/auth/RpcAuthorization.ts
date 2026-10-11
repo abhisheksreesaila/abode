@@ -152,6 +152,11 @@ export const RPC_REQUIRED_SCOPES = {
   [WS_METHODS.projectsWriteFile]: AuthFilesystemWriteScope,
   [WS_METHODS.projectsEnsureScratch]: AuthOrchestrationOperateScope,
   [WS_METHODS.projectsCreateNew]: AuthOrchestrationOperateScope,
+  // abode: customizations. Reading can open ~/.claude.json, which holds MCP env values, so
+  // read and write need the operate scope.
+  [WS_METHODS.customizationsList]: AuthOrchestrationReadScope,
+  [WS_METHODS.customizationsReadFile]: AuthOrchestrationOperateScope,
+  [WS_METHODS.customizationsWriteFile]: AuthOrchestrationOperateScope,
   [WS_METHODS.shellOpenInEditor]: AuthOrchestrationOperateScope,
   [WS_METHODS.filesystemBrowse]: AuthFilesystemReadScope,
   [WS_METHODS.filesystemGetMetadata]: AuthFilesystemReadScope,

@@ -22,6 +22,7 @@ import {
   type ThemeHalves,
   type ThemePreferenceMode,
 } from "../themePalette";
+import { ABODE_DEFAULT_THEME, defaultAppearanceMode } from "../abode/defaultTheme"; // abode:
 
 type Theme = ThemePreference;
 type ThemeSnapshot = {
@@ -38,7 +39,7 @@ type DesktopThemeBridge = Pick<DesktopBridge, "setTheme">;
 const STORAGE_KEY = "t3code:theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
 const DEFAULT_THEME_SNAPSHOT: ThemeSnapshot = {
-  theme: "system",
+  theme: ABODE_DEFAULT_THEME, // abode: fresh profiles start on abode
   resolvedTheme: "light",
   systemDark: false,
   followSystem: true,
@@ -181,7 +182,7 @@ export function readAppearanceModePreference(theme: Theme): ThemePreferenceMode 
   }
 
   if (readStoredFollowSystem(theme)) return "system";
-  return getThemePreferenceMode(theme) ?? "light";
+  return defaultAppearanceMode(theme, getThemePreferenceMode(theme) ?? "light"); // abode:
 }
 
 function writeAppearanceModePreference(appearanceMode: ThemePreferenceMode): void {
@@ -214,7 +215,8 @@ export function readThemePreference(): Theme {
   if (raw !== null && isKnownThemePreference(raw)) {
     return canonicalThemePreference(raw);
   }
-  return DEFAULT_THEME_SNAPSHOT.theme;
+  // abode: only a profile with nothing stored starts on abode; an unknown value keeps "system".
+  return raw === null ? ABODE_DEFAULT_THEME : "system";
 }
 
 export function writeThemePreference(theme: Theme): void {

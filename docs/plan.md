@@ -25,7 +25,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-002: abode theme and fonts
 
-- **Status:** todo
+- **Status:** review (reviewer PASS, merged; needs a look in the real app, especially the light palette)
 - **What:**
   - The VS Code Dark Modern palette from the first fork (`git show main:packages/shared/src/abodeTheme.ts`, tokens in `docs/design/fluent.md`) becomes a built-in theme called "abode" in upstream's theme system, with dark and light variants.
   - abode is the default theme when the user has never picked one. A theme picked later in Settings › Appearance wins.
@@ -40,7 +40,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-003: Customizations service (server, add-only)
 
-- **Status:** todo
+- **Status:** done (reviewer PASS, merged; live server check pending)
 - **What:** port the first fork's Customizations service (`git show main:apps/server/src/customizations/Customizations.ts` and `main:packages/contracts/src/customizations.ts`) to `apps/server/src/abode/` and `packages/contracts/src/abodeCustomizations.ts`. It lists Claude skills, agents, MCP servers and CLAUDE.md files (user-wide and per workspace), and reads and writes them only inside `~/.claude/` and a workspace's `.claude/`, `.mcp.json` and `CLAUDE.md`. Same three RPCs (`customizations.list`, `.readFile`, `.writeFile`) and the same auth scopes.
 - **Upstream files it may touch:** `packages/contracts/src/rpc.ts`, `packages/contracts/src/index.ts`, `apps/server/src/ws.ts`, `apps/server/src/auth/RpcAuthorization.ts`.
 - **Acceptance:**
@@ -50,7 +50,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-004: Voice dictation
 
-- **Status:** todo
+- **Status:** review (reviewer PASS, merged; needs Abhishek with a real mic)
 - **What:** port voice from the first fork (`git show main:apps/web/src/voice/...`, tickets F-002, F-003, F-023, F-052) into `apps/web/src/abode/voice/`. Mic button in the composer and a hold-to-talk key; local Moonshine/Whisper via transformers.js in a worker; text streams into the composer and nothing is sent until Enter. Voice settings appear in Settings.
 - **Upstream files it may touch:** `apps/web/src/components/chat/ChatComposer.tsx` (one slot for the mic control), the settings panel that hosts the voice section, `apps/web/package.json`.
 - **Acceptance:**
@@ -87,7 +87,12 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 - **Status:** todo
 - **Depends on:** A-005
-- **What:** first compare upstream's current composer and transcript with the first fork's (F-009, F-013, F-014, F-015, F-017, F-022, F-027, F-029, F-039) and list what upstream already covers. Port only the gaps that Abhishek still wants, as abode components with small hooks.
+- **Gap check (2026-10-11):** upstream nightly already has the context meter with compact (F-014), usage limits and the /usage page (F-015), edit from here and cite selection (F-016), Changes/Files/PR/preview tabs in the right panel (F-040, F-049). Don't port those.
+- **What, in order:**
+  1. Simple/Detailed transcript toggle (F-013), M.
+  2. Composer layout like the reference with the branch/worktree info inside the footer and colored chips for access mode, branch kind and worktree (F-022, F-039, F-027), M.
+  3. Cheap wins: visible Back button on utility pages (F-048), README tagline and starter cards on the project welcome (F-026), provider tint on the picker (F-017). Each S.
+  - Only if Abhishek still wants them: status bar (F-030), picking a Claude agent type (F-021), delights (F-034).
 
 ### A-008: Switch the host to abode-next
 

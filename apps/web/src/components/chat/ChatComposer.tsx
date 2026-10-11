@@ -1136,6 +1136,7 @@ import { useAtomCommand } from "../../state/use-atom-command";
 import { readEnvironmentScope } from "../../state/session";
 import { serverEnvironment } from "../../state/server";
 import type { ReviewCommentContext } from "../../reviewCommentContext";
+import { ComposerVoiceSlot } from "../../abode/voice/ComposerVoiceSlot"; // abode:voice
 
 const WORKSPACE_SNAPSHOT_RETRY_COOLDOWN_MS = 10_000;
 
@@ -1354,6 +1355,7 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
 });
 
 const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(props: {
+  beforeActions?: ReactNode; // abode:voice (mic, between the context meter and send)
   compact: boolean;
   canOperateThread: boolean;
   activeContextWindow: ContextWindowSnapshot | null;
@@ -1406,6 +1408,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
       ) : props.reserveContextWindowMeter ? (
         <ContextWindowMeterPlaceholder />
       ) : null}
+      {props.beforeActions /* abode:voice */}
       <ComposerPrimaryActions
         compact={props.compact}
         canOperateThread={props.canOperateThread}
@@ -6168,7 +6171,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const insertComposerText = useCallback(
     (
       text: string,
-      position: "cursor" | "end",
+      position: "cursor" | "end" | number, // abode:voice (number = prompt offset)
       options?: {
         ensureLeadingBoundary?: boolean;
         citationCommentAnchor?: AssistantCitationSourceAnchor;
@@ -6189,7 +6192,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         text = importPastedComposerText(options.clipboardData, importContextFragment);
       }
       const prompt = promptRef.current;
-      const cursor = position === "cursor" ? readComposerSnapshot().expandedCursor : prompt.length;
+      const cursor =
+        typeof position === "number" // abode:voice
+          ? Math.min(position, prompt.length)
+          : position === "cursor"
+            ? readComposerSnapshot().expandedCursor
+            : prompt.length;
       const needsLeadingSpace =
         (options?.ensureLeadingBoundary ?? false) &&
         cursor > 0 &&
@@ -6650,6 +6658,39 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       getTimelineScrollableNode,
       isTimelineAtLogicalEnd,
       setIsComposerScrollCollapsed,
+    ],
+  );
+
+  // abode:voice (memoized so the memo'd footer does not re-render on every keystroke)
+  const insertComposerTextRef = useRef(insertComposerText);
+  insertComposerTextRef.current = insertComposerText;
+  const insertVoiceText = useCallback(
+    (text: string, anchor: number | "cursor") =>
+      insertComposerTextRef.current(text, anchor, { ensureLeadingBoundary: true }),
+    [],
+  );
+  const voiceDisabled =
+    isConnecting ||
+    isComposerApprovalState ||
+    pendingUserInputs.length > 0 ||
+    projectSelectionRequired;
+  const voiceAction = useMemo(
+    () => (
+      <ComposerVoiceSlot
+        editorRef={composerEditorRef}
+        insertText={insertVoiceText}
+        disabled={voiceDisabled}
+        resetKey={composerDraftTargetKey}
+        collapsedMobile={isComposerCollapsedMobile}
+        expandMobile={expandMobileComposer}
+      />
+    ),
+    [
+      composerDraftTargetKey,
+      expandMobileComposer,
+      insertVoiceText,
+      isComposerCollapsedMobile,
+      voiceDisabled,
     ],
   );
 
@@ -7662,6 +7703,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                     </>
                   ) : null}
                   <ComposerFooterPrimaryActions
+                    beforeActions={voiceAction} // abode:voice
                     compact={isComposerResting || isComposerPrimaryActionsCompact}
                     canOperateThread={canOperateThread}
                     activeContextWindow={

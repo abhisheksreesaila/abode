@@ -104,6 +104,7 @@ import { isMacPlatform } from "../../lib/utils";
 import { EMPTY_SERVER_PROVIDERS } from "../../state/server";
 import { useArchivedThreadSnapshots } from "../../lib/archivedThreadsState";
 import { formatRelativeTimeLabel } from "../../timestampFormat";
+import { VoiceSettingsSection } from "../../abode/voice/VoiceSettingsSection"; // abode:voice
 import { Button } from "../ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "../ui/collapsible";
 import {
@@ -3401,6 +3402,9 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
+
+      {/* abode:voice */}
+      <VoiceSettingsSection />
 
       <LegacyFeaturesSection />
     </SettingsPageContainer>

@@ -9,3 +9,4 @@
 - Builders must only edit inside their own worktree. Before each merge, check that the main checkout's `git status` is clean; a builder once leaked an uncommitted edit into main.
 - Upstream Orchestration V2 (protocol 2) refuses V1 peers in both directions. Before pulling upstream, check `ORCHESTRATION_PROTOCOL_VERSION` and the official mobile app's version. A protocol bump breaks the phone until abode follows.
 - Engine edits made the first fork unmergeable (75 conflicts after 10 days). abode code lives in `abode/` folders, and upstream files only get small `abode:`-marked hooks that `scripts/abode/hook-report.sh` keeps under budget.
+- Tests and typecheck don't catch the production build's license check. After adding a dependency, run `cd apps/web && vp build --outDir <scratch>` before calling the ticket done.
