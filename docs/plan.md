@@ -76,7 +76,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-006: Customizations in the sidebar and right-panel editor
 
-- **Status:** review (reviewer PASS after fixes, merged; needs Abhishek in the real app. Editor is a plain textarea: no line numbers, highlighting or find yet)
+- **Status:** review (reviewer PASS; real-app fixes 2026-10-11: works on new-thread drafts, opens symlinked skills, Ctrl+S saves, new skills show in `/` at once. Needs Abhishek to confirm. Editor is a plain textarea: no line numbers, highlighting or find yet)
 - **Depends on:** A-003, A-005
 - **What:** port F-011, F-043, F-045, F-046: a resizable Customizations section at the bottom of the abode sidebar with folders (Skills, Agents, MCP servers, Instructions), user-wide and per workspace, a + to create a new skill or agent from a template, and clicking an item opens it in an editor tab in the right panel, with save and a read-only lock.
 - **Acceptance:**
