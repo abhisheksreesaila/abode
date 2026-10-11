@@ -73,6 +73,13 @@ describe("simplifyRowsForMode", () => {
     expect(ids(simplifyRowsForMode(rows, [], "simple"))).toEqual(["f"]);
   });
 
+  it("keeps an answered question as a record of what was asked", () => {
+    const answered = group("q", [{ tone: "tool", questionAnswer: {} as never }], {
+      displayLabel: "Answered questions",
+    });
+    expect(ids(simplifyRowsForMode([answered], [], "simple"))).toEqual(["q"]);
+  });
+
   it("keeps the details row of a kept failed group, including under the thinking row", () => {
     const details = group("g2:details", [{ tone: "tool" }], { isExpandedToolGroup: true });
     expect(ids(simplifyRowsForMode([toggle("g2", true), details], [], "simple"))).toEqual([

@@ -105,8 +105,12 @@ export function simplifyRowsForMode(
             row.id === `${previous.groupId}:details`;
           if (!keptGroup) continue;
         } else if (row.displayLabel !== undefined) {
-          // A single tool call: a step, unless it failed.
-          if (!row.groupedEntries.some(workEntryDisplayIndicatesToolFailure)) continue;
+          // A single tool call: a step, unless it failed or records an answered question.
+          const keep = row.groupedEntries.some(
+            (entry) =>
+              workEntryDisplayIndicatesToolFailure(entry) || entry.questionAnswer !== undefined,
+          );
+          if (!keep) continue;
         }
         // Anything else upstream emits as a plain work row is standalone: provider errors,
         // usage-limit and retry warnings, system notices, notifications, failed-run work.
