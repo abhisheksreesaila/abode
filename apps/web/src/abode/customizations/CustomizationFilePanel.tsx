@@ -29,6 +29,7 @@ import {
   changedOnDisk,
   cursorPosition,
   isSkillFile,
+  keepMyEdits,
   resolveLoad,
   isDirty,
   languageForPath,
@@ -190,8 +191,10 @@ export function CustomizationFilePanel(props: {
       return;
     }
     // The draft stays; it is now an edit against the newer disk text.
-    setSaved(conflict.onDisk);
-    rememberUnsavedDraft(draftKey, { saved: conflict.onDisk, contents: conflict.mine });
+    const next = keepMyEdits({ onDisk: conflict.onDisk, mine: conflict.mine });
+    setSaved(next.saved);
+    setContents(next.contents);
+    rememberUnsavedDraft(draftKey, next);
     setConflict(null);
   };
 
@@ -313,7 +316,7 @@ export function CustomizationFilePanel(props: {
       ) : (
         <textarea
           value={contents}
-          readOnly={locked}
+          readOnly={locked || conflict !== null}
           spellCheck={false}
           aria-label={`Contents of ${display}`}
           onChange={(event) => onChange(event.target.value)}

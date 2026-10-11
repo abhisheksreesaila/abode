@@ -209,3 +209,11 @@ export function changedOnDisk(input: {
 export function isSkillFile(path: string): boolean {
   return path.replaceAll("\\", "/").endsWith("/SKILL.md");
 }
+
+/** "Keep my edits" after the file changed on disk: show the draft, as an edit of the new disk text. */
+export function keepMyEdits(input: { readonly onDisk: string; readonly mine: string }): {
+  readonly saved: string;
+  readonly contents: string;
+} {
+  return { saved: input.onDisk, contents: input.mine };
+}

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   canSave,
+  isDirty,
+  keepMyEdits,
   changedOnDisk,
   isSkillFile,
   resolveLoad,
@@ -140,5 +142,13 @@ describe("isSkillFile", () => {
   it("matches SKILL.md only", () => {
     expect(isSkillFile("/w/.claude/skills/x/SKILL.md")).toBe(true);
     expect(isSkillFile("/w/.claude/agents/x.md")).toBe(false);
+  });
+});
+
+describe("keepMyEdits", () => {
+  it("shows the draft against the newer disk text, so it is dirty", () => {
+    const state = keepMyEdits({ onDisk: "new disk", mine: "my edit" });
+    expect(state).toEqual({ saved: "new disk", contents: "my edit" });
+    expect(isDirty(state.saved, state.contents)).toBe(true);
   });
 });
