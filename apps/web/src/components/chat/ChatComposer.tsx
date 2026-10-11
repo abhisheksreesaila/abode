@@ -6662,10 +6662,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   );
 
   // abode:voice (memoized so the memo'd footer does not re-render on every keystroke)
+  const insertComposerTextRef = useRef(insertComposerText);
+  insertComposerTextRef.current = insertComposerText;
   const insertVoiceText = useCallback(
     (text: string, anchor: number | "cursor") =>
-      insertComposerText(text, anchor, { ensureLeadingBoundary: true }),
-    [insertComposerText],
+      insertComposerTextRef.current(text, anchor, { ensureLeadingBoundary: true }),
+    [],
   );
   const voiceDisabled =
     isConnecting ||
