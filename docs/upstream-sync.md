@@ -24,14 +24,15 @@ abode is rebuilt on branch `abode-next`, starting from upstream nightly `v0.0.46
 
 ## Hook points (keep this table current)
 
-| Upstream file                                       | What abode hooks there                                             |
-| --------------------------------------------------- | ------------------------------------------------------------------ |
-| `apps/web/src/components/AppSidebarLayout.tsx`      | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar |
-| `apps/web/src/main.tsx`                             | imports `abode/abode.css` and registers the abode theme            |
-| `packages/shared/src/themePalettes.ts`              | adds the abode theme to the built-in list                          |
-| `packages/contracts/src/rpc.ts`, `index.ts`         | three `customizations.*` RPCs (add-only)                           |
-| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts` | wires the Customizations service (add-only)                        |
-| `apps/web/src/components/chat/ChatComposer.tsx`     | mic button slot for voice                                          |
+| Upstream file                                         | What abode hooks there                                                |
+| ----------------------------------------------------- | --------------------------------------------------------------------- |
+| `apps/web/src/components/AppSidebarLayout.tsx`        | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar    |
+| `apps/web/src/main.tsx`                               | imports `abode/abode.css` and registers the abode theme               |
+| `packages/shared/src/themePalettes.ts`                | adds the abode theme to the built-in list                             |
+| `packages/contracts/src/rpc.ts`, `index.ts`           | three `customizations.*` RPCs (add-only)                              |
+| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`   | wires the Customizations service (add-only)                           |
+| `apps/server/src/observability/RpcInstrumentation.ts` | span aggregate names for the three `customizations.*` RPCs (add-only) |
+| `apps/web/src/components/chat/ChatComposer.tsx`       | mic button slot for voice                                             |
 
 Tickets add rows here when they add a hook.
 
