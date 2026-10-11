@@ -141,7 +141,7 @@ import {
   resolveProjectPathForDispatch,
 } from "../lib/projectPaths";
 import { onOpenCommandPalette } from "../commandPaletteBus";
-import { abodePanelToggleActions } from "../abode/shell/panelToggleActions";
+import { abodePanelToggleActions } from "../abode/shell/panelToggleActions"; // abode: shell panel toggles
 import { isPreviewFocused } from "../lib/previewFocus";
 import { isTerminalFocused } from "../lib/terminalFocus";
 import {
