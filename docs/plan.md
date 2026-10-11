@@ -85,7 +85,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-007: Composer and transcript polish
 
-- **Status:** todo
+- **Status:** doing (part 1, Simple/Detailed, reviewer PASS and merged; needs a real-app check. Parts 2 and 3 todo.)
 - **Depends on:** A-005
 - **Gap check (2026-10-11):** upstream nightly already has the context meter with compact (F-014), usage limits and the /usage page (F-015), edit from here and cite selection (F-016), Changes/Files/PR/preview tabs in the right panel (F-040, F-049). Don't port those.
 - **What, in order:**
