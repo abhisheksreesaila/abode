@@ -36,6 +36,8 @@ One bullet per hook (a list, not a table, so adding a row never re-aligns the ot
 - `apps/web/index.html`, `src/themeBoot.test.ts`: boot splash palette for abode; nothing stored boots as abode
 - `ThemeSettings.tsx`, `CommandPalette.tsx`: list the abode theme card / command
 - `apps/web/src/components/CommandPalette.tsx`: A-005: one line, `actionItems.push(...abodePanelToggleActions())`, adds Toggle sidebar / terminal / side panel
+- `apps/web/src/components/chat/MessagesTimeline.tsx`: A-007: `useStableRows(useSimpleRows(rawRows, timelineEntries), ...)` filters the derived rows by the Simple/Detailed mode (Detailed returns the same array)
+- `apps/web/src/hooks/useThreadActionMenu.ts`, `components/threadActionMenu.logic.ts`: A-007: header menu gets a Transcript submenu (`abode:${string}` ids); the palette row rides on `abodePanelToggleActions`
 - `packages/contracts/src/rpc.ts`, `index.ts`: three `customizations.*` RPCs (add-only)
 - `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`: wires the Customizations service (add-only)
 - `apps/server/src/observability/RpcInstrumentation.ts`: span aggregate names for the three `customizations.*` RPCs (add-only)
