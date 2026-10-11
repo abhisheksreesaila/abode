@@ -127,9 +127,16 @@ describe("threadSquareTone", () => {
     expect(threadSquareTone("Completed")).toBe("done");
     expect(threadSquareTone(null)).toBe("idle");
   });
-  it("swaps the age for needs you only while waiting", () => {
+  it("turns red for a failed run, but never hides something waiting on you", () => {
+    expect(threadSquareTone(null, true)).toBe("failed");
+    expect(threadSquareTone("Completed", true)).toBe("failed");
+    expect(threadSquareTone("Awaiting Input", true)).toBe("needs-you");
+    expect(threadSquareTone("Working", true)).toBe("running");
+  });
+  it("swaps the age for a state word only while it applies", () => {
     expect(threadMetaLabel("needs-you", "2m")).toBe("needs you");
     expect(threadMetaLabel("running", "2m")).toBe("2m");
+    expect(threadMetaLabel("failed", "2m")).toBe("failed");
   });
 });
 

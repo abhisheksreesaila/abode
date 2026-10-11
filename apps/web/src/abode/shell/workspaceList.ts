@@ -148,20 +148,25 @@ export function splitLatestThreads<T>(
   return { shown, olderCount: threads.length - shown.length };
 }
 
-export type ThreadSquareTone = "running" | "needs-you" | "done" | "idle";
+export type ThreadSquareTone = "running" | "needs-you" | "failed" | "done" | "idle";
 
-/** The 7px status square of a thread row (F-028): green running, amber needs you, dim idle. */
-export function threadSquareTone(statusLabel: string | null): ThreadSquareTone {
-  if (statusLabel === null) return "idle";
-  if (NEEDS_YOU_LABELS.has(statusLabel)) return "needs-you";
-  if (RUNNING_LABELS.has(statusLabel)) return "running";
+/**
+ * The 7px status square of a thread row: green running, amber needs you, red
+ * failed, dim idle. Waiting on the user outranks everything, then running.
+ */
+export function threadSquareTone(statusLabel: string | null, failed = false): ThreadSquareTone {
+  if (statusLabel !== null && NEEDS_YOU_LABELS.has(statusLabel)) return "needs-you";
+  if (statusLabel !== null && RUNNING_LABELS.has(statusLabel)) return "running";
+  if (failed) return "failed";
   if (statusLabel === "Completed") return "done";
   return "idle";
 }
 
-/** The right-hand meta label of a thread row: "needs you" replaces the age while it waits. */
+/** The right-hand meta label of a thread row: a state word replaces the age while it applies. */
 export function threadMetaLabel(tone: ThreadSquareTone, relativeAge: string): string {
-  return tone === "needs-you" ? "needs you" : relativeAge;
+  if (tone === "needs-you") return "needs you";
+  if (tone === "failed") return "failed";
+  return relativeAge;
 }
 
 export type WorkspacePillView =
