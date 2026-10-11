@@ -93,6 +93,21 @@
               chrome: "oklch(0.242641 0.024125 250.573)",
             },
           },
+          // abode: mirrors apps/web/src/abode/abodeTheme.ts (canvas, text, accent, chrome).
+          abode: {
+            light: {
+              background: "#ffffff",
+              foreground: "#3b3b3b",
+              accent: "#005fb8",
+              chrome: "#f8f8f8",
+            },
+            dark: {
+              background: "#1f1f1f",
+              foreground: "#cccccc",
+              accent: "#0078d4",
+              chrome: "#181818",
+            },
+          },
           ember: {
             light: {
               background: "oklch(0.976527 0.002685 60.725)",
@@ -139,6 +154,7 @@
           "ocean",
           "ember",
           "iris",
+          "abode", // abode:
           "t3-chat-dark",
           "t3-grove",
           "t3-ocean",
@@ -231,7 +247,9 @@
           };
           const isLegacyT3ChatDark = storedTheme === "t3-chat-dark";
           const themeId =
-            storedTheme === null ? "" : (LEGACY_THEME_IDS[storedTheme] ?? storedTheme);
+            storedTheme === null
+              ? "abode" /* abode: nothing stored */
+              : (LEGACY_THEME_IDS[storedTheme] ?? storedTheme);
           const legacyMode = isLegacyT3ChatDark ? "dark" : null;
           const builtInModes = BUILT_IN_THEME_MODES[themeId] ?? null;
           const customTheme = builtInModes ? null : findCustomTheme(themeId);
@@ -266,7 +284,7 @@
               ? "system"
               : storedFollowSystem === "false"
                 ? preferenceMode
-                : theme === "system"
+                : theme === "system" || themeId === "abode" // abode: follows the system by default
                   ? "system"
                   : preferenceMode;
           // A valid mix half for the wanted appearance takes over: it decides
@@ -360,7 +378,8 @@
           }
           // A resolved half is a selection even when the base theme is gone
           // (deleting the base leaves the mix pointing at a real theme).
-          const hasSelection = halfThemeId !== null || (isKnownTheme && storedTheme !== null);
+          const hasSelection =
+            halfThemeId !== null || (isKnownTheme && (storedTheme !== null || themeId === "abode")); // abode:
           if (hasSelection) {
             document.documentElement.dataset.themeSelected = "true";
           } else {
