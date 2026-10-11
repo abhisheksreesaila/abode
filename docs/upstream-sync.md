@@ -24,14 +24,17 @@ abode is rebuilt on branch `abode-next`, starting from upstream nightly `v0.0.46
 
 ## Hook points (keep this table current)
 
-| Upstream file                                       | What abode hooks there                                             |
-| --------------------------------------------------- | ------------------------------------------------------------------ |
-| `apps/web/src/components/AppSidebarLayout.tsx`      | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar |
-| `apps/web/src/main.tsx`                             | imports `abode/abode.css` and registers the abode theme            |
-| `packages/shared/src/themePalettes.ts`              | adds the abode theme to the built-in list                          |
-| `packages/contracts/src/rpc.ts`, `index.ts`         | three `customizations.*` RPCs (add-only)                           |
-| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts` | wires the Customizations service (add-only)                        |
-| `apps/web/src/components/chat/ChatComposer.tsx`     | mic button slot for voice                                          |
+| Upstream file                                       | What abode hooks there                                                                               |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `apps/web/src/components/AppSidebarLayout.tsx`      | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar                                   |
+| `apps/web/src/main.tsx`                             | imports the bundled fonts and `abode/abode.css`                                                      |
+| `apps/web/src/themePalette.ts`                      | adds `ABODE_THEME` to the web built-in definitions (not shared `BUILT_IN_THEMES`: mobile mirrors it) |
+| `packages/shared/src/themePalettes.ts`              | reserves the id `abode` (one line)                                                                   |
+| `apps/web/src/hooks/useTheme.ts`                    | default theme and default appearance for a fresh profile                                             |
+| `ThemeSettings.tsx`, `CommandPalette.tsx`           | list the abode theme card / command                                                                  |
+| `packages/contracts/src/rpc.ts`, `index.ts`         | three `customizations.*` RPCs (add-only)                                                             |
+| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts` | wires the Customizations service (add-only)                                                          |
+| `apps/web/src/components/chat/ChatComposer.tsx`     | mic button slot for voice                                                                            |
 
 Tickets add rows here when they add a hook.
 

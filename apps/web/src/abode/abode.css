@@ -1,0 +1,21 @@
+/* abode structural styling (docs/design/fluent.md). Colors live in the abode theme
+   (abodeTheme.ts); this file holds what a theme can't express: fonts, density and radii.
+   Everything is scoped to the theme id so other themes keep T3's values. The doubled
+   selector lifts specificity above the root dark-variant rules. */
+
+html[data-theme-id="abode"]:not([data-theme-id=""]),
+html.dark[data-theme-id="abode"] {
+  --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+
+/* VS Code-like density: 13px UI is the 14px base scaled by 13/14, which also tightens
+   rem-based row padding. Controls drop to a 2px radius. */
+html[data-theme-id="abode"] {
+  font-size: 92.857%;
+  --radius: 0.375rem;
+  --control-radius: 2px;
+  --sidebar-content-inset: 0.375rem;
+  --sidebar-control-gap: 0.25rem;
+  --sidebar-row-content-inset: 0.5rem;
+}
