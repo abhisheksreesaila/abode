@@ -21,7 +21,7 @@ describe("abode theme registration", () => {
   it("is a known theme with dark and light halves", () => {
     expect(isKnownThemePreference(ABODE_THEME_ID)).toBe(true);
     expect(getThemeDefinition(ABODE_THEME_ID)?.label).toBe("abode");
-    expect(getThemeColorsForMode(ABODE_THEME, "dark")?.canvas).toBe("#1f1f1f");
+    expect(getThemeColorsForMode(ABODE_THEME, "dark")).toBe(ABODE_THEME.colors);
     expect(getThemeColorsForMode(ABODE_THEME, "light")).not.toBeNull();
   });
 });
