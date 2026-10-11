@@ -2,18 +2,9 @@ import {
   workEntryIsVisibleInGroup,
   type MessagesTimelineRow,
 } from "~/components/chat/MessagesTimeline.logic";
-import type { TimelineEntry, WorkLogEntry } from "~/session-logic";
+import type { TimelineEntry } from "~/session-logic";
 import { workEntryDisplayIndicatesToolFailure } from "~/session-logic";
 import type { TranscriptMode } from "./transcriptMode";
-
-/** Work that is an outcome the reader needs, not a step: answered questions, compaction, errors. */
-function isWorkEntryVisibleInSimple(work: WorkLogEntry): boolean {
-  return (
-    work.questionAnswer !== undefined ||
-    work.sourceActivityKind === "context-compaction" ||
-    work.tone === "error"
-  );
-}
 
 interface RunTotals {
   toolCalls: number;
@@ -36,6 +27,16 @@ function totalsByRun(entries: ReadonlyArray<TimelineEntry>, runIds: ReadonlySet<
     for (const file of work.changedFiles ?? []) run.files.add(file);
   }
   return totals;
+}
+
+function isWorkLogRow(row: MessagesTimelineRow | undefined): boolean {
+  return (
+    row !== undefined &&
+    (row.kind === "work" ||
+      row.kind === "work-toggle" ||
+      row.kind === "work-live" ||
+      row.kind === "thinking")
+  );
 }
 
 export function formatWorkSummary(
@@ -92,24 +93,32 @@ export function simplifyRowsForMode(
         if (!inExpandedFold && !row.hasFailure) continue;
         break;
       case "work": {
-        // The expanded details of a kept group must stay, or its chevron is dead.
-        const previous = out.at(-1);
-        const detailsOfKept =
-          row.isExpandedToolGroup &&
-          previous !== undefined &&
-          (previous.kind === "work-live" || previous.kind === "work-toggle") &&
-          row.id === `${previous.groupId}:details`;
-        if (
-          !inExpandedFold &&
-          !detailsOfKept &&
-          !row.groupedEntries.some(isWorkEntryVisibleInSimple)
-        ) {
-          continue;
+        if (inExpandedFold) break;
+        if (row.isExpandedToolGroup) {
+          // The expanded details of a kept group must stay, or its chevron is dead.
+          const previous = out.at(-1);
+          const keptGroup =
+            previous !== undefined &&
+            (previous.kind === "work-live" ||
+              previous.kind === "work-toggle" ||
+              previous.kind === "thinking") &&
+            row.id === `${previous.groupId}:details`;
+          if (!keptGroup) continue;
+        } else if (row.displayLabel !== undefined) {
+          // A single tool call: a step, unless it failed.
+          if (!row.groupedEntries.some(workEntryDisplayIndicatesToolFailure)) continue;
         }
+        // Anything else upstream emits as a plain work row is standalone: provider errors,
+        // usage-limit and retry warnings, system notices, notifications, failed-run work.
         break;
       }
     }
     out.push(row);
   }
-  return out;
+  // Spacing flag from upstream: a row only continues a work log if its neighbour survived.
+  return out.map((row, index) =>
+    row.continuesWorkLog && !isWorkLogRow(out[index + 1])
+      ? { ...row, continuesWorkLog: false }
+      : row,
+  );
 }

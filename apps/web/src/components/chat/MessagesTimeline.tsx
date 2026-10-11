@@ -944,7 +944,8 @@ const ConversationTimeline = memo(function ConversationTimeline({
     supportsConversationRollback,
     worktreeSetup,
   ]);
-  const rows = useStableRows(useSimpleRows(rawRows, timelineEntries), listIdentityKey); // abode: A-007 Simple/Detailed
+  const abodeRows = useSimpleRows(rawRows, timelineEntries, listIdentityKey); // abode: A-007 Simple/Detailed
+  const rows = useStableRows(abodeRows.rows, abodeRows.identity);
   // Run status/timestamps churn on every stream event; the shared row context
   // must not change with them or every timeline row re-renders per event.
   const runs = useStableHandoffRuns(runsProp);

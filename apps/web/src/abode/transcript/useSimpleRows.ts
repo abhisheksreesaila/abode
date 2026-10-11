@@ -13,7 +13,10 @@ import { useTranscriptModeStore } from "./transcriptModeStore";
 export function useSimpleRows(
   rows: MessagesTimelineRow[],
   entries: ReadonlyArray<TimelineEntry>,
-): MessagesTimelineRow[] {
+  identity: string,
+): { rows: MessagesTimelineRow[]; identity: string } {
   const mode = useTranscriptModeStore((store) => store.mode);
-  return useMemo(() => simplifyRowsForMode(rows, entries, mode), [rows, entries, mode]);
+  const simple = useMemo(() => simplifyRowsForMode(rows, entries, mode), [rows, entries, mode]);
+  // The stable-rows pass ignores spacing flags, so each mode gets its own identity.
+  return { rows: simple, identity: `${identity}:${mode}` };
 }

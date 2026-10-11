@@ -38,13 +38,16 @@ describe("simplifyRowsForMode", () => {
     expect(simplifyRowsForMode(rows, [], "detailed")).toBe(rows);
   });
 
-  it("drops tool groups and their toggles but keeps messages, live rows and errors", () => {
+  it("drops tool steps but keeps messages, live rows and standalone work rows", () => {
     const live = asRow({ kind: "work-live", id: "live", groupId: "gl", groupedEntries: [] });
     const rows = [
       user("u"),
       toggle("g1"),
-      group("w1", [{ tone: "tool" }]),
-      group("err", [{ tone: "error" }]),
+      group("step", [{ tone: "tool" }], { displayLabel: "Ran ls" }),
+      // Real V2 shapes: errors, notices and warnings arrive with tone "info".
+      group("err", [{ tone: "info", itemType: "error", sourceActivityKind: "runtime.error" }]),
+      group("notice", [{ tone: "info", itemType: "system_notice" }]),
+      group("limit", [{ tone: "info", sourceActivityKind: "runtime.warning" }]),
       toggle("g2", true),
       live,
       asRow({ kind: "working", id: "working" }),
@@ -53,6 +56,8 @@ describe("simplifyRowsForMode", () => {
     expect(ids(simplifyRowsForMode(rows, [], "simple"))).toEqual([
       "u",
       "err",
+      "notice",
+      "limit",
       "g2:toggle",
       "live",
       "working",
@@ -60,10 +65,32 @@ describe("simplifyRowsForMode", () => {
     ]);
   });
 
-  it("keeps the details row of a kept failed group", () => {
+  it("keeps a failed single-tool row and drops a successful one", () => {
+    const failed = group("f", [{ tone: "tool", toolLifecycleStatus: "failed" }], {
+      displayLabel: "Ran x",
+    });
+    const rows = [failed, group("ok", [{ tone: "tool" }], { displayLabel: "Ran y" })];
+    expect(ids(simplifyRowsForMode(rows, [], "simple"))).toEqual(["f"]);
+  });
+
+  it("keeps the details row of a kept failed group, including under the thinking row", () => {
     const details = group("g2:details", [{ tone: "tool" }], { isExpandedToolGroup: true });
-    const rows = [toggle("g2", true), details];
-    expect(ids(simplifyRowsForMode(rows, [], "simple"))).toEqual(["g2:toggle", "g2:details"]);
+    expect(ids(simplifyRowsForMode([toggle("g2", true), details], [], "simple"))).toEqual([
+      "g2:toggle",
+      "g2:details",
+    ]);
+    const thinking = asRow({ kind: "thinking", id: "t", groupId: "g2" });
+    expect(ids(simplifyRowsForMode([thinking, details], [], "simple"))).toEqual([
+      "t",
+      "g2:details",
+    ]);
+  });
+
+  it("clears continuesWorkLog when the next row was dropped", () => {
+    const err = { ...group("err", [{ tone: "info", itemType: "error" }]), continuesWorkLog: true };
+    const rows = [err as MessagesTimelineRow, toggle("g")];
+    const [out] = simplifyRowsForMode(rows, [], "simple");
+    expect(out).toMatchObject({ id: "err", continuesWorkLog: false });
   });
 
   it("adds call, file and failure counts to a turn fold", () => {

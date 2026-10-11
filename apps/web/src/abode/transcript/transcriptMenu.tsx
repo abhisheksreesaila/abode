@@ -14,7 +14,7 @@ export function abodeTranscriptMenuItem(): ContextMenuItem<AbodeTranscriptMenuId
   return {
     id: "abode:transcript",
     label: "Transcript",
-    icon: "scroll-text",
+    icon: "folder-tree",
     separatorBefore: true,
     children: [
       { id: "abode:transcript:simple", label: "Simple", checked: mode === "simple" },
