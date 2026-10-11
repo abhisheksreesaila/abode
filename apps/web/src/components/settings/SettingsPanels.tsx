@@ -2482,6 +2482,7 @@ export function GeneralSettingsPanel() {
           </>
         ) : null}
       </SettingsSection>
+
       <SettingsSection id="behavior" title="Behavior">
         <NotificationSettings />
         <SettingsRow
@@ -3042,6 +3043,7 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
+
       <SettingsSection id="projects-and-threads" title="Projects & threads">
         <SettingsRow
           serverScoped
@@ -3104,6 +3106,7 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
+
       <SettingsSection id="confirmations" title="Confirmations">
         <SettingsRow
           {...searchableSetting("unpin-confirmation")}
@@ -3225,6 +3228,7 @@ export function GeneralSettingsPanel() {
           />
         ) : null}
       </SettingsSection>
+
       <SettingsSection id="text-generation" title="Text generation">
         <SettingsRow
           serverScoped
@@ -3336,6 +3340,7 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
+
       <SettingsSection id="about" title="About">
         {isElectron || HOSTED_APP_CHANNEL ? (
           <AboutVersionSection />
@@ -3397,7 +3402,10 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
-      <VoiceSettingsSection /> {/* abode:voice */}
+
+      {/* abode:voice */}
+      <VoiceSettingsSection />
+
       <LegacyFeaturesSection />
     </SettingsPageContainer>
   );

@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { memo, type RefObject } from "react";
 
 import type { ComposerPromptEditorHandle } from "../../components/ComposerPromptEditorTiptap";
 import { ComposerVoiceControl } from "./ComposerVoiceControl";
@@ -7,7 +7,7 @@ import { ComposerVoiceControl } from "./ComposerVoiceControl";
  * The single piece of voice UI that ChatComposer renders: the mic control wired to the
  * composer's editor handle. All dictation behavior lives in this folder.
  */
-export function ComposerVoiceSlot({
+export const ComposerVoiceSlot = memo(function ComposerVoiceSlot({
   editorRef,
   insertText,
   disabled,
@@ -44,4 +44,4 @@ export function ComposerVoiceSlot({
       }}
     />
   );
-}
+});
