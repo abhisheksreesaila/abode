@@ -25,11 +25,17 @@ import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { Toggle, ToggleGroup } from "~/components/ui/toggle-group";
 import { useAtomCommand } from "~/state/use-atom-command";
 
-import { describeCustomizationsError, displayCustomizationPath } from "./customizationsModel";
+import {
+  describeCustomizationsError,
+  displayCustomizationPath,
+  isAlreadyExistsError,
+} from "./customizationsModel";
 import { customizationsEnvironment } from "./customizationsState";
 import {
   availableScopes,
   coerceScope,
+  createWriteInput,
+  failureAction,
   nameProblem,
   needsName,
   planNewCustomization,
@@ -83,25 +89,26 @@ export function NewCustomizationDialog(props: {
     setError(null);
     try {
       const input = { cwd: scope.cwd, path: plan.path };
-      if (plan.openIfExists) {
+      const openExisting = async () => {
         const existing = await readFile({ environmentId: scope.environmentId, input });
         if (existing._tag === "Success") {
           onReady(existing.value.path);
           return;
         }
         if (isAtomCommandInterrupted(existing)) return;
-        if (plan.readOnly) {
-          setError(`${target ?? plan.path} does not exist yet, and abode can't create it.`);
-          return;
-        }
+        setError(
+          plan.readOnly
+            ? `${target ?? plan.path} does not exist yet, and abode can't create it.`
+            : describeCustomizationsError(squashAtomCommandFailure(existing)),
+        );
+      };
+      if (plan.readOnly) {
+        await openExisting();
+        return;
       }
       const written = await writeFile({
         environmentId: scope.environmentId,
-        input: {
-          ...input,
-          contents: plan.contents,
-          ...(plan.openIfExists ? {} : { createOnly: true }),
-        },
+        input: createWriteInput(plan, scope.cwd),
       });
       if (written._tag === "Success") {
         toastManager.add(
@@ -116,7 +123,15 @@ export function NewCustomizationDialog(props: {
         return;
       }
       if (isAtomCommandInterrupted(written)) return;
-      setError(describeCustomizationsError(squashAtomCommandFailure(written)));
+      const failure = squashAtomCommandFailure(written);
+      if (
+        isAlreadyExistsError(failure) &&
+        failureAction(plan, "already_exists") === "open-existing"
+      ) {
+        await openExisting();
+        return;
+      }
+      setError(describeCustomizationsError(failure));
     } finally {
       setBusy(false);
     }

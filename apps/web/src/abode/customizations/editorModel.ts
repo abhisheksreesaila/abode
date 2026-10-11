@@ -1,5 +1,3 @@
-import type { CustomizationKind } from "@t3tools/contracts";
-
 /**
  * Pure logic behind the customization editor (abode F-045): language and validation hints for the
  * status line, the dirty and close guard, and what happens after a create. No file contents are
@@ -15,13 +13,6 @@ export function languageForPath(path: string): EditorLanguage {
   if (lower.endsWith(".toml")) return "toml";
   return "text";
 }
-
-export const LANGUAGE_LABEL: Record<EditorLanguage, string> = {
-  markdown: "Markdown",
-  json: "JSON",
-  toml: "TOML",
-  text: "Plain text",
-};
 
 export interface ValidationHint {
   /** Hints are warnings: they never block saving. */
@@ -179,31 +170,6 @@ export function isDirty(saved: string, current: string): boolean {
   return saved !== current;
 }
 
-export type CloseDecision = "exit-fullscreen" | "confirm-discard" | "close";
-
-/** Esc steps out of full screen first, then guards unsaved changes, then closes. */
-export function decideClose(input: {
-  readonly dirty: boolean;
-  readonly maximized: boolean;
-  /** The Close button always closes; Esc steps out of full screen first. */
-  readonly viaEscape: boolean;
-}): CloseDecision {
-  if (input.viaEscape && input.maximized) return "exit-fullscreen";
-  return input.dirty ? "confirm-discard" : "close";
-}
-
-export type EditorMode =
-  | { readonly type: "create"; readonly kind: CustomizationKind }
-  | { readonly type: "edit"; readonly path: string };
-
-/**
- * After the create form saves, the same surface turns into an editor for the saved file: no second
- * dialog. `path` is what the server reports it wrote (home paths expanded).
- */
-export function modeAfterCreate(written: { readonly path: string }): EditorMode {
-  return { type: "edit", path: written.path };
-}
-
 /** Save needs something to write, an unlocked file and no save in flight. */
 export function canSave(input: {
   readonly dirty: boolean;
@@ -215,4 +181,31 @@ export function canSave(input: {
   if (input.saving) return false;
   if (input.creating) return input.hasPlan;
   return input.dirty && !input.locked;
+}
+
+export type LoadResolution = "clean" | "restore" | "conflict";
+
+/**
+ * What to do with an unsaved draft when a file is opened again. A draft made against the same
+ * disk text is restored; one made against older text is a conflict the person must settle.
+ */
+export function resolveLoad(input: {
+  readonly onDisk: string;
+  readonly draft: { readonly saved: string } | null;
+}): LoadResolution {
+  if (input.draft === null) return "clean";
+  return input.draft.saved === input.onDisk ? "restore" : "conflict";
+}
+
+/** True when the file on disk is no longer the text this editor loaded (Claude edits skills too). */
+export function changedOnDisk(input: {
+  readonly loaded: string;
+  readonly onDisk: string;
+}): boolean {
+  return input.loaded !== input.onDisk;
+}
+
+/** Skill files are what the composer's `$` picker lists, so saving one refreshes that list. */
+export function isSkillFile(path: string): boolean {
+  return path.replaceAll("\\", "/").endsWith("/SKILL.md");
 }

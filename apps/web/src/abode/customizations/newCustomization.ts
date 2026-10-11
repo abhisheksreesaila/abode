@@ -176,3 +176,20 @@ export function planNewCustomization(
     readOnly: false,
   };
 }
+
+/** The write a create sends. It is always `createOnly`: a create can never replace a file. */
+export function createWriteInput(plan: NewCustomizationPlan, cwd: string) {
+  return { cwd, path: plan.path, contents: plan.contents, createOnly: true } as const;
+}
+
+/**
+ * What to do when the create write failed. Only "already exists" on a fixed-file target
+ * (CLAUDE.md, AGENTS.md, .mcp.json) means open the file; every other failure is shown, and the
+ * file is left alone.
+ */
+export function failureAction(
+  plan: NewCustomizationPlan,
+  failure: "already_exists" | string,
+): "open-existing" | "show-error" {
+  return plan.openIfExists && failure === "already_exists" ? "open-existing" : "show-error";
+}

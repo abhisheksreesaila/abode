@@ -95,6 +95,11 @@ export function describeCustomizationsError(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong.";
 }
 
+/** The write failed because the file is already there (a create never overwrites). */
+export function isAlreadyExistsError(error: unknown): boolean {
+  return isCustomizationsError(error) && error.failure === "already_exists";
+}
+
 const HOME_CLAUDE_SEGMENT = /\/\.(?:claude(?:\.json|\/)|codex\/)/;
 const WORKSPACE_ROOT_FILES = new Set(["CLAUDE.md", "CLAUDE.local.md", ".mcp.json", "AGENTS.md"]);
 

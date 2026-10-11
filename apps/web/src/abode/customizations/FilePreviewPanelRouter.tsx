@@ -1,13 +1,12 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { resolvePathLinkTarget } from "@t3tools/shared/fileLinks";
-import { type ComponentProps, lazy } from "react";
+import type { ComponentProps } from "react";
 
+import FilePreviewPanel from "~/components/files/FilePreviewPanel";
 import { useProject, useThreadShell } from "~/state/entities";
 
 import { findKnownCustomization, isCustomizationPath } from "./customizationsModel";
 import { CustomizationFilePanel } from "./CustomizationFilePanel";
-
-const FilePreviewPanel = lazy(() => import("~/components/files/FilePreviewPanel"));
 
 type FilePreviewPanelProps = ComponentProps<typeof FilePreviewPanel>;
 

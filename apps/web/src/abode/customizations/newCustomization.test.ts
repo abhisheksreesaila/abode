@@ -3,6 +3,8 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   availableScopes,
   coerceScope,
+  createWriteInput,
+  failureAction,
   harnessFromProviderInstance,
   nameProblem,
   planNewCustomization,
@@ -141,5 +143,24 @@ describe("nameProblem", () => {
   it("needs no name for instructions and MCP files", () => {
     expect(nameProblem("instructions", "")).toBeNull();
     expect(nameProblem("mcp", "")).toBeNull();
+  });
+});
+
+describe("creating never overwrites", () => {
+  const claudeMd = () => plan({ kind: "instructions", scope: "workspace" })!;
+
+  it("always writes create-only, even for files that are opened when present", () => {
+    expect(createWriteInput(claudeMd(), CWD).createOnly).toBe(true);
+    expect(createWriteInput(plan({})!, CWD).createOnly).toBe(true);
+  });
+
+  it("opens the existing file only when the write failed because it exists", () => {
+    expect(failureAction(claudeMd(), "already_exists")).toBe("open-existing");
+  });
+
+  it("shows any other failure (too large, no access) instead of writing the template", () => {
+    expect(failureAction(claudeMd(), "file_too_large")).toBe("show-error");
+    expect(failureAction(claudeMd(), "operation_failed")).toBe("show-error");
+    expect(failureAction(plan({})!, "already_exists")).toBe("show-error");
   });
 });

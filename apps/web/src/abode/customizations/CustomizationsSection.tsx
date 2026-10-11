@@ -38,6 +38,8 @@ import {
   rememberCustomizations,
 } from "./customizationsModel";
 import { customizationsEnvironment } from "./customizationsState";
+import { isSkillFile } from "./editorModel";
+import { useRefreshProviderSkills } from "./useRefreshProviderSkills";
 import { harnessFromProviderInstance } from "./newCustomization";
 import { NewCustomizationDialog } from "./NewCustomizationDialog";
 import { useActiveCustomizationsScope, type CustomizationsScope } from "./useCustomizationsScope";
@@ -104,6 +106,11 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
   const [openKinds, setOpenKinds] = useState<ReadonlySet<CustomizationKind>>(new Set(["skill"]));
   const [creating, setCreating] = useState<CustomizationKind | null>(null);
   const shell = useThreadShell(scope.threadRef);
+  const refreshSkills = useRefreshProviderSkills({
+    environmentId: scope.environmentId,
+    threadRef: scope.threadRef,
+    workspaceRoot: scope.cwd,
+  });
   const defaultHarness: CustomizationHarness = harnessFromProviderInstance(
     shell?.modelSelection.instanceId,
   );
@@ -173,7 +180,10 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
               </button>
               <button
                 type="button"
-                aria-label={`New ${label}`}
+                aria-label={
+                  scope.threadRef === null ? `New ${label} (open a session first)` : `New ${label}`
+                }
+                disabled={scope.threadRef === null}
                 onClick={() => setCreating(kind)}
                 className="mr-1 flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-xs text-sidebar-muted-foreground outline-hidden ring-ring hover:text-sidebar-foreground focus-visible:ring-1 focus-visible:ring-inset"
               >
@@ -186,8 +196,9 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
                   <span>{group.emptyLabel}</span>
                   <button
                     type="button"
+                    disabled={scope.threadRef === null}
                     onClick={() => setCreating(kind)}
-                    className="cursor-pointer text-primary hover:underline"
+                    className="cursor-pointer disabled:cursor-default disabled:opacity-60 text-primary hover:underline"
                   >
                     Create one
                   </button>
@@ -215,6 +226,7 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
           onReady={(path) => {
             setCreating(null);
             refresh();
+            if (isSkillFile(path)) refreshSkills();
             openFile(path);
           }}
         />

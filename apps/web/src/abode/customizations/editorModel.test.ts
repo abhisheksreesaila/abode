@@ -2,10 +2,11 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   canSave,
+  changedOnDisk,
+  isSkillFile,
+  resolveLoad,
   cursorPosition,
-  decideClose,
   languageForPath,
-  modeAfterCreate,
   parseFrontmatter,
   validateCustomization,
 } from "./editorModel";
@@ -100,29 +101,6 @@ describe("cursorPosition", () => {
   });
 });
 
-describe("decideClose", () => {
-  it("Esc leaves full screen first, even when dirty", () => {
-    expect(decideClose({ dirty: true, maximized: true, viaEscape: true })).toBe("exit-fullscreen");
-  });
-  it("prompts when dirty, otherwise closes", () => {
-    expect(decideClose({ dirty: true, maximized: false, viaEscape: true })).toBe("confirm-discard");
-    expect(decideClose({ dirty: false, maximized: false, viaEscape: true })).toBe("close");
-  });
-  it("the Close button ignores full screen", () => {
-    expect(decideClose({ dirty: false, maximized: true, viaEscape: false })).toBe("close");
-    expect(decideClose({ dirty: true, maximized: true, viaEscape: false })).toBe("confirm-discard");
-  });
-});
-
-describe("create to edit", () => {
-  it("switches to editing the written file", () => {
-    expect(modeAfterCreate({ path: "/home/me/.claude/skills/x/SKILL.md" })).toEqual({
-      type: "edit",
-      path: "/home/me/.claude/skills/x/SKILL.md",
-    });
-  });
-});
-
 describe("canSave", () => {
   const base = { dirty: true, locked: false, saving: false, creating: false, hasPlan: true };
   it("needs dirty, unlocked and idle when editing", () => {
@@ -134,5 +112,33 @@ describe("canSave", () => {
   it("creating only needs a plan", () => {
     expect(canSave({ ...base, creating: true, dirty: false, locked: true })).toBe(true);
     expect(canSave({ ...base, creating: true, hasPlan: false })).toBe(false);
+  });
+});
+
+describe("resolveLoad", () => {
+  it("restores a draft made against the same disk text", () => {
+    expect(resolveLoad({ onDisk: "a", draft: { saved: "a" } })).toBe("restore");
+  });
+
+  it("flags a draft whose file changed on disk instead of dropping it", () => {
+    expect(resolveLoad({ onDisk: "b", draft: { saved: "a" } })).toBe("conflict");
+  });
+
+  it("is clean with no draft", () => {
+    expect(resolveLoad({ onDisk: "a", draft: null })).toBe("clean");
+  });
+});
+
+describe("changedOnDisk", () => {
+  it("compares the text on disk with the text that was loaded", () => {
+    expect(changedOnDisk({ loaded: "a", onDisk: "a" })).toBe(false);
+    expect(changedOnDisk({ loaded: "a", onDisk: "a\n" })).toBe(true);
+  });
+});
+
+describe("isSkillFile", () => {
+  it("matches SKILL.md only", () => {
+    expect(isSkillFile("/w/.claude/skills/x/SKILL.md")).toBe(true);
+    expect(isSkillFile("/w/.claude/agents/x.md")).toBe(false);
   });
 });

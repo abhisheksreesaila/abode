@@ -9,6 +9,7 @@ import {
   displayCustomizationPath,
   findKnownCustomization,
   groupCustomizations,
+  isAlreadyExistsError,
   isCustomizationPath,
   rememberCustomizations,
   resolveLocked,
@@ -125,5 +126,14 @@ describe("paths", () => {
     const user = item({ path: "/home/a/.claude/CLAUDE.md", scope: "user" });
     rememberCustomizations([user]);
     expect(findKnownCustomization(user.path)).toBe(user);
+  });
+});
+
+describe("isAlreadyExistsError", () => {
+  it("recognises only the already_exists failure", () => {
+    const failure = (f: string) => ({ _tag: "CustomizationsError", failure: f, message: "m" });
+    expect(isAlreadyExistsError(failure("already_exists"))).toBe(true);
+    expect(isAlreadyExistsError(failure("file_too_large"))).toBe(false);
+    expect(isAlreadyExistsError(new Error("x"))).toBe(false);
   });
 });

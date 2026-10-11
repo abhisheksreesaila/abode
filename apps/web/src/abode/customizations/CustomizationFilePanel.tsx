@@ -4,7 +4,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import { AlertTriangleIcon, EyeIcon, LockIcon, LockOpenIcon, SaveIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { FileMarkdownPreview } from "~/components/files/FileMarkdownPreview";
 import { Badge } from "~/components/ui/badge";
@@ -26,11 +26,15 @@ import {
 import { customizationsEnvironment } from "./customizationsState";
 import {
   canSave,
+  changedOnDisk,
   cursorPosition,
+  isSkillFile,
+  resolveLoad,
   isDirty,
   languageForPath,
   validateCustomization,
 } from "./editorModel";
+import { useRefreshProviderSkills } from "./useRefreshProviderSkills";
 import { clearUnsavedDraft, readUnsavedDraft, rememberUnsavedDraft } from "./unsavedDrafts";
 
 type LoadState =
@@ -54,6 +58,11 @@ export function CustomizationFilePanel(props: {
   const { environmentId, cwd, projectName, path, threadRef } = props;
   const readFile = useAtomCommand(customizationsEnvironment.readFile, { reportFailure: false });
   const writeFile = useAtomCommand(customizationsEnvironment.writeFile, { reportFailure: false });
+  const refreshSkills = useRefreshProviderSkills({
+    environmentId,
+    threadRef,
+    workspaceRoot: cwd,
+  });
   const draftKey = useMemo(() => ({ environmentId, path }), [environmentId, path]);
   const known = findKnownCustomization(path);
 
@@ -64,7 +73,14 @@ export function CustomizationFilePanel(props: {
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [caret, setCaret] = useState(0);
+  const [cursor, setCursor] = useState({ line: 1, column: 1 });
+  // Set when the disk text is not the text this editor holds: a stale draft on open, or a
+  // changed file at save time. The person picks; nothing is overwritten or dropped silently.
+  const [conflict, setConflict] = useState<{
+    readonly kind: "draft" | "save";
+    readonly onDisk: string;
+    readonly mine: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,12 +89,14 @@ export function CustomizationFilePanel(props: {
       if (result._tag === "Success") {
         const onDisk = result.value.contents;
         const draft = readUnsavedDraft(draftKey);
-        const restore = draft !== null && draft.saved === onDisk;
-        if (!restore) clearUnsavedDraft(draftKey);
+        const resolution = resolveLoad({ onDisk, draft });
         setSaved(onDisk);
-        setContents(restore ? draft.contents : onDisk);
-        // Restoring an edit means the person had unlocked the file.
-        if (restore) setLockChoice(false);
+        setContents(resolution === "restore" && draft ? draft.contents : onDisk);
+        if (resolution === "restore") setLockChoice(false);
+        if (resolution === "conflict" && draft) {
+          setConflict({ kind: "draft", onDisk, mine: draft.contents });
+          setLockChoice(false);
+        }
         setLoad({ status: "ready", readOnly: result.value.readOnly });
         return;
       }
@@ -103,26 +121,19 @@ export function CustomizationFilePanel(props: {
   const isMarkdown = languageForPath(path) === "markdown";
   const display = displayCustomizationPath(path, cwd);
 
-  const onChange = useCallback(
-    (next: string) => {
-      setContents(next);
-      rememberUnsavedDraft(draftKey, { saved, contents: next });
-    },
-    [draftKey, saved],
-  );
+  const onChange = (next: string) => {
+    setContents(next);
+    rememberUnsavedDraft(draftKey, { saved, contents: next });
+  };
 
-  const save = useCallback(async () => {
-    if (!canSave({ dirty, locked, saving, creating: false, hasPlan: true })) return;
+  const write = async (toWrite: string) => {
     setSaving(true);
     setError(null);
-    const toWrite = contents;
     try {
-      const result = await writeFile({
-        environmentId,
-        input: { cwd, path, contents: toWrite },
-      });
+      const result = await writeFile({ environmentId, input: { cwd, path, contents: toWrite } });
       if (result._tag === "Success") {
         setSaved(toWrite);
+        setConflict(null);
         clearUnsavedDraft(draftKey);
         toastManager.add(
           stackedThreadToast({
@@ -134,6 +145,7 @@ export function CustomizationFilePanel(props: {
         );
         // The list reads names and descriptions out of the file, so refresh it after a save.
         appAtomRegistry.refresh(customizationsEnvironment.list({ environmentId, input: { cwd } }));
+        if (isSkillFile(path)) refreshSkills();
         return;
       }
       if (isAtomCommandInterrupted(result)) return;
@@ -145,9 +157,43 @@ export function CustomizationFilePanel(props: {
     } finally {
       setSaving(false);
     }
-  }, [contents, cwd, dirty, display, draftKey, environmentId, locked, path, saving, writeFile]);
+  };
 
-  const position = cursorPosition(contents, caret);
+  const save = async () => {
+    if (!canSave({ dirty, locked, saving, creating: false, hasPlan: true }) || conflict) return;
+    // Claude edits skills itself: look at the file again before replacing it.
+    setSaving(true);
+    const current = await readFile({ environmentId, input: { cwd, path } });
+    setSaving(false);
+    if (isAtomCommandInterrupted(current)) return;
+    if (
+      current._tag === "Success" &&
+      changedOnDisk({ loaded: saved, onDisk: current.value.contents })
+    ) {
+      setConflict({ kind: "save", onDisk: current.value.contents, mine: contents });
+      return;
+    }
+    await write(contents);
+  };
+
+  const loadDiskVersion = () => {
+    if (!conflict) return;
+    setSaved(conflict.onDisk);
+    setContents(conflict.onDisk);
+    clearUnsavedDraft(draftKey);
+    setConflict(null);
+  };
+  const keepMine = () => {
+    if (!conflict) return;
+    if (conflict.kind === "save") {
+      void write(conflict.mine);
+      return;
+    }
+    // The draft stays; it is now an edit against the newer disk text.
+    setSaved(conflict.onDisk);
+    rememberUnsavedDraft(draftKey, { saved: conflict.onDisk, contents: conflict.mine });
+    setConflict(null);
+  };
 
   return (
     <div
@@ -223,6 +269,30 @@ export function CustomizationFilePanel(props: {
         </Button>
       </div>
 
+      {conflict ? (
+        <div
+          role="alert"
+          className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/60 bg-warning/10 px-3 py-1.5 text-xs"
+        >
+          <span className="min-w-0 flex-1">
+            {conflict.kind === "draft"
+              ? "This file changed on disk since your unsaved edits."
+              : "This file changed on disk since you opened it."}
+          </span>
+          <Button size="compact" variant="outline" onClick={keepMine}>
+            {conflict.kind === "draft" ? "Keep my edits" : "Overwrite"}
+          </Button>
+          <Button size="compact" variant="outline" onClick={loadDiskVersion}>
+            Load disk version
+          </Button>
+          {conflict.kind === "save" ? (
+            <Button size="compact" variant="ghost" onClick={() => setConflict(null)}>
+              Cancel
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
       {load.status === "loading" ? (
         <div className="flex flex-1 items-center justify-center text-muted-foreground">
           <Spinner size="sm" />
@@ -247,7 +317,9 @@ export function CustomizationFilePanel(props: {
           spellCheck={false}
           aria-label={`Contents of ${display}`}
           onChange={(event) => onChange(event.target.value)}
-          onSelect={(event) => setCaret(event.currentTarget.selectionStart)}
+          onSelect={(event) =>
+            setCursor(cursorPosition(event.currentTarget.value, event.currentTarget.selectionStart))
+          }
           className="min-h-0 flex-1 resize-none bg-background p-3 font-mono text-xs leading-5 text-foreground outline-hidden read-only:opacity-90"
         />
       )}
@@ -266,7 +338,7 @@ export function CustomizationFilePanel(props: {
         )}
         {error ? <span className="text-destructive">{error}</span> : null}
         <span className="tabular-nums">
-          Ln {position.line}, Col {position.column}
+          Ln {cursor.line}, Col {cursor.column}
         </span>
       </div>
     </div>
