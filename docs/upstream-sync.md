@@ -42,6 +42,7 @@ One bullet per hook (a list, not a table, so adding a row never re-aligns the ot
 - `apps/web/src/components/ComposerPromptEditorTiptap.tsx`: voice: registers the provisional-dictation extension, exposes `provisionalDictation` on the editor handle, hides placeholder while dictating
 - `apps/web/src/components/settings/SettingsPanels.tsx`: voice: renders `VoiceSettingsSection` in General settings
 - `apps/web/package.json`, `pnpm-workspace.yaml`: voice: `@huggingface/transformers`, `onnxruntime-web` (pinned to transformers.js's version); `allowBuilds` entries for their optional native deps
+- `third-party-licenses.config.json`: voice: generated notices for onnxruntime, guid-typescript and sharp-libvips (the production build fails without them)
 
 Tickets add a bullet here when they add a hook.
 
