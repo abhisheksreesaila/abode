@@ -2170,7 +2170,11 @@ function OpenCommandPaletteDialog(props: {
     },
   });
 
-  actionItems.push(...abodePanelToggleActions()); // abode: sidebar, terminal, side panel toggles
+  actionItems.push(
+    ...abodePanelToggleActions({
+      hasThreadView: activeThread !== null || activeDraftThread !== null,
+    }),
+  ); // abode: sidebar, terminal, side panel toggles
 
   // Target the active thread or draft's project, falling back to the first sidebar group.
   const contextualProjectGroup =

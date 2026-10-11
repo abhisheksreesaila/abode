@@ -16,3 +16,16 @@ html[data-theme-id="abode"] {
   --sidebar-control-gap: 0.25rem;
   --sidebar-row-content-inset: 0.5rem;
 }
+
+/* Workspace accent colors for the sidebar (docs/design/fluent.md). Slots 5-8 are the
+   main-window.md syntax hues. workspaceColor.ts falls back to the same values. */
+html[data-theme-id="abode"] {
+  --ws-1: #4cc2ff;
+  --ws-2: #c586c0;
+  --ws-3: #dcdcaa;
+  --ws-4: #4ec9b0;
+  --ws-5: #f48771;
+  --ws-6: #b5cea8;
+  --ws-7: #9cdcfe;
+  --ws-8: #d7ba7d;
+}

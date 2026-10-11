@@ -83,3 +83,27 @@ export function visibleDraftRows<
   rows.sort((left, right) => right.session.createdAt.localeCompare(left.session.createdAt));
   return rows;
 }
+
+/** Draft ids per workspace key, computed once for the whole sidebar. */
+export function draftIdsByWorkspace<
+  TSession extends ProjectRefLike & { readonly createdAt: string; readonly promotedTo?: unknown },
+  TComposer,
+>(input: {
+  readonly groups: ReadonlyArray<{
+    readonly projectKey: string;
+    readonly memberProjectRefs: ReadonlyArray<ProjectRefLike>;
+  }>;
+  readonly sessions: Readonly<Record<string, TSession>>;
+  readonly composers: Readonly<Record<string, TComposer | undefined>>;
+  readonly routeDraftId: string | null;
+  readonly hasContent: (composer: TComposer) => boolean;
+}): Record<string, string[]> {
+  const rows = visibleDraftRows(input);
+  const grouped = groupThreadsByWorkspace(
+    input.groups,
+    rows.map((row) => ({ ...row.session, draftId: row.draftId })),
+  );
+  const result: Record<string, string[]> = {};
+  for (const [workspaceKey, drafts] of grouped) result[workspaceKey] = drafts.map((d) => d.draftId);
+  return result;
+}

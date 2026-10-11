@@ -1,17 +1,14 @@
 import { replaceComposerContextReferences } from "@t3tools/shared/composerContextReferences";
 import { SquarePenIcon, XIcon } from "lucide-react";
 import { memo } from "react";
-import { useShallow } from "zustand/react/shallow";
 
 import {
-  composerDraftHasUserContent,
   DraftId,
   useComposerDraftStore,
   type ComposerThreadDraftState,
 } from "~/composerDraftStore";
 import { discardComposerDraft } from "~/lib/discardComposerDraft";
 import { useAbodeActiveRoute, useAbodeSidebar } from "./sidebarContext";
-import { projectRefKey, visibleDraftRows, type ProjectRefLike } from "./workspaceModel";
 
 function draftPreview(composer: ComposerThreadDraftState): string {
   const firstLine =
@@ -75,31 +72,16 @@ const DraftRow = memo(function DraftRow({ draftId }: { draftId: string }) {
 });
 
 /**
- * Unsent drafts that belong to one workspace: an interrupted "new session"
- * stays one click away. Rows are keyed by draft id, so typing in a background
- * draft re-renders only its own row.
+ * Unsent drafts of one workspace. The sidebar works out the ids once for all
+ * workspaces; each row subscribes to its own draft, so typing in a background
+ * draft re-renders only that row.
  */
 export const WorkspaceDrafts = memo(function WorkspaceDrafts(props: {
-  readonly memberProjectRefs: ReadonlyArray<ProjectRefLike>;
+  readonly draftIds: ReadonlyArray<string>;
 }) {
-  const { draftId: activeDraftId } = useAbodeActiveRoute();
-  const refKeys = new Set(props.memberProjectRefs.map(projectRefKey));
-  const draftIds = useComposerDraftStore(
-    useShallow((store) =>
-      visibleDraftRows({
-        sessions: store.draftThreadsByThreadKey,
-        composers: store.draftsByThreadKey,
-        routeDraftId: activeDraftId,
-        hasContent: composerDraftHasUserContent,
-      })
-        .filter(({ session }) => refKeys.has(projectRefKey(session)))
-        .map(({ draftId }) => draftId),
-    ),
-  );
-  if (draftIds.length === 0) return null;
   return (
     <>
-      {draftIds.map((draftId) => (
+      {props.draftIds.map((draftId) => (
         <DraftRow key={draftId} draftId={draftId} />
       ))}
     </>

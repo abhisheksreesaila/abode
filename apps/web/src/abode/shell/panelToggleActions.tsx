@@ -4,7 +4,12 @@ import { isCommandPaletteOpen } from "~/commandPaletteBus";
 import { ITEM_ICON_CLASS, type CommandPaletteActionItem } from "~/components/CommandPalette.logic";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { primaryServerKeybindingsAtom } from "~/state/server";
-import { PANEL_TOGGLES, pressOnBody, runPanelToggle, type PanelToggleId } from "./panelToggles";
+import {
+  panelTogglesForRoute,
+  pressOnBody,
+  runPanelToggle,
+  type PanelToggleId,
+} from "./panelToggles";
 
 const ICONS: Record<PanelToggleId, typeof PanelLeftIcon> = {
   sidebar: PanelLeftIcon,
@@ -26,8 +31,10 @@ function afterPaletteCloses(action: () => void, framesLeft = 60): void {
  * command's own shortcut, so it runs the exact code the keyboard does and the
  * palette shows the live binding next to it.
  */
-export function abodePanelToggleActions(): CommandPaletteActionItem[] {
-  return PANEL_TOGGLES.map((toggle): CommandPaletteActionItem => {
+export function abodePanelToggleActions(input: {
+  readonly hasThreadView: boolean;
+}): CommandPaletteActionItem[] {
+  return panelTogglesForRoute(input).map((toggle): CommandPaletteActionItem => {
     const Icon = ICONS[toggle.id];
     return {
       kind: "action",

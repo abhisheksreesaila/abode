@@ -42,15 +42,14 @@ export interface WorkspacePill {
   readonly detail: string;
 }
 
+export type ThreadAttention = "needs-you" | "running" | "done" | null;
+
 export interface WorkspaceThreadState {
-  /** Label of the thread's status pill (`Working`, `Awaiting Input`, ...), if any. */
-  readonly statusLabel: string | null;
+  /** What the thread asks of the user right now, from upstream's typed thread status. */
+  readonly attention: ThreadAttention;
   /** The thread's last run failed (or hit a usage limit). */
   readonly failed: boolean;
 }
-
-export const NEEDS_YOU_LABELS = new Set(["Pending Approval", "Awaiting Input", "Plan Ready"]);
-export const RUNNING_LABELS = new Set(["Working", "Connecting", "Waiting"]);
 
 function describeBucket(kind: WorkspacePillKind, count: number): string {
   if (kind === "running") return `${count} running`;
@@ -73,13 +72,13 @@ export function resolveWorkspacePill(
     done: 0,
   };
   for (const thread of threads) {
-    if (thread.statusLabel !== null && NEEDS_YOU_LABELS.has(thread.statusLabel)) {
+    if (thread.attention === "needs-you") {
       counts["needs-you"] += 1;
-    } else if (thread.statusLabel !== null && RUNNING_LABELS.has(thread.statusLabel)) {
+    } else if (thread.attention === "running") {
       counts.running += 1;
     } else if (thread.failed) {
       counts.failed += 1;
-    } else if (thread.statusLabel === "Completed") {
+    } else if (thread.attention === "done") {
       counts.done += 1;
     }
   }
@@ -154,11 +153,11 @@ export type ThreadSquareTone = "running" | "needs-you" | "failed" | "done" | "id
  * The 7px status square of a thread row: green running, amber needs you, red
  * failed, dim idle. Waiting on the user outranks everything, then running.
  */
-export function threadSquareTone(statusLabel: string | null, failed = false): ThreadSquareTone {
-  if (statusLabel !== null && NEEDS_YOU_LABELS.has(statusLabel)) return "needs-you";
-  if (statusLabel !== null && RUNNING_LABELS.has(statusLabel)) return "running";
+export function threadSquareTone(attention: ThreadAttention, failed = false): ThreadSquareTone {
+  if (attention === "needs-you") return "needs-you";
+  if (attention === "running") return "running";
   if (failed) return "failed";
-  if (statusLabel === "Completed") return "done";
+  if (attention === "done") return "done";
   return "idle";
 }
 
@@ -181,4 +180,45 @@ export type WorkspacePillView =
 export function workspacePillView(pill: WorkspacePill): WorkspacePillView {
   if (pill.kind === "failed") return { kind: "failed", text: "\u2297 failed" };
   return { kind: "count", tone: pill.kind, text: String(pill.count) };
+}
+
+interface VisibleOptions<T> {
+  readonly latest: number;
+  readonly activeKey: string | null;
+  readonly keyOf: (thread: T) => string;
+}
+
+/**
+ * The sessions one workspace actually renders: the latest few plus the open one
+ * (all of them once "older" is opened), or only the open one when collapsed.
+ * The sidebar's rows and the Ctrl+1..9 order both come from here.
+ */
+export function visibleWorkspaceThreads<T>(
+  threads: readonly T[],
+  options: VisibleOptions<T> & { readonly expanded: boolean; readonly showAll: boolean },
+): { readonly rows: readonly T[]; readonly window: ThreadListWindow<T> } {
+  const window = threadListWindow(threads, {
+    expanded: options.showAll,
+    latest: options.latest,
+    isActive: (thread) => options.keyOf(thread) === options.activeKey,
+  });
+  const rows = options.expanded
+    ? window.shown
+    : threads.filter((thread) => options.keyOf(thread) === options.activeKey);
+  return { rows, window };
+}
+
+export function jumpOrderKeys<T>(
+  workspaces: ReadonlyArray<{
+    readonly threads: readonly T[];
+    readonly expanded: boolean;
+    readonly showAll: boolean;
+  }>,
+  options: VisibleOptions<T>,
+): string[] {
+  return workspaces.flatMap((workspace) =>
+    visibleWorkspaceThreads(workspace.threads, { ...options, ...workspace }).rows.map(
+      options.keyOf,
+    ),
+  );
 }

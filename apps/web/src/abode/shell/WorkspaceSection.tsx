@@ -3,7 +3,7 @@ import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime
 import type { ContextMenuItem } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from "lucide-react";
-import { memo, useCallback, useMemo, useState, type MouseEvent } from "react";
+import { memo, useCallback, useMemo, type MouseEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
@@ -30,7 +30,7 @@ import { applyWorkspaceColorMenuChoice } from "./workspaceColorStore";
 import {
   formatWorkspaceLocation,
   resolveWorkspacePill,
-  threadListWindow,
+  visibleWorkspaceThreads,
   workspacePillView,
 } from "./workspaceList";
 import { threadShellKey } from "./workspaceModel";
@@ -38,7 +38,7 @@ import { threadShellKey } from "./workspaceModel";
 // A shared empty list keeps ThreadRow's memo intact for sessions without subagents.
 const NO_SUBAGENTS: ReadonlyArray<SidebarThreadSummary> = [];
 
-function expansionPreferenceKeys(group: WorkspaceGroup): string[] {
+export function expansionPreferenceKeys(group: WorkspaceGroup): string[] {
   const { project } = group;
   return [
     project.projectKey,
@@ -60,8 +60,11 @@ function memberLabel(member: SidebarProjectGroupMember): string {
  */
 export const WorkspaceSection = memo(function WorkspaceSection(props: {
   readonly group: WorkspaceGroup;
+  readonly showAll: boolean;
+  readonly onShowAll: (workspaceKey: string, showAll: boolean) => void;
+  readonly draftIds: ReadonlyArray<string>;
 }) {
-  const { group } = props;
+  const { group, showAll, onShowAll, draftIds } = props;
   const { project } = group;
   const { threadKey: activeThreadKey } = useAbodeActiveRoute();
   const router = useRouter();
@@ -73,7 +76,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
     resolveProjectExpanded(state.projectExpandedById, preferenceKeys),
   );
   const setProjectExpanded = useUiStateStore((state) => state.setProjectExpanded);
-  const [showAllThreads, setShowAllThreads] = useState(false);
   const { copyToClipboard: copyPath } = useCopyToClipboard<{ path: string }>({
     onCopy: ({ path }) =>
       toastManager.add({ type: "success", title: "Path copied", description: path }),
@@ -98,15 +100,14 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   const activeIsHere =
     activeThreadKey !== null &&
     group.threads.some((thread) => threadShellKey(thread) === activeThreadKey);
-  // A collapsed workspace still shows the open session, so the sidebar always says where you are.
-  const threadWindow = threadListWindow(group.threads, {
-    expanded: showAllThreads,
+  // The same helper feeds the Ctrl+1..9 order, so rows and shortcuts always agree.
+  const { rows: visibleThreads, window: threadWindow } = visibleWorkspaceThreads(group.threads, {
+    expanded,
+    showAll,
     latest: previewCount,
-    isActive: (thread) => threadShellKey(thread) === activeThreadKey,
+    activeKey: activeThreadKey,
+    keyOf: threadShellKey,
   });
-  const visibleThreads = expanded
-    ? threadWindow.shown
-    : group.threads.filter((thread) => threadShellKey(thread) === activeThreadKey);
 
   const firstMember = project.memberProjects[0];
   const location = formatWorkspaceLocation({
@@ -265,7 +266,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       </div>
       {expanded || activeIsHere ? (
         <ul data-abode="guide">
-          {expanded ? <WorkspaceDrafts memberProjectRefs={project.memberProjectRefs} /> : null}
+          {expanded ? <WorkspaceDrafts draftIds={draftIds} /> : null}
           {visibleThreads.map((thread) => (
             <ThreadRow
               key={`${thread.environmentId}:${thread.id}`}
@@ -284,7 +285,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
               <button
                 type="button"
                 data-abode="row thread meta"
-                onClick={() => setShowAllThreads(true)}
+                onClick={() => onShowAll(project.projectKey, true)}
               >
                 {threadWindow.olderCount} older
               </button>
@@ -295,7 +296,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
               <button
                 type="button"
                 data-abode="row thread meta"
-                onClick={() => setShowAllThreads(false)}
+                onClick={() => onShowAll(project.projectKey, false)}
               >
                 Show less
               </button>

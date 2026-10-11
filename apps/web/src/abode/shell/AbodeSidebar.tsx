@@ -3,7 +3,7 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useParams, useRouter } from "@tanstack/react-router";
 import { FolderPlusIcon, SquarePenIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
 import { SidebarThreadUndoNotice } from "~/components/sidebar/SidebarThreadUndoNotice";
@@ -17,8 +17,9 @@ import { Button } from "~/components/ui/button";
 import { SidebarContent, SidebarFooter, SidebarTrigger, useSidebar } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { openCommandPalette, isCommandPaletteOpen } from "~/commandPaletteBus";
-import { DraftId, useComposerDraftStore } from "~/composerDraftStore";
+import { composerDraftHasUserContent, DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { isElectron } from "~/env";
+import { useClientSettings } from "~/hooks/useSettings";
 import { useHandleNewThread } from "~/hooks/useHandleNewThread";
 import {
   resolveShortcutCommand,
@@ -48,8 +49,9 @@ import {
 import { useAbodeThreadActions } from "./useAbodeThreadActions";
 import { useWorkspaceGroups } from "./useWorkspaceGroups";
 import { useEnsureWorkspaceColors } from "./workspaceColorStore";
-import { threadShellKey } from "./workspaceModel";
-import { WorkspaceSection } from "./WorkspaceSection";
+import { jumpOrderKeys } from "./workspaceList";
+import { draftIdsByWorkspace, threadShellKey } from "./workspaceModel";
+import { expansionPreferenceKeys, WorkspaceSection } from "./WorkspaceSection";
 import "./shell.css";
 
 /**
@@ -57,6 +59,8 @@ import "./shell.css";
  * upstream's two thread sidebars (hooked in `AppSidebarLayout`), and reads the
  * same stores, grouping and commands they do.
  */
+const NO_DRAFTS: ReadonlyArray<string> = [];
+
 export function AbodeSidebar() {
   const groups = useWorkspaceGroups();
   const actions = useAbodeThreadActions();
@@ -100,19 +104,55 @@ export function AbodeSidebar() {
     [isMobile, router, setOpenMobile],
   );
 
-  // Sessions in the order they are listed, for Ctrl+1..9 and previous/next.
-  const orderedThreads = useMemo(
-    () =>
-      groups.flatMap((group) => {
-        const expanded = resolveProjectExpanded(projectExpandedById, [
-          group.project.projectKey,
-          ...group.project.memberProjects.map((member) => member.physicalProjectKey),
-        ]);
-        return expanded ? group.threads : [];
-      }),
-    [groups, projectExpandedById],
+  const [showAllByWorkspace, setShowAllByWorkspace] = useState<ReadonlySet<string>>(
+    () => new Set(),
   );
-  const orderedThreadKeys = useMemo(() => orderedThreads.map(threadShellKey), [orderedThreads]);
+  const handleShowAll = useCallback((workspaceKey: string, showAll: boolean) => {
+    setShowAllByWorkspace((current) => {
+      if (current.has(workspaceKey) === showAll) return current;
+      const next = new Set(current);
+      if (showAll) next.add(workspaceKey);
+      else next.delete(workspaceKey);
+      return next;
+    });
+  }, []);
+  const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
+
+  // Ctrl+1..9 and previous/next walk exactly the rows the workspaces render.
+  const orderedThreadKeys = useMemo(
+    () =>
+      jumpOrderKeys(
+        groups.map((group) => ({
+          threads: group.threads,
+          expanded: resolveProjectExpanded(projectExpandedById, expansionPreferenceKeys(group)),
+          showAll: showAllByWorkspace.has(group.project.projectKey),
+        })),
+        { latest: previewCount, activeKey: activeThreadKey, keyOf: threadShellKey },
+      ),
+    [activeThreadKey, groups, previewCount, projectExpandedById, showAllByWorkspace],
+  );
+  const threadByKey = useMemo(
+    () => new Map(groups.flatMap((group) => group.threads).map((t) => [threadShellKey(t), t])),
+    [groups],
+  );
+
+  // Draft ids per workspace, computed once. The selector returns a string so typing
+  // in a draft that is not listed does not re-render the sidebar.
+  const draftIdsJson = useComposerDraftStore((store) =>
+    JSON.stringify(
+      draftIdsByWorkspace({
+        groups: groups.map((group) => group.project),
+        sessions: store.draftThreadsByThreadKey,
+        composers: store.draftsByThreadKey,
+        routeDraftId: activeDraftId,
+        hasContent: composerDraftHasUserContent,
+      }),
+    ),
+  );
+  const draftIds = useMemo(
+    () => JSON.parse(draftIdsJson) as Record<string, string[]>,
+    [draftIdsJson],
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -128,7 +168,7 @@ export function AbodeSidebar() {
         },
       });
       const goTo = (threadKey: string | null) => {
-        const target = orderedThreads.find((thread) => threadShellKey(thread) === threadKey);
+        const target = threadKey === null ? undefined : threadByKey.get(threadKey);
         if (!target) return;
         event.preventDefault();
         event.stopPropagation();
@@ -150,7 +190,7 @@ export function AbodeSidebar() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeThreadKey, keybindings, navigateToThread, orderedThreadKeys, orderedThreads]);
+  }, [activeThreadKey, keybindings, navigateToThread, orderedThreadKeys, threadByKey]);
 
   // Like the other sidebars: one workspace (or Shift) starts right here, several ask first.
   const handleNewSession = useCallback(
@@ -232,7 +272,13 @@ export function AbodeSidebar() {
         </div>
         <SidebarContent>
           {groups.map((group) => (
-            <WorkspaceSection key={group.project.projectKey} group={group} />
+            <WorkspaceSection
+              key={group.project.projectKey}
+              group={group}
+              showAll={showAllByWorkspace.has(group.project.projectKey)}
+              onShowAll={handleShowAll}
+              draftIds={draftIds[group.project.projectKey] ?? NO_DRAFTS}
+            />
           ))}
           {groups.length === 0 ? (
             <div className="px-3 pt-4 text-center text-xs text-sidebar-muted-foreground">

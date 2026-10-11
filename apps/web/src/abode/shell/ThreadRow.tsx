@@ -15,6 +15,7 @@ import { useSidebarRowSubscriptionLease } from "~/components/Sidebar.logic";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { useSupportsMultiplePullRequests } from "~/hooks/useSupportsMultiplePullRequests";
+import { useNowMinute } from "~/hooks/useNowMinute";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
 import { cn } from "~/lib/utils";
 import { useEnvironmentScope } from "~/state/session";
@@ -63,7 +64,9 @@ export const ThreadRow = memo(function ThreadRow(props: ThreadRowProps) {
   const openPrLink = useOpenPrLink();
 
   const state = deriveWorkspaceThreadState(thread, localLastVisitedAt);
-  const tone = threadSquareTone(state.statusLabel, state.failed);
+  const tone = threadSquareTone(state.attention, state.failed);
+  // Re-render each minute: the row is memoised, so the age would otherwise freeze.
+  useNowMinute();
   const age = formatRelativeTime(
     thread.latestUserMessageAt ?? thread.updatedAt ?? thread.createdAt,
   );

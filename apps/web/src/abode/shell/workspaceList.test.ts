@@ -8,7 +8,10 @@ import {
   splitLatestThreads,
   threadMetaLabel,
   threadSquareTone,
+  type ThreadAttention,
   workspacePillView,
+  visibleWorkspaceThreads,
+  jumpOrderKeys,
 } from "./workspaceList";
 
 describe("homeRelativePath", () => {
@@ -42,35 +45,35 @@ describe("formatWorkspaceLocation", () => {
 });
 
 describe("resolveWorkspacePill", () => {
-  const t = (statusLabel: string | null, failed = false) => ({
-    statusLabel,
+  const t = (attention: ThreadAttention, failed = false) => ({
+    attention,
     failed: failed,
   });
   it("is null when nothing is happening", () => {
     expect(resolveWorkspacePill([t(null), t(null)])).toBeNull();
   });
   it("counts background-task waits as running", () => {
-    expect(resolveWorkspacePill([t("Waiting"), t("Working")])).toMatchObject({
+    expect(resolveWorkspacePill([t("running"), t("running")])).toMatchObject({
       kind: "running",
       count: 2,
     });
   });
   it("shows a done pill for unseen completions, below everything else", () => {
-    expect(resolveWorkspacePill([t("Completed")])).toMatchObject({ kind: "done", label: "done" });
-    expect(resolveWorkspacePill([t("Completed"), t("Working")])?.kind).toBe("running");
+    expect(resolveWorkspacePill([t("done")])).toMatchObject({ kind: "done", label: "done" });
+    expect(resolveWorkspacePill([t("done"), t("running")])?.kind).toBe("running");
   });
   it("counts running threads", () => {
-    expect(resolveWorkspacePill([t("Working"), t("Connecting"), t(null)])).toMatchObject({
+    expect(resolveWorkspacePill([t("running"), t("running"), t(null)])).toMatchObject({
       kind: "running",
       count: 2,
       label: "2 running",
     });
   });
   it("ranks needs-you over failed over running, listing all in the detail", () => {
-    const pill = resolveWorkspacePill([t("Working"), t(null, true), t("Awaiting Input")]);
+    const pill = resolveWorkspacePill([t("running"), t(null, true), t("needs-you")]);
     expect(pill).toMatchObject({ kind: "needs-you", label: "1 needs you" });
     expect(pill?.detail).toBe("1 needs you, failed, 1 running");
-    expect(resolveWorkspacePill([t("Working"), t(null, true)])?.label).toBe("failed");
+    expect(resolveWorkspacePill([t("running"), t(null, true)])?.label).toBe("failed");
   });
 });
 
@@ -119,19 +122,19 @@ describe("threadListWindow", () => {
 
 describe("threadSquareTone", () => {
   it("maps thread status labels to the three squares plus done", () => {
-    expect(threadSquareTone("Working")).toBe("running");
-    expect(threadSquareTone("Connecting")).toBe("running");
-    expect(threadSquareTone("Waiting")).toBe("running");
-    expect(threadSquareTone("Pending Approval")).toBe("needs-you");
-    expect(threadSquareTone("Plan Ready")).toBe("needs-you");
-    expect(threadSquareTone("Completed")).toBe("done");
+    expect(threadSquareTone("running")).toBe("running");
+    expect(threadSquareTone("running")).toBe("running");
+    expect(threadSquareTone("running")).toBe("running");
+    expect(threadSquareTone("needs-you")).toBe("needs-you");
+    expect(threadSquareTone("needs-you")).toBe("needs-you");
+    expect(threadSquareTone("done")).toBe("done");
     expect(threadSquareTone(null)).toBe("idle");
   });
   it("turns red for a failed run, but never hides something waiting on you", () => {
     expect(threadSquareTone(null, true)).toBe("failed");
-    expect(threadSquareTone("Completed", true)).toBe("failed");
-    expect(threadSquareTone("Awaiting Input", true)).toBe("needs-you");
-    expect(threadSquareTone("Working", true)).toBe("running");
+    expect(threadSquareTone("done", true)).toBe("failed");
+    expect(threadSquareTone("needs-you", true)).toBe("needs-you");
+    expect(threadSquareTone("running", true)).toBe("running");
   });
   it("swaps the age for a state word only while it applies", () => {
     expect(threadMetaLabel("needs-you", "2m")).toBe("needs you");
@@ -149,5 +152,56 @@ describe("workspacePillView", () => {
       kind: "failed",
       text: "\u2297 failed",
     });
+  });
+});
+
+describe("visibleWorkspaceThreads", () => {
+  const keyOf = (n: number) => `t${n}`;
+  const base = { showAll: false, latest: 2, activeKey: null as string | null, keyOf };
+
+  it("shows the latest few and hides the rest behind older", () => {
+    const result = visibleWorkspaceThreads([1, 2, 3, 4], { ...base, expanded: true });
+    expect(result.rows).toEqual([1, 2]);
+    expect(result.window.olderCount).toBe(2);
+  });
+
+  it("keeps the open session in a collapsed workspace and nothing else", () => {
+    const result = visibleWorkspaceThreads([1, 2, 3, 4], {
+      ...base,
+      expanded: false,
+      activeKey: "t4",
+    });
+    expect(result.rows).toEqual([4]);
+  });
+
+  it("shows everything once older is opened", () => {
+    expect(
+      visibleWorkspaceThreads([1, 2, 3, 4], { ...base, expanded: true, showAll: true }).rows,
+    ).toEqual([1, 2, 3, 4]);
+  });
+
+  it("keeps the open session visible even when it is an older one", () => {
+    expect(
+      visibleWorkspaceThreads([1, 2, 3, 4], { ...base, expanded: true, activeKey: "t4" }).rows,
+    ).toEqual([1, 2, 4]);
+  });
+});
+
+describe("jumpOrderKeys", () => {
+  it("is exactly the rows the sidebar renders, workspace by workspace", () => {
+    const keyOf = (n: number) => `t${n}`;
+    const workspaces = [
+      { threads: [1, 2, 3, 4], expanded: true, showAll: false },
+      { threads: [5, 6], expanded: false, showAll: false },
+      { threads: [7, 8, 9], expanded: true, showAll: true },
+    ];
+    const options = { latest: 2, activeKey: "t6", keyOf };
+    const rendered = workspaces.flatMap(
+      (w) =>
+        visibleWorkspaceThreads(w.threads, { ...options, expanded: w.expanded, showAll: w.showAll })
+          .rows,
+    );
+    expect(rendered).toEqual([1, 2, 6, 7, 8, 9]);
+    expect(jumpOrderKeys(workspaces, options)).toEqual(rendered.map(keyOf));
   });
 });

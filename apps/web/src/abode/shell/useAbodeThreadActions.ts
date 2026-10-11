@@ -31,6 +31,7 @@ import {
   ORCHESTRATION_OPERATE_DENIED_MESSAGE,
   useOrchestrationCommand,
 } from "../../state/use-orchestration-command";
+import { archiveFailureTitle } from "./archiveFailure";
 import type { SidebarThreadSummary } from "../../types";
 
 function reportError(title: string, error: unknown) {
@@ -119,9 +120,14 @@ export function useAbodeThreadActions() {
   const attemptArchive = useCallback(
     async (threadRef: ScopedThreadRef) => {
       if (!checkOperatePermission(threadRef.environmentId)) return;
-      const result = await archiveThread(threadRef);
+      let didArchive = false;
+      const result = await archiveThread(threadRef, {
+        onArchived: () => {
+          didArchive = true;
+        },
+      });
       if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-        reportError("Failed to archive thread", squashAtomCommandFailure(result));
+        reportError(archiveFailureTitle(didArchive), squashAtomCommandFailure(result));
       }
     },
     [archiveThread],

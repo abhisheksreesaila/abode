@@ -45,6 +45,13 @@ export const PANEL_TOGGLES: ReadonlyArray<PanelToggle> = [
   },
 ];
 
+/** The terminal and side panel belong to the thread view; the sidebar works everywhere. */
+export function panelTogglesForRoute(input: {
+  readonly hasThreadView: boolean;
+}): ReadonlyArray<PanelToggle> {
+  return input.hasThreadView ? PANEL_TOGGLES : PANEL_TOGGLES.filter((t) => t.id === "sidebar");
+}
+
 const NAMED_KEYS: Readonly<Record<string, { key: string; code: string }>> = {
   space: { key: " ", code: "Space" },
   enter: { key: "Enter", code: "Enter" },

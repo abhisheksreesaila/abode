@@ -20,7 +20,7 @@ const thread = (overrides: Record<string, unknown> = {}): Input =>
 describe("deriveWorkspaceThreadState", () => {
   it("is quiet for an idle thread", () => {
     expect(deriveWorkspaceThreadState(thread(), undefined)).toEqual({
-      statusLabel: null,
+      attention: null,
       failed: false,
     });
   });
@@ -28,16 +28,30 @@ describe("deriveWorkspaceThreadState", () => {
   it("reports a running thread as Working", () => {
     expect(
       deriveWorkspaceThreadState(thread({ runtime: { status: "running" } }), undefined),
-    ).toEqual({ statusLabel: "Working", failed: false });
+    ).toEqual({ attention: "running", failed: false });
   });
 
   it("reports approvals and questions as needing the user", () => {
     expect(
-      deriveWorkspaceThreadState(thread({ hasPendingApprovals: true }), undefined).statusLabel,
-    ).toBe("Pending Approval");
+      deriveWorkspaceThreadState(thread({ hasPendingApprovals: true }), undefined).attention,
+    ).toBe("needs-you");
     expect(
-      deriveWorkspaceThreadState(thread({ hasPendingUserInput: true }), undefined).statusLabel,
-    ).toBe("Awaiting Input");
+      deriveWorkspaceThreadState(thread({ hasPendingUserInput: true }), undefined).attention,
+    ).toBe("needs-you");
+  });
+
+  it("treats a plan waiting for approval as needing the user", () => {
+    expect(
+      deriveWorkspaceThreadState(
+        thread({
+          interactionMode: "plan",
+          hasActionableProposedPlan: true,
+          latestRun: { runId: "r1", completedAt: "2026-10-10T10:00:00.000Z", status: "completed" },
+          runtime: { status: "idle" },
+        }),
+        undefined,
+      ).attention,
+    ).toBe("needs-you");
   });
 
   it("marks a failed run, including one stopped by a usage limit", () => {
@@ -61,13 +75,13 @@ describe("deriveWorkspaceThreadState", () => {
       deriveWorkspaceThreadState(
         thread({ ...finished, lastVisitedAt: "2026-10-10T09:00:00.000Z" }),
         undefined,
-      ).statusLabel,
-    ).toBe("Completed");
+      ).attention,
+    ).toBe("done");
     expect(
       deriveWorkspaceThreadState(
         thread({ ...finished, lastVisitedAt: "2026-10-10T11:00:00.000Z" }),
         undefined,
-      ).statusLabel,
+      ).attention,
     ).toBeNull();
   });
 
@@ -77,11 +91,11 @@ describe("deriveWorkspaceThreadState", () => {
       runtime: { status: "idle" },
       lastVisitedAt: undefined,
     };
+    expect(deriveWorkspaceThreadState(thread(finished), "2026-10-10T09:00:00.000Z").attention).toBe(
+      "done",
+    );
     expect(
-      deriveWorkspaceThreadState(thread(finished), "2026-10-10T09:00:00.000Z").statusLabel,
-    ).toBe("Completed");
-    expect(
-      deriveWorkspaceThreadState(thread(finished), "2026-10-10T12:00:00.000Z").statusLabel,
+      deriveWorkspaceThreadState(thread(finished), "2026-10-10T12:00:00.000Z").attention,
     ).toBeNull();
   });
 });

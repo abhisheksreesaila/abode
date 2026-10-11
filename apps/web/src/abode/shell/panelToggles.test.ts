@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 
 import {
   PANEL_TOGGLES,
+  panelTogglesForRoute,
   keyboardEventInitForShortcut,
   runPanelToggle,
   type PanelToggleId,
@@ -100,5 +101,35 @@ describe("runPanelToggle", () => {
       }),
     ).toBe(false);
     expect(press).not.toHaveBeenCalled();
+  });
+});
+
+describe("shortcut choice", () => {
+  it("skips a binding whose when clause is not satisfied and uses the plain one", () => {
+    const bindings = [
+      {
+        command: "terminal.toggle",
+        shortcut: shortcut({ key: "t", modKey: true }),
+        whenAst: { type: "identifier", name: "terminalFocus" },
+      },
+      { command: "terminal.toggle", shortcut: shortcut({ key: "j", modKey: true }) },
+    ] as unknown as ResolvedKeybindingsConfig;
+    const press = vi.fn();
+    runPanelToggle("terminal", { keybindings: bindings, platform: "Linux", press });
+    expect(press).toHaveBeenCalledWith(expect.objectContaining({ key: "j" }));
+  });
+});
+
+describe("panelTogglesForRoute", () => {
+  it("offers only the sidebar where there is no thread view", () => {
+    expect(panelTogglesForRoute({ hasThreadView: false }).map((t) => t.id)).toEqual(["sidebar"]);
+  });
+
+  it("offers all three on a thread or draft", () => {
+    expect(panelTogglesForRoute({ hasThreadView: true }).map((t) => t.id)).toEqual([
+      "sidebar",
+      "terminal",
+      "rightPanel",
+    ]);
   });
 });

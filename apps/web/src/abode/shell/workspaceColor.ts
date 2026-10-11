@@ -14,7 +14,7 @@ export interface WorkspaceColorSlot {
 }
 
 export const WORKSPACE_COLORS: ReadonlyArray<WorkspaceColorSlot> = [
-  { name: "Blue", cssVar: "--ws-1", fallback: "#4fc1ff" },
+  { name: "Blue", cssVar: "--ws-1", fallback: "#4cc2ff" },
   { name: "Purple", cssVar: "--ws-2", fallback: "#c586c0" },
   { name: "Yellow", cssVar: "--ws-3", fallback: "#dcdcaa" },
   { name: "Teal", cssVar: "--ws-4", fallback: "#4ec9b0" },
@@ -45,7 +45,7 @@ function isValidIndex(value: unknown): value is number {
   );
 }
 
-/** CSS color for a slot, e.g. `var(--ws-1, #4fc1ff)`. */
+/** CSS color for a slot, e.g. `var(--ws-1, #4cc2ff)`. */
 export function workspaceColorCss(index: number): string {
   const slot = WORKSPACE_COLORS[isValidIndex(index) ? index : 0]!;
   return `var(${slot.cssVar}, ${slot.fallback})`;

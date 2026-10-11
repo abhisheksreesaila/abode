@@ -69,7 +69,7 @@ describe("workspace color assignment", () => {
   });
 
   it("references theme variables with fallbacks", () => {
-    expect(workspaceColorCss(0)).toBe("var(--ws-1, #4fc1ff)");
+    expect(workspaceColorCss(0)).toBe("var(--ws-1, #4cc2ff)");
     expect(workspaceColorCss(7)).toBe("var(--ws-8, #d7ba7d)");
   });
 });

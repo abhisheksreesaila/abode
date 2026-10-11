@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  draftIdsByWorkspace,
   groupThreadsByWorkspace,
   projectRefKey,
   visibleDraftRows,
@@ -108,5 +109,35 @@ describe("visibleDraftRows", () => {
         hasContent,
       }),
     ).toEqual([]);
+  });
+});
+
+describe("draftIdsByWorkspace", () => {
+  const session = (projectId: string, createdAt: string) => ({
+    environmentId: "local",
+    projectId,
+    createdAt,
+    promotedTo: null,
+  });
+
+  it("files each draft under its workspace, newest first", () => {
+    const result = draftIdsByWorkspace({
+      groups: [group("a", ["local", "p1"]), group("b", ["local", "p2"])],
+      sessions: {
+        d1: session("p1", "2026-10-01"),
+        d2: session("p1", "2026-10-02"),
+        d3: session("p2", "2026-10-01"),
+        d4: session("gone", "2026-10-01"),
+      },
+      composers: {
+        d1: { prompt: "x" },
+        d2: { prompt: "x" },
+        d3: { prompt: "x" },
+        d4: { prompt: "x" },
+      },
+      routeDraftId: null,
+      hasContent: () => true,
+    });
+    expect(result).toEqual({ a: ["d2", "d1"], b: ["d3"] });
   });
 });
