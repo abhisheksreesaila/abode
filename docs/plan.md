@@ -25,7 +25,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-002: abode theme and fonts
 
-- **Status:** todo
+- **Status:** review (reviewer PASS, merged; needs a look in the real app, especially the light palette)
 - **What:**
   - The VS Code Dark Modern palette from the first fork (`git show main:packages/shared/src/abodeTheme.ts`, tokens in `docs/design/fluent.md`) becomes a built-in theme called "abode" in upstream's theme system, with dark and light variants.
   - abode is the default theme when the user has never picked one. A theme picked later in Settings › Appearance wins.
