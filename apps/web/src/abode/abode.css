@@ -1,6 +1,6 @@
-/* abode structural styling (docs/design/fluent.md). Colors live in the abode theme
+/* abode structural styling (docs/design/fluent.md). Colors live in the abode themes
    (abodeTheme.ts); this file holds what a theme can't express: fonts, spacing and radii.
-   Scoped to the theme id so other themes keep T3's values. The doubled html.dark selector
+   Scoped to the theme ids so other themes keep T3's values. The doubled html.dark selector
    lifts specificity above the root dark-variant rules. */
 
 html[data-theme-id="abode"],
@@ -12,14 +12,32 @@ html.dark[data-theme-id="abode"] {
 html[data-theme-id="abode"] {
   --radius: 0.375rem;
   --control-radius: 2px;
+}
+
+html[data-theme-id="abode"],
+html[data-theme-id="abode-azure"] {
   --sidebar-content-inset: 0.375rem;
   --sidebar-control-gap: 0.25rem;
   --sidebar-row-content-inset: 0.5rem;
 }
 
+/* Flat Azure: Segoe-style type, square corners. */
+html[data-theme-id="abode-azure"],
+html.dark[data-theme-id="abode-azure"] {
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", "Inter Variable", Inter, system-ui, sans-serif;
+  --font-mono:
+    "Cascadia Code", "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+}
+
+html[data-theme-id="abode-azure"] {
+  --radius: 0.125rem;
+  --control-radius: 0;
+}
+
 /* Workspace accent colors for the sidebar (docs/design/fluent.md). Slots 5-8 are the
    main-window.md syntax hues. workspaceColor.ts falls back to the same values. */
-html[data-theme-id="abode"] {
+html[data-theme-id="abode"],
+html[data-theme-id="abode-azure"] {
   --ws-1: #4cc2ff;
   --ws-2: #c586c0;
   --ws-3: #dcdcaa;

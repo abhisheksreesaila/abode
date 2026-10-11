@@ -26,15 +26,17 @@ abode is rebuilt on branch `abode-next`, starting from upstream nightly `v0.0.46
 
 One bullet per hook (a list, not a table, so adding a row never re-aligns the others).
 
+Fonts: use upstream's Settings › Appearance › Typography (an inline style on `<html>`, so it overrides abode.css). Omarchy: `scripts/abode/omarchy/install.sh` adds a theme-set hook that publishes Omarchy's palette to abode's server as the "Omarchy" environment theme; nothing in the app.
+
 `t3 theme set abode` does not work by design: abode stays out of `BUILT_IN_THEME_IDS` so the mobile app's theme ids are unchanged.
 
 - `apps/web/src/components/AppSidebarLayout.tsx`: renders `ActivityBar` + `AbodeSidebar` instead of `LegacySidebar`/`Sidebar` (A-005); spreads `abodeShellProviderStyle` into the provider style, before the macOS inset. Those two sidebar files stay in the tree, unused
 - `apps/web/src/main.tsx`: imports the bundled fonts and `abode/abode.css`
-- `apps/web/src/themePalette.ts`: adds `ABODE_THEME` to the web built-in definitions (not shared `BUILT_IN_THEMES`: mobile mirrors it)
-- `packages/shared/src/themePalettes.ts`: reserves the id `abode` (one line)
+- `apps/web/src/themePalette.ts`: adds `ABODE_THEMES` (Amber, Azure) to the web built-in definitions (not shared `BUILT_IN_THEMES`: mobile mirrors it). A new abode theme goes in that list and needs no new hook, apart from its id in shared and its boot colors in `index.html`
+- `packages/shared/src/themePalettes.ts`: reserves the ids `abode` and `abode-azure` (one line each)
 - `apps/web/src/hooks/useTheme.ts`: default theme and default appearance for a fresh profile
-- `apps/web/index.html`, `src/themeBoot.test.ts`: boot splash palette for abode; nothing stored boots as abode
-- `ThemeSettings.tsx`, `CommandPalette.tsx`: list the abode theme card / command
+- `apps/web/index.html`, `src/themeBoot.test.ts`: boot splash palettes for the abode themes; nothing stored boots as abode (Amber)
+- `ThemeSettings.tsx`, `CommandPalette.tsx`: list the abode theme cards / commands (`...ABODE_THEMES`)
 - `apps/web/src/components/CommandPalette.tsx`: A-005: one line, `actionItems.push(...abodePanelToggleActions())`, adds Toggle sidebar / terminal / side panel
 - `apps/web/src/components/chat/MessagesTimeline.tsx`: A-007: `useStableRows(useSimpleRows(rawRows, timelineEntries), ...)` filters the derived rows by the Simple/Detailed mode (Detailed returns the same array)
 - `apps/web/src/hooks/useThreadActionMenu.ts`, `components/threadActionMenu.logic.ts`: A-007: header menu gets a Transcript submenu (`abode:${string}` ids); the palette row rides on `abodePanelToggleActions`

@@ -22,6 +22,7 @@ export const RESERVED_THEME_IDS: ReadonlySet<string> = new Set([
   "dark",
   ...BUILT_IN_THEME_IDS,
   "abode", // abode: built into the web theme runtime, see apps/web/src/abode/abodeTheme.ts
+  "abode-azure", // abode:
   "t3-chat-dark",
   "t3-grove",
   "t3-ocean",

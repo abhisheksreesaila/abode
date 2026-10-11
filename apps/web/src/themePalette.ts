@@ -19,7 +19,7 @@ import {
   type ThemeDefinition,
   type ThemeVariants,
 } from "@t3tools/shared/themePalettes";
-import { ABODE_THEME } from "./abode/abodeTheme"; // abode:
+import { ABODE_THEMES } from "./abode/abodeTheme"; // abode:
 
 export { EMBER_THEME, GROVE_THEME, IRIS_THEME, OCEAN_THEME, T3_CHAT_THEME, THEME_COLOR_ROLES };
 export type { ThemeAppearance, ThemeColorRole, ThemeColors, ThemeDefinition, ThemeVariants };
@@ -1088,10 +1088,10 @@ export function updateThemeColorFamily(
   }
 }
 
-// abode: the abode theme lives beside the built-ins here, not in shared BUILT_IN_THEMES (mobile mirrors that list).
+// abode: the abode themes live beside the built-ins here, not in shared BUILT_IN_THEMES (mobile mirrors that list).
 const BUILT_IN_THEME_DEFINITIONS: ReadonlyArray<ThemeDefinition> = [
   ...BUILT_IN_THEMES,
-  ABODE_THEME,
+  ...ABODE_THEMES,
 ];
 
 export function getThemeDefinition(theme: ThemePreference): ThemeDefinition | null {

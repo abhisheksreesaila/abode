@@ -17,7 +17,7 @@ import {
   THEME_FOLLOW_SYSTEM_STORAGE_KEY,
   toCanonicalThemeColor,
 } from "./themePalette";
-import { ABODE_THEME } from "./abode/abodeTheme"; // abode:
+import { ABODE_AZURE_THEME, ABODE_THEME } from "./abode/abodeTheme"; // abode:
 
 const THEME_STORAGE_KEY = "t3code:theme";
 // A custom theme that omits chrome falls back to the runtime default, so the
@@ -350,6 +350,7 @@ describe("index.html boot script", () => {
       EMBER_THEME,
       IRIS_THEME,
       ABODE_THEME, // abode:
+      ABODE_AZURE_THEME, // abode:
     ]) {
       // The boot script resolves every built-in from a light base appearance.
       if (theme !== ABODE_THEME) expect(theme.appearance).toBe("light"); // abode: abode has a dark base

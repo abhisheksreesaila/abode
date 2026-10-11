@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { getThemeColorsForMode, getThemeDefinition, isKnownThemePreference } from "../themePalette";
-import { ABODE_THEME, ABODE_THEME_ID } from "./abodeTheme";
+import { ABODE_AZURE_THEME_ID, ABODE_THEME, ABODE_THEME_ID } from "./abodeTheme";
 
 function stubStorage(initial: Record<string, string>) {
   const store = new Map(Object.entries(initial));
@@ -18,9 +18,11 @@ afterEach(() => {
 });
 
 describe("abode theme registration", () => {
-  it("is a known theme with dark and light halves", () => {
+  it("registers Amber and Azure as known themes", () => {
     expect(isKnownThemePreference(ABODE_THEME_ID)).toBe(true);
-    expect(getThemeDefinition(ABODE_THEME_ID)?.label).toBe("abode");
+    expect(getThemeDefinition(ABODE_THEME_ID)?.label).toBe("abode Amber");
+    expect(isKnownThemePreference(ABODE_AZURE_THEME_ID)).toBe(true);
+    expect(getThemeDefinition(ABODE_AZURE_THEME_ID)?.label).toBe("abode Azure");
     expect(getThemeColorsForMode(ABODE_THEME, "dark")).toBe(ABODE_THEME.colors);
     expect(getThemeColorsForMode(ABODE_THEME, "light")).not.toBeNull();
   });

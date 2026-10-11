@@ -28,7 +28,7 @@ import {
   IRIS_THEME,
   OCEAN_THEME,
 } from "../../themePalette";
-import { ABODE_THEME } from "../../abode/abodeTheme"; // abode:
+import { ABODE_THEMES } from "../../abode/abodeTheme"; // abode:
 import {
   AlertDialog,
   AlertDialogClose,
@@ -56,7 +56,7 @@ import {
 import { ThemeWireframe } from "./ThemeWireframe";
 
 const MAINTAINER_THEMES: ReadonlyArray<ThemeDefinition> = [
-  ABODE_THEME, // abode:
+  ...ABODE_THEMES, // abode:
   T3_CHAT_THEME,
   GROVE_THEME,
   OCEAN_THEME,

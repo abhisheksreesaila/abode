@@ -104,7 +104,7 @@ import { useTheme } from "../hooks/useTheme";
 import { useCustomThemes } from "../hooks/useCustomThemes";
 import { useEnvironmentThemeDefinitions } from "../hooks/useEnvironmentTheme";
 import { BUILT_IN_THEMES } from "@t3tools/shared/themePalettes";
-import { ABODE_THEME } from "../abode/abodeTheme"; // abode:
+import { ABODE_THEMES } from "../abode/abodeTheme"; // abode:
 import { getThemeDefinition } from "../themePalette";
 import {
   STANDARD_THEME_CARDS,
@@ -704,7 +704,7 @@ function OpenCommandPaletteDialog(props: {
     const seen = new Set<string>();
     return [
       ...STANDARD_THEME_CARDS.map((card) => ({ ...card, id: null })),
-      ...[...BUILT_IN_THEMES, ABODE_THEME /* abode: */, ...customThemes, ...environmentThemes]
+      ...[...BUILT_IN_THEMES, ...ABODE_THEMES /* abode: */, ...customThemes, ...environmentThemes]
         .filter((definition) => {
           if (seen.has(definition.id)) return false;
           seen.add(definition.id);
