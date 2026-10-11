@@ -10,3 +10,6 @@
 - Upstream Orchestration V2 (protocol 2) refuses V1 peers in both directions. Before pulling upstream, check `ORCHESTRATION_PROTOCOL_VERSION` and the official mobile app's version. A protocol bump breaks the phone until abode follows.
 - Engine edits made the first fork unmergeable (75 conflicts after 10 days). abode code lives in `abode/` folders, and upstream files only get small `abode:`-marked hooks that `scripts/abode/hook-report.sh` keeps under budget.
 - Tests and typecheck don't catch the production build's license check. After adding a dependency, run `cd apps/web && vp build --outDir <scratch>` before calling the ticket done.
+- The app opens on a new-thread draft, not a thread. Anything that needs "the current thread" must also work on a draft (the draft's own `threadId` keys its side panel); A-006 passed review but every Customizations button was disabled in the real app.
+- Test against the user's real setup, not just fixtures: most of their skills are symlinks (`~/.claude/skills/x -> ~/.agents/skills/x`), which a symlink-strict path check rejected.
+- Upstream catches some keys app-wide in the capture phase (`mod+s` stashes the composer prompt). A key an abode panel needs must be excluded in that handler, or the panel never sees it.

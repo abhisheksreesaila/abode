@@ -202,6 +202,7 @@ export function CustomizationFilePanel(props: {
     <div
       className="flex min-h-0 flex-1 flex-col"
       data-testid="customization-file-panel"
+      data-abode-editor=""
       onKeyDown={(event) => {
         if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "s") {
           event.preventDefault();

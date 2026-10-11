@@ -252,6 +252,41 @@ const make = Effect.gen(function* () {
     );
   };
 
+  /**
+   * Skill managers install a skill as a symlink (`~/.claude/skills/tdd -> ~/.agents/skills/tdd`).
+   * A file is allowed when it lies inside such a linked skill folder or is a linked agent file,
+   * and only inside what that one link points at. A workspace link must also point inside the
+   * workspace, so a cloned repo can't link its way to files elsewhere on the machine.
+   */
+  const insideLinkedEntry = (
+    absolutePath: string,
+    realTarget: string,
+    configDir: string,
+    workspaceRoot: string,
+  ) =>
+    Effect.gen(function* () {
+      const roots = [
+        { root: configDir, bound: null },
+        { root: codexHomeDir(), bound: null },
+        { root: path.join(workspaceRoot, ".claude"), bound: workspaceRoot },
+      ];
+      for (const { root, bound } of roots) {
+        if (!isInside(root, absolutePath)) continue;
+        const [folder, name] = path.relative(root, absolutePath).split(path.sep);
+        if ((folder !== "skills" && folder !== "agents") || !name) continue;
+        const entry = path.join(root, folder, name);
+        const isLink = yield* fileSystem.readLink(entry).pipe(
+          Effect.as(true),
+          Effect.orElseSucceed(() => false),
+        );
+        if (!isLink) continue;
+        const realEntry = yield* realPathAllowingMissing(entry);
+        if (bound !== null && !isInside(yield* realPathAllowingMissing(bound), realEntry)) continue;
+        if (isInside(realEntry, realTarget)) return true;
+      }
+      return false;
+    });
+
   const requireRegisteredCwd = Effect.fn("Customizations.requireRegisteredCwd")(function* (
     cwd: string,
   ) {
@@ -339,7 +374,12 @@ const make = Effect.gen(function* () {
         isCodexPrompt ||
         isInside(path.join(realWorkspaceRoot, ".claude"), realTarget) ||
         WORKSPACE_WRITABLE_FILES.some((file) => realTarget === path.join(realWorkspaceRoot, file)));
-    if (!allowed) return yield* denied();
+    if (
+      !allowed &&
+      !(yield* insideLinkedEntry(absolutePath, realTarget, configDir, workspaceRoot))
+    ) {
+      return yield* denied();
+    }
     return { realTarget, readOnly: false, resolvedPath };
   });
 

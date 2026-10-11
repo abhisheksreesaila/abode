@@ -393,6 +393,70 @@ describe("Customizations", () => {
   );
 
   it.effect.skipIf(!symlinksSupported)(
+    "opens and saves a user skill or agent that is a symlink to a shared folder",
+    () =>
+      Effect.gen(function* () {
+        const customizations = yield* Customizations.Customizations;
+        const { path, fileSystem, root, configDir, workspace } = yield* makeSandbox;
+        const shared = path.join(root, "shared-skills");
+        yield* put(path.join(shared, "tdd", "SKILL.md"), "tdd");
+        yield* put(path.join(shared, "tdd", "refs", "notes.md"), "notes");
+        yield* put(path.join(shared, "other", "SKILL.md"), "other");
+        yield* put(path.join(shared, "reviewer.md"), "agent");
+        yield* mkdirp(path.join(configDir, "skills"));
+        yield* mkdirp(path.join(configDir, "agents"));
+        NodeFS.symlinkSync(path.join(shared, "tdd"), path.join(configDir, "skills", "tdd"));
+        NodeFS.symlinkSync(
+          path.join(shared, "reviewer.md"),
+          path.join(configDir, "agents", "reviewer.md"),
+        );
+
+        const skill = path.join(configDir, "skills", "tdd", "SKILL.md");
+        expect(yield* customizations.readFile({ cwd: workspace, path: skill })).toMatchObject({
+          contents: "tdd",
+          readOnly: false,
+        });
+        yield* customizations.writeFile({ cwd: workspace, path: skill, contents: "tdd v2" });
+        expect(yield* fileSystem.readFileString(path.join(shared, "tdd", "SKILL.md"))).toBe(
+          "tdd v2",
+        );
+        const nested = path.join(configDir, "skills", "tdd", "refs", "notes.md");
+        expect((yield* customizations.readFile({ cwd: workspace, path: nested })).contents).toBe(
+          "notes",
+        );
+        const agent = path.join(configDir, "agents", "reviewer.md");
+        yield* customizations.writeFile({ cwd: workspace, path: agent, contents: "agent v2" });
+        expect(yield* fileSystem.readFileString(path.join(shared, "reviewer.md"))).toBe("agent v2");
+        // The link opens its own folder only: a second link inside it can't reach further.
+        NodeFS.symlinkSync(
+          path.join(shared, "other", "SKILL.md"),
+          path.join(shared, "tdd", "leak"),
+        );
+        const escaped = yield* customizations
+          .readFile({ cwd: workspace, path: path.join(configDir, "skills", "tdd", "leak") })
+          .pipe(Effect.flip);
+        expect(escaped._tag).toBe("CustomizationsPathNotAllowedError");
+      }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported)(
+    "rejects a workspace skill that links outside the workspace",
+    () =>
+      Effect.gen(function* () {
+        const customizations = yield* Customizations.Customizations;
+        const { path, workspace, outside } = yield* makeSandbox;
+        yield* put(path.join(outside, "id_rsa"), "secret");
+        yield* mkdirp(path.join(workspace, ".claude", "skills"));
+        NodeFS.symlinkSync(outside, path.join(workspace, ".claude", "skills", "evil"));
+        const target = path.join(workspace, ".claude", "skills", "evil", "id_rsa");
+        const read = yield* customizations
+          .readFile({ cwd: workspace, path: target })
+          .pipe(Effect.flip);
+        expect(read._tag).toBe("CustomizationsPathNotAllowedError");
+      }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported)(
     "rejects symlinks that point outside the allowed roots",
     () =>
       Effect.gen(function* () {

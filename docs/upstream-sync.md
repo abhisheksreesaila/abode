@@ -42,6 +42,7 @@ One bullet per hook (a list, not a table, so adding a row never re-aligns the ot
 - `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`: wires the Customizations service (add-only)
 - `apps/server/src/observability/RpcInstrumentation.ts`: span aggregate names for the three `customizations.*` RPCs (add-only)
 - `apps/web/src/components/chat/ChatComposer.tsx`: voice: `beforeActions` slot in the footer, `voiceAction` element, `insertComposerText` accepts a numeric offset
+- `apps/web/src/components/chat/ChatComposer.tsx`: A-006: the `composer.stash` key handler returns early for key presses inside the customization editor (`data-abode-editor`), so Ctrl+S saves the file there (2 lines)
 - `apps/web/src/components/ComposerPromptEditorTiptap.tsx`: voice: registers the provisional-dictation extension, exposes `provisionalDictation` on the editor handle, hides placeholder while dictating
 - `apps/web/src/components/settings/SettingsPanels.tsx`: voice: renders `VoiceSettingsSection` in General settings
 - `apps/web/src/components/ChatView.tsx`: A-006: the lazy `FilePreviewPanel` import points at `abode/customizations/FilePreviewPanelRouter`, which opens customization files (skills, agents, `~/.claude/...`) in abode's editor and passes every other file to upstream's panel (2 lines)

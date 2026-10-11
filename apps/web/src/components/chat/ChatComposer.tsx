@@ -1137,6 +1137,7 @@ import { readEnvironmentScope } from "../../state/session";
 import { serverEnvironment } from "../../state/server";
 import type { ReviewCommentContext } from "../../reviewCommentContext";
 import { ComposerVoiceSlot } from "../../abode/voice/ComposerVoiceSlot"; // abode:voice
+import { isAbodeEditorKeyEvent } from "../../abode/customizations/editorKeys"; // abode:editor
 
 const WORKSPACE_SNAPSHOT_RETRY_COOLDOWN_MS = 10_000;
 
@@ -5725,6 +5726,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
 
   useEffect(() => {
     const handler = (event: globalThis.KeyboardEvent) => {
+      if (isAbodeEditorKeyEvent(event)) return; // abode:editor (Ctrl+S saves the file there)
       const command = resolveShortcutCommand(event, keybindings, {
         context: {
           terminalFocus: getTerminalFocusOwner() !== null,

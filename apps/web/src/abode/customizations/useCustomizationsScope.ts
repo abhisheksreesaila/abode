@@ -1,4 +1,4 @@
-import { scopeProjectRef } from "@t3tools/client-runtime/environment";
+import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useParams } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -12,7 +12,7 @@ export interface CustomizationsScope {
   /** The registered project root; customizations belong to the workspace, not a checkout copy. */
   readonly cwd: string;
   readonly projectName: string;
-  /** Null when there is no thread whose side panel could open a file. */
+  /** The side panel to open files in: the thread's, or a new-thread draft's own. */
   readonly threadRef: ScopedThreadRef | null;
 }
 
@@ -25,8 +25,14 @@ export function useActiveCustomizationsScope(): CustomizationsScope | null {
   const routeDraft = useComposerDraftStore((store) =>
     routeTarget?.kind === "draft" ? store.getDraftSession(routeTarget.draftId) : null,
   );
-  const threadRef = resolveActiveThreadRouteRef(routeTarget, routeDraft);
-  const shell = useThreadShell(threadRef);
+  const serverThreadRef = resolveActiveThreadRouteRef(routeTarget, routeDraft);
+  const shell = useThreadShell(serverThreadRef);
+  // A draft has no server thread yet, but ChatView already keys its side panel by the draft's id.
+  const draftThreadRef = useMemo(
+    () => (routeDraft ? scopeThreadRef(routeDraft.environmentId, routeDraft.threadId) : null),
+    [routeDraft],
+  );
+  const threadRef = serverThreadRef ?? draftThreadRef;
   const source = shell ?? routeDraft;
   const projectRef = useMemo(
     () => (source ? scopeProjectRef(source.environmentId, source.projectId) : null),
