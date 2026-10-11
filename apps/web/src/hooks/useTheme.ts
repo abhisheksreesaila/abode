@@ -215,7 +215,8 @@ export function readThemePreference(): Theme {
   if (raw !== null && isKnownThemePreference(raw)) {
     return canonicalThemePreference(raw);
   }
-  return DEFAULT_THEME_SNAPSHOT.theme;
+  // abode: only a profile with nothing stored starts on abode; an unknown value keeps "system".
+  return raw === null ? ABODE_DEFAULT_THEME : "system";
 }
 
 export function writeThemePreference(theme: Theme): void {

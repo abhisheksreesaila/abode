@@ -34,10 +34,10 @@ describe("default theme rule", () => {
     expect(readAppearanceModePreference(readThemePreference())).toBe("system");
   });
 
-  it("starts on abode when the stored value is unknown", async () => {
+  it("keeps upstream's system fallback when the stored value is unknown", async () => {
     stubStorage({ "t3code:theme": "does-not-exist" });
     const { readThemePreference } = await import("../hooks/useTheme");
-    expect(readThemePreference()).toBe(ABODE_THEME_ID);
+    expect(readThemePreference()).toBe("system");
   });
 
   it("keeps a theme the user already picked", async () => {

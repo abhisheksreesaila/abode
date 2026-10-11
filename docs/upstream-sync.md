@@ -31,10 +31,13 @@ abode is rebuilt on branch `abode-next`, starting from upstream nightly `v0.0.46
 | `apps/web/src/themePalette.ts`                      | adds `ABODE_THEME` to the web built-in definitions (not shared `BUILT_IN_THEMES`: mobile mirrors it) |
 | `packages/shared/src/themePalettes.ts`              | reserves the id `abode` (one line)                                                                   |
 | `apps/web/src/hooks/useTheme.ts`                    | default theme and default appearance for a fresh profile                                             |
+| `apps/web/index.html`, `src/themeBoot.test.ts`      | boot splash palette for abode; nothing stored boots as abode                                         |
 | `ThemeSettings.tsx`, `CommandPalette.tsx`           | list the abode theme card / command                                                                  |
 | `packages/contracts/src/rpc.ts`, `index.ts`         | three `customizations.*` RPCs (add-only)                                                             |
 | `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts` | wires the Customizations service (add-only)                                                          |
 | `apps/web/src/components/chat/ChatComposer.tsx`     | mic button slot for voice                                                                            |
+
+`t3 theme set abode` does not work by design: abode stays out of `BUILT_IN_THEME_IDS` so the mobile app's theme ids are unchanged.
 
 Tickets add rows here when they add a hook.
 
