@@ -43,6 +43,10 @@ import {
 } from "../logicalProject";
 import { buildPhysicalToLogicalProjectKeyMap } from "../sidebarProjectGrouping";
 import { threadRuntimeCanArchive } from "@t3tools/client-runtime/state/models";
+import {
+  abodeTranscriptMenuItem,
+  runAbodeTranscriptMenuAction,
+} from "../abode/transcript/transcriptMenu"; // abode: A-007
 import { useCopyToClipboard } from "./useCopyToClipboard";
 import { useNewThreadHandler } from "./useHandleNewThread";
 import { useClientSettings } from "./useSettings";
@@ -147,7 +151,7 @@ export function useThreadActionMenu(input: {
         };
         const isRegeneratingTitle = thread.titleRegeneration != null;
         const snoozePresets = resolveSnoozePresets(now, timestampFormat);
-        const items = buildThreadActionMenuItems({
+        const baseItems = buildThreadActionMenuItems({
           canOperate: readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
           branch: thread.branch ?? null,
           projectFilter: null,
@@ -161,8 +165,10 @@ export function useThreadActionMenu(input: {
           supports,
           snoozePresets,
         });
+        const items = [...baseItems, abodeTranscriptMenuItem()]; // abode: Transcript submenu
         const clicked = await settlePromise(() => api.contextMenu.show(items, position));
         if (clicked._tag === "Failure" || clicked.value === null) return;
+        if (runAbodeTranscriptMenuAction(clicked.value)) return; // abode
         const action: ThreadActionMenuId = clicked.value;
         if (
           threadActionRequiresOperate(action) &&

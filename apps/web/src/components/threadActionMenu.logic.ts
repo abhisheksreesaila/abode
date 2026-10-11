@@ -1,3 +1,4 @@
+import type { AbodeTranscriptMenuId } from "../abode/transcript/transcriptMenu"; // abode
 import type { ContextMenuItem } from "@t3tools/contracts";
 import type { SnoozePreset } from "@t3tools/client-runtime/state/thread-settled";
 
@@ -28,7 +29,8 @@ export type ThreadActionMenuId =
   | "copy-branch"
   | "copy-thread-id"
   | "archive"
-  | "delete";
+  | "delete"
+  | AbodeTranscriptMenuId; // abode: transcript mode submenu
 
 export type DraftActionMenuId =
   | "copy"
