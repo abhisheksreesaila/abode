@@ -24,14 +24,17 @@ abode is rebuilt on branch `abode-next`, starting from upstream nightly `v0.0.46
 
 ## Hook points (keep this table current)
 
-| Upstream file                                       | What abode hooks there                                             |
-| --------------------------------------------------- | ------------------------------------------------------------------ |
-| `apps/web/src/components/AppSidebarLayout.tsx`      | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar |
-| `apps/web/src/main.tsx`                             | imports `abode/abode.css` and registers the abode theme            |
-| `packages/shared/src/themePalettes.ts`              | adds the abode theme to the built-in list                          |
-| `packages/contracts/src/rpc.ts`, `index.ts`         | three `customizations.*` RPCs (add-only)                           |
-| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts` | wires the Customizations service (add-only)                        |
-| `apps/web/src/components/chat/ChatComposer.tsx`     | mic button slot for voice                                          |
+| Upstream file                                            | What abode hooks there                                                                                                                            |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/components/AppSidebarLayout.tsx`           | renders `AbodeShell`/`AbodeSidebar` in place of the thread sidebar                                                                                |
+| `apps/web/src/main.tsx`                                  | imports `abode/abode.css` and registers the abode theme                                                                                           |
+| `packages/shared/src/themePalettes.ts`                   | adds the abode theme to the built-in list                                                                                                         |
+| `packages/contracts/src/rpc.ts`, `index.ts`              | three `customizations.*` RPCs (add-only)                                                                                                          |
+| `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`      | wires the Customizations service (add-only)                                                                                                       |
+| `apps/web/src/components/chat/ChatComposer.tsx`          | voice: `beforeActions` slot in the footer, `voiceAction` element, `insertComposerText` accepts a numeric offset                                   |
+| `apps/web/src/components/ComposerPromptEditorTiptap.tsx` | voice: registers the provisional-dictation extension, exposes `provisionalDictation` on the editor handle, hides placeholder while dictating      |
+| `apps/web/src/components/settings/SettingsPanels.tsx`    | voice: renders `VoiceSettingsSection` in General settings                                                                                         |
+| `apps/web/package.json`, `pnpm-workspace.yaml`           | voice: `@huggingface/transformers`, `onnxruntime-web` (pinned to transformers.js's version); `allowBuilds` entries for their optional native deps |
 
 Tickets add rows here when they add a hook.
 

@@ -110,6 +110,12 @@ import { ComposerCodeBlockNodeView } from "./chat/ComposerCodeBlockNodeView";
 import { composerCodeBlockHighlight } from "./composerCodeBlockHighlight";
 import { importPastedComposerText } from "./composerInlineTokenPaste";
 import { didComposerSelectionChangeVisibly } from "./composerSelection";
+// abode:voice
+import {
+  ComposerVoiceProvisionalExtension,
+  createProvisionalDictationHandle,
+  type ProvisionalDictationHandle,
+} from "../abode/voice/provisionalDictation";
 import type { ComposerDraftContextRecords } from "./composerContextPresentation";
 
 export interface ComposerPromptEditorHandle {
@@ -117,6 +123,7 @@ export interface ComposerPromptEditorHandle {
   focusAt: (cursor: number) => void;
   focusAtEnd: () => void;
   readSelectionRange: () => { start: number; end: number };
+  provisionalDictation: ProvisionalDictationHandle; // abode:voice
   requestCitationComment: (request: ComposerCitationCommentRequest) => void;
   readSnapshot: () => {
     value: string;
@@ -929,6 +936,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
   const citationRequestRef = useRef<ComposerCitationCommentRequest | null>(null);
   const [openCitation, setOpenCitation] = useState<OpenCitationComment | null>(null);
   const [isEmpty, setIsEmpty] = useState(value.length === 0);
+  const [hasProvisional, setHasProvisional] = useState(false); // abode:voice
 
   const citationCommentActions = useMemo(
     () => ({
@@ -1068,6 +1076,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
         ComposerCitationExtension,
         ComposerContextReferenceExtension,
         ComposerMarkersExtension,
+        ComposerVoiceProvisionalExtension, // abode:voice
         ...(richText
           ? [
               ComposerCodeExtension,
@@ -1691,6 +1700,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
           });
         }
       },
+      provisionalDictation: createProvisionalDictationHandle(editor, setHasProvisional), // abode:voice
       readSnapshot,
       isCaretOnVisualEdge: (edge) => {
         const snapshot = readSnapshot();
@@ -1810,7 +1820,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
               onCopyCapture={(event) => handleCopyCut(event, false)}
               onCutCapture={(event) => handleCopyCut(event, true)}
             />
-            {isEmpty && contextRecords.size === 0 && placeholder ? (
+            {isEmpty && !hasProvisional && contextRecords.size === 0 && placeholder ? ( // abode:voice
               <div
                 className={cn(
                   "pointer-events-none absolute inset-0 leading-relaxed text-placeholder/75",

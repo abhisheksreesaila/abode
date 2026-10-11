@@ -104,6 +104,7 @@ import { isMacPlatform } from "../../lib/utils";
 import { EMPTY_SERVER_PROVIDERS } from "../../state/server";
 import { useArchivedThreadSnapshots } from "../../lib/archivedThreadsState";
 import { formatRelativeTimeLabel } from "../../timestampFormat";
+import { VoiceSettingsSection } from "../../abode/voice/VoiceSettingsSection"; // abode:voice
 import { Button } from "../ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "../ui/collapsible";
 import {
@@ -2481,7 +2482,6 @@ export function GeneralSettingsPanel() {
           </>
         ) : null}
       </SettingsSection>
-
       <SettingsSection id="behavior" title="Behavior">
         <NotificationSettings />
         <SettingsRow
@@ -3042,7 +3042,6 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
-
       <SettingsSection id="projects-and-threads" title="Projects & threads">
         <SettingsRow
           serverScoped
@@ -3105,7 +3104,6 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
-
       <SettingsSection id="confirmations" title="Confirmations">
         <SettingsRow
           {...searchableSetting("unpin-confirmation")}
@@ -3227,7 +3225,6 @@ export function GeneralSettingsPanel() {
           />
         ) : null}
       </SettingsSection>
-
       <SettingsSection id="text-generation" title="Text generation">
         <SettingsRow
           serverScoped
@@ -3339,7 +3336,6 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
-
       <SettingsSection id="about" title="About">
         {isElectron || HOSTED_APP_CHANNEL ? (
           <AboutVersionSection />
@@ -3401,7 +3397,7 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
-
+      <VoiceSettingsSection /> {/* abode:voice */}
       <LegacyFeaturesSection />
     </SettingsPageContainer>
   );
