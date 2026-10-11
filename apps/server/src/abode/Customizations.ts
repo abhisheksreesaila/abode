@@ -259,7 +259,11 @@ const make = Effect.gen(function* () {
     for (const candidate of candidates) {
       const project = yield* projectStore
         .findActiveByWorkspaceRoot(candidate)
-        .pipe(Effect.orElseSucceed(() => Option.none()));
+        .pipe(
+          Effect.mapError(
+            (cause) => new CustomizationsFileError({ path: cwd, operation: "read", cause }),
+          ),
+        );
       if (Option.isSome(project)) return project.value.workspaceRoot;
     }
     return yield* new CustomizationsCwdNotRegisteredError({ cwd });
@@ -320,8 +324,16 @@ const make = Effect.gen(function* () {
     const underCodexSkills = isInside(realCodexSkills, realTarget);
     const isCodexPrompt =
       path.dirname(realTarget) === realCodexPrompts && realTarget.endsWith(".md");
+    const workspaceClaude = path.join(realWorkspaceRoot, ".claude");
+    const isWorkspaceCredentials =
+      isInside(workspaceClaude, realTarget) &&
+      path
+        .relative(workspaceClaude, realTarget)
+        .split(path.sep)
+        .some((segment) => segment.startsWith(".credentials"));
     const allowed =
       !isCredentials &&
+      !isWorkspaceCredentials &&
       (underConfigDir ||
         underCodexSkills ||
         isCodexPrompt ||

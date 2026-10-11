@@ -469,4 +469,42 @@ describe("Customizations", () => {
       expect(unregistered._tag).toBe("CustomizationsCwdNotRegisteredError");
     }).pipe(Effect.scoped, Effect.provide(TestLayer)),
   );
+
+  it.effect("denies .credentials files under the workspace .claude folder too", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const { path, workspace } = yield* makeSandbox;
+      yield* put(path.join(workspace, ".claude", ".credentials.json"), "token");
+      for (const target of [".claude/.credentials.json", ".claude/.credentials-x/y"]) {
+        const read = yield* customizations
+          .readFile({ cwd: workspace, path: target })
+          .pipe(Effect.flip);
+        expect(read._tag, target).toBe("CustomizationsPathNotAllowedError");
+        const write = yield* customizations
+          .writeFile({ cwd: workspace, path: target, contents: "x" })
+          .pipe(Effect.flip);
+        expect(write._tag, target).toBe("CustomizationsPathNotAllowedError");
+      }
+    }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect("reports a project store failure as a file error, not an unregistered cwd", () =>
+    Effect.gen(function* () {
+      const customizations = yield* Customizations.Customizations;
+      const error = yield* customizations.list({ cwd: "/anywhere" }).pipe(Effect.flip);
+      expect(error._tag).toBe("CustomizationsFileError");
+      expect(Customizations.toCustomizationsError(error).failure).toBe("operation_failed");
+    }).pipe(
+      Effect.provide(
+        Customizations.layer.pipe(
+          Layer.provideMerge(
+            Layer.succeed(ProjectStore.ProjectStoreV2, {
+              findActiveByWorkspaceRoot: () => Effect.fail("db down" as const),
+            } as unknown as ProjectStore.ProjectStoreV2["Service"]),
+          ),
+          Layer.provideMerge(NodeServices.layer),
+        ),
+      ),
+    ),
+  );
 });
