@@ -363,6 +363,16 @@ import {
   SourceControlRepositoryLookupInput,
 } from "./sourceControl.ts";
 import { VcsError } from "./vcs.ts";
+// abode: customizations contract
+import {
+  CustomizationsError,
+  CustomizationsListInput,
+  CustomizationsListResult,
+  CustomizationsReadFileInput,
+  CustomizationsReadFileResult,
+  CustomizationsWriteFileInput,
+  CustomizationsWriteFileResult,
+} from "./abodeCustomizations.ts";
 import { Project, ProjectMutation, ProjectMutationError } from "./project.ts";
 
 export const WS_METHODS = {
@@ -378,6 +388,10 @@ export const WS_METHODS = {
   projectsMutate: "projects.mutate",
   projectsEnsureScratch: "projects.ensureScratch",
   projectsCreateNew: "projects.createNew",
+  // abode: customizations RPCs
+  customizationsList: "customizations.list",
+  customizationsReadFile: "customizations.readFile",
+  customizationsWriteFile: "customizations.writeFile",
 
   // Shell methods
   shellOpenInEditor: "shell.openInEditor",
@@ -1234,6 +1248,25 @@ const WsProjectsCreateNewRpc = Rpc.make(WS_METHODS.projectsCreateNew, {
   error: Schema.Union([OrchestrationDispatchCommandError, EnvironmentAuthorizationError]),
 });
 
+// abode: customizations RPCs (add-only)
+const WsCustomizationsListRpc = Rpc.make(WS_METHODS.customizationsList, {
+  payload: CustomizationsListInput,
+  success: CustomizationsListResult,
+  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
+});
+
+const WsCustomizationsReadFileRpc = Rpc.make(WS_METHODS.customizationsReadFile, {
+  payload: CustomizationsReadFileInput,
+  success: CustomizationsReadFileResult,
+  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
+});
+
+const WsCustomizationsWriteFileRpc = Rpc.make(WS_METHODS.customizationsWriteFile, {
+  payload: CustomizationsWriteFileInput,
+  success: CustomizationsWriteFileResult,
+  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
+});
+
 const WsShellOpenInEditorRpc = Rpc.make(WS_METHODS.shellOpenInEditor, {
   payload: LaunchEditorInput,
   error: Schema.Union([ExternalLauncherError, EnvironmentAuthorizationError]),
@@ -1954,6 +1987,9 @@ export const WsRpcGroup = RpcGroup.make(
   WsProjectsCreateNewRpc,
   WsProjectsWriteFileRpc,
   WsProjectsMutateRpc,
+  WsCustomizationsListRpc, // abode:
+  WsCustomizationsReadFileRpc, // abode:
+  WsCustomizationsWriteFileRpc, // abode:
   WsShellOpenInEditorRpc,
   WsFilesystemBrowseRpc,
   WsFilesystemGetMetadataRpc,
