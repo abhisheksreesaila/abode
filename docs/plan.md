@@ -40,7 +40,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-003: Customizations service (server, add-only)
 
-- **Status:** todo
+- **Status:** done (reviewer PASS, merged; live server check pending)
 - **What:** port the first fork's Customizations service (`git show main:apps/server/src/customizations/Customizations.ts` and `main:packages/contracts/src/customizations.ts`) to `apps/server/src/abode/` and `packages/contracts/src/abodeCustomizations.ts`. It lists Claude skills, agents, MCP servers and CLAUDE.md files (user-wide and per workspace), and reads and writes them only inside `~/.claude/` and a workspace's `.claude/`, `.mcp.json` and `CLAUDE.md`. Same three RPCs (`customizations.list`, `.readFile`, `.writeFile`) and the same auth scopes.
 - **Upstream files it may touch:** `packages/contracts/src/rpc.ts`, `packages/contracts/src/index.ts`, `apps/server/src/ws.ts`, `apps/server/src/auth/RpcAuthorization.ts`.
 - **Acceptance:**
