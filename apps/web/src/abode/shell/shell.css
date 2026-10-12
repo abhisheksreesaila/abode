@@ -1,5 +1,5 @@
 /*
- * abode shell: layout glue and the dense VS Code row metrics (22px lines, 7px
+ * abode shell: layout glue and the row metrics (28px lines, 7px
  * status squares, 11px meta) that sit between Tailwind's scale steps. Every
  * color is a theme variable; nothing here is a literal color. The abode theme
  * (A-002) and the user's own theme both reach this file through those variables.
@@ -184,7 +184,8 @@
 }
 
 /* Workspace header: tinted row with a 3px bar in the workspace color. */
-[data-slot="sidebar-content"] > section + section {
+[data-slot="sidebar-content"] > section + section,
+[data-abode~="hidden-toggle"] {
   margin-top: 6px;
 }
 [data-abode~="workspace-header"] {
