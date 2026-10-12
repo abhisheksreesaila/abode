@@ -21,21 +21,22 @@ Status: approved (2026-10-11, "experiment is the name of the game")
 - **v1:**
   1. **Message cards by kind.** Agents tag content with callouts (`> [!QUESTION]`, `> [!WARNING]`, `> [!INFO]`, `> [!TICKETS]`, `> [!DONE]`); abode renders each as a colored card with an icon. A shipped skill/CLAUDE.md snippet tells agents to use them. Untagged answers get abode's best guess (questions, warnings, ticket lists); a wrong guess is fine, the text is still all there.
   2. **A pleasant reading style** for all agent text: proportional font, comfortable line length and spacing, softer contrast, nicer headings, lists and tables. Code stays monospace.
-  3. **Pin and flag** (assumed scope): pin a message or a card to the thread's Pinned list; flag it as "come back to"; add your own note to a pin; "reply to this" quotes it into the composer. Kept per browser like workspace colors (assumed).
-  - **Characters** (after the three above, same brief): original Pixar-style yellow helpers drawn for abode, one per harness (Claude, Codex), and a "boss" avatar for me. Shown as small avatars next to turns, plus a few personality touches in empty states. Off-switch in Settings.
-- **Not doing:** rewriting upstream's timeline (virtualization, tool calls, diffs stay upstream's); a model that classifies messages; Minion/Gru images or names; changing what the agent sends over the wire; mobile.
+  3. **Two columns on desktop** (mockup C): the readable chat on the left; on the right a board that collects every card from the thread into lanes (Needs you, Watch out, Tickets, Done), with answer buttons on questions and a jump back to the message. On a narrow window the board is a tab.
+  4. **The cast with moods:** original Pixar-style helpers, Sunny (Claude) and Pip (Codex), whose face shows the mood (asking, worried, working, done, idle) at the top of the board and next to each turn. I'm the Boss: built from parts (face, hat/crown/hair, brows, eyes/glasses, scarf color) or a photo, with my own name; helpers can be renamed. Off-switch in Settings.
+- **Not doing:** pins and flags (sessions end and context fills, so a pin in a dead thread is never reopened; the board collects what matters automatically); rewriting upstream's timeline (virtualization, tool calls, diffs stay upstream's); a model that classifies messages; Minion/Gru images or names; changing what the agent sends over the wire; mobile.
 
 ## How it should look and feel
 
 - **Three words:** fun, useful, focused.
 - **Feels like:** Linear/Notion docs for reading comfort, GitHub callouts for the cards, a touch of Pixar warmth in the avatars only.
 - **Style:** abode's themes (Amber default), not Terminal Ledger.
-- **The one screen:** a thread with a long agent answer: you see the question card and warning card first, pin the ticket list, reply to the question.
+- **The one screen:** a thread with a long agent answer: the board on the right shows Sunny asking one question and one warning; you answer with a button without scrolling the chat.
+- **Mockups:** https://claude.ai/artifact/6GkVJ5rYWzpZWqjMUgRAqm (`design/chat-revamp.html`): picked C's layout, the cast and the Boss builder.
 
 ## How we'll know it worked
 
-- I can tell what an answer needs from me without reading it all, and I find pinned items without scrolling.
-- **Done for v1:** cards render for all five kinds in Amber, Azure and Omarchy themes; pins survive reload; the agent skill is installed; Abhishek checks it on a real thread.
+- I can tell what an answer needs from me without reading it all, and answer it from the board.
+- **Done for v1:** cards render for all five kinds in Amber, Azure and Omarchy themes; the board fills from tags and guesses; moods follow the thread's state; my Boss and helper names survive reload; the agent skill is installed; Abhishek checks it on a real thread.
 
 ## Constraints and risks
 
@@ -45,11 +46,13 @@ Status: approved (2026-10-11, "experiment is the name of the game")
 
 ## Decisions and trade-offs
 
-- Scan fast is v1's priority: biggest daily win; pins and characters come after.
+- Scan fast is v1's priority: biggest daily win.
+- No pins or flags: less to build and nothing to curate; "Carry over" (open items into a new session or docs/plan.md) is a later idea.
+- Avatar settings per browser for v1 (assumed): like workspace colors; a phone or second browser starts with the default Boss.
 - Agents tag, abode also guesses: tags are reliable, guesses cover old and untagged answers; mislabels are accepted (the full text is always shown).
 - Experiment behind a switch: bold changes are safe to try because Classic is one click away.
 - Original look-alike characters, not Minions/Gru: safe in a public repo; it won't be the exact movie characters.
 
 ## Open questions
 
-- None blocking. Exact pin/flag/append behaviour is assumed above; correct it on the mockups.
+- None blocking.
