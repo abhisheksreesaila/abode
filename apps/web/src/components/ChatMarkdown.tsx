@@ -211,6 +211,7 @@ import {
 } from "../browser/openFileInPreview";
 import { resolveLinkTarget } from "../browser/browserLinkTarget";
 import { PullRequestLinkPreview } from "./pullRequest/PullRequestLinkPreview";
+import { ABODE_ALERT_PRESENTATIONS, remarkAbodeCallouts } from "~/abode/chat/callouts"; // abode: chat cards
 
 interface ChatMarkdownProps {
   text: string;
@@ -2840,8 +2841,8 @@ const CHAT_MARKDOWN_COMPONENTS = {
     return <p {...props}>{renderSkillInlineMarkdownChildren(children, skills)}</p>;
   },
   blockquote: function MarkdownBlockquote({ node: _node, children, ...props }) {
-    const alert =
-      GITHUB_ALERT_PRESENTATIONS[String((props as Record<string, unknown>)["data-alert"] ?? "")];
+    const alertKey = String((props as Record<string, unknown>)["data-alert"] ?? "");
+    const alert = GITHUB_ALERT_PRESENTATIONS[alertKey] ?? ABODE_ALERT_PRESENTATIONS[alertKey]; // abode: chat cards
     if (!alert) {
       return <blockquote {...props}>{children}</blockquote>;
     }
@@ -3419,6 +3420,7 @@ function ChatMarkdown({
   const remarkPlugins = useMemo(
     () => [
       ...(lineBreaks ? CHAT_MARKDOWN_REMARK_PLUGINS_WITH_BREAKS : CHAT_MARKDOWN_REMARK_PLUGINS),
+      remarkAbodeCallouts, // abode: chat cards
       ...extraRemarkPlugins,
       ...(incrementalParsing ? [createIncrementalMarkdownPlugin()] : []),
     ],

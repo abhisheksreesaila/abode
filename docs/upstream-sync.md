@@ -54,6 +54,8 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 - `apps/web/package.json`, `pnpm-workspace.yaml`: voice: `@huggingface/transformers`, `onnxruntime-web` (pinned to transformers.js's version); `allowBuilds` entries for their optional native deps
 - `third-party-licenses.config.json`: voice: generated notices for onnxruntime, guid-typescript and sharp-libvips (the production build fails without them)
 
+- `apps/web/src/components/ChatMarkdown.tsx`: A-009: `remarkAbodeCallouts` in the remark plugin list and `ABODE_ALERT_PRESENTATIONS` as the fallback in the blockquote renderer's alert lookup (3 lines incl. import); abode's callouts ride on upstream's GitHub-alert rendering
+
 Tickets add a bullet here when they add a hook.
 
 ### What the abode shell reads from upstream (check these when a sync breaks the build)

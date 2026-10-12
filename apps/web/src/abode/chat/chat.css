@@ -1,0 +1,56 @@
+/*
+ * abode chat: callout cards and the calmer reading style. Colors are theme tokens, so
+ * Amber, Azure, Omarchy and any user theme all apply. Cards keep upstream's alert markup
+ * (a left-bordered div with a title line); abode adds the tint and spacing.
+ */
+
+.abode-callout {
+  --abode-kind: var(--info);
+  margin-block: 0.6rem;
+  padding: 0.55rem 0.8rem 0.6rem;
+  border-left-width: 3px;
+  border-left-color: var(--abode-kind);
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--abode-kind) 9%, transparent);
+}
+.abode-callout-question {
+  --abode-kind: var(--info);
+}
+.abode-callout-warning {
+  --abode-kind: var(--warning);
+}
+.abode-callout-info {
+  --abode-kind: color-mix(in srgb, var(--info) 45%, var(--success));
+}
+.abode-callout-tickets {
+  --abode-kind: var(--primary);
+}
+.abode-callout-done {
+  --abode-kind: var(--success);
+}
+.abode-callout-title {
+  color: var(--abode-kind);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.abode-callout > :not(.abode-callout-title) {
+  color: var(--foreground);
+}
+
+/* Reading style for agent answers, only with abode chat on. */
+html[data-abode-chat] [data-message-role="assistant"] .chat-markdown {
+  max-width: 76ch;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+html[data-abode-chat] [data-message-role="assistant"] .chat-markdown :is(h1, h2, h3, h4) {
+  margin-top: 1.1em;
+  color: var(--foreground);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+html[data-abode-chat] [data-message-role="assistant"] .chat-markdown strong {
+  color: var(--foreground);
+}
