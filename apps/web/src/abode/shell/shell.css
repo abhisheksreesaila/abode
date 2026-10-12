@@ -8,7 +8,9 @@
 :root {
   /* The rail only exists from Tailwind's `md` breakpoint up, like upstream's sidebar. */
   --abode-activity-bar-width: 0px;
-  --abode-row-height: 22px;
+  /* Roomier than VS Code's 22px so rows are easy to hit. */
+  --abode-row-height: 28px;
+  --abode-strip-height: 24px;
 }
 
 @media (min-width: 48rem) {
@@ -47,9 +49,11 @@
 [data-abode~="activity-item"]:focus-visible {
   box-shadow: inset 0 0 0 1px var(--ring);
 }
-/* The lit item gets VS Code's 2px accent bar on the left edge. */
+/* The lit item: an accent-tinted tile, an accent icon and a 3px accent bar on the left edge. */
 [data-abode~="activity-item"][data-active="true"] {
-  box-shadow: inset 2px 0 0 0 var(--primary);
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+  box-shadow: inset 3px 0 0 0 var(--primary);
 }
 [data-abode~="activity-item"] svg {
   width: 1.25rem;
@@ -92,7 +96,7 @@
   padding-left: 2rem;
 }
 [data-abode~="subagent"] {
-  height: 20px;
+  height: 24px;
   gap: 0.375rem;
   padding-left: 2.75rem;
   font-size: 12px;
@@ -180,7 +184,11 @@
 }
 
 /* Workspace header: tinted row with a 3px bar in the workspace color. */
+[data-slot="sidebar-content"] > section + section {
+  margin-top: 6px;
+}
 [data-abode~="workspace-header"] {
+  height: 30px;
   gap: 0.375rem;
   padding-left: 0.25rem;
   border-left: 3px solid var(--workspace-color);
@@ -233,7 +241,7 @@
 /* Sidebar section strips */
 [data-abode~="strip"] {
   display: flex;
-  height: var(--abode-row-height);
+  height: var(--abode-strip-height);
   flex-shrink: 0;
   align-items: center;
   gap: 0.25rem;

@@ -74,7 +74,7 @@ function ItemRow(props: {
             disabled={disabled}
             onClick={() => onOpen(item.path)}
             data-testid="customization-item"
-            className="flex h-[22px] w-full cursor-pointer items-center gap-1.5 rounded-xs py-0 pr-2 pl-8 text-start text-xs text-sidebar-foreground outline-hidden ring-ring hover:bg-sidebar-row-hover focus-visible:ring-1 focus-visible:ring-inset disabled:cursor-default disabled:opacity-60"
+            className="flex h-[26px] w-full cursor-pointer items-center gap-1.5 rounded-xs py-0 pr-2 pl-8 text-start text-xs text-sidebar-foreground outline-hidden ring-ring hover:bg-sidebar-row-hover focus-visible:ring-1 focus-visible:ring-inset disabled:cursor-default disabled:opacity-60"
           />
         }
       >
@@ -156,12 +156,12 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
         const open = openKinds.has(kind);
         return (
           <div key={kind}>
-            <div className="flex min-h-[22px] items-center rounded-xs hover:bg-sidebar-row-hover">
+            <div className="flex min-h-[26px] items-center rounded-xs hover:bg-sidebar-row-hover">
               <button
                 type="button"
                 aria-expanded={open}
                 onClick={() => toggle(kind)}
-                className="flex min-h-[22px] min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-xs px-2 text-start text-xs text-sidebar-foreground outline-hidden ring-ring focus-visible:ring-1 focus-visible:ring-inset"
+                className="flex min-h-[26px] min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-xs px-2 text-start text-xs text-sidebar-foreground outline-hidden ring-ring focus-visible:ring-1 focus-visible:ring-inset"
               >
                 <ChevronRightIcon
                   aria-hidden

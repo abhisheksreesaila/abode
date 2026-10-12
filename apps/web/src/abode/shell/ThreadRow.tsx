@@ -49,7 +49,7 @@ interface ThreadRowProps {
 }
 
 /**
- * One session: a 22px line with a status square, the title and an age. The
+ * One session: a 28px line with a status square, the title and an age. The
  * shared behaviours (PR state, inline rename, archive, the context menu) call
  * the same upstream hooks and commands the other sidebars use.
  */
