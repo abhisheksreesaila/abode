@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # abode host: runs a pinned build of abode as a systemd user service.
 #
-#   scripts/abode/host.sh install          seed ~/.abode, build origin/main, install and start the service
-#   scripts/abode/host.sh update [ref]     build <ref> (default origin/main), switch, health-check, roll back on failure
+#   scripts/abode/host.sh install          seed ~/.abode, build abode-next, install and start the service
+#   scripts/abode/host.sh update [ref]     build <ref> (default abode-next), switch, health-check, roll back on failure
 #   scripts/abode/host.sh status           show the running release and service state
 #   scripts/abode/host.sh rollback         switch back to the previous release
 #
@@ -112,7 +112,7 @@ seed_home() {
 cmd_install() {
   mkdir -p "$ROOT/releases"
   seed_home
-  local rel; rel="$(build_release "${1:-origin/main}")"
+  local rel; rel="$(build_release "${1:-abode-next}")"
   switch_to "$rel"
   write_unit
   systemctl --user enable --now "$UNIT"
@@ -121,7 +121,7 @@ cmd_install() {
 
 cmd_update_inner() {
   local rel prev
-  rel="$(build_release "${1:-origin/main}")"
+  rel="$(build_release "${1:-abode-next}")"
   prev="$(readlink -f "$ROOT/current" || true)"
   if [[ "$rel" == "$prev" ]]; then log "already running $(basename "$rel")"; return; fi
   if [[ -n "$prev" ]]; then ln -sfn "$prev" "$ROOT/previous"; fi

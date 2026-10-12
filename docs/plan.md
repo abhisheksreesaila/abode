@@ -96,8 +96,8 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-008: Switch the host to abode-next
 
-- **Status:** blocked (Abhishek: look at abode-next in the app, then say "switch the host". Also check the T3 Code phone app is a version that speaks orchestration protocol 2.)
-- **What:** point `scripts/abode/host.sh update` at `abode-next` (later, make `abode-next` the new `main`). The old V1 release stays as the rollback.
+- **Status:** done (2026-10-11: host runs abode-next 2835b2afc8; dry run on a copy of the data first, all 4 projects and 5 threads carried over. Backup of the old data: `~/.abode/backups/pre-abode-next-20261011`. Still check the T3 Code phone app speaks orchestration protocol 2.)
+- **What:** `scripts/abode/host.sh update` now builds `abode-next` by default. Rollback: `host.sh rollback`, then copy the backup's `state.sqlite` back (the new build migrated the database).
 
 ## Phase B: the abode chat (brief: docs/briefs/chat-revamp.md, mockups: design/chat-revamp.html)
 
