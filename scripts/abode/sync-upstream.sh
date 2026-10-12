@@ -12,7 +12,8 @@ if [[ -n "$(git status --porcelain)" ]]; then
 fi
 
 git fetch upstream --tags --prune --quiet
-target="${1:-$(git tag -l '*-nightly.*' --sort=-creatordate | head -1)}"
+# for-each-ref --count avoids `| head -1`, which dies of SIGPIPE under pipefail once there are many tags.
+target="${1:-$(git for-each-ref --count=1 --sort=-creatordate --format='%(refname:short)' 'refs/tags/*-nightly.*')}"
 current="$(git describe --tags --match '*-nightly.*' --abbrev=0 HEAD)"
 log "current base: $current"
 log "target:       $target"
