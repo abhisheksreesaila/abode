@@ -4,12 +4,15 @@
  * (a left-bordered div with a title line); abode adds the tint and spacing.
  */
 
+/* Classic chat keeps upstream's alert look in the kind's color; abode chat adds the card. */
 .abode-callout {
   --abode-kind: var(--info);
+  border-left-color: var(--abode-kind);
+}
+html[data-abode-chat] .abode-callout {
   margin-block: 0.6rem;
   padding: 0.55rem 0.8rem 0.6rem;
   border-left-width: 3px;
-  border-left-color: var(--abode-kind);
   border-radius: 0 6px 6px 0;
   background: color-mix(in srgb, var(--abode-kind) 9%, transparent);
 }
@@ -53,4 +56,37 @@ html[data-abode-chat] [data-message-role="assistant"] .chat-markdown :is(h1, h2,
 }
 html[data-abode-chat] [data-message-role="assistant"] .chat-markdown strong {
   color: var(--foreground);
+}
+
+/*
+ * Avatars beside the timeline's messages. The board hands the drawings over as
+ * --abode-helper-avatar / --abode-boss-avatar on the chat's row container.
+ */
+/* The timeline clips its rows' overflow, so the avatar sits in an indent inside the row. */
+html[data-abode-chat] [data-timeline-row-kind="message"][data-message-role="assistant"] {
+  position: relative;
+  padding-left: 2.5rem;
+}
+html[data-abode-chat] [data-timeline-row-kind="message"][data-message-role="user"] {
+  position: relative;
+  padding-right: 2.5rem;
+}
+html[data-abode-chat] [data-timeline-row-kind="message"][data-message-role="assistant"]::before,
+html[data-abode-chat] [data-timeline-row-kind="message"][data-message-role="user"]::after {
+  content: "";
+  position: absolute;
+  top: 0.1rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: center / contain no-repeat;
+  pointer-events: none;
+}
+html[data-abode-chat] [data-timeline-row-kind="message"][data-message-role="assistant"]::before {
+  left: 0;
+  background-image: var(--abode-helper-avatar, none);
+}
+html[data-abode-chat] [data-timeline-row-kind="message"][data-message-role="user"]::after {
+  right: 0;
+  background-image: var(--abode-boss-avatar, none);
+  border-radius: 50%;
 }

@@ -1,11 +1,12 @@
 import { calloutKind, type CardKind } from "./cards";
 
 /**
- * Remark plugin for abode's callouts. Upstream's GitHub-alert plugin handles NOTE, TIP,
- * IMPORTANT, WARNING and CAUTION; this one lifts abode's own markers (`[!QUESTION]`,
- * `[!INFO]`, `[!TICKETS]`, `[!DONE]`, …) into `data-alert="abode-<kind>"` the same way, so
- * upstream's blockquote renderer can draw them. Unlike GitHub, a title may follow the
- * marker on its line (`> [!DONE] Shipped`); it becomes a bold first line.
+ * Remark plugin for abode's callouts: lifts `[!QUESTION]`, `[!INFO]`, `[!TICKETS]`,
+ * `[!DONE]` and GitHub's own NOTE/TIP/IMPORTANT/WARNING/CAUTION into
+ * `data-alert="abode-<kind>"`, so every callout in a chat is drawn as an abode card by
+ * upstream's blockquote renderer. It runs after upstream's GitHub-alert plugin and takes
+ * over the markers that one leaves in place. A title may follow the marker on its line
+ * (`> [!DONE] Shipped`); it becomes a bold first line.
  */
 
 interface MdNode {
@@ -15,7 +16,6 @@ interface MdNode {
   children?: MdNode[];
 }
 
-const GITHUB_KINDS = new Set(["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"]);
 const MARKER = /^\[!([A-Za-z]+)\][ \t]*([^\n]*)(?:\r?\n|$)/;
 
 export function abodeAlertValue(kind: CardKind): string {
@@ -24,6 +24,13 @@ export function abodeAlertValue(kind: CardKind): string {
 
 function readAbodeCallout(node: MdNode): void {
   if (node.type !== "blockquote") return;
+  // Already lifted by upstream's GitHub-alert plugin: relabel it as the abode kind.
+  const lifted = node.data?.hProperties?.dataAlert;
+  if (typeof lifted === "string") {
+    const kind = calloutKind(lifted);
+    if (kind) node.data!.hProperties!.dataAlert = abodeAlertValue(kind);
+    return;
+  }
   const paragraph = node.children?.[0];
   const text = paragraph?.children?.[0];
   if (paragraph?.type !== "paragraph" || text?.type !== "text" || typeof text.value !== "string") {
@@ -33,8 +40,7 @@ function readAbodeCallout(node: MdNode): void {
   if (!match) return;
   const tag = match[1]!.toUpperCase();
   const kind = calloutKind(tag);
-  // GitHub's own alerts stay upstream's, unless a title makes them abode-only syntax.
-  if (!kind || (GITHUB_KINDS.has(tag) && match[2] === "")) return;
+  if (!kind) return;
 
   const title = match[2]!.trim();
   const remainder = text.value.slice(match[0].length);

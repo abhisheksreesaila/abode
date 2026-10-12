@@ -616,6 +616,7 @@ const EMPTY_PROVIDERS: ServerProvider[] = [];
 const EMPTY_PROVIDER_MODELS: ServerProvider["models"] = [];
 const EMPTY_USAGE_LIMIT_SOURCES: UsageLimitSourceSnapshots = [];
 import type { CodexArtifactTemplate } from "@t3tools/shared/codexArtifactTemplates";
+import { AbodeBoard } from "~/abode/chat/AbodeBoard"; // abode: board
 
 const TIMELINE_SCROLL_CANCEL_SENTINEL = Object.freeze({});
 const EMPTY_FEEDBACK_SUBMISSIONS: ReadonlyArray<CodexFeedbackSubmission> = [];
@@ -11982,6 +11983,7 @@ export default function ChatView(props: ChatViewProps) {
             ) : null}
           </ThreadFindCanvas>
           {/* end chat column */}
+          <AbodeBoard threadRef={isServerThread ? activeThreadRef : null} /> {/* abode: board */}
         </div>
         {/* end horizontal flex container */}
 

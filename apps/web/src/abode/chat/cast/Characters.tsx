@@ -1,3 +1,4 @@
+/* oxlint-disable shadcn/no-raw-colors -- character art draws in fixed colors, like the brand marks in Icons.tsx */
 import { useId, type ReactNode } from "react";
 
 import type { BossLook } from "./bossConfig";

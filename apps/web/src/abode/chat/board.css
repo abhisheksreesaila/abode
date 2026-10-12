@@ -1,0 +1,262 @@
+/*
+ * The abode board: a column right of the chat. Colors are theme tokens; lane colors match
+ * the callout cards. Motion is one-shot (a pose part animates once when it mounts).
+ */
+
+[data-abode-board] {
+  width: 19rem;
+  flex-shrink: 0;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--border);
+  background: color-mix(in srgb, var(--sidebar, var(--background)) 70%, var(--background));
+}
+
+[data-abode-board-hero] {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 10%, transparent),
+    transparent 70%
+  );
+}
+[data-abode-board-hero] svg {
+  overflow: visible;
+}
+[data-abode-board-hero] p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+}
+[data-abode-board-hero] b {
+  color: var(--foreground);
+}
+
+[data-abode-board-lanes] {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+[data-abode-lane] {
+  --abode-kind: var(--info);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+[data-abode-lane="warning"] {
+  --abode-kind: var(--warning);
+}
+[data-abode-lane="tickets"] {
+  --abode-kind: var(--primary);
+}
+[data-abode-lane="done"] {
+  --abode-kind: var(--success);
+}
+[data-abode-lane] h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--abode-kind);
+}
+[data-abode-lane] h3 span {
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--abode-kind) 18%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-abode-tile] {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--abode-kind);
+  border-radius: 0 6px 6px 0;
+  background: var(--card, var(--background));
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  text-align: left;
+  color: var(--foreground);
+}
+button[data-abode-tile]:hover,
+[data-abode-card-text]:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--abode-kind) 60%, transparent);
+}
+[data-abode-ticket] code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--abode-kind);
+}
+[data-abode-done] {
+  opacity: 0.75;
+}
+[data-abode-card-text] {
+  all: unset;
+  display: block;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+[data-abode-card-text]:focus-visible,
+[data-abode-tile]:focus-visible,
+[data-abode-answers] button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+[data-abode-answers] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+[data-abode-answers] button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--abode-kind) 55%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--abode-kind);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+[data-abode-answers] button[data-primary] {
+  background: var(--abode-kind);
+  color: var(--background);
+}
+[data-abode-answers] button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+[data-abode-agreed] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--success) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  animation: abode-agree 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) 1 both;
+}
+
+[data-abode-board-empty] {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+/* Pose parts: one motion when mounted. */
+[data-part] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-part="hand-l"] {
+  animation: abode-tap-l 0.5s steps(4) 1;
+}
+[data-part="hand-r"] {
+  animation: abode-tap-r 0.5s steps(4) 1;
+}
+[data-part="line"] {
+  animation: abode-fade 0.6s steps(3) 1 both;
+}
+[data-part="glasses"] {
+  animation: abode-specs 0.6s ease-out 1 both;
+}
+[data-part="lens"] {
+  animation: abode-scan 0.7s ease-in-out 1;
+}
+[data-part="brush"] {
+  transform-origin: 0% 100%;
+  animation: abode-paint 0.7s ease-in-out 1;
+}
+[data-part="dot"] {
+  animation: abode-pop 0.6s steps(3) 1 both;
+}
+[data-part="dot"]:nth-child(2) {
+  animation-delay: 0.15s;
+}
+[data-part="dot"]:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes abode-tap-l {
+  25%,
+  75% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes abode-tap-r {
+  0%,
+  50%,
+  100% {
+    transform: translateY(-3px);
+  }
+  25%,
+  75% {
+    transform: none;
+  }
+}
+@keyframes abode-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes abode-specs {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+}
+@keyframes abode-scan {
+  50% {
+    transform: translateX(-14px);
+  }
+}
+@keyframes abode-paint {
+  35% {
+    transform: rotate(-22deg);
+  }
+  70% {
+    transform: rotate(14deg);
+  }
+}
+@keyframes abode-pop {
+  from {
+    opacity: 0.2;
+    transform: scale(0.6);
+  }
+}
+@keyframes abode-agree {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-part],
+  [data-abode-agreed] {
+    animation: none !important;
+  }
+}

@@ -105,7 +105,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-009: Cards in the chat
 
-- **Status:** doing
+- **Status:** review
 - **What:** `> [!QUESTION]`, `> [!WARNING]`, `> [!INFO]`, `> [!TICKETS]`, `> [!DONE]` (plus GitHub's NOTE/TIP/IMPORTANT/CAUTION) render as colored cards with an icon and label, and agent text gets the calmer reading style. Parser for the board: `abode/chat/cards.ts` (tags first, guesses for untagged answers).
 - **Acceptance:**
   - [ ] All five abode kinds render as cards in Amber, Azure and Omarchy; upstream's own alerts still render.
@@ -114,7 +114,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-010: The board column
 
-- **Status:** todo
+- **Status:** review
 - **Depends on:** A-009
 - **What:** on wide windows a column right of the chat: a header with the helper, then lanes Needs you (open questions from the latest answer, plus upstream's pending approvals/inputs linking to the composer), Watch out, Tickets, Done. Question options are buttons that send the choice as a user message (`startTurn`) and turn into a "👍 choice · on it" chip with "change". Each item jumps to its message. Hidden on narrow windows and when abode chat is off.
 - **Acceptance:**
@@ -124,7 +124,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-011: The cast with moods and activity poses
 
-- **Status:** todo
+- **Status:** review
 - **Depends on:** A-010
 - **What:** Sunny (Claude) / Pip (Codex) avatars beside assistant messages and the Boss beside the user's, via CSS. The board header shows the helper's mood (asking, worried, working, done, idle, agreed) and an activity pose from the latest work item (typing for file changes, terminal for commands, magnifier for search, thought bubble for reasoning). One ~0.5s motion per new work item, no loops, off under reduced motion.
 - **Acceptance:**
@@ -133,7 +133,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-012: Settings: abode chat switch, Boss builder, names
 
-- **Status:** todo
+- **Status:** review
 - **What:** in Settings › General next to Voice: an "abode chat" switch (Classic = upstream's chat untouched), the Boss builder (face, top, brows, eyes, scarf, or a photo) and names for the Boss, the Claude helper and the Codex helper. Saved per browser.
 - **Acceptance:**
   - [ ] Turning abode chat off removes the board, cards styling and avatars.

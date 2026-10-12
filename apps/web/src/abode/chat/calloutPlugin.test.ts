@@ -34,8 +34,19 @@ describe("remarkAbodeCallouts", () => {
     });
   });
 
-  it("leaves GitHub's own alerts and plain quotes to upstream", () => {
-    expect(run(quote(para("[!WARNING]\nx"))).data).toBeUndefined();
+  it("draws GitHub's alerts as abode cards too, before or after upstream lifts them", () => {
+    expect(run(quote(para("[!WARNING]\nx"))).data?.hProperties?.dataAlert).toBe("abode-warning");
+    const lifted = {
+      type: "root",
+      children: [
+        { type: "blockquote", data: { hProperties: { dataAlert: "note" } }, children: [] },
+      ],
+    };
+    remarkAbodeCallouts()(lifted);
+    expect(lifted.children[0]!.data.hProperties.dataAlert).toBe("abode-info");
+  });
+
+  it("leaves plain quotes and unknown markers alone", () => {
     expect(run(quote(para("just a quote"))).data).toBeUndefined();
     expect(run(quote(para("[!BANANA]\nx"))).data).toBeUndefined();
   });

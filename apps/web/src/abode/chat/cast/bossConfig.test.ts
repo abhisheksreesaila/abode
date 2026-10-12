@@ -36,3 +36,12 @@ describe("sanitizeCast", () => {
     ).toBeNull();
   });
 });
+
+describe("useCastStore.update", () => {
+  it("lands quick look changes made one after another", async () => {
+    const { useCastStore } = await import("./castStore");
+    useCastStore.getState().update({ look: { top: "beanie" } });
+    useCastStore.getState().update({ look: { eyes: "round" } });
+    expect(useCastStore.getState().look).toMatchObject({ top: "beanie", eyes: "round" });
+  });
+});
