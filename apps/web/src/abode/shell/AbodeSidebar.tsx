@@ -2,7 +2,7 @@ import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useParams, useRouter } from "@tanstack/react-router";
-import { FolderPlusIcon, SquarePenIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, FolderPlusIcon, SquarePenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
@@ -49,6 +49,8 @@ import {
 import { useAbodeThreadActions } from "./useAbodeThreadActions";
 import { useWorkspaceGroups } from "./useWorkspaceGroups";
 import { useEnsureWorkspaceColors } from "./workspaceColorStore";
+import { splitHiddenWorkspaces } from "./workspaceHidden";
+import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
 import { jumpOrderKeys } from "./workspaceList";
 import { draftIdsByWorkspace, threadShellKey } from "./workspaceModel";
 import { expansionPreferenceKeys, WorkspaceSection } from "./WorkspaceSection";
@@ -118,19 +120,6 @@ export function AbodeSidebar() {
   }, []);
   const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
 
-  // Ctrl+1..9 and previous/next walk exactly the rows the workspaces render.
-  const orderedThreadKeys = useMemo(
-    () =>
-      jumpOrderKeys(
-        groups.map((group) => ({
-          threads: group.threads,
-          expanded: resolveProjectExpanded(projectExpandedById, expansionPreferenceKeys(group)),
-          showAll: showAllByWorkspace.has(group.project.projectKey),
-        })),
-        { latest: previewCount, activeKey: activeThreadKey, keyOf: threadShellKey },
-      ),
-    [activeThreadKey, groups, previewCount, projectExpandedById, showAllByWorkspace],
-  );
   const threadByKey = useMemo(
     () => new Map(groups.flatMap((group) => group.threads).map((t) => [threadShellKey(t), t])),
     [groups],
@@ -152,6 +141,40 @@ export function AbodeSidebar() {
   const draftIds = useMemo(
     () => JSON.parse(draftIdsJson) as Record<string, string[]>,
     [draftIdsJson],
+  );
+
+  // Hidden workspaces sit under a "N hidden" row; the one you are in always stays listed.
+  const hiddenKeys = useHiddenWorkspacesStore((state) => state.hiddenKeys);
+  const [revealHidden, setRevealHidden] = useState(false);
+  const { shown: shownGroups, hidden: hiddenGroups } = useMemo(
+    () =>
+      splitHiddenWorkspaces(groups, {
+        hiddenKeys,
+        keyOf: (group) => group.project.projectKey,
+        isActive: (group) =>
+          group.threads.some((thread) => threadShellKey(thread) === activeThreadKey) ||
+          (activeDraftId !== null &&
+            (draftIds[group.project.projectKey] ?? NO_DRAFTS).includes(activeDraftId)),
+      }),
+    [activeDraftId, activeThreadKey, draftIds, groups, hiddenKeys],
+  );
+  const listedGroups = useMemo(
+    () => (revealHidden ? [...shownGroups, ...hiddenGroups] : shownGroups),
+    [hiddenGroups, revealHidden, shownGroups],
+  );
+
+  // Ctrl+1..9 and previous/next walk exactly the rows the workspaces render.
+  const orderedThreadKeys = useMemo(
+    () =>
+      jumpOrderKeys(
+        listedGroups.map((group) => ({
+          threads: group.threads,
+          expanded: resolveProjectExpanded(projectExpandedById, expansionPreferenceKeys(group)),
+          showAll: showAllByWorkspace.has(group.project.projectKey),
+        })),
+        { latest: previewCount, activeKey: activeThreadKey, keyOf: threadShellKey },
+      ),
+    [activeThreadKey, listedGroups, previewCount, projectExpandedById, showAllByWorkspace],
   );
 
   useEffect(() => {
@@ -252,7 +275,7 @@ export function AbodeSidebar() {
         </div>
         <div data-abode="strip">
           <span className="min-w-0 flex-1 truncate">Workspaces</span>
-          <span className="font-normal tabular-nums">{groups.length}</span>
+          <span className="font-normal tabular-nums">{shownGroups.length}</span>
           <Tooltip>
             <TooltipTrigger
               render={
@@ -271,7 +294,7 @@ export function AbodeSidebar() {
           </Tooltip>
         </div>
         <SidebarContent>
-          {groups.map((group) => (
+          {shownGroups.map((group) => (
             <WorkspaceSection
               key={group.project.projectKey}
               group={group}
@@ -280,6 +303,36 @@ export function AbodeSidebar() {
               draftIds={draftIds[group.project.projectKey] ?? NO_DRAFTS}
             />
           ))}
+          {hiddenGroups.length > 0 ? (
+            <button
+              type="button"
+              aria-expanded={revealHidden}
+              data-testid="sidebar-hidden-workspaces"
+              data-abode="row hidden-toggle"
+              onClick={() => setRevealHidden((current) => !current)}
+            >
+              {revealHidden ? (
+                <ChevronDownIcon aria-hidden className="size-3.5 shrink-0" />
+              ) : (
+                <ChevronRightIcon aria-hidden className="size-3.5 shrink-0" />
+              )}
+              <span className="min-w-0 flex-1 truncate text-left">
+                {hiddenGroups.length} hidden
+              </span>
+            </button>
+          ) : null}
+          {revealHidden
+            ? hiddenGroups.map((group) => (
+                <WorkspaceSection
+                  key={group.project.projectKey}
+                  group={group}
+                  hidden
+                  showAll={showAllByWorkspace.has(group.project.projectKey)}
+                  onShowAll={handleShowAll}
+                  draftIds={draftIds[group.project.projectKey] ?? NO_DRAFTS}
+                />
+              ))
+            : null}
           {groups.length === 0 ? (
             <div className="px-3 pt-4 text-center text-xs text-sidebar-muted-foreground">
               No workspaces yet

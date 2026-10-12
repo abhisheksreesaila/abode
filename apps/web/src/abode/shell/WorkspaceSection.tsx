@@ -27,6 +27,7 @@ import { WorkspaceDrafts } from "./WorkspaceDrafts";
 import { buildWorkspaceColorMenuItem } from "./workspaceColor";
 import { useWorkspaceColorStyle } from "./workspaceColorHooks";
 import { applyWorkspaceColorMenuChoice } from "./workspaceColorStore";
+import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
 import {
   formatWorkspaceLocation,
   resolveWorkspacePill,
@@ -63,8 +64,10 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   readonly showAll: boolean;
   readonly onShowAll: (workspaceKey: string, showAll: boolean) => void;
   readonly draftIds: ReadonlyArray<string>;
+  /** Listed under the sidebar's "hidden" row; its menu offers the way back. */
+  readonly hidden?: boolean;
 }) {
-  const { group, showAll, onShowAll, draftIds } = props;
+  const { group, showAll, onShowAll, draftIds, hidden = false } = props;
   const { project } = group;
   const { threadKey: activeThreadKey } = useAbodeActiveRoute();
   const router = useRouter();
@@ -179,6 +182,9 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         ...(group.isScratch
           ? []
           : [{ id: "copy-path", label: "Copy path", separatorBefore: true }]),
+        hidden
+          ? { id: "show-workspace", label: "Show in sidebar" }
+          : { id: "hide-workspace", label: "Hide from sidebar" },
         { id: "project-settings", label: "Project settings", icon: "settings" },
       ];
       const clicked = await settlePromise(() =>
@@ -187,7 +193,11 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       if (clicked._tag === "Failure" || clicked.value === null) return;
       if (applyWorkspaceColorMenuChoice(project.projectKey, clicked.value)) return;
       if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
-      else if (clicked.value === "copy-path" && firstMember) {
+      else if (clicked.value === "hide-workspace" || clicked.value === "show-workspace") {
+        useHiddenWorkspacesStore
+          .getState()
+          .setHidden(project.projectKey, clicked.value === "hide-workspace");
+      } else if (clicked.value === "copy-path" && firstMember) {
         copyPath(firstMember.workspaceRoot, { path: firstMember.workspaceRoot });
       } else if (clicked.value === "project-settings") {
         void router.navigate({
@@ -196,7 +206,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         });
       }
     },
-    [copyPath, createSession, firstMember, group.isScratch, project.projectKey, router],
+    [copyPath, createSession, firstMember, group.isScratch, hidden, project.projectKey, router],
   );
 
   const ChevronIcon = expanded ? ChevronDownIcon : ChevronRightIcon;
@@ -204,6 +214,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
     <section
       aria-label={group.name}
       data-testid={`workspace-${project.projectKey}`}
+      data-abode-hidden={hidden || undefined}
       style={color ? ({ "--workspace-color": color.color } as React.CSSProperties) : undefined}
     >
       <div
