@@ -33,6 +33,17 @@ export function splitHiddenWorkspaces<T>(
   return { shown, hidden };
 }
 
+/**
+ * The workspace menu's hide/show item. It follows the saved choice, not where the
+ * workspace is listed: the one holding the open session stays listed while hidden,
+ * and its menu still has to offer the way back.
+ */
+export function workspaceHiddenMenuItem(isHidden: boolean): { id: string; label: string } {
+  return isHidden
+    ? { id: "show-workspace", label: "Show in sidebar" }
+    : { id: "hide-workspace", label: "Hide from sidebar" };
+}
+
 export function setWorkspaceHidden(
   keys: ReadonlyArray<string>,
   key: string,

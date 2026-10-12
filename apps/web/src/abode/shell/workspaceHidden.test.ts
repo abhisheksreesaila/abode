@@ -4,6 +4,7 @@ import {
   sanitizePersistedHiddenKeys,
   setWorkspaceHidden,
   splitHiddenWorkspaces,
+  workspaceHiddenMenuItem,
 } from "./workspaceHidden";
 
 const split = (groups: string[], hiddenKeys: string[], active: string | null = null) =>
@@ -34,6 +35,13 @@ describe("hidden workspaces", () => {
     expect(hidden).toEqual(["a"]);
     expect(setWorkspaceHidden(hidden, "a", true)).toBe(hidden);
     expect(setWorkspaceHidden(hidden, "a", false)).toEqual([]);
+  });
+
+  it("offers Show for a hidden workspace even while it stays listed for the open session", () => {
+    const keys = setWorkspaceHidden([], "b", true);
+    expect(split(["a", "b"], [...keys], "b").shown).toContain("b");
+    expect(workspaceHiddenMenuItem(keys.includes("b")).id).toBe("show-workspace");
+    expect(workspaceHiddenMenuItem(keys.includes("a")).id).toBe("hide-workspace");
   });
 
   it("drops junk from storage", () => {

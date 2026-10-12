@@ -27,6 +27,7 @@ import { WorkspaceDrafts } from "./WorkspaceDrafts";
 import { buildWorkspaceColorMenuItem } from "./workspaceColor";
 import { useWorkspaceColorStyle } from "./workspaceColorHooks";
 import { applyWorkspaceColorMenuChoice } from "./workspaceColorStore";
+import { workspaceHiddenMenuItem } from "./workspaceHidden";
 import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
 import {
   formatWorkspaceLocation,
@@ -64,7 +65,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   readonly showAll: boolean;
   readonly onShowAll: (workspaceKey: string, showAll: boolean) => void;
   readonly draftIds: ReadonlyArray<string>;
-  /** Listed under the sidebar's "hidden" row; its menu offers the way back. */
+  /** Listed (dimmed) under the sidebar's "N hidden" row. */
   readonly hidden?: boolean;
 }) {
   const { group, showAll, onShowAll, draftIds, hidden = false } = props;
@@ -79,6 +80,9 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
     resolveProjectExpanded(state.projectExpandedById, preferenceKeys),
   );
   const setProjectExpanded = useUiStateStore((state) => state.setProjectExpanded);
+  const isHiddenPref = useHiddenWorkspacesStore((state) =>
+    state.hiddenKeys.includes(project.projectKey),
+  );
   const { copyToClipboard: copyPath } = useCopyToClipboard<{ path: string }>({
     onCopy: ({ path }) =>
       toastManager.add({ type: "success", title: "Path copied", description: path }),
@@ -182,9 +186,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         ...(group.isScratch
           ? []
           : [{ id: "copy-path", label: "Copy path", separatorBefore: true }]),
-        hidden
-          ? { id: "show-workspace", label: "Show in sidebar" }
-          : { id: "hide-workspace", label: "Hide from sidebar" },
+        workspaceHiddenMenuItem(isHiddenPref),
         { id: "project-settings", label: "Project settings", icon: "settings" },
       ];
       const clicked = await settlePromise(() =>
@@ -206,7 +208,15 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         });
       }
     },
-    [copyPath, createSession, firstMember, group.isScratch, hidden, project.projectKey, router],
+    [
+      copyPath,
+      createSession,
+      firstMember,
+      group.isScratch,
+      isHiddenPref,
+      project.projectKey,
+      router,
+    ],
   );
 
   const ChevronIcon = expanded ? ChevronDownIcon : ChevronRightIcon;

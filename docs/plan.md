@@ -60,7 +60,7 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 ### A-005: abode shell: activity bar, workspaces sidebar, panel toggles
 
-- **Status:** review (reviewer PASS, merged; needs Abhishek in the real app, including macOS traffic lights over the logo. 2026-10-11: "Hide from sidebar" on a workspace's menu (client-only, undone from the "N hidden" row); the open session is a soft accent fill instead of an outline)
+- **Status:** review (reviewer PASS, merged; needs Abhishek in the real app, including macOS traffic lights over the logo. 2026-10-11: "Hide from sidebar" on a workspace's menu (client-only, undone from the "N hidden" row); the open session is a soft accent fill instead of an outline. Hide/show is only on the workspace menu, not the palette)
 - **What:** the VS Code agents-window layout from the first fork (F-028, F-035–F-044, F-047; `docs/design/fluent.md`, `docs/design/main-window.md`), rebuilt as abode components that read upstream's existing state and hooks:
   - a 48px activity bar on the far left (logo, Agents, Search → command palette, Pull requests, Usage, then Settings at the bottom);
   - one sidebar: colored, collapsible workspaces with their sessions underneath, running subagents nested under their session with a live dot, and the "needs you" amber state;

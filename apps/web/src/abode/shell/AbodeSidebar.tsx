@@ -4,6 +4,7 @@ import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useParams, useRouter } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronRightIcon, FolderPlusIcon, SquarePenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
 import { SidebarThreadUndoNotice } from "~/components/sidebar/SidebarThreadUndoNotice";
@@ -51,7 +52,8 @@ import { useWorkspaceGroups } from "./useWorkspaceGroups";
 import { useEnsureWorkspaceColors } from "./workspaceColorStore";
 import { splitHiddenWorkspaces } from "./workspaceHidden";
 import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
-import { jumpOrderKeys } from "./workspaceList";
+import { deriveWorkspaceThreadState } from "./threadState";
+import { jumpOrderKeys, resolveWorkspacePill, workspacePillView } from "./workspaceList";
 import { draftIdsByWorkspace, threadShellKey } from "./workspaceModel";
 import { expansionPreferenceKeys, WorkspaceSection } from "./WorkspaceSection";
 import "./shell.css";
@@ -158,6 +160,26 @@ export function AbodeSidebar() {
       }),
     [activeDraftId, activeThreadKey, draftIds, groups, hiddenKeys],
   );
+  // Forget the expanded state once nothing is hidden, so the next hide starts collapsed.
+  if (revealHidden && hiddenGroups.length === 0) setRevealHidden(false);
+  // A hidden workspace's "needs you" or running state still shows, on the "N hidden" row.
+  const hiddenThreads = useMemo(
+    () => hiddenGroups.flatMap((group) => group.threads),
+    [hiddenGroups],
+  );
+  const hiddenVisitedAts = useUiStateStore(
+    useShallow((state) =>
+      hiddenThreads.map((thread) => state.threadLastVisitedAtById[threadShellKey(thread)] ?? null),
+    ),
+  );
+  const hiddenPill = useMemo(() => {
+    const pill = resolveWorkspacePill(
+      hiddenThreads.map((thread, index) =>
+        deriveWorkspaceThreadState(thread, hiddenVisitedAts[index] ?? undefined),
+      ),
+    );
+    return pill && pill.kind !== "done" ? { pill, view: workspacePillView(pill) } : null;
+  }, [hiddenThreads, hiddenVisitedAts]);
   const listedGroups = useMemo(
     () => (revealHidden ? [...shownGroups, ...hiddenGroups] : shownGroups),
     [hiddenGroups, revealHidden, shownGroups],
@@ -319,6 +341,20 @@ export function AbodeSidebar() {
               <span className="min-w-0 flex-1 truncate text-left">
                 {hiddenGroups.length} hidden
               </span>
+              {hiddenPill?.view.kind === "failed" ? (
+                <span data-abode="meta" className="font-medium text-error-foreground">
+                  {hiddenPill.view.text}
+                </span>
+              ) : hiddenPill?.view ? (
+                <span
+                  role="img"
+                  aria-label={hiddenPill.pill.detail}
+                  data-tone={hiddenPill.view.tone}
+                  data-abode="workspace-pill"
+                >
+                  {hiddenPill.view.text}
+                </span>
+              ) : null}
             </button>
           ) : null}
           {revealHidden
