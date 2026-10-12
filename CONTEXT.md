@@ -7,3 +7,5 @@ abode uses T3 Code's glossary (`docs/internals/glossary.md`). These are the extr
 - **Subagent:** a short-lived agent a thread spawns. It shows nested under its thread.
 - **Harness:** a T3 **provider** (Claude, Codex, …).
 - **Side panel:** T3's right panel (files, diff, browser, terminal tabs). It's closed by default.
+- **Card:** one tagged piece of an agent's answer (question, warning, info, tickets, done), written by the agent as a `> [!KIND]` callout and rendered by abode as a colored block.
+- **Pin:** a message or card the user saved to the thread's Pinned list, optionally flagged and with the user's own note.
