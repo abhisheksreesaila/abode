@@ -13,3 +13,4 @@
 - The app opens on a new-thread draft, not a thread. Anything that needs "the current thread" must also work on a draft (the draft's own `threadId` keys its side panel); A-006 passed review but every Customizations button was disabled in the real app.
 - Test against the user's real setup, not just fixtures: most of their skills are symlinks (`~/.claude/skills/x -> ~/.agents/skills/x`), which a symlink-strict path check rejected.
 - Upstream catches some keys app-wide in the capture phase (`mod+s` stashes the composer prompt). A key an abode panel needs must be excluded in that handler, or the panel never sees it.
+- Every effect that hands state to a DOM node must survive React's dev double-mount: reset any "already done" ref in the cleanup, or the second mount skips the work (A-011 avatars vanished in dev).

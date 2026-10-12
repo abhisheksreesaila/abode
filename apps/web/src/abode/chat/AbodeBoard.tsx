@@ -1,5 +1,5 @@
 import { useAtomValue } from "@effect/atom-react";
-import type { ScopedThreadRef } from "@t3tools/contracts";
+import { MessageId, type ScopedThreadRef } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -130,29 +130,31 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
 
   // The timeline's avatars are CSS backgrounds; hand it the drawings as data URLs.
   // The signature changes whenever a drawing does, which re-reads the hidden copies.
-  // After each render, copy the hidden drawings onto the chat's container when they changed.
+  // Copy the hidden drawings onto the chat's container when they change; the container is
+  // also the size container that hides the board when the chat gets narrow.
+  const drawingSignature = JSON.stringify([helper, cast, helperName]);
   const handedOver = useRef("");
   useLayoutEffect(() => {
     const host = columnRef.current?.parentElement;
     const drawings = avatarsRef.current?.children;
-    if (!host || !drawings || drawings.length < 2) return;
+    if (!host || !drawings || drawings.length < 2 || handedOver.current === drawingSignature)
+      return;
+    handedOver.current = drawingSignature;
     const asUrl = (element: Element) =>
       element instanceof HTMLImageElement
         ? `url("${element.src}")`
         : `url("data:image/svg+xml,${encodeURIComponent(
             element.outerHTML.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'),
           )}")`;
-    const helperUrl = asUrl(drawings[0]!);
-    const bossUrl = asUrl(drawings[1]!);
-    if (handedOver.current === helperUrl + bossUrl) return;
-    handedOver.current = helperUrl + bossUrl;
-    host.style.setProperty("--abode-helper-avatar", helperUrl);
-    host.style.setProperty("--abode-boss-avatar", bossUrl);
-  });
+    host.style.setProperty("--abode-helper-avatar", asUrl(drawings[0]!));
+    host.style.setProperty("--abode-boss-avatar", asUrl(drawings[1]!));
+  }, [drawingSignature]);
   useLayoutEffect(() => {
     const host = columnRef.current?.parentElement;
+    host?.style.setProperty("container-type", "inline-size");
     return () => {
       handedOver.current = "";
+      host?.style.removeProperty("container-type");
       host?.style.removeProperty("--abode-helper-avatar");
       host?.style.removeProperty("--abode-boss-avatar");
     };
@@ -174,7 +176,7 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
         version: 1,
         environmentId: threadRef.environmentId,
         threadId: threadRef.threadId,
-        messageId: messageId as never,
+        messageId: MessageId.make(messageId),
         text: quote,
         start: 0,
         end: quote.length,

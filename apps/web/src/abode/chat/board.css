@@ -3,10 +3,8 @@
  * the callout cards. Motion is one-shot (a pose part animates once when it mounts).
  */
 
-/* The board shows only while the chat area itself is wide (the side panel may be open). */
-:has(> [data-abode-board]) {
-  container-type: inline-size;
-}
+/* The board shows only while the chat area itself is wide (the side panel may be open);
+   AbodeBoard makes its parent the size container. */
 [data-abode-board] {
   display: flex;
   width: 19rem;
