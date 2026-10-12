@@ -13,7 +13,7 @@ base="${1:-$(git describe --tags --match '*-nightly.*' --abbrev=0 HEAD)}"
 own=(
   ':!apps/web/src/abode' ':!apps/server/src/abode' ':!packages/contracts/src/abode*'
   ':!scripts/abode' ':!docs/brief.md' ':!docs/briefs' ':!docs/plan.md' ':!docs/lessons.md'
-  ':!docs/design' ':!docs/research' ':!docs/upstream-sync.md' ':!CONTEXT.md' ':!pnpm-lock.yaml'
+  ':!docs/design' ':!design' ':!docs/research' ':!docs/upstream-sync.md' ':!CONTEXT.md' ':!pnpm-lock.yaml'
 )
 
 echo "abode hooks vs $base"
