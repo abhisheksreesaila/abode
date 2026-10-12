@@ -38,6 +38,7 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 - `apps/web/index.html`, `src/themeBoot.test.ts`: boot splash palettes for the abode themes; nothing stored boots as abode (Amber)
 - `apps/web/index.html`, `public/manifest.webmanifest`: tab icon, splash logo and title point at `public/abode/` (rendered from `public/abode/icon.svg` with `rsvg-convert`; upstream's own icons stay in place, unused)
 - `apps/web/src/branding.ts`, `src/branding.test.ts`: the product name is "abode" (the desktop app's injected name still wins)
+- `apps/web/src/components/sidebar/SidebarChrome.tsx`: `SidebarBrandMark` shows "abode" instead of the T3 wordmark (Settings sidebar header and the sidebar width probe)
 - `ThemeSettings.tsx`, `CommandPalette.tsx`: list the abode theme cards / commands (`...ABODE_THEMES`)
 - `apps/web/src/components/CommandPalette.tsx`: A-005: one line, `actionItems.push(...abodePanelToggleActions())`, adds Toggle sidebar / terminal / side panel
 - `apps/web/src/components/chat/MessagesTimeline.tsx`: A-007: `useStableRows(useSimpleRows(rawRows, timelineEntries), ...)` filters the derived rows by the Simple/Detailed mode (Detailed returns the same array)
