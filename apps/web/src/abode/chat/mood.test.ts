@@ -27,6 +27,10 @@ describe("helperMood", () => {
     });
   });
 
+  it("shows a failed turn even right after you answered", () => {
+    expect(helperMood({ ...base, status: "failed", agreedChoice: "Go now" }).mark).toBe("worried");
+  });
+
   it("is worried after a failure or when the last answer carried warnings", () => {
     expect(helperMood({ ...base, status: "failed" }).mark).toBe("worried");
     expect(helperMood({ ...base, latestWarnings: 1 })).toMatchObject({

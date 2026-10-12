@@ -3,13 +3,24 @@
  * the callout cards. Motion is one-shot (a pose part animates once when it mounts).
  */
 
+/* The board shows only while the chat area itself is wide (the side panel may be open). */
+:has(> [data-abode-board]) {
+  container-type: inline-size;
+}
 [data-abode-board] {
+  display: flex;
   width: 19rem;
   flex-shrink: 0;
   flex-direction: column;
   min-height: 0;
   border-left: 1px solid var(--border);
   background: color-mix(in srgb, var(--sidebar, var(--background)) 70%, var(--background));
+}
+
+@container (width < 58rem) {
+  [data-abode-board] {
+    display: none;
+  }
 }
 
 [data-abode-board-hero] {

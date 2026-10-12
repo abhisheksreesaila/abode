@@ -1,8 +1,14 @@
+import { useAtomValue } from "@effect/atom-react";
 import type { ScopedThreadRef } from "@t3tools/contracts";
+import { useNavigate } from "@tanstack/react-router";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 import { resolveSidebarThreadStatus } from "~/components/Sidebar.logic";
+import { assistantCitationNavigation } from "~/lib/assistantCitationNavigation";
 import { newMessageId } from "~/lib/utils";
+import { getProviderInstanceEntry } from "~/providerInstances";
+import { primaryServerProvidersAtom } from "~/state/server";
 import { useThreadShell, useThreadVisibleTurnItems } from "~/state/entities";
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
@@ -24,8 +30,8 @@ const ACTIVITY_TYPES = new Set([
   "dynamic_tool",
 ]);
 
-function helperFor(instanceId: string | undefined): Helper {
-  return instanceId && /codex/i.test(instanceId) ? "pip" : "sunny";
+function helperFor(driverKind: string | undefined): Helper {
+  return driverKind === "codex" ? "pip" : "sunny";
 }
 
 function toStatus(status: ReturnType<typeof resolveSidebarThreadStatus>): HelperStatus {
@@ -38,12 +44,16 @@ function toStatus(status: ReturnType<typeof resolveSidebarThreadStatus>): Helper
     : null;
 }
 
-/** Scrolls the timeline to a message when it is rendered. */
-function jumpTo(messageId: string) {
-  const row = document.querySelector<HTMLElement>(
-    `[data-message-id="${CSS.escape(messageId)}"][data-message-role="assistant"]`,
-  );
-  row?.scrollIntoView({ behavior: "smooth", block: "start" });
+/** A short plain-text quote from a card, for finding it again in the rendered message. */
+export function quoteFor(text: string): string {
+  const plain = text
+    .replace(/[*_`#>[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plain
+    .split(/(?<=[.!?])\s/)[0]!
+    .slice(0, 80)
+    .trim();
 }
 
 /**
@@ -59,8 +69,19 @@ export function AbodeBoard(props: { readonly threadRef: ScopedThreadRef | null }
 function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
   const shell = useThreadShell(threadRef);
   const projected = useThreadVisibleTurnItems(threadRef);
-  const cast = useCastStore();
-  const startTurn = useOrchestrationCommand(threadEnvironment.startTurn, { reportFailure: false });
+  const providers = useAtomValue(primaryServerProvidersAtom);
+  const navigate = useNavigate();
+  const cast = useCastStore(
+    useShallow((state) => ({
+      look: state.look,
+      photo: state.photo,
+      bossName: state.bossName,
+      claudeName: state.claudeName,
+      codexName: state.codexName,
+    })),
+  );
+  // Failures surface as upstream's own error toast.
+  const startTurn = useOrchestrationCommand(threadEnvironment.startTurn);
   const [sending, setSending] = useState(false);
   const [answered, setAnswered] = useState<{ messageId: string; choice: string } | null>(null);
   const columnRef = useRef<HTMLElement>(null);
@@ -79,7 +100,11 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
   const latestAnswerId = latestAnswer?.type === "assistant_message" ? latestAnswer.messageId : null;
   const agreed = answered !== null && answered.messageId === latestAnswerId ? answered : null;
 
-  const helper = helperFor(shell?.modelSelection.instanceId);
+  const helper = helperFor(
+    shell
+      ? getProviderInstanceEntry(providers, shell.modelSelection.instanceId)?.driverKind
+      : undefined,
+  );
   const helperName = helper === "pip" ? cast.codexName : cast.claudeName;
   const status = shell ? toStatus(resolveSidebarThreadStatus(shell)) : null;
   const latestWarnings = board.watchOut.filter(
@@ -105,15 +130,9 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
 
   // The timeline's avatars are CSS backgrounds; hand it the drawings as data URLs.
   // The signature changes whenever a drawing does, which re-reads the hidden copies.
-  const drawingSignature = JSON.stringify([
-    helper,
-    cast.look,
-    cast.photo,
-    helperName,
-    cast.bossName,
-  ]);
+  // After each render, copy the hidden drawings onto the chat's container when they changed.
+  const handedOver = useRef("");
   useLayoutEffect(() => {
-    if (drawingSignature === "") return;
     const host = columnRef.current?.parentElement;
     const drawings = avatarsRef.current?.children;
     if (!host || !drawings || drawings.length < 2) return;
@@ -123,13 +142,47 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
         : `url("data:image/svg+xml,${encodeURIComponent(
             element.outerHTML.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'),
           )}")`;
-    host.style.setProperty("--abode-helper-avatar", asUrl(drawings[0]!));
-    host.style.setProperty("--abode-boss-avatar", asUrl(drawings[1]!));
+    const helperUrl = asUrl(drawings[0]!);
+    const bossUrl = asUrl(drawings[1]!);
+    if (handedOver.current === helperUrl + bossUrl) return;
+    handedOver.current = helperUrl + bossUrl;
+    host.style.setProperty("--abode-helper-avatar", helperUrl);
+    host.style.setProperty("--abode-boss-avatar", bossUrl);
+  });
+  useLayoutEffect(() => {
+    const host = columnRef.current?.parentElement;
     return () => {
-      host.style.removeProperty("--abode-helper-avatar");
-      host.style.removeProperty("--abode-boss-avatar");
+      handedOver.current = "";
+      host?.style.removeProperty("--abode-helper-avatar");
+      host?.style.removeProperty("--abode-boss-avatar");
     };
-  }, [drawingSignature]);
+  }, []);
+
+  /** Scrolls to a rendered message, or asks the timeline to find the quote in older history. */
+  const jumpTo = (messageId: string, text: string) => {
+    const row = document.querySelector<HTMLElement>(
+      `[data-message-id="${CSS.escape(messageId)}"][data-message-role="assistant"]`,
+    );
+    if (row) {
+      row.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    const quote = quoteFor(text);
+    if (quote === "") return;
+    void navigate(
+      assistantCitationNavigation({
+        version: 1,
+        environmentId: threadRef.environmentId,
+        threadId: threadRef.threadId,
+        messageId: messageId as never,
+        text: quote,
+        start: 0,
+        end: quote.length,
+        prefix: "",
+        suffix: "",
+      }),
+    );
+  };
 
   const answer = async (entry: BoardEntry, choice: string) => {
     if (!shell || sending) return;
@@ -151,7 +204,7 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
   };
 
   return (
-    <aside ref={columnRef} data-abode-board="" aria-label="Board" className="hidden xl:flex">
+    <aside ref={columnRef} data-abode-board="" aria-label="Board">
       <div ref={avatarsRef} hidden>
         <HelperAvatar helper={helper} name={helperName} />
         <BossAvatar look={cast.look} photo={cast.photo} name={cast.bossName} />
@@ -189,7 +242,7 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
           <Lane kind="question" title="Needs you" count={board.needsYou.length}>
             {board.needsYou.map((entry) => (
               <div key={entry.key} data-abode-tile="">
-                <CardText entry={entry} />
+                <CardText entry={entry} onJump={jumpTo} />
                 {entry.card.options.length > 0 ? (
                   <div data-abode-answers="">
                     {entry.card.options.map((option, index) => (
@@ -213,7 +266,7 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
           <Lane kind="warning" title="Watch out" count={board.watchOut.length}>
             {board.watchOut.map((entry) => (
               <div key={entry.key} data-abode-tile="">
-                <CardText entry={entry} />
+                <CardText entry={entry} onJump={jumpTo} />
               </div>
             ))}
           </Lane>
@@ -226,7 +279,7 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
                 type="button"
                 data-abode-tile=""
                 data-abode-ticket=""
-                onClick={() => jumpTo(entry.messageId)}
+                onClick={() => jumpTo(entry.messageId, `${entry.ticket.id} ${entry.ticket.title}`)}
               >
                 <code>{entry.ticket.id}</code> {entry.ticket.title}
               </button>
@@ -237,7 +290,7 @@ function Board({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
           <Lane kind="done" title="Done" count={board.done.length}>
             {board.done.map((entry) => (
               <div key={entry.key} data-abode-tile="" data-abode-done="">
-                <CardText entry={entry} />
+                <CardText entry={entry} onJump={jumpTo} />
               </div>
             ))}
           </Lane>
@@ -270,10 +323,18 @@ function Lane(props: {
 }
 
 /** A card's title and first lines; the whole tile jumps back to its message. */
-function CardText({ entry }: { readonly entry: BoardEntry }) {
+function CardText(props: {
+  readonly entry: BoardEntry;
+  readonly onJump: (messageId: string, text: string) => void;
+}) {
+  const { entry } = props;
   const text = [entry.card.title, entry.card.body].filter(Boolean).join(" · ");
   return (
-    <button type="button" data-abode-card-text="" onClick={() => jumpTo(entry.messageId)}>
+    <button
+      type="button"
+      data-abode-card-text=""
+      onClick={() => props.onJump(entry.messageId, entry.card.body || entry.card.title || "")}
+    >
       {text.replace(/[*_`#>]/g, "").slice(0, 280)}
     </button>
   );

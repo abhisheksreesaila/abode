@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -96,6 +96,7 @@ async function photoDataUrl(file: File): Promise<string | null> {
 export function ChatSettingsSection() {
   const cast = useCastStore();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const setLook = (look: Partial<BossLook>) => cast.update({ look });
 
   return (
@@ -113,7 +114,9 @@ export function ChatSettingsSection() {
       />
       <SettingsRow
         title="You"
-        description="How you appear beside your messages. Build your Boss, or use a photo."
+        description={
+          photoError ?? "How you appear beside your messages. Build your Boss, or use a photo."
+        }
         control={
           <div className="flex items-center gap-3">
             <BossAvatar
@@ -130,7 +133,10 @@ export function ChatSettingsSection() {
               onChange={async (event) => {
                 const file = event.target.files?.[0];
                 event.target.value = "";
-                if (file) cast.update({ photo: await photoDataUrl(file) });
+                if (!file) return;
+                const photo = await photoDataUrl(file).catch(() => null);
+                setPhotoError(photo ? null : "That image couldn't be read. Try a JPG or PNG.");
+                if (photo) cast.update({ photo });
               }}
             />
             {cast.photo ? (

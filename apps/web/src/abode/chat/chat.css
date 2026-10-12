@@ -16,6 +16,14 @@ html[data-abode-chat] .abode-callout {
   border-radius: 0 6px 6px 0;
   background: color-mix(in srgb, var(--abode-kind) 9%, transparent);
 }
+/* GitHub's own alerts stay upstream's (its colors and labels); abode chat gives them the card shape. */
+html[data-abode-chat] .chat-markdown [role="note"]:not(.abode-callout) {
+  margin-block: 0.6rem;
+  padding: 0.55rem 0.8rem 0.6rem;
+  border-left-width: 3px;
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
 .abode-callout-question {
   --abode-kind: var(--info);
 }

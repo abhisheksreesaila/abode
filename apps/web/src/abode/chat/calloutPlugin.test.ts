@@ -34,16 +34,23 @@ describe("remarkAbodeCallouts", () => {
     });
   });
 
-  it("draws GitHub's alerts as abode cards too, before or after upstream lifts them", () => {
-    expect(run(quote(para("[!WARNING]\nx"))).data?.hProperties?.dataAlert).toBe("abode-warning");
+  it("leaves GitHub's alerts to upstream, as upstream's plugin hands them over", () => {
+    // The shape remarkGithubAlerts leaves behind: marker gone, data-alert set.
     const lifted = {
       type: "root",
       children: [
-        { type: "blockquote", data: { hProperties: { dataAlert: "note" } }, children: [] },
+        { type: "blockquote", data: { hProperties: { dataAlert: "note" } }, children: [para("x")] },
       ],
     };
     remarkAbodeCallouts()(lifted);
-    expect(lifted.children[0]!.data.hProperties.dataAlert).toBe("abode-info");
+    expect(lifted.children[0]!.data.hProperties.dataAlert).toBe("note");
+    expect(run(quote(para("[!WARNING]\nx"))).data).toBeUndefined();
+  });
+
+  it("takes a GitHub tag with a title, which GitHub itself would not render", () => {
+    expect(run(quote(para("[!WARNING] Slow query\nx"))).data?.hProperties?.dataAlert).toBe(
+      "abode-warning",
+    );
   });
 
   it("leaves plain quotes and unknown markers alone", () => {

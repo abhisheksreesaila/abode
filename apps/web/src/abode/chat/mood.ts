@@ -30,13 +30,13 @@ export function helperMood(input: {
   if (input.status === "input") {
     return { mark: "asking", headline: "has a question for you below", working };
   }
+  if (input.status === "failed" || input.status === "limited") {
+    return { mark: "worried", headline: "ran into a problem", working };
+  }
   if (input.agreedChoice !== null) {
     return { mark: "agreed", headline: `is on it: ${input.agreedChoice}`, working };
   }
   if (working) return { mark: null, headline: "is working", working };
-  if (input.status === "failed" || input.status === "limited") {
-    return { mark: "worried", headline: "ran into a problem", working };
-  }
   if (input.openQuestions > 0) {
     const what = input.openQuestions === 1 ? "a question" : plural(input.openQuestions, "question");
     return { mark: "asking", headline: `has ${what} for you`, working };

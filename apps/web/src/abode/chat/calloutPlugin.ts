@@ -1,11 +1,11 @@
 import { calloutKind, type CardKind } from "./cards";
 
 /**
- * Remark plugin for abode's callouts: lifts `[!QUESTION]`, `[!INFO]`, `[!TICKETS]`,
- * `[!DONE]` and GitHub's own NOTE/TIP/IMPORTANT/WARNING/CAUTION into
- * `data-alert="abode-<kind>"`, so every callout in a chat is drawn as an abode card by
- * upstream's blockquote renderer. It runs after upstream's GitHub-alert plugin and takes
- * over the markers that one leaves in place. A title may follow the marker on its line
+ * Remark plugin for abode's own callouts (`[!QUESTION]`, `[!INFO]`, `[!TICKETS]`,
+ * `[!DONE]`, …): lifts them into `data-alert="abode-<kind>"` the way upstream's
+ * GitHub-alert plugin lifts NOTE/TIP/IMPORTANT/WARNING/CAUTION, so upstream's blockquote
+ * renderer draws them. GitHub's five stay upstream's, so classic chat is unchanged; abode
+ * chat restyles them in chat.css. A title may follow the marker on its line
  * (`> [!DONE] Shipped`); it becomes a bold first line.
  */
 
@@ -16,6 +16,7 @@ interface MdNode {
   children?: MdNode[];
 }
 
+const GITHUB_TAGS = new Set(["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"]);
 const MARKER = /^\[!([A-Za-z]+)\][ \t]*([^\n]*)(?:\r?\n|$)/;
 
 export function abodeAlertValue(kind: CardKind): string {
@@ -24,13 +25,8 @@ export function abodeAlertValue(kind: CardKind): string {
 
 function readAbodeCallout(node: MdNode): void {
   if (node.type !== "blockquote") return;
-  // Already lifted by upstream's GitHub-alert plugin: relabel it as the abode kind.
-  const lifted = node.data?.hProperties?.dataAlert;
-  if (typeof lifted === "string") {
-    const kind = calloutKind(lifted);
-    if (kind) node.data!.hProperties!.dataAlert = abodeAlertValue(kind);
-    return;
-  }
+  // Already lifted by upstream's GitHub-alert plugin: that one stays upstream's.
+  if (node.data?.hProperties?.dataAlert !== undefined) return;
   const paragraph = node.children?.[0];
   const text = paragraph?.children?.[0];
   if (paragraph?.type !== "paragraph" || text?.type !== "text" || typeof text.value !== "string") {
@@ -40,7 +36,8 @@ function readAbodeCallout(node: MdNode): void {
   if (!match) return;
   const tag = match[1]!.toUpperCase();
   const kind = calloutKind(tag);
-  if (!kind) return;
+  // A bare GitHub marker is upstream's; with a title it is abode syntax (GitHub ignores it).
+  if (!kind || (GITHUB_TAGS.has(tag) && match[2] === "")) return;
 
   const title = match[2]!.trim();
   const remainder = text.value.slice(match[0].length);

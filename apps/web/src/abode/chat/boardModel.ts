@@ -32,6 +32,18 @@ export interface Board {
   readonly isEmpty: boolean;
 }
 
+// Turn items are immutable: an unchanged message keeps its object, so while one answer
+// streams only that one is parsed again.
+const cardCache = new WeakMap<object, Card[]>();
+function cardsOf(item: { readonly text: string }): Card[] {
+  let cards = cardCache.get(item);
+  if (cards === undefined) {
+    cards = parseCards(item.text);
+    cardCache.set(item, cards);
+  }
+  return cards;
+}
+
 function isAssistant(
   item: BoardSourceItem,
 ): item is Extract<BoardSourceItem, { type: "assistant_message" }> {
@@ -55,7 +67,7 @@ export function buildBoard(items: ReadonlyArray<BoardSourceItem>): Board {
       continue;
     }
     if (!isAssistant(item)) continue;
-    const cards = parseCards(item.text).map((card, cardIndex): BoardEntry => ({
+    const cards = cardsOf(item).map((card, cardIndex): BoardEntry => ({
       key: `${item.messageId}:${cardIndex}`,
       messageId: item.messageId,
       card,
