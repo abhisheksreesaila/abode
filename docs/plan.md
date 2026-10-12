@@ -141,7 +141,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-013: Tell the agents about cards
 
-- **Status:** todo
+- **Status:** blocked (Abhishek: say "install the card instructions" to run it on your real ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md; tested on scratch copies: idempotent, --remove restores)
 - **What:** `scripts/abode/chat/install-instructions.sh` appends a marked, idempotent block to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` explaining the five callouts (and removes it with `--remove`). Upstream has no custom-instructions setting, so this is the engine-free route.
 - **Acceptance:**
   - [ ] Running it twice changes nothing; `--remove` restores the files.
