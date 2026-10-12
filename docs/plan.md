@@ -98,3 +98,51 @@ read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs m
 
 - **Status:** blocked (Abhishek: look at abode-next in the app, then say "switch the host". Also check the T3 Code phone app is a version that speaks orchestration protocol 2.)
 - **What:** point `scripts/abode/host.sh update` at `abode-next` (later, make `abode-next` the new `main`). The old V1 release stays as the rollback.
+
+## Phase B: the abode chat (brief: docs/briefs/chat-revamp.md, mockups: design/chat-revamp.html)
+
+Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitHub-alert rendering (two lines in `ChatMarkdown.tsx`); the board is one line after the chat column in `ChatView.tsx`; avatars are pure CSS on the timeline's existing `data-message-role` attributes; settings reuse the voice-settings hook line; answers use upstream's `startTurn` command. Everything else lives in `apps/web/src/abode/chat/`.
+
+### A-009: Cards in the chat
+
+- **Status:** doing
+- **What:** `> [!QUESTION]`, `> [!WARNING]`, `> [!INFO]`, `> [!TICKETS]`, `> [!DONE]` (plus GitHub's NOTE/TIP/IMPORTANT/CAUTION) render as colored cards with an icon and label, and agent text gets the calmer reading style. Parser for the board: `abode/chat/cards.ts` (tags first, guesses for untagged answers).
+- **Acceptance:**
+  - [ ] All five abode kinds render as cards in Amber, Azure and Omarchy; upstream's own alerts still render.
+  - [ ] Streaming still parses incrementally (no `extraRemarkPlugins`).
+  - [ ] Parser tests cover tags, options, tickets, code fences and guesses.
+
+### A-010: The board column
+
+- **Status:** todo
+- **Depends on:** A-009
+- **What:** on wide windows a column right of the chat: a header with the helper, then lanes Needs you (open questions from the latest answer, plus upstream's pending approvals/inputs linking to the composer), Watch out, Tickets, Done. Question options are buttons that send the choice as a user message (`startTurn`) and turn into a "👍 choice · on it" chip with "change". Each item jumps to its message. Hidden on narrow windows and when abode chat is off.
+- **Acceptance:**
+  - [ ] Lane building and "is this question still open" are pure and tested.
+  - [ ] An answer button sends one user message to the thread; the chip appears; nothing is sent twice.
+  - [ ] Works on a thread handed off from Claude to Codex.
+
+### A-011: The cast with moods and activity poses
+
+- **Status:** todo
+- **Depends on:** A-010
+- **What:** Sunny (Claude) / Pip (Codex) avatars beside assistant messages and the Boss beside the user's, via CSS. The board header shows the helper's mood (asking, worried, working, done, idle, agreed) and an activity pose from the latest work item (typing for file changes, terminal for commands, magnifier for search, thought bubble for reasoning). One ~0.5s motion per new work item, no loops, off under reduced motion.
+- **Acceptance:**
+  - [ ] Mood and pose are pure functions with tests.
+  - [ ] No CSS animation runs while the agent is idle (checked in the browser).
+
+### A-012: Settings: abode chat switch, Boss builder, names
+
+- **Status:** todo
+- **What:** in Settings › General next to Voice: an "abode chat" switch (Classic = upstream's chat untouched), the Boss builder (face, top, brows, eyes, scarf, or a photo) and names for the Boss, the Claude helper and the Codex helper. Saved per browser.
+- **Acceptance:**
+  - [ ] Turning abode chat off removes the board, cards styling and avatars.
+  - [ ] Settings survive reload; junk in storage falls back to defaults (tested).
+
+### A-013: Tell the agents about cards
+
+- **Status:** todo
+- **What:** `scripts/abode/chat/install-instructions.sh` appends a marked, idempotent block to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` explaining the five callouts (and removes it with `--remove`). Upstream has no custom-instructions setting, so this is the engine-free route.
+- **Acceptance:**
+  - [ ] Running it twice changes nothing; `--remove` restores the files.
+  - [ ] Abhishek agrees before it touches his global files.
