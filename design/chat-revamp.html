@@ -873,6 +873,229 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+  /* Activity poses: one short motion per agent event, then a still pose. */
+  .acts {
+    margin-top: 16px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .acts h3 {
+    margin: 0 0 4px;
+  }
+  .acts > p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 70ch;
+  }
+  .actgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .act {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .act svg {
+    width: 110px;
+    height: 110px;
+    display: block;
+    margin: 0 auto 4px;
+    overflow: visible;
+  }
+  .act b {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .act .ev {
+    font: 11px var(--mono);
+    color: var(--accent);
+    min-height: 1.4em;
+  }
+  .acts .bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .hand,
+  .brush,
+  .glasses,
+  .tline,
+  .bubble-dot,
+  .lens {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .act.go .hand.l {
+    animation: tapL 0.5s steps(4) 1;
+  }
+  .act.go .hand.r {
+    animation: tapR 0.5s steps(4) 1;
+  }
+  .act.go .tline {
+    animation: line 0.6s steps(3) 1 both;
+  }
+  .act.go .brush {
+    animation: paint 0.7s ease-in-out 1;
+    transform-origin: 0% 100%;
+  }
+  .act.go .glasses {
+    animation: specs 0.6s ease-out 1 both;
+  }
+  .act.go .lens {
+    animation: scan 0.7s ease-in-out 1;
+  }
+  .act.go .bubble-dot {
+    animation: pop 0.6s steps(3) 1 both;
+  }
+  .act.go .bubble-dot:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .act.go .bubble-dot:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  @keyframes tapL {
+    0%,
+    50%,
+    100% {
+      transform: translateY(0);
+    }
+    25%,
+    75% {
+      transform: translateY(-4px);
+    }
+  }
+  @keyframes tapR {
+    0%,
+    50%,
+    100% {
+      transform: translateY(-4px);
+    }
+    25%,
+    75% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes line {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes paint {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    35% {
+      transform: rotate(-22deg);
+    }
+    70% {
+      transform: rotate(14deg);
+    }
+  }
+  @keyframes specs {
+    from {
+      transform: translateY(-14px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes scan {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(-16px);
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0.2;
+      transform: scale(0.6);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .agreed {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 5px 12px 5px 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--done) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--done) 45%, transparent);
+    color: var(--done);
+    font: 600 13px var(--sans);
+  }
+  .agreed svg {
+    width: 22px;
+    height: 22px;
+  }
+  .agreed {
+    animation: agree 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) 1 both;
+  }
+  #heroAv.cheer {
+    animation: hop 0.5s ease-out 1;
+  }
+  @keyframes agree {
+    from {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes hop {
+    0%,
+    100% {
+      transform: none;
+    }
+    40% {
+      transform: translateY(-8px);
+    }
+  }
+  .undo {
+    background: none;
+    border: 0;
+    color: var(--muted);
+    font: 12px var(--sans);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .agreed,
+    #heroAv.cheer {
+      animation: none !important;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .act.go * {
+      animation: none !important;
+    }
+  }
 </style>
 
 <!-- Characters: original abode helpers (not any studio's characters). -->
@@ -1052,6 +1275,14 @@
       stroke-width="3.5"
       fill="none"
       stroke-linecap="round"
+    />
+  </symbol>
+  <!-- Thumbs up: shown once you answer, the helper's "got it". -->
+  <symbol id="m-ok" viewBox="0 0 100 100">
+    <circle cx="82" cy="20" r="17" fill="#8ee6a0" />
+    <path
+      d="M74 22 h5 v12 h-5z M80 34 h10 q4 0 4 -4 l2 -8 q1 -4 -3 -4 h-6 l1 -6 q0 -5 -4 -5 l-4 9 z"
+      fill="#0e2614"
     />
   </symbol>
   <symbol id="m-z" viewBox="0 0 100 100">
@@ -1349,11 +1580,11 @@
     </aside>
     <div class="main">
       <div class="hero">
-        <svg class="av lg">
+        <svg class="av lg" id="heroAv">
           <use href="#sunny" />
-          <use href="#m-q" />
+          <use href="#m-q" id="heroMood" />
         </svg>
-        <div class="say">
+        <div class="say" id="heroSay">
           Sunny is waiting on <b>1 question</b> from you. 4 tickets are open, 1 warning since
           yesterday.
         </div>
@@ -1511,6 +1742,140 @@
       <svg><use href="#boss" /></svg>
       <h3>The Boss</h3>
       <p>You. Build your own below, or use a photo.</p>
+    </div>
+  </div>
+  <div class="acts">
+    <h3>What the helper is doing</h3>
+    <p>
+      Each pose matches a real agent activity. The helper moves once per event (a file edit, a
+      command, a search), about half a second, then holds still. Nothing loops, so an idle or stuck
+      agent looks still. Press Play to replay a burst of events.
+    </p>
+    <div class="bar">
+      <button class="pick" id="playActs" type="button">▶ Play a burst of activity</button>
+    </div>
+    <div class="actgrid">
+      <div class="act" data-ev="edit src/engine/sort.ts">
+        <svg viewBox="0 0 120 120">
+          <use href="#sunny" x="10" y="0" width="100" height="100" />
+          <rect x="28" y="84" width="64" height="30" rx="3" fill="#3a3f47" />
+          <rect x="32" y="88" width="56" height="20" rx="2" fill="#5fd4c4" opacity=".35" />
+          <rect x="20" y="112" width="80" height="5" rx="2" fill="#2a2e34" />
+          <ellipse class="hand l" cx="42" cy="110" rx="7" ry="5" fill="#f2b320" />
+          <ellipse class="hand r" cx="78" cy="110" rx="7" ry="5" fill="#f2b320" />
+        </svg>
+        <b>Developer · typing</b><span class="ev"></span>
+      </div>
+      <div class="act" data-ev="$ pnpm test sort">
+        <svg viewBox="0 0 120 120">
+          <use href="#pip" x="10" y="0" width="100" height="100" />
+          <rect x="18" y="74" width="84" height="42" rx="4" fill="#111" />
+          <text x="24" y="88" font-family="JetBrains Mono, monospace" font-size="8" fill="#8ee6a0">
+            $ test
+          </text>
+          <text
+            class="tline"
+            x="24"
+            y="99"
+            font-family="JetBrains Mono, monospace"
+            font-size="8"
+            fill="#cfc7bb"
+          >
+            ✓ 12 passed
+          </text>
+          <rect class="tline" x="24" y="104" width="5" height="7" fill="#f59e0b" />
+        </svg>
+        <b>Running a command</b><span class="ev"></span>
+      </div>
+      <div class="act" data-ev="read docs/plan.md">
+        <svg viewBox="0 0 120 120">
+          <use href="#sunny" x="10" y="0" width="100" height="100" />
+          <g class="glasses">
+            <circle
+              cx="48"
+              cy="54"
+              r="10"
+              fill="rgba(160,200,255,.25)"
+              stroke="#2a2a2a"
+              stroke-width="3"
+            />
+            <circle
+              cx="72"
+              cy="54"
+              r="10"
+              fill="rgba(160,200,255,.25)"
+              stroke="#2a2a2a"
+              stroke-width="3"
+            />
+            <path d="M58 54 h4" stroke="#2a2a2a" stroke-width="3" />
+          </g>
+          <rect
+            x="70"
+            y="80"
+            width="34"
+            height="34"
+            rx="2"
+            fill="#e7e1d8"
+            transform="rotate(8 87 97)"
+          />
+          <path
+            d="M76 90 h20 M76 96 h22 M76 102 h16"
+            stroke="#a8a29e"
+            stroke-width="2"
+            transform="rotate(8 87 97)"
+          />
+        </svg>
+        <b>Reviewer · glasses on</b><span class="ev"></span>
+      </div>
+      <div class="act" data-ev="grep 'Q21' bench/">
+        <svg viewBox="0 0 120 120">
+          <use href="#pip" x="10" y="0" width="100" height="100" />
+          <g class="lens">
+            <circle
+              cx="84"
+              cy="88"
+              r="12"
+              fill="rgba(160,220,255,.25)"
+              stroke="#c9a227"
+              stroke-width="4"
+            />
+            <path d="M93 97 l12 12" stroke="#7a5a12" stroke-width="6" stroke-linecap="round" />
+          </g>
+        </svg>
+        <b>Searching</b><span class="ev"></span>
+      </div>
+      <div class="act" data-ev="design chat board v2">
+        <svg viewBox="0 0 120 120">
+          <use href="#sunny" x="10" y="0" width="100" height="100" />
+          <ellipse cx="28" cy="98" rx="18" ry="12" fill="#d9a074" />
+          <circle cx="20" cy="95" r="3.5" fill="#fb7a5a" />
+          <circle cx="29" cy="91" r="3.5" fill="#7cb7ff" />
+          <circle cx="37" cy="97" r="3.5" fill="#8ee6a0" />
+          <g class="brush">
+            <rect x="88" y="64" width="5" height="40" rx="2" fill="#8a5a2b" />
+            <path d="M87 60 q3 -10 7 0z" fill="#c4a8ff" />
+          </g>
+        </svg>
+        <b>Designer · painting</b><span class="ev"></span>
+      </div>
+      <div class="act" data-ev="thinking…">
+        <svg viewBox="0 0 120 120">
+          <use href="#pip" x="10" y="0" width="100" height="100" />
+          <g>
+            <circle class="bubble-dot" cx="88" cy="22" r="4" fill="#cfc7bb" />
+            <circle class="bubble-dot" cx="98" cy="12" r="6" fill="#cfc7bb" />
+            <circle class="bubble-dot" cx="112" cy="0" r="9" fill="#cfc7bb" />
+          </g>
+        </svg>
+        <b>Thinking</b><span class="ev"></span>
+      </div>
+      <div class="act" data-ev="you said: Go now">
+        <svg viewBox="0 0 120 120">
+          <use href="#sunny" x="10" y="0" width="100" height="100" />
+          <use href="#m-ok" x="10" y="0" width="100" height="100" />
+        </svg>
+        <b>You agreed · thumbs up</b><span class="ev"></span>
+      </div>
     </div>
   </div>
   <div class="builder" id="builder">
@@ -1673,6 +2038,57 @@
     renderBoss();
   });
   renderBoss();
+
+  // Answering a question: the buttons become a "thumbs up" chip, the helper hops once and its mood flips to done.
+  document.querySelectorAll(".answers").forEach((group) => {
+    group.querySelectorAll("button").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        if (btn.textContent.startsWith("📌") || btn.textContent.startsWith("Start")) return;
+        const chip = document.createElement("div");
+        chip.innerHTML =
+          '<span class="agreed"><svg viewBox="62 0 40 40"><use href="#m-ok"/></svg>' +
+          btn.textContent +
+          ' · on it</span><button class="undo" type="button">change</button>';
+        group.hidden = true;
+        group.after(chip);
+        chip.querySelector(".undo").addEventListener("click", () => {
+          chip.remove();
+          group.hidden = false;
+          setHero(false);
+        });
+        if (group.closest('[data-board="c"]')) setHero(true, btn.textContent);
+      }),
+    );
+  });
+  function setHero(agreed, choice) {
+    const mood = document.getElementById("heroMood"),
+      av = document.getElementById("heroAv"),
+      say = document.getElementById("heroSay");
+    mood.setAttribute("href", agreed ? "#m-ok" : "#m-q");
+    say.innerHTML = agreed
+      ? "Got it, Boss: <b>" +
+        choice +
+        "</b>. Sunny is back to work. 4 tickets are open, 1 warning since yesterday."
+      : "Sunny is waiting on <b>1 question</b> from you. 4 tickets are open, 1 warning since yesterday.";
+    av.classList.remove("cheer");
+    void av.getBoundingClientRect();
+    if (agreed) av.classList.add("cheer");
+  }
+
+  // One short motion per event; a burst is a few events, then stillness.
+  function pulse(act) {
+    act.classList.remove("go");
+    void act.getBoundingClientRect();
+    act.classList.add("go");
+    act.querySelector(".ev").textContent = act.dataset.ev;
+  }
+  const acts = [...document.querySelectorAll(".act")];
+  acts.forEach((act) => act.addEventListener("click", () => pulse(act)));
+  document.getElementById("playActs").addEventListener("click", () => {
+    acts.forEach((act, i) =>
+      [0, 900, 1800].forEach((t) => setTimeout(() => pulse(act), t + i * 120)),
+    );
+  });
 
   const tabs = document.querySelectorAll('[role="tab"]');
   const boards = document.querySelectorAll("[data-board]");

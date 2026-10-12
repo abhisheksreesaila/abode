@@ -23,6 +23,8 @@ Status: approved (2026-10-11, "experiment is the name of the game")
   2. **A pleasant reading style** for all agent text: proportional font, comfortable line length and spacing, softer contrast, nicer headings, lists and tables. Code stays monospace.
   3. **Two columns on desktop** (mockup C): the readable chat on the left; on the right a board that collects every card from the thread into lanes (Needs you, Watch out, Tickets, Done), with answer buttons on questions and a jump back to the message. On a narrow window the board is a tab.
   4. **The cast with moods:** original Pixar-style helpers, Sunny (Claude) and Pip (Codex), whose face shows the mood (asking, worried, working, done, idle) at the top of the board and next to each turn. I'm the Boss: built from parts (face, hat/crown/hair, brows, eyes/glasses, scarf color) or a photo, with my own name; helpers can be renamed. Off-switch in Settings.
+  5. **Activity poses:** the helper's pose follows what the agent is doing (typing for file edits, a terminal for commands, glasses and a magnifier for reading and search, painting for a designer subagent, glasses and clipboard for a reviewer, a thought bubble for thinking). One short motion per real event, then still; nothing loops.
+  6. **Thumbs up on answers:** answering a question from the board turns its buttons into a "👍 your choice · on it" chip (with "change"), and the helper hops once into a done/happy mood.
 - **Not doing:** pins and flags (sessions end and context fills, so a pin in a dead thread is never reopened; the board collects what matters automatically); rewriting upstream's timeline (virtualization, tool calls, diffs stay upstream's); a model that classifies messages; Minion/Gru images or names; changing what the agent sends over the wire; mobile.
 
 ## How it should look and feel
@@ -41,7 +43,7 @@ Status: approved (2026-10-11, "experiment is the name of the game")
 ## Constraints and risks
 
 - **Merge safety:** `MessagesTimeline.tsx` is 5,900 upstream lines. Cards and reading style go through one small hook into upstream's `ChatMarkdown` (custom blockquote/callout renderer) plus CSS; pins through one hook on the message actions. Must stay inside the 400-line hook budget (326 used).
-- **Performance:** no animations that repaint; avatars are static images, a few KB each.
+- **Performance:** no looping animations (upstream rule: they peg the GPU). Motion is one-shot per agent event (~0.5s), paused in hidden windows and off under "reduce motion"; characters are inline SVG, a few KB.
 - **Riskiest assumption:** the new layout is actually easier than the stream. Cheapest test: mockups of real threads first, then ship behind a Settings switch (Classic / abode chat) so it can be compared and turned off.
 
 ## Decisions and trade-offs
