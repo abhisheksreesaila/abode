@@ -24,6 +24,19 @@ describe("projectParentLabel", () => {
     expect(projectParentLabel("/srv")).toBe("/");
   });
 
+  it("reads WSL network paths as the Linux home", () => {
+    expect(projectParentLabel("\\\\wsl.localhost\\Ubuntu\\home\\me\\x")).toBe("~");
+    expect(projectParentLabel("\\\\wsl$\\Ubuntu\\home\\me\\code\\x")).toBe("~/code");
+  });
+
+  it("matches Windows home folders in any case", () => {
+    expect(projectParentLabel("c:\\users\\me\\code\\x")).toBe("~/code");
+  });
+
+  it("shows nothing for a project that is the home folder itself", () => {
+    expect(projectParentLabel("/home/me")).toBe("");
+  });
+
   it("is empty for an empty root", () => {
     expect(projectParentLabel("")).toBe("");
   });

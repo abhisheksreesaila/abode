@@ -81,12 +81,17 @@ html:not(.dark)[data-theme-id="abode-azure"] {
   border-radius: 9999px;
   background: var(--card);
   color: var(--foreground);
-  font-size: 0.6em;
+  font-size: 0.8125rem;
   line-height: 1.4;
-  vertical-align: 0.25em;
   text-decoration-line: none;
 }
-[data-draft-project-trigger]:hover {
+/* In the headline the chip scales with it and sits on the text's middle. */
+h1 [data-draft-project-trigger] {
+  font-size: 0.6em;
+  vertical-align: 0.25em;
+}
+[data-draft-project-trigger]:hover,
+[data-draft-project-trigger][data-popup-open] {
   border-color: color-mix(in srgb, var(--foreground) 25%, var(--border));
 }
 [data-abode-chip-icon] {
