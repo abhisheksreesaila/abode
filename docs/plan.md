@@ -204,7 +204,7 @@ The card sits above the composer (where questions already open) and shows the th
 
 ### A-020: The calm card
 
-- **Status:** todo
+- **Status:** review
 - **Depends on:** A-018 for names (without it every subagent is 🤖 helper)
 - **What:** above the composer while a thread has a task list or subagents in its latest run: "Tickets 4 of 5" from the agent's task list, then one row per subagent type: emoji, type, finished of started, ✓ when all are done. A bright orange "Needs you" while an approval or question waits. Static: no animation. Only in Calm.
 - **Acceptance:**

@@ -1,0 +1,93 @@
+/*
+ * The calm card (docs/design/calm-mode.md, option A). Theme tokens only; the orange is
+ * shell.css's --abode-needs-you. Nothing here animates.
+ */
+[data-abode-calm-card] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 14px;
+}
+[data-abode-calm-card][data-needs-you="true"] {
+  padding-top: 0;
+  border: 2px solid var(--abode-needs-you);
+  overflow: hidden;
+}
+[data-abode-calm-alert] {
+  margin: 0 -16px;
+  padding: 7px 16px;
+  background: var(--abode-needs-you);
+  color: var(--abode-needs-you-foreground);
+  font-size: 13px;
+  font-weight: 700;
+}
+[data-abode-calm-tickets] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+[data-abode-calm-label] {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+[data-abode-calm-count] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+[data-abode-calm-tickets] [data-abode-calm-count] {
+  font-weight: 600;
+}
+[data-abode-calm-bar] {
+  display: flex;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+[data-abode-calm-bar] > span {
+  border-radius: 2px;
+  background: var(--primary);
+}
+[data-abode-calm-bar][data-done="true"] > span {
+  background: var(--success);
+}
+[data-abode-calm-check] {
+  color: var(--success);
+  font-weight: 700;
+}
+[data-abode-calm-agents] {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto 20px;
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+[data-abode-calm-agents] > li:not([data-abode-calm-more]) {
+  display: contents;
+}
+[data-abode-calm-agents] [data-abode-calm-name] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-abode-calm-agents] [data-abode-calm-count] {
+  color: var(--muted-foreground);
+  text-align: right;
+}
+[data-abode-calm-more] {
+  grid-column: 2 / -1;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}

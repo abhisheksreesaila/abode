@@ -623,6 +623,7 @@ const EMPTY_PROVIDER_MODELS: ServerProvider["models"] = [];
 const EMPTY_USAGE_LIMIT_SOURCES: UsageLimitSourceSnapshots = [];
 import type { CodexArtifactTemplate } from "@t3tools/shared/codexArtifactTemplates";
 import { ChatAvatars } from "~/abode/chat/ChatAvatars"; // abode: message avatars
+import { CalmCard } from "~/abode/calm/CalmCard"; // abode: calm card
 
 const TIMELINE_SCROLL_CANCEL_SENTINEL = Object.freeze({});
 const EMPTY_FEEDBACK_SUBMISSIONS: ReadonlyArray<CodexFeedbackSubmission> = [];
@@ -11730,6 +11731,8 @@ export default function ChatView(props: ChatViewProps) {
                       </div>
                     </div>
                   ) : null}
+                  <CalmCard threadRef={isServerThread ? activeThreadRef : null} />{" "}
+                  {/* abode: calm card */}
                   <div
                     ref={draftHeroTransition.composerAnchorRef}
                     className="relative z-10"
