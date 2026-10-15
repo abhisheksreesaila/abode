@@ -277,3 +277,18 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 - **Acceptance:**
   - [ ] No activity bar on any route; home, search and settings reachable from the sidebar header; a collapsed sidebar can be reopened without the keyboard.
   - [ ] `hook-report.sh` total goes down, and no new upstream lines.
+
+### A-029: Voice on the host: Nemotron streaming
+
+- **Status:** todo
+- **What:** Abhishek wants VS Code's dictation. VS Code runs NVIDIA Nemotron 3.5 ASR streaming natively on the machine; the spike (`docs/research/voice-nemotron.md`) shows it from Node via `sherpa-onnx-node` (Apache-2.0): 5.4% WER (Moonshine 6.7%), 3.3% on 3-minute prompts, final text 0.13 s after you stop, RTF about 0.12 on 4 CPU threads. Do the same through the abode server:
+  - **Server** (`apps/server/src/abode/`): a voice service running Nemotron 3.5 560 ms int8 (k2-fsa's sherpa build, OpenMDW-1.1) in a worker thread with 4 threads. The model (about 453 MB) downloads on first use into T3 home with its checksum pinned, reporting progress; nothing loads until someone dictates, and it unloads after a few idle minutes.
+  - **Wire:** mic audio streams as 16 kHz PCM from the client to the host while you talk; the final text returns when you stop. Add-only `abode*` contracts and RPCs, an existing permission scope, bounded buffers and session counts.
+  - **Client** (`apps/web/src/abode/voice/`): use the host when it has voice, and Moonshine in the browser (A-024) when not. Same mic button, hold-to-talk key, listening bars, Esc and Enter. Settings › Voice shows which engine is active and the host model's download state.
+- **Acceptance:**
+  - [ ] Service and session logic tested with a fake recognizer; one real-model test runs when the model is present and is skipped otherwise.
+  - [ ] Final text arrives within about 1 s of stopping for a 2-minute recording on this machine (measured, not assumed).
+  - [ ] Falls back to Moonshine when the host has no voice; works from a remote browser, since the audio goes to the host.
+  - [ ] `hook-report.sh` stays under 400, and `vp build` passes the license check.
+  - [ ] security-auditor passes it (audio upload path, model download).
+  - [ ] Abhishek dictates a real prompt.
