@@ -7,9 +7,12 @@ import {
   type RecordingEvent,
   type RecordingState,
 } from "./recordingMachine";
+import { textFromHostOrBrowser, type HostDictation } from "./hostDictation";
+import { pickVoiceEngine } from "./hostVoiceStatus";
 import { isShortcutRelease, matchesVoiceShortcut } from "./shortcut";
 import { SPEECH_SAMPLE_RATE } from "./pcmBuffer";
 import { transcribe, warmTranscriber } from "./transcriberClient";
+import { useHostVoice } from "./useHostVoice";
 
 /** Shorter than this is an accidental tap, not speech. */
 const MIN_SAMPLES = SPEECH_SAMPLE_RATE * 0.3;
@@ -32,8 +35,11 @@ export interface VoiceDictation {
 }
 
 /**
- * Drives dictation: mic capture -> worker transcription -> `onTranscript`. The hold-to-talk
- * key is handled on `window` so it works wherever focus is in the app.
+ * Drives dictation: mic capture -> transcription -> `onTranscript`. Transcription happens on the
+ * host (Nemotron, audio streamed while you talk) when it has a ready model, and otherwise in a
+ * browser worker (Moonshine); a host that fails mid-dictation falls back to the browser with the
+ * audio recorded meanwhile. The hold-to-talk key is handled on `window` so it works wherever
+ * focus is in the app.
  */
 export function useVoiceDictation(input: {
   enabled: boolean;
@@ -51,6 +57,9 @@ export function useVoiceDictation(input: {
   const recorderRef = useRef<ActiveRecording | null>(null);
   const tokenRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  const hostVoice = useHostVoice();
+  const hostVoiceRef = useRef(hostVoice);
+  const dictationRef = useRef<HostDictation | null>(null);
   const ownerRef = useRef(Symbol("voice-dictation"));
   const onTranscriptRef = useRef(input.onTranscript);
   const { onTranscript } = input;
@@ -58,7 +67,8 @@ export function useVoiceDictation(input: {
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
     canStartRef.current = canStart;
-  }, [onTranscript, canStart]);
+    hostVoiceRef.current = hostVoice;
+  }, [onTranscript, canStart, hostVoice]);
 
   const send = useCallback((event: RecordingEvent) => {
     const transition = reduceRecording(stateRef.current, event);
@@ -67,6 +77,8 @@ export function useVoiceDictation(input: {
     if (transition.discardAudio) {
       recorderRef.current?.discard();
       recorderRef.current = null;
+      dictationRef.current?.cancel();
+      dictationRef.current = null;
       tokenRef.current += 1;
       // Stops the worker before its next segment, so a new dictation does not wait behind it.
       abortRef.current?.abort();
@@ -87,35 +99,46 @@ export function useVoiceDictation(input: {
 
   const runTranscription = useCallback(
     async (recorder: ActiveRecording, token: number) => {
+      const dictation = dictationRef.current;
       let audio: Float32Array;
       try {
         audio = await recorder.finish();
       } catch {
         // Empty or very short audio cannot be decoded; that is "heard nothing", not a model fault.
+        dictation?.cancel();
         if (token === tokenRef.current) send({ type: "transcribed", text: "" });
         return;
       }
       if (token !== tokenRef.current) return;
+      if (audio.length < MIN_SAMPLES) {
+        dictation?.cancel();
+        send({ type: "transcribed", text: "" });
+        return;
+      }
       try {
-        if (audio.length < MIN_SAMPLES) {
-          send({ type: "transcribed", text: "" });
-          return;
-        }
         const controller = new AbortController();
-        abortRef.current = controller;
-        const text = await transcribe(
-          audio,
-          (fraction) => {
-            if (token === tokenRef.current) send({ type: "progress", fraction });
+        // The host's text when it delivers it; otherwise the recording goes to the browser model.
+        const text = await textFromHostOrBrowser(
+          dictation,
+          async () => {
+            abortRef.current = controller;
+            return transcribe(
+              audio,
+              (fraction) => {
+                if (token === tokenRef.current) send({ type: "progress", fraction });
+              },
+              {
+                signal: controller.signal,
+                onSegment: (current, total) => {
+                  if (token === tokenRef.current) send({ type: "segment", current, total });
+                },
+              },
+            );
           },
-          {
-            signal: controller.signal,
-            onSegment: (current, total) => {
-              if (token === tokenRef.current) send({ type: "segment", current, total });
-            },
-          },
+          () => token === tokenRef.current,
         );
         if (abortRef.current === controller) abortRef.current = null;
+        if (dictationRef.current === dictation) dictationRef.current = null;
         if (token === tokenRef.current) send({ type: "transcribed", text });
       } catch {
         if (token === tokenRef.current)
@@ -133,13 +156,21 @@ export function useVoiceDictation(input: {
     activeOwner = ownerRef.current;
     send({ type: "start" });
     const token = ++tokenRef.current;
-    // Load the model while the user talks, so transcription after release is quick.
-    void warmTranscriber((fraction) => {
-      if (token === tokenRef.current) send({ type: "progress", fraction });
-    }).then(() => {
-      if (token === tokenRef.current) send({ type: "warmed" });
-    });
-    startRecording().then(
+    const host = hostVoiceRef.current;
+    const dictation = pickVoiceEngine(host.status) === "host" ? host.begin() : null;
+    dictationRef.current = dictation;
+    if (dictation === null) {
+      // A host that has voice but no model yet starts fetching it now, for the next dictation.
+      if (host.status?.model === "missing") void host.prepare();
+      else void host.refresh();
+      // Load the model while the user talks, so transcription after release is quick.
+      void warmTranscriber((fraction) => {
+        if (token === tokenRef.current) send({ type: "progress", fraction });
+      }).then(() => {
+        if (token === tokenRef.current) send({ type: "warmed" });
+      });
+    }
+    startRecording({ onSamples: (samples) => dictation?.push(samples) }).then(
       (recorder) => {
         if (token !== tokenRef.current) {
           recorder.discard();

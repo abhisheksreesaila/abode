@@ -4,8 +4,11 @@ import { Button } from "../../components/ui/button";
 import { Switch } from "../../components/ui/switch";
 import { SettingsRow, SettingsSection } from "../../components/settings/settingsLayout";
 import { DEFAULT_VOICE_SHORTCUT, voiceShortcutLabel } from "./shortcut";
+import { describeHostModel, describeVoiceEngine, pickVoiceEngine } from "./hostVoiceStatus";
 import { captureVoiceShortcut, findVoiceShortcutConflict } from "./shortcutCapture";
 import { resetTranscriber } from "./transcriberClient";
+import { usePrimaryEnvironmentId, useEnvironment } from "../../state/environments";
+import { useHostVoice } from "./useHostVoice";
 import { deleteVoiceModelFiles, formatModelSize, readVoiceModelBytes } from "./voiceModel";
 import { useVoiceSettings } from "./voiceSettings";
 
@@ -93,7 +96,7 @@ function ModelRow() {
 
   return (
     <SettingsRow
-      title="Speech model"
+      title="Browser speech model"
       description={
         bytes === undefined
           ? "Checking…"
@@ -115,14 +118,49 @@ function ModelRow() {
   );
 }
 
-/** Voice dictation preferences: on/off, hold-to-talk key and the downloaded model. */
+/** Which engine dictation uses right now, and the state of the model on the host. */
+function HostVoiceRows() {
+  const host = useHostVoice();
+  const engine = pickVoiceEngine(host.status);
+  const hostModel = describeHostModel(host.status);
+  const hostLabel = useEnvironment(usePrimaryEnvironmentId())?.label;
+  return (
+    <>
+      <SettingsRow
+        title="Speech engine"
+        description={
+          !host.known
+            ? "Checking…"
+            : engine === "host" && hostLabel
+              ? `${describeVoiceEngine(engine)}. Dictation runs on ${hostLabel}.`
+              : describeVoiceEngine(engine)
+        }
+      />
+      {host.known && host.status !== null ? (
+        <SettingsRow
+          title="Host speech model"
+          description={hostModel.description}
+          control={
+            hostModel.action ? (
+              <Button size="xs" variant="outline" onClick={() => void host.prepare()}>
+                {hostModel.action === "download" ? "Download" : "Retry"}
+              </Button>
+            ) : null
+          }
+        />
+      ) : null}
+    </>
+  );
+}
+
+/** Voice dictation preferences: on/off, hold-to-talk key, the engine and its models. */
 export function VoiceSettingsSection() {
   const { settings, update } = useVoiceSettings();
   return (
     <SettingsSection id="voice" title="Voice">
       <SettingsRow
         title="Voice dictation"
-        description="Hold the key or tap the mic in the composer and speak. Transcribed on this device; nothing is sent until you press Enter."
+        description="Hold the key or tap the mic in the composer and speak. Transcribed on the computer running abode, or in this browser when that is not available. Nothing is sent until you press Enter."
         control={
           <Switch
             checked={settings.enabled}
@@ -136,6 +174,7 @@ export function VoiceSettingsSection() {
         description="Hold to record, release to transcribe. Esc cancels."
         control={<ShortcutRecorder />}
       />
+      <HostVoiceRows />
       <ModelRow />
     </SettingsSection>
   );

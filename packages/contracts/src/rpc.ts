@@ -377,6 +377,7 @@ import {
   CustomizationsWriteFileInput,
   CustomizationsWriteFileResult,
 } from "./abodeCustomizations.ts";
+import { WsVoiceRpc } from "./abodeVoice.ts"; // abode: voice
 import { Project, ProjectMutation, ProjectMutationError } from "./project.ts";
 
 export const WS_METHODS = {
@@ -396,6 +397,7 @@ export const WS_METHODS = {
   customizationsList: "customizations.list",
   customizationsReadFile: "customizations.readFile",
   customizationsWriteFile: "customizations.writeFile",
+  voice: "voice.session", // abode: voice
 
   // Shell methods
   shellOpenInEditor: "shell.openInEditor",
@@ -2024,6 +2026,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsCustomizationsListRpc, // abode:
   WsCustomizationsReadFileRpc, // abode:
   WsCustomizationsWriteFileRpc, // abode:
+  WsVoiceRpc, // abode: voice
   WsShellOpenInEditorRpc,
   WsFilesystemBrowseRpc,
   WsFilesystemGetMetadataRpc,
