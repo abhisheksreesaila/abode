@@ -32,7 +32,12 @@ export function describeMicrophoneError(error: unknown): string {
   return "Couldn't start the microphone.";
 }
 
-export async function startRecording(): Promise<ActiveRecording> {
+export interface RecordingOptions {
+  /** Called with each 16 kHz chunk as it is captured (and with the tail when `finish` runs). */
+  onSamples?: (samples: Float32Array) => void;
+}
+
+export async function startRecording(options: RecordingOptions = {}): Promise<ActiveRecording> {
   // Browsers hide mediaDevices on insecure origins (plain http that is not localhost).
   if (!navigator.mediaDevices?.getUserMedia) throw new InsecureContextError();
   // Create and resume the context before the first await: Safari only allows that inside
@@ -54,6 +59,10 @@ export async function startRecording(): Promise<ActiveRecording> {
     void context.close();
   };
   const store = createPcmStore();
+  const keep = (samples: Float32Array) => {
+    store.push(samples);
+    options.onSamples?.(samples);
+  };
   const downsample = createDownsampler(context.sampleRate);
   let level = 0;
   try {
@@ -66,7 +75,7 @@ export async function startRecording(): Promise<ActiveRecording> {
       if (released) return;
       const samples = event.inputBuffer.getChannelData(0);
       level = levelOf(samples);
-      store.push(downsample(samples));
+      keep(downsample(samples));
     };
     // A processor only runs while connected to the destination; the zero gain keeps it silent.
     const mute = context.createGain();
@@ -82,7 +91,7 @@ export async function startRecording(): Promise<ActiveRecording> {
     discard: release,
     finish: async () => {
       release();
-      store.push(downsample.flush());
+      keep(downsample.flush());
       return store.all();
     },
     level: () => (released ? 0 : level),
