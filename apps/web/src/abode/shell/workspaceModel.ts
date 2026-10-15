@@ -86,6 +86,21 @@ export function visibleDraftRows<
   return rows;
 }
 
+/**
+ * Draft rows a workspace renders: all of them when expanded; when collapsed only the open
+ * one (like its open thread), so "+" still shows its "New session" row.
+ */
+export function renderedDraftIds(input: {
+  readonly expanded: boolean;
+  readonly draftIds: ReadonlyArray<string>;
+  readonly activeDraftId: string | null;
+}): ReadonlyArray<string> {
+  if (input.expanded) return input.draftIds;
+  return input.activeDraftId !== null && input.draftIds.includes(input.activeDraftId)
+    ? [input.activeDraftId]
+    : [];
+}
+
 /** Draft ids per workspace key, computed once for the whole sidebar. */
 export function draftIdsByWorkspace<
   TSession extends ProjectRefLike & { readonly createdAt: string; readonly promotedTo?: unknown },

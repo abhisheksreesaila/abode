@@ -27,7 +27,7 @@ import { WorkspaceDrafts } from "./WorkspaceDrafts";
 import { WORKSPACE_REMOVE_MENU_ITEM } from "./workspaceRemoved";
 import { useRemovedWorkspacesStore } from "./workspaceRemovedStore";
 import { resolveWorkspacePill, visibleWorkspaceThreads, workspacePillView } from "./workspaceList";
-import { threadShellKey } from "./workspaceModel";
+import { renderedDraftIds, threadShellKey } from "./workspaceModel";
 
 // A shared empty list keeps ThreadRow's memo intact for sessions without subagents.
 const NO_SUBAGENTS: ReadonlyArray<SidebarThreadSummary> = [];
@@ -243,9 +243,9 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
           <TooltipPopup side="right">New session in {group.name}</TooltipPopup>
         </Tooltip>
       </div>
-      {expanded || activeIsHere ? (
+      {expanded || activeIsHere || activeDraftIsHere ? (
         <ul data-abode="guide">
-          {expanded || activeDraftIsHere ? <WorkspaceDrafts draftIds={draftIds} /> : null}
+          <WorkspaceDrafts draftIds={renderedDraftIds({ expanded, draftIds, activeDraftId })} />
           {visibleThreads.map((thread) => (
             <ThreadRow
               key={`${thread.environmentId}:${thread.id}`}

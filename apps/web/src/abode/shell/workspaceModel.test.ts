@@ -4,6 +4,7 @@ import {
   draftIdsByWorkspace,
   groupThreadsByWorkspace,
   projectRefKey,
+  renderedDraftIds,
   visibleDraftRows,
   workspaceDisplayName,
 } from "./workspaceModel";
@@ -187,5 +188,19 @@ describe("draftIdsByWorkspace", () => {
       hasContent: () => false,
     });
     expect(result).toEqual({ a: ["d1"] });
+  });
+});
+
+describe("renderedDraftIds", () => {
+  const draftIds = ["a", "b"];
+  it("renders every draft when expanded", () => {
+    expect(renderedDraftIds({ expanded: true, draftIds, activeDraftId: "b" })).toEqual(["a", "b"]);
+  });
+  it("renders only the open draft when collapsed", () => {
+    expect(renderedDraftIds({ expanded: false, draftIds, activeDraftId: "b" })).toEqual(["b"]);
+  });
+  it("renders none when collapsed and the open draft is elsewhere or absent", () => {
+    expect(renderedDraftIds({ expanded: false, draftIds, activeDraftId: "z" })).toEqual([]);
+    expect(renderedDraftIds({ expanded: false, draftIds, activeDraftId: null })).toEqual([]);
   });
 });
