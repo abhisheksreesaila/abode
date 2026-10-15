@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { buildCalmCard, currentWork, type CalmStep, type CalmSubagent } from "./calmCard";
+import {
+  batchRunIds,
+  buildCalmCard,
+  currentWork,
+  type CalmStep,
+  type CalmSubagent,
+} from "./calmCard";
 
 const agent = (status: CalmSubagent["status"], agentType?: string): CalmSubagent =>
   agentType === undefined ? { status } : { status, agentType };
@@ -103,59 +109,52 @@ describe("buildCalmCard", () => {
   });
 });
 
+describe("batchRunIds", () => {
+  const run = (id: string, ordinal: number, wake = false) =>
+    wake ? { id, ordinal, workStartedAt: "2026-10-14T20:00:00Z" } : { id, ordinal };
+
+  it("is the user's latest run plus every wake after it", () => {
+    const ids = batchRunIds([run("r1", 1), run("r2", 2), run("r3", 3, true), run("r4", 4, true)]);
+    expect([...ids].toSorted()).toEqual(["r2", "r3", "r4"]);
+  });
+
+  it("orders by ordinal, not by array position", () => {
+    const ids = batchRunIds([run("r3", 3, true), run("r1", 1), run("r2", 2)]);
+    expect([...ids].toSorted()).toEqual(["r2", "r3"]);
+  });
+
+  it("is empty for a thread without runs", () => {
+    expect(batchRunIds([]).size).toBe(0);
+  });
+});
+
 describe("currentWork", () => {
+  const batch = new Set(["r2", "r3"]);
   const steps = (...statuses: CalmStep["status"][]) => statuses.map((status) => ({ status }));
 
-  it("keeps an unfinished task list across later runs (a wake keeps working through it)", () => {
-    const work = currentWork({
-      latestRunId: "run-3",
-      plan: { runId: "run-1", steps: steps("completed", "pending") },
-      turn: null,
-    });
-    expect(work.steps).toHaveLength(2);
-  });
-
-  it("drops a finished task list once a newer run starts", () => {
-    const work = currentWork({
-      latestRunId: "run-3",
-      plan: { runId: "run-1", steps: steps("completed", "completed") },
-      turn: null,
-    });
-    expect(work.steps).toEqual([]);
-  });
-
-  it("keeps a finished task list from the latest run", () => {
-    const work = currentWork({
-      latestRunId: "run-3",
-      plan: { runId: "run-3", steps: steps("completed") },
-      turn: null,
-    });
-    expect(work.steps).toHaveLength(1);
-  });
-
-  it("keeps subagents while any still runs, or from the latest run", () => {
-    const running = [{ status: "running" as const }];
-    const settled = [{ status: "completed" as const }];
+  it("keeps a task list written in this batch, finished or not", () => {
     expect(
-      currentWork({
-        latestRunId: "run-3",
-        plan: null,
-        turn: { runId: "run-1", subagents: running },
-      }).subagents,
+      currentWork({ batch, plan: { runId: "r2", steps: steps("completed") }, subagents: [] }).steps,
     ).toHaveLength(1);
+  });
+
+  it("drops a task list from before the user's latest message, even an unfinished one", () => {
     expect(
-      currentWork({
-        latestRunId: "run-3",
-        plan: null,
-        turn: { runId: "run-1", subagents: settled },
-      }).subagents,
+      currentWork({ batch, plan: { runId: "r1", steps: steps("pending") }, subagents: [] }).steps,
     ).toEqual([]);
-    expect(
-      currentWork({
-        latestRunId: "run-3",
-        plan: null,
-        turn: { runId: "run-3", subagents: settled },
-      }).subagents,
-    ).toHaveLength(1);
+  });
+
+  it("counts subagents spawned anywhere in the batch, while a wake runs", () => {
+    const work = currentWork({
+      batch,
+      plan: null,
+      subagents: [
+        { runId: "r1", status: "completed" },
+        { runId: "r2", status: "running" },
+        { runId: "r2", status: "completed" },
+        { runId: "r3", status: "running" },
+      ],
+    });
+    expect(work.subagents).toHaveLength(3);
   });
 });

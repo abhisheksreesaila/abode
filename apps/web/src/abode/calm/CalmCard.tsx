@@ -1,4 +1,3 @@
-import { deriveThreadTurnSubagents } from "@t3tools/client-runtime/state/thread-subagents";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useMemo } from "react";
 
@@ -7,7 +6,7 @@ import { deriveActivePlanState } from "~/session-logic";
 import { useThreadProjection, useThreadShell } from "~/state/entities";
 
 import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
-import { buildCalmCard, currentWork } from "./calmCard";
+import { batchRunIds, buildCalmCard, currentWork } from "./calmCard";
 import "./calm.css";
 
 /**
@@ -26,17 +25,20 @@ function Card({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
   const status = shell ? resolveSidebarThreadStatus(shell) : null;
   const needsYou = status === "approval" || status === "input";
 
-  const latestRunId = shell?.latestRun?.runId ?? null;
-
   const card = useMemo(() => {
     if (projection === null) return null;
+    const batch = batchRunIds(projection.runs);
+    const latestRunId = projection.runs.reduce<(typeof projection.runs)[number] | null>(
+      (latest, run) => (latest === null || run.ordinal > latest.ordinal ? run : latest),
+      null,
+    )?.id;
     const work = currentWork({
-      latestRunId,
-      plan: deriveActivePlanState(projection, latestRunId ?? undefined),
-      turn: deriveThreadTurnSubagents(projection),
+      batch,
+      plan: deriveActivePlanState(projection, latestRunId),
+      subagents: projection.subagents,
     });
     return buildCalmCard({ ...work, needsYou });
-  }, [projection, latestRunId, needsYou]);
+  }, [projection, needsYou]);
   if (card === null) return null;
 
   return (

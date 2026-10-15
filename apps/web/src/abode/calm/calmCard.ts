@@ -93,29 +93,39 @@ export function buildCalmCard(input: {
 }
 
 /**
- * Which task list and subagents still describe the work in progress. A list stays while it
- * is unfinished, since a wake (a new run) keeps working through it; a finished one leaves
- * once a newer run starts. Subagents likewise stay while any runs. Without this the card
- * would show an old "5 of 5 ✓" under every later question.
+ * The runs of the current batch: the user's latest run plus every wake run after it (a
+ * background subagent finishing, a delegated result). Wake runs carry `workStartedAt`;
+ * a run the user started does not.
+ */
+export function batchRunIds(
+  runs: ReadonlyArray<{
+    readonly id: string;
+    readonly ordinal: number;
+    readonly workStartedAt?: unknown;
+  }>,
+): Set<string> {
+  const ids = new Set<string>();
+  const newestFirst = runs.toSorted((left, right) => right.ordinal - left.ordinal);
+  for (const run of newestFirst) {
+    ids.add(run.id);
+    if (run.workStartedAt === undefined) break;
+  }
+  return ids;
+}
+
+/**
+ * The task list and subagents of the current batch, so the card counts a whole batch of
+ * developers across the wakes they cause, and an old list never lingers under later work.
  */
 export function currentWork<Step extends CalmStep, Subagent extends CalmSubagent>(input: {
-  readonly latestRunId: string | null;
+  readonly batch: ReadonlySet<string>;
   readonly plan: { readonly runId: string | null; readonly steps: ReadonlyArray<Step> } | null;
-  readonly turn: {
-    readonly runId: string | null;
-    readonly subagents: ReadonlyArray<Subagent>;
-  } | null;
+  readonly subagents: ReadonlyArray<Subagent & { readonly runId: string | null }>;
 }): { readonly steps: ReadonlyArray<Step>; readonly subagents: ReadonlyArray<Subagent> } {
-  const { latestRunId, plan, turn } = input;
-  const planCurrent =
-    plan !== null &&
-    (plan.runId === latestRunId || plan.steps.some((step) => step.status !== "completed"));
-  const turnCurrent =
-    turn !== null &&
-    (turn.runId === latestRunId ||
-      turn.subagents.some((subagent) => !FINISHED.has(subagent.status)));
+  const { batch, plan } = input;
+  const inBatch = (runId: string | null) => runId !== null && batch.has(runId);
   return {
-    steps: planCurrent ? plan.steps : [],
-    subagents: turnCurrent ? turn.subagents : [],
+    steps: plan !== null && inBatch(plan.runId) ? plan.steps : [],
+    subagents: input.subagents.filter((subagent) => inBatch(subagent.runId)),
   };
 }
