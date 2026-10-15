@@ -196,7 +196,7 @@ The card sits above the composer (where questions already open) and shows the th
 
 ### A-019: Calm transcript
 
-- **Status:** todo
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
 - **What:** the transcript menu becomes Calm / Detailed (Calm replaces Simple, default; a stored "simple" reads as Calm). Calm shows your messages and each settled turn's "Worked for…" fold row; agent text, tool calls and thinking are hidden. Opening a fold shows that turn as Detailed. Failures and errors stay visible.
 - **Acceptance:**
   - [ ] Row filtering is pure and tested (a turn with text, tools and a failure; a running turn; an expanded fold).
