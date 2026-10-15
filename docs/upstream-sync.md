@@ -58,6 +58,8 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 
 - `apps/web/src/components/ChatView.tsx`: A-015: `<ChatAvatars threadRef=… />` right after the chat column (1 line + import); it hands the timeline its avatars as CSS variables on the shared flex container
 - Avatars beside messages need no hook: `abode/chat/chat.css` targets the timeline's existing `data-timeline-row-kind` / `data-message-role` attributes. If upstream renames those, avatars silently disappear (nothing breaks)
+- `packages/contracts/src/orchestrationV2.ts`: A-018: optional `agentType` on `OrchestrationV2Subagent` (1 line, add-only; ADR 0001)
+- `apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts`: A-018: the `task_started` call spreads `abodeAgentType(message)` (`apps/server/src/abode/subagentType.ts`, reads the frame's `subagent_type`); `updateClaudeSubagentNode` takes `agentType` and sets it only when it creates the subagent (5 lines, marked `abode:`). If upstream stores the type itself, drop this and read theirs
 
 Tickets add a bullet here when they add a hook.
 

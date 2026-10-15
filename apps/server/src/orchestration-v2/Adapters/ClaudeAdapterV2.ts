@@ -133,6 +133,7 @@ import {
   boundProviderEventForLogging,
   shouldPersistProviderEvent,
 } from "../../provider/EventNdjsonLogger.ts";
+import { abodeAgentType } from "../../abode/subagentType.ts"; // abode
 import * as ProviderEventLoggers from "@t3tools/provider-core/server/ProviderEventLoggers";
 import {
   claudeRateLimitEventToUpdate,
@@ -4975,6 +4976,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
           // The Agent call's effort and the subagent whose own Agent call
           // started this one; read only when this call registers the subagent.
           readonly effort?: string;
+          readonly agentType?: string; // abode
           readonly owner?: ActiveClaudeSubagent;
           readonly progress?: string;
           /** Raw SDK frame, folded into the coordinator's workflow snapshot. */
@@ -5117,6 +5119,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
               prompt: input.prompt ?? "",
               title: input.title ?? null,
               model: input.model ?? null,
+              ...(input.agentType === undefined ? {} : { agentType: input.agentType }), // abode
               result: null,
               startedAt: now,
             }),
@@ -7343,6 +7346,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
                 ...(message.prompt === undefined ? {} : { prompt: message.prompt }),
                 ...(model === undefined ? {} : { model }),
                 ...(launch?.effort === undefined ? {} : { effort: launch.effort }),
+                ...abodeAgentType(message), // abode
                 ...(owner === undefined ? {} : { owner }),
                 ...(isWorkflow
                   ? {
