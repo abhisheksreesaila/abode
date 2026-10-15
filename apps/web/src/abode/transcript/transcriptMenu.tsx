@@ -8,7 +8,7 @@ import { useTranscriptModeStore } from "./transcriptModeStore";
 const MENU_PREFIX = "abode:transcript:";
 export type AbodeTranscriptMenuId = "abode:transcript" | `${typeof MENU_PREFIX}${TranscriptMode}`;
 
-/** "Transcript > Simple / Detailed" submenu for the thread's header menu. */
+/** "Transcript > Calm / Detailed" submenu for the thread's header menu. */
 export function abodeTranscriptMenuItem(): ContextMenuItem<AbodeTranscriptMenuId> {
   const { mode } = useTranscriptModeStore.getState();
   return {
@@ -17,7 +17,7 @@ export function abodeTranscriptMenuItem(): ContextMenuItem<AbodeTranscriptMenuId
     icon: "folder-tree",
     separatorBefore: true,
     children: [
-      { id: "abode:transcript:simple", label: "Simple", checked: mode === "simple" },
+      { id: "abode:transcript:calm", label: "Calm", checked: mode === "calm" },
       { id: "abode:transcript:detailed", label: "Detailed", checked: mode === "detailed" },
     ],
   };
@@ -35,8 +35,8 @@ export function abodeTranscriptAction(): CommandPaletteActionItem {
   return {
     kind: "action",
     value: "action:abode-transcript-mode",
-    searchTerms: ["transcript", "simple", "detailed", "tool calls", "verbose", "mode"],
-    title: "Toggle simple / detailed transcript",
+    searchTerms: ["transcript", "calm", "simple", "detailed", "tool calls", "verbose", "mode"],
+    title: "Toggle calm / detailed transcript",
     icon: <ScrollTextIcon className={ITEM_ICON_CLASS} />,
     run: async () => {
       const { mode, setMode } = useTranscriptModeStore.getState();

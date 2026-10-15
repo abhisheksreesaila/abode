@@ -53,11 +53,63 @@ export function formatWorkSummary(
 }
 
 /**
- * Simple view of upstream's derived rows. Tool groups drop out, and upstream's
- * own "Worked for ..." fold row (which already hides a settled turn's steps and
- * opens on click) gains call and file counts, so a tools-only turn never looks
- * empty. Live rows (working indicator, running tool) and failures stay. An
- * expanded fold shows its turn exactly as Detailed does.
+ * Mirrors upstream's timelineEntryStartsResponse (not exported) on derived rows:
+ * a steer joins its running response; an automatic-wake notification starts one.
+ */
+function startsResponse(row: MessagesTimelineRow): boolean {
+  if (row.kind === "message") {
+    const { role, inputIntent } = row.message;
+    return role === "user" && inputIntent !== "steer" && inputIntent !== "promoted_queued_to_steer";
+  }
+  return row.kind === "work" && row.groupedEntries.some((e) => e.itemType === "notification");
+}
+
+/**
+ * Assistant messages Calm still shows outside an opened fold. Upstream builds a
+ * fold row only when a settled turn has something to hide besides its final
+ * answer, so a plain text answer has no "Worked for ..." row to open and would
+ * be unreachable. Decision: such a turn keeps its last assistant message (and
+ * that message's footer) once it has settled; a running turn shows no assistant
+ * text at all. Turns with a fold row hide their text; opening the fold shows it.
+ * An interrupted or failed turn has no fold either, so it keeps only its last
+ * answer on purpose; its earlier steps are in Detailed. Turns split where upstream's
+ * response does: a non-steer user message or an automatic-wake notification.
+ */
+function keptAnswerIds(rows: ReadonlyArray<MessagesTimelineRow>): Set<string> {
+  const kept = new Set<string>();
+  let start = 0;
+  const closeSegment = (end: number) => {
+    let hasFold = false;
+    let running = false;
+    let last: string | undefined;
+    for (let i = start; i < end; i++) {
+      const row = rows[i]!;
+      if (row.kind === "turn-fold") hasFold = true;
+      else if (row.kind === "working" || (row.kind === "work-live" && row.active)) running = true;
+      else if (row.kind === "message" && row.message.role === "assistant") {
+        if (row.assistantCopyStreaming) running = true;
+        last = row.message.id;
+      }
+    }
+    if (last !== undefined && !hasFold && !running) kept.add(last);
+  };
+  rows.forEach((row, index) => {
+    if (startsResponse(row)) {
+      closeSegment(index);
+      start = index + 1;
+    }
+  });
+  closeSegment(rows.length);
+  return kept;
+}
+
+/**
+ * Calm view of upstream's derived rows. Your messages stay. A settled turn
+ * shows only upstream's own "Worked for ..." fold row (which gains call and file
+ * counts, so a tools-only turn never looks empty); the agent's text, tool groups
+ * and thinking drop out. Live rows (working indicator, running tool) and
+ * failures stay, but no assistant text streams. An expanded fold shows its turn
+ * exactly as Detailed does.
  */
 export function simplifyRowsForMode(
   rows: MessagesTimelineRow[],
@@ -67,11 +119,18 @@ export function simplifyRowsForMode(
   if (mode === "detailed") return rows;
   let totals: Map<string, RunTotals> | undefined;
   let inExpandedFold = false;
+  const keptAnswers = keptAnswerIds(rows);
   const out: MessagesTimelineRow[] = [];
   for (const row of rows) {
+    if (startsResponse(row)) inExpandedFold = false;
     switch (row.kind) {
       case "message":
-        if (row.message.role === "user") inExpandedFold = false;
+        if (row.message.role === "assistant" && !inExpandedFold) {
+          if (!keptAnswers.has(row.message.id)) continue;
+        }
+        break;
+      case "assistant-meta":
+        if (!inExpandedFold && !keptAnswers.has(row.message.id)) continue;
         break;
       case "turn-fold": {
         inExpandedFold = row.expanded;
