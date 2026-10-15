@@ -216,4 +216,4 @@ The card sits above the composer (where questions already open) and shows the th
 - **Status:** review
 - **What:** a session waiting on you shows a bright orange "Needs you" tag on its sidebar row instead of only the small square.
 - **Acceptance:**
-  - [ ] Shows exactly while the session's status is approval or input; goes away when answered.
+  - [ ] Shows exactly while the session waits on you (an approval, a question, or a plan ready to approve); goes away when answered.

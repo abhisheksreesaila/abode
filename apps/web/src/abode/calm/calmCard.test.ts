@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { buildCalmCard, type CalmSubagent } from "./calmCard";
+import { buildCalmCard, currentWork, type CalmStep, type CalmSubagent } from "./calmCard";
 
 const agent = (status: CalmSubagent["status"], agentType?: string): CalmSubagent =>
   agentType === undefined ? { status } : { status, agentType };
@@ -100,5 +100,62 @@ describe("buildCalmCard", () => {
     });
     expect(card?.agents.map((row) => row.type)).toEqual(["a", "b", "c", "d", "e", "f"]);
     expect(card?.moreAgentTypes).toBe(2);
+  });
+});
+
+describe("currentWork", () => {
+  const steps = (...statuses: CalmStep["status"][]) => statuses.map((status) => ({ status }));
+
+  it("keeps an unfinished task list across later runs (a wake keeps working through it)", () => {
+    const work = currentWork({
+      latestRunId: "run-3",
+      plan: { runId: "run-1", steps: steps("completed", "pending") },
+      turn: null,
+    });
+    expect(work.steps).toHaveLength(2);
+  });
+
+  it("drops a finished task list once a newer run starts", () => {
+    const work = currentWork({
+      latestRunId: "run-3",
+      plan: { runId: "run-1", steps: steps("completed", "completed") },
+      turn: null,
+    });
+    expect(work.steps).toEqual([]);
+  });
+
+  it("keeps a finished task list from the latest run", () => {
+    const work = currentWork({
+      latestRunId: "run-3",
+      plan: { runId: "run-3", steps: steps("completed") },
+      turn: null,
+    });
+    expect(work.steps).toHaveLength(1);
+  });
+
+  it("keeps subagents while any still runs, or from the latest run", () => {
+    const running = [{ status: "running" as const }];
+    const settled = [{ status: "completed" as const }];
+    expect(
+      currentWork({
+        latestRunId: "run-3",
+        plan: null,
+        turn: { runId: "run-1", subagents: running },
+      }).subagents,
+    ).toHaveLength(1);
+    expect(
+      currentWork({
+        latestRunId: "run-3",
+        plan: null,
+        turn: { runId: "run-1", subagents: settled },
+      }).subagents,
+    ).toEqual([]);
+    expect(
+      currentWork({
+        latestRunId: "run-3",
+        plan: null,
+        turn: { runId: "run-3", subagents: settled },
+      }).subagents,
+    ).toHaveLength(1);
   });
 });

@@ -91,3 +91,31 @@ export function buildCalmCard(input: {
     needsYou,
   };
 }
+
+/**
+ * Which task list and subagents still describe the work in progress. A list stays while it
+ * is unfinished, since a wake (a new run) keeps working through it; a finished one leaves
+ * once a newer run starts. Subagents likewise stay while any runs. Without this the card
+ * would show an old "5 of 5 ✓" under every later question.
+ */
+export function currentWork<Step extends CalmStep, Subagent extends CalmSubagent>(input: {
+  readonly latestRunId: string | null;
+  readonly plan: { readonly runId: string | null; readonly steps: ReadonlyArray<Step> } | null;
+  readonly turn: {
+    readonly runId: string | null;
+    readonly subagents: ReadonlyArray<Subagent>;
+  } | null;
+}): { readonly steps: ReadonlyArray<Step>; readonly subagents: ReadonlyArray<Subagent> } {
+  const { latestRunId, plan, turn } = input;
+  const planCurrent =
+    plan !== null &&
+    (plan.runId === latestRunId || plan.steps.some((step) => step.status !== "completed"));
+  const turnCurrent =
+    turn !== null &&
+    (turn.runId === latestRunId ||
+      turn.subagents.some((subagent) => !FINISHED.has(subagent.status)));
+  return {
+    steps: planCurrent ? plan.steps : [],
+    subagents: turnCurrent ? turn.subagents : [],
+  };
+}

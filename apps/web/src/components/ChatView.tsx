@@ -11731,8 +11731,8 @@ export default function ChatView(props: ChatViewProps) {
                       </div>
                     </div>
                   ) : null}
-                  <CalmCard threadRef={isServerThread ? activeThreadRef : null} />{" "}
                   {/* abode: calm card */}
+                  <CalmCard threadRef={isServerThread ? activeThreadRef : null} />
                   <div
                     ref={draftHeroTransition.composerAnchorRef}
                     className="relative z-10"

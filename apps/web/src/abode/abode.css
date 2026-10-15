@@ -60,3 +60,10 @@ html:not(.dark)[data-theme-id="abode-azure"] {
   --ws-7: #1c6e9e;
   --ws-8: #8a5a14;
 }
+
+/* "Needs you" (sidebar tag, calm card): a bright orange apart from the amber accent, with
+   dark text on it. Every theme gets it, since a waiting agent must stand out in all of them. */
+:root {
+  --abode-needs-you: light-dark(#ea580c, #f97316);
+  --abode-needs-you-foreground: #1c1917;
+}

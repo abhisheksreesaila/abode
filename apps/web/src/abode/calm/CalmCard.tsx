@@ -7,7 +7,7 @@ import { deriveActivePlanState } from "~/session-logic";
 import { useThreadProjection, useThreadShell } from "~/state/entities";
 
 import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
-import { buildCalmCard } from "./calmCard";
+import { buildCalmCard, currentWork } from "./calmCard";
 import "./calm.css";
 
 /**
@@ -26,17 +26,17 @@ function Card({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
   const status = shell ? resolveSidebarThreadStatus(shell) : null;
   const needsYou = status === "approval" || status === "input";
 
+  const latestRunId = shell?.latestRun?.runId ?? null;
+
   const card = useMemo(() => {
     if (projection === null) return null;
-    const turn = deriveThreadTurnSubagents(projection);
-    // The newest task list in the thread: the agent keeps one list across its turns.
-    const plan = deriveActivePlanState(projection, turn?.runId ?? undefined);
-    return buildCalmCard({
-      steps: plan?.steps ?? [],
-      subagents: turn?.subagents ?? [],
-      needsYou,
+    const work = currentWork({
+      latestRunId,
+      plan: deriveActivePlanState(projection, latestRunId ?? undefined),
+      turn: deriveThreadTurnSubagents(projection),
     });
-  }, [projection, needsYou]);
+    return buildCalmCard({ ...work, needsYou });
+  }, [projection, latestRunId, needsYou]);
   if (card === null) return null;
 
   return (
