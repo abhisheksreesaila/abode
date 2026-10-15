@@ -3,7 +3,7 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useParams, useRouter } from "@tanstack/react-router";
 import { FolderPlusIcon, SquarePenIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
 import { SidebarThreadUndoNotice } from "~/components/sidebar/SidebarThreadUndoNotice";
@@ -61,6 +61,8 @@ import "./shell.css";
  * same stores, grouping and commands they do.
  */
 const NO_DRAFTS: ReadonlyArray<string> = [];
+/** Module scope on purpose: the sidebar unmounts on Settings, and returning must still count as a move. A reload resets it. */
+let previousOpenWorkspace: OpenWorkspace | null = null;
 
 export function AbodeSidebar() {
   const groups = useWorkspaceGroups();
@@ -158,7 +160,6 @@ export function AbodeSidebar() {
       )?.project.projectKey ?? null,
     [activeDraftId, activeThreadKey, draftIds, groups],
   );
-  const previousOpenRef = useRef<OpenWorkspace | null>(null);
   useEffect(() => {
     const current =
       openRouteId !== null && openWorkspaceKey !== null
@@ -166,12 +167,12 @@ export function AbodeSidebar() {
         : null;
     const { removedKeys: removed, setRemoved } = useRemovedWorkspacesStore.getState();
     const key = workspaceToRestore({
-      previous: previousOpenRef.current,
+      previous: previousOpenWorkspace,
       current,
       removedKeys: removed,
     });
     if (key !== null) setRemoved(key, false);
-    if (current !== null) previousOpenRef.current = current;
+    if (current !== null) previousOpenWorkspace = current;
   }, [openRouteId, openWorkspaceKey]);
 
   // Ctrl+1..9 and previous/next walk exactly the rows the workspaces render.
