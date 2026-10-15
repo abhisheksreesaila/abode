@@ -97,14 +97,14 @@
 }
 /* A session: two lines, the title then where it runs and its age (like VS Code's agent
    sessions). Drafts and the "older" row stay one line. */
-[data-abode~="thread"]:has(> [data-abode~="lines"]) {
+[data-abode~="session"] {
   height: auto;
   min-height: 44px;
   align-items: flex-start;
   padding-top: 6px;
   padding-bottom: 6px;
 }
-[data-abode~="thread"]:has(> [data-abode~="lines"]) > [data-abode~="square"] {
+[data-abode~="session"] > [data-abode~="square"] {
   margin-top: 6px;
 }
 [data-abode~="lines"] {
@@ -119,6 +119,13 @@
   min-width: 0;
   align-items: center;
   gap: 6px;
+}
+/* A session's archive button sits on its second line, where the age hides on hover, so it
+   never covers the PR link on the first. */
+[data-abode~="session"] > [data-abode~="action"] {
+  top: auto;
+  bottom: 4px;
+  height: 20px;
 }
 [data-abode~="place"] {
   font-size: 11px;
@@ -143,8 +150,7 @@
 }
 [data-abode~="action"] {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
   right: 0.25rem;
   display: none;
   height: var(--abode-row-height);
@@ -231,6 +237,7 @@
   gap: 0.5rem;
   padding-left: 0.5rem;
   font-size: 14px;
+  color: var(--contrast-sidebar-foreground);
 }
 [data-abode~="workspace-folder"] {
   color: var(--workspace-color, currentColor);

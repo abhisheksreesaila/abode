@@ -2,14 +2,13 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import { threadRuntimeCanArchive } from "@t3tools/client-runtime/state/models";
 import { AuthOrchestrationOperateScope } from "@t3tools/contracts";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/shared/threadPullRequests";
-import { ArchiveIcon, FolderIcon } from "lucide-react";
+import { ArchiveIcon, FolderGit2Icon, FolderIcon } from "lucide-react";
 import { memo, useCallback, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import {
   ChangeRequestStatusIcon,
   prStatusIndicator,
   PrStatusTooltipContent,
-  ThreadWorktreeIndicator,
   useLinkedThreadPullRequest,
 } from "~/components/ThreadStatusIndicators";
 import { useSidebarRowSubscriptionLease } from "~/components/Sidebar.logic";
@@ -175,7 +174,7 @@ export const ThreadRow = memo(function ThreadRow(props: ThreadRowProps) {
         aria-current={isActive ? "page" : undefined}
         data-testid={`thread-row-${thread.id}`}
         data-active={isActive}
-        data-abode="row thread"
+        data-abode="row thread session"
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
@@ -261,12 +260,25 @@ export const ThreadRow = memo(function ThreadRow(props: ThreadRowProps) {
           </span>
           <span data-abode="line place">
             {place.kind === "worktree" ? (
-              <ThreadWorktreeIndicator thread={thread} />
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <span
+                      role="img"
+                      aria-label="Runs in its own worktree"
+                      className="inline-flex shrink-0"
+                    />
+                  }
+                >
+                  <FolderGit2Icon className="size-3" />
+                </TooltipTrigger>
+                <TooltipPopup side="top">Runs in its own worktree</TooltipPopup>
+              </Tooltip>
             ) : (
               <FolderIcon aria-hidden className="size-3 shrink-0" />
             )}
             {place.branch ? <span className="min-w-0 truncate">{place.branch}</span> : null}
-            <span aria-hidden>·</span>
+            {meta ? <span aria-hidden>·</span> : null}
             <span
               data-abode={canArchive ? "meta yields" : "meta"}
               data-tone={tone}
