@@ -1,0 +1,42 @@
+[
+  [
+    "af_heart",
+    "Rename the useThreadActionMenu hook to useThreadMenu and update every import in apps web."
+  ],
+  [
+    "am_michael",
+    "Run vp test in apps web, then run the typecheck for the server package before you commit."
+  ],
+  [
+    "af_bella",
+    "Open a pull request against nightly with the title fix sidebar scroll jump, and link the issue."
+  ],
+  [
+    "am_adam",
+    "Add a new route to the fh-saas app, then run pixi install and check that the login redirect works."
+  ],
+  [
+    "af_nicole",
+    "The orchestrator emits an event, the projection reads it from SQLite, and the websocket pushes it to the client."
+  ],
+  [
+    "am_michael",
+    "Create a worktree for the voice ticket, check out a new branch, and don't touch the main checkout."
+  ],
+  [
+    "af_heart",
+    "In the transcribe worker file, switch the pipeline device to WebGPU and fall back to wasm if it throws."
+  ],
+  [
+    "am_adam",
+    "Delete the unused composer draft store, rebase on abode next, and run the hook report before pushing."
+  ],
+  [
+    "af_bella",
+    "Why does the useEffect cleanup run twice in strict mode, and can we memoize the selector with useMemo instead?"
+  ],
+  [
+    "am_michael",
+    "Set the environment variable T3 code home to a scratch directory, then start the dev server on port 3000."
+  ]
+]

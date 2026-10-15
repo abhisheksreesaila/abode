@@ -1,3 +1,4 @@
+import { applyDevVocabulary } from "./devVocabulary";
 import { SPEECH_SAMPLE_RATE } from "./pcmBuffer";
 import type { WorkerRequest, WorkerResponse } from "./workerProtocol";
 
@@ -5,6 +6,8 @@ export interface PendingRequest {
   resolve: (text: string) => void;
   reject: (error: Error) => void;
   onProgress: (fraction: number) => void;
+  /** Segment `current` of `total` is about to be transcribed (recordings over 30 s only). */
+  onSegment?: ((current: number, total: number) => void) | undefined;
 }
 
 let worker: Worker | null = null;
@@ -22,8 +25,12 @@ export function routeWorkerMessage(requests: Map<number, PendingRequest>, messag
   }
   const request = requests.get(message.id);
   if (!request) return;
+  if (message.type === "segment") {
+    request.onSegment?.(message.current, message.total);
+    return;
+  }
   requests.delete(message.id);
-  if (message.type === "result") request.resolve(message.text);
+  if (message.type === "result") request.resolve(applyDevVocabulary(message.text));
   else request.reject(new Error(message.message));
 }
 
@@ -48,11 +55,36 @@ function failAll(error: Error) {
   pending.clear();
 }
 
+export interface TranscribeOptions {
+  onSegment?: ((current: number, total: number) => void) | undefined;
+  /** Aborting rejects with an AbortError and stops the worker before its next segment. */
+  signal?: AbortSignal;
+}
+
 /** 16 kHz mono samples in, text out. Transfers the buffer to the worker. */
-export function transcribe(audio: Float32Array, onProgress: (fraction: number) => void) {
+export function transcribe(
+  audio: Float32Array,
+  onProgress: (fraction: number) => void,
+  options: TranscribeOptions = {},
+) {
   const id = nextId++;
+  const { signal, onSegment } = options;
   return new Promise<string>((resolve, reject) => {
-    pending.set(id, { resolve, reject, onProgress });
+    if (signal?.aborted) {
+      reject(new DOMException("Transcription cancelled.", "AbortError"));
+      return;
+    }
+    pending.set(id, { resolve, reject, onProgress, onSegment });
+    signal?.addEventListener(
+      "abort",
+      () => {
+        if (!pending.delete(id)) return;
+        const cancel: WorkerRequest = { type: "cancel", id };
+        worker?.postMessage(cancel, []);
+        reject(new DOMException("Transcription cancelled.", "AbortError"));
+      },
+      { once: true },
+    );
     const request: WorkerRequest = { type: "transcribe", id, audio };
     ensureWorker().postMessage(request, [audio.buffer]);
   });

@@ -31,4 +31,10 @@ describe("routeWorkerMessage", () => {
     expect(a.resolve).not.toHaveBeenCalled();
     expect([...pending.keys()]).toEqual([1]);
   });
+
+  it("hands back the text with developer words fixed", () => {
+    const a = request();
+    routeWorkerMessage(new Map([[1, a]]), { type: "result", id: 1, text: "Run Pixie install" });
+    expect(a.resolve).toHaveBeenCalledWith("Run pixi install");
+  });
 });

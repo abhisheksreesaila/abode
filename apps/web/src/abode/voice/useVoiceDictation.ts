@@ -50,6 +50,7 @@ export function useVoiceDictation(input: {
   const stateRef = useRef<RecordingState>(idleState);
   const recorderRef = useRef<ActiveRecording | null>(null);
   const tokenRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
   const ownerRef = useRef(Symbol("voice-dictation"));
   const onTranscriptRef = useRef(input.onTranscript);
   const { onTranscript } = input;
@@ -67,6 +68,9 @@ export function useVoiceDictation(input: {
       recorderRef.current?.discard();
       recorderRef.current = null;
       tokenRef.current += 1;
+      // Stops the worker before its next segment, so a new dictation does not wait behind it.
+      abortRef.current?.abort();
+      abortRef.current = null;
     }
     if (transition.state.status === "idle" || transition.state.status === "error") {
       if (activeOwner === ownerRef.current) activeOwner = null;
@@ -97,9 +101,21 @@ export function useVoiceDictation(input: {
           send({ type: "transcribed", text: "" });
           return;
         }
-        const text = await transcribe(audio, (fraction) => {
-          if (token === tokenRef.current) send({ type: "progress", fraction });
-        });
+        const controller = new AbortController();
+        abortRef.current = controller;
+        const text = await transcribe(
+          audio,
+          (fraction) => {
+            if (token === tokenRef.current) send({ type: "progress", fraction });
+          },
+          {
+            signal: controller.signal,
+            onSegment: (current, total) => {
+              if (token === tokenRef.current) send({ type: "segment", current, total });
+            },
+          },
+        );
+        if (abortRef.current === controller) abortRef.current = null;
         if (token === tokenRef.current) send({ type: "transcribed", text });
       } catch {
         if (token === tokenRef.current)
