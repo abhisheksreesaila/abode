@@ -4,6 +4,7 @@
  */
 import { env, pipeline, type AutomaticSpeechRecognitionPipeline } from "@huggingface/transformers";
 
+import { segmentAudio } from "./segmentAudio";
 import { createDownloadProgress, VOICE_MODEL_DTYPE, VOICE_MODEL_ID } from "./voiceModel";
 import type { WorkerRequest, WorkerResponse } from "./workerProtocol";
 
@@ -58,8 +59,17 @@ addEventListener("message", (event: MessageEvent<WorkerRequest>) => {
   queue = queue.then(async () => {
     try {
       const asr = await loadRecognizer(request.id);
-      const output = await asr(request.audio);
-      const text = Array.isArray(output) ? output.map((part) => part.text).join(" ") : output.text;
+      // The model is trained on clips of up to 30 s and repeats or drops text on longer ones, so
+      // a long recording goes through in pieces cut at pauses (segmentAudio.ts).
+      const parts: string[] = [];
+      for (const { start, end } of segmentAudio(request.audio)) {
+        const output = await asr(request.audio.subarray(start, end));
+        parts.push(Array.isArray(output) ? output.map((part) => part.text).join(" ") : output.text);
+      }
+      const text = parts
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(" ");
       reply({ type: "result", id: request.id, text });
     } catch (error) {
       reply({
