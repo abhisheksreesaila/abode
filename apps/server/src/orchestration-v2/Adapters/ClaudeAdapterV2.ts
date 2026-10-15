@@ -133,6 +133,7 @@ import {
   boundProviderEventForLogging,
   shouldPersistProviderEvent,
 } from "../../provider/EventNdjsonLogger.ts";
+import { abodeAgentType } from "../../abode/subagentType.ts"; // abode:
 import * as ProviderEventLoggers from "@t3tools/provider-core/server/ProviderEventLoggers";
 import {
   claudeRateLimitEventToUpdate,
@@ -4975,6 +4976,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
           // The Agent call's effort and the subagent whose own Agent call
           // started this one; read only when this call registers the subagent.
           readonly effort?: string;
+          readonly agentType?: string; // abode:
           readonly owner?: ActiveClaudeSubagent;
           readonly progress?: string;
           /** Raw SDK frame, folded into the coordinator's workflow snapshot. */
@@ -5120,6 +5122,10 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
               result: null,
               startedAt: now,
             }),
+            // abode: a later frame fills a missing type; a present one stays
+            ...(priorTask?.agentType === undefined && input.agentType !== undefined
+              ? { agentType: input.agentType }
+              : {}),
             status: input.status,
             // A reopen replayed under a continuation run re-attributes the
             // subagent to that run. RunExecutionService routes parent-thread
@@ -7343,6 +7349,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
                 ...(message.prompt === undefined ? {} : { prompt: message.prompt }),
                 ...(model === undefined ? {} : { model }),
                 ...(launch?.effort === undefined ? {} : { effort: launch.effort }),
+                ...abodeAgentType(message), // abode:
                 ...(owner === undefined ? {} : { owner }),
                 ...(isWorkflow
                   ? {
@@ -7400,6 +7407,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
                 taskId: message.task_id,
                 ...(message.tool_use_id === undefined ? {} : { toolUseId: message.tool_use_id }),
                 ...(progress.length === 0 ? {} : { progress }),
+                ...abodeAgentType(message), // abode:
                 workflowFrame: message,
                 status: "running",
               });
