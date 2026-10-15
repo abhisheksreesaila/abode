@@ -53,12 +53,27 @@ export function formatWorkSummary(
 }
 
 /**
+ * Mirrors upstream's timelineEntryStartsResponse (not exported) on derived rows:
+ * a steer joins its running response; an automatic-wake notification starts one.
+ */
+function startsResponse(row: MessagesTimelineRow): boolean {
+  if (row.kind === "message") {
+    const { role, inputIntent } = row.message;
+    return role === "user" && inputIntent !== "steer" && inputIntent !== "promoted_queued_to_steer";
+  }
+  return row.kind === "work" && row.groupedEntries.some((e) => e.itemType === "notification");
+}
+
+/**
  * Assistant messages Calm still shows outside an opened fold. Upstream builds a
  * fold row only when a settled turn has something to hide besides its final
  * answer, so a plain text answer has no "Worked for ..." row to open and would
  * be unreachable. Decision: such a turn keeps its last assistant message (and
  * that message's footer) once it has settled; a running turn shows no assistant
  * text at all. Turns with a fold row hide their text; opening the fold shows it.
+ * An interrupted or failed turn has no fold either, so it keeps only its last
+ * answer on purpose; its earlier steps are in Detailed. Turns split where upstream's
+ * response does: a non-steer user message or an automatic-wake notification.
  */
 function keptAnswerIds(rows: ReadonlyArray<MessagesTimelineRow>): Set<string> {
   const kept = new Set<string>();
@@ -79,7 +94,7 @@ function keptAnswerIds(rows: ReadonlyArray<MessagesTimelineRow>): Set<string> {
     if (last !== undefined && !hasFold && !running) kept.add(last);
   };
   rows.forEach((row, index) => {
-    if (row.kind === "message" && row.message.role === "user") {
+    if (startsResponse(row)) {
       closeSegment(index);
       start = index + 1;
     }
@@ -107,10 +122,10 @@ export function simplifyRowsForMode(
   const keptAnswers = keptAnswerIds(rows);
   const out: MessagesTimelineRow[] = [];
   for (const row of rows) {
+    if (startsResponse(row)) inExpandedFold = false;
     switch (row.kind) {
       case "message":
-        if (row.message.role === "user") inExpandedFold = false;
-        else if (row.message.role === "assistant" && !inExpandedFold) {
+        if (row.message.role === "assistant" && !inExpandedFold) {
           if (!keptAnswers.has(row.message.id)) continue;
         }
         break;

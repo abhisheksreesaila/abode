@@ -213,6 +213,47 @@ describe("calm assistant text", () => {
   });
 });
 
+describe("calm response boundaries", () => {
+  const steer = asRow({
+    kind: "message",
+    id: "steer",
+    createdAt: "t",
+    message: { role: "user", id: "steer", inputIntent: "steer" },
+  });
+  const wake = (id: string) => group(id, [{ tone: "info", itemType: "notification" }]);
+
+  it("keeps a text-only answer reachable when a tool-using wake follows", () => {
+    const rows = [user("u"), assistant("a1"), wake("n"), fold("r2"), assistant("a2")];
+    expect(ids(simplifyRowsForMode(rows, [], "calm"))).toEqual(["u", "a1", "n", "turn-fold:r2"]);
+  });
+
+  it("shows a text-only wake's answer on its own, not behind the first run's fold", () => {
+    const rows = [user("u"), fold("r1"), assistant("a1"), wake("n"), assistant("a2")];
+    expect(ids(simplifyRowsForMode(rows, [], "calm"))).toEqual(["u", "turn-fold:r1", "n", "a2"]);
+  });
+
+  it("does not split a response at a steer message", () => {
+    const rows = [user("u"), assistant("a1"), steer, fold("r1"), assistant("a2")];
+    expect(ids(simplifyRowsForMode(rows, [], "calm"))).toEqual(["u", "steer", "turn-fold:r1"]);
+  });
+
+  it("a running wake does not hide an earlier settled answer", () => {
+    const rows = [user("u"), assistant("a1"), wake("n"), asRow({ kind: "working", id: "w" })];
+    expect(ids(simplifyRowsForMode(rows, [], "calm"))).toEqual(["u", "a1", "n", "w"]);
+  });
+
+  it("an opened fold ends at the next wake", () => {
+    const rows = [user("u"), fold("r1", true), assistant("a1"), wake("n"), assistant("a2")];
+    expect(ids(simplifyRowsForMode(rows, [], "calm"))).toEqual([
+      "u",
+      "turn-fold:r1",
+      "a1",
+      "n",
+      "a2",
+    ]);
+  });
+});
+
 describe("parseTranscriptMode", () => {
   it("reads a stored simple as calm, and defaults to calm", () => {
     expect(parseTranscriptMode("simple")).toBe("calm");
