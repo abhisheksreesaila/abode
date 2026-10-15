@@ -110,8 +110,16 @@ describe("buildCalmCard", () => {
 });
 
 describe("batchRunIds", () => {
-  const run = (id: string, ordinal: number, wake = false, status = "completed") =>
-    wake ? { id, ordinal, status, workStartedAt: "2026-10-14T20:00:00Z" } : { id, ordinal, status };
+  const run = (
+    id: string,
+    ordinal: number,
+    wake = false,
+    status = "completed",
+    startedAt: string | null = "2026-10-14T19:00:00Z",
+  ) =>
+    wake
+      ? { id, ordinal, status, startedAt, workStartedAt: "2026-10-14T20:00:00Z" }
+      : { id, ordinal, status, startedAt };
 
   it("is the user's latest run plus every wake after it", () => {
     const ids = batchRunIds([run("r1", 1), run("r2", 2), run("r3", 3, true), run("r4", 4, true)]);
@@ -127,9 +135,25 @@ describe("batchRunIds", () => {
     const ids = batchRunIds([
       run("r2", 2, false, "running"),
       run("r3", 3, true),
-      run("r4", 4, false, "queued"),
+      run("r4", 4, false, "queued", null),
     ]);
     expect([...ids].toSorted()).toEqual(["r2", "r3"]);
+  });
+
+  it("skips a queued message turned into a steer (cancelled, never started)", () => {
+    const ids = batchRunIds([
+      run("r2", 2, false, "running"),
+      run("r3", 3, false, "cancelled", null),
+    ]);
+    expect([...ids]).toEqual(["r2"]);
+  });
+
+  it("lets a user run that is about to start begin a new batch", () => {
+    const ids = batchRunIds([
+      run("r2", 2, false, "running"),
+      run("r3", 3, false, "starting", null),
+    ]);
+    expect([...ids]).toEqual(["r3"]);
   });
 
   it("is empty for a thread without runs", () => {

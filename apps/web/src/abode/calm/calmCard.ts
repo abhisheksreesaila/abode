@@ -95,20 +95,24 @@ export function buildCalmCard(input: {
 /**
  * The runs of the current batch: the user's latest run plus every wake run after it (a
  * background subagent finishing, a delegated result). Wake runs carry `workStartedAt`;
- * a run the user started does not. A queued run is skipped: the stamp lands only when a
- * wake starts, so a wake waiting behind the active run would otherwise end the batch.
+ * a run the user started does not. A run that never started is skipped unless it is about
+ * to: the stamp lands only when a wake starts, so a queued wake (or a queued message later
+ * turned into a steer, which cancels its run) would otherwise end the batch.
  */
 export function batchRunIds(
   runs: ReadonlyArray<{
     readonly id: string;
     readonly ordinal: number;
     readonly status: string;
+    readonly startedAt: unknown;
     readonly workStartedAt?: unknown;
   }>,
 ): Set<string> {
   const ids = new Set<string>();
   const newestFirst = runs
-    .filter((run) => run.status !== "queued")
+    .filter(
+      (run) => run.startedAt !== null || run.status === "preparing" || run.status === "starting",
+    )
     .toSorted((left, right) => right.ordinal - left.ordinal);
   for (const run of newestFirst) {
     ids.add(run.id);
