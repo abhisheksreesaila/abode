@@ -11,7 +11,8 @@ if [[ -n "$(git status --porcelain)" ]]; then
   log "working tree is not clean; commit or stash first"; exit 1
 fi
 
-git fetch upstream --tags --prune --quiet
+# --force: upstream moves some tags (android-nightly); our copies just follow.
+git fetch upstream --tags --prune --force --quiet
 # for-each-ref --count avoids `| head -1`, which dies of SIGPIPE under pipefail once there are many tags.
 target="${1:-$(git for-each-ref --count=1 --sort=-creatordate --format='%(refname:short)' 'refs/tags/*-nightly.*')}"
 current="$(git describe --tags --match '*-nightly.*' --abbrev=0 HEAD)"
