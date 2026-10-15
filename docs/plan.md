@@ -241,13 +241,12 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-024: Voice that hears you
 
-- **Status:** todo
-- **What:** Abhishek struggled with dictation on 2026-10-14. Today it is Moonshine Base q8 on the CPU (wasm). Measure, then switch: run the same real speech clips (developer-style sentences with code words, 5 to 30 seconds) through Moonshine Base and Whisper candidates (base.en, small.en, large-v3-turbo; wasm and WebGPU where transformers.js supports it) and record word error rate, time to transcribe a 15-second clip on this machine, and download size. Pick the most accurate one that transcribes 15 seconds in about 3 seconds or less; use WebGPU when it is there and fall back to wasm. Record the numbers in `docs/research/voice-spike.md`. Settings shows the new model's size, and a model already cached under the old id is cleaned up or ignored.
+- **Status:** review (reviewer PASS; needs Abhishek to dictate a long real prompt)
+- **What:** Abhishek struggled with dictation on 2026-10-14. Measured (`docs/research/voice-spike.md`): no model beats Moonshine Base within the CPU (wasm) budget, but Moonshine loops on anything past 30 s, and the whole recording went to it in one call (a 2-minute clip came back at 253% WER). Long recordings are now cut at pauses (judged against the room's noise floor, so quiet endings and noisy rooms work) into pieces of 30 s or less and transcribed in order: 2 minutes goes to about 4% WER. A developer vocabulary fixes words Moonshine mishears (worktree, websocket, pixi, SQLite, fh-saas, abode, the React hooks). Cancel stops a long transcription, and the composer shows "Transcribing 2 of 8…". The model and its download are unchanged. GPU or streaming voice is a separate decision (Nemotron spike, `docs/research/voice-nemotron.md`).
 - **Acceptance:**
-  - [ ] The comparison is a script someone can rerun, and its table is in `docs/research/voice-spike.md`.
-  - [ ] The chosen model transcribes the clips with a clearly lower error rate than Moonshine Base.
-  - [ ] `vp build` passes (license check) if a dependency changes.
-  - [ ] Abhishek dictates a real prompt in the app.
+  - [x] The comparison is a script someone can rerun (`apps/web/scripts/abode/voice-bench/`), and its tables are in `docs/research/voice-spike.md`.
+  - [x] Pause segmentation is pure and tested with exact boundaries (soft tail, 10 and 15 dB room noise, no-pause cut, tiny tail).
+  - [ ] Abhishek dictates a real 1 to 3 minute prompt in the app.
 
 ### A-025: Calmer sidebar chrome
 

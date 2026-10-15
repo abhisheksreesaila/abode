@@ -12,7 +12,7 @@ base="${1:-$(git describe --tags --match '*-nightly.*' --abbrev=0 HEAD)}"
 # abode-owned paths: changes here are not hooks.
 own=(
   ':!apps/web/src/abode' ':!apps/server/src/abode' ':!packages/contracts/src/abode*'
-  ':!scripts/abode' ':!docs/brief.md' ':!docs/briefs' ':!docs/plan.md' ':!docs/lessons.md'
+  ':!scripts/abode' ':!apps/web/scripts/abode' ':!docs/brief.md' ':!docs/briefs' ':!docs/plan.md' ':!docs/lessons.md'
   ':!docs/design' ':!design' ':!docs/research' ':!docs/upstream-sync.md' ':!CONTEXT.md' ':!pnpm-lock.yaml'
 )
 
