@@ -6,58 +6,9 @@
  */
 
 :root {
-  /* The rail only exists from Tailwind's `md` breakpoint up, like upstream's sidebar. */
-  --abode-activity-bar-width: 0px;
   /* Roomier than VS Code's 22px so rows are easy to hit without aiming. */
   --abode-row-height: 30px;
   --abode-strip-height: 24px;
-}
-
-@media (min-width: 48rem) {
-  :root {
-    --abode-activity-bar-width: 3rem;
-  }
-}
-
-/*
- * Upstream positions its sidebar with `fixed left-0`. With the rail in the
- * flow before it, the open sidebar moves right of the rail. A collapsed one
- * keeps upstream's off-screen offset so the slide-away animation is unchanged.
- */
-[data-slot="sidebar-wrapper"]:has(> [data-abode-activity-bar])
-  [data-slot="sidebar"][data-side="left"]:not([data-collapsible="offcanvas"])
-  > [data-slot="sidebar-container"] {
-  left: var(--abode-activity-bar-width);
-}
-
-/* Activity bar */
-[data-abode~="activity-item"] {
-  position: relative;
-  display: flex;
-  width: 3rem;
-  height: 3rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  color: var(--contrast-sidebar-muted-foreground);
-  outline: none;
-}
-[data-abode~="activity-item"]:hover,
-[data-abode~="activity-item"][data-active="true"] {
-  color: var(--contrast-sidebar-foreground);
-}
-[data-abode~="activity-item"]:focus-visible {
-  box-shadow: inset 0 0 0 1px var(--ring);
-}
-/* The lit item: an accent-tinted tile, an accent icon and a 3px accent bar on the left edge. */
-[data-abode~="activity-item"][data-active="true"] {
-  background: color-mix(in srgb, var(--primary) 16%, transparent);
-  color: var(--primary);
-  box-shadow: inset 3px 0 0 0 var(--primary);
-}
-[data-abode~="activity-item"] svg {
-  width: 1.25rem;
-  height: 1.25rem;
 }
 
 /* Rows: a workspace header, a session, a draft, a subagent */

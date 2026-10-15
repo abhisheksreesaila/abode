@@ -31,10 +31,8 @@ import {
   usePanelAnimationSettings,
   usePanelNavigationSuppression,
 } from "../panelAnimations";
-// abode: the workspace sidebar and activity bar replace upstream's two thread sidebars.
+// abode: the workspace sidebar replaces upstream's two thread sidebars.
 import { AbodeSidebar } from "../abode/shell/AbodeSidebar";
-import { ActivityBar } from "../abode/shell/ActivityBar";
-import { abodeShellProviderStyle } from "../abode/shell/shellLayout";
 import { useThreadVisitedMigration } from "../hooks/useThreadVisitedMigration";
 import { SettingsSidebarNav } from "./settings/SettingsSidebarNav";
 import { SidebarBrandWidthProbe, SidebarChromeHeader } from "./sidebar/SidebarChrome";
@@ -272,7 +270,6 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const sidebarProviderStyle = {
     "--sidebar-width": `${clampThreadSidebarWidth(sidebarWidth, sidebarMinimumWidth, sidebarMaximumWidth)}px`,
     "--panel-animation-duration": `${panelAnimationDurationMs}ms`,
-    ...abodeShellProviderStyle, // abode: room for the activity bar (before the window-controls inset below)
     ...windowControlsInsetStyle,
   } as CSSProperties;
 
@@ -323,7 +320,6 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
       >
         <SidebarBrandWidthProbe onWidthChange={setBrandWidth} />
         <ProjectProjectionRetention />
-        <ActivityBar /> {/* abode */}
         <Sidebar
           side="left"
           collapsible="offcanvas"

@@ -30,7 +30,7 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 
 `t3 theme set abode` does not work by design: abode stays out of `BUILT_IN_THEME_IDS` so the mobile app's theme ids are unchanged.
 
-- `apps/web/src/components/AppSidebarLayout.tsx`: renders `ActivityBar` + `AbodeSidebar` instead of `LegacySidebar`/`Sidebar` (A-005); spreads `abodeShellProviderStyle` into the provider style, before the macOS inset. Those two sidebar files stay in the tree, unused
+- `apps/web/src/components/AppSidebarLayout.tsx`: renders `AbodeSidebar` instead of `LegacySidebar`/`Sidebar` (A-005): an import and one render line. The sidebar's own header row (home, search, settings) and its left padding for the window controls live in `abode/`. Those two sidebar files stay in the tree, unused
 - `apps/web/src/main.tsx`: imports the bundled fonts and `abode/abode.css`
 - `apps/web/src/themePalette.ts`: adds `ABODE_THEMES` (Amber, Azure) to the web built-in definitions (not shared `BUILT_IN_THEMES`: mobile mirrors it). A new abode theme goes in that list and needs no new hook, apart from its id in shared and its boot colors in `index.html`
 - `packages/shared/src/themePalettes.ts`: reserves the ids `abode` and `abode-azure` (one line each)
