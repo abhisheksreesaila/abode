@@ -41,7 +41,7 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 - `apps/web/src/components/sidebar/SidebarChrome.tsx`: `SidebarBrandMark` shows "abode" instead of the T3 wordmark (Settings sidebar header and the sidebar width probe)
 - `ThemeSettings.tsx`, `CommandPalette.tsx`: list the abode theme cards / commands (`...ABODE_THEMES`)
 - `apps/web/src/components/CommandPalette.tsx`: A-005: one line, `actionItems.push(...abodePanelToggleActions())`, adds Toggle sidebar / terminal / side panel
-- `apps/web/src/components/chat/MessagesTimeline.tsx`: A-007: `useStableRows(useSimpleRows(rawRows, timelineEntries), ...)` filters the derived rows by the Simple/Detailed mode (Detailed returns the same array)
+- `apps/web/src/components/chat/MessagesTimeline.tsx`: A-007: `useStableRows(useSimpleRows(rawRows, timelineEntries), ...)` filters the derived rows by the Calm/Detailed mode (A-019: Calm replaced Simple, same hook line) (Detailed returns the same array)
 - `apps/web/src/hooks/useThreadActionMenu.ts`, `components/threadActionMenu.logic.ts`: A-007: header menu gets a Transcript submenu (`abode:${string}` ids); the palette row rides on `abodePanelToggleActions`
 - `packages/contracts/src/rpc.ts`, `index.ts`: three `customizations.*` RPCs (add-only)
 - `apps/server/src/ws.ts`, `auth/RpcAuthorization.ts`: wires the Customizations service (add-only)
