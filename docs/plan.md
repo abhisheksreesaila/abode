@@ -186,7 +186,7 @@ The card sits above the composer (where questions already open) and shows the th
 
 ### A-018: Record the subagent type
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; known gap: a subagent recovered after a server restart has no type until a later frame carries one)
 - **What:** optional `agentType` on `OrchestrationV2Subagent` (contracts, add-only). The Claude adapter keeps the Agent tool's `subagent_type` with the pending launch and copies it onto the subagent when `task_started` arrives. Codex leaves it empty. Marked `abode:` hooks, listed in docs/upstream-sync.md.
 - **Upstream files it may touch:** `packages/contracts/src/orchestrationV2.ts`, `apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts`.
 - **Acceptance:**
