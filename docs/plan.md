@@ -221,7 +221,7 @@ The card sits above the composer (where questions already open) and shows the th
 
 ### A-022: Sidebar like VS Code's agent sessions
 
-- **Status:** review
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
 - **What:** Abhishek's reference (VS Code's agent sessions view): a workspace header is a folder icon in the workspace color and the name (no tinted bar, no path line; Copy path stays on its menu). A session is two lines: status square and title, then where it runs (worktree icon or folder, branch) and its age or "Needs you" tag. No guide line. Replaces A-014's 16px gaps. Diff counts (+N −M) are left out: upstream's thread shells don't carry them yet (its own sidebar has an empty seam for it).
 - **Acceptance:**
   - [ ] Matches the reference in the real app (Abhishek).
