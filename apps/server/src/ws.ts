@@ -3185,6 +3185,7 @@ export const layer = Layer.unwrap(
     const pullRequests = yield* PullRequestService.PullRequestService;
     const reviewGuides = yield* PullRequestReviewGuideService.PullRequestReviewGuideService;
     const sql = yield* SqlClient.SqlClient;
+    const voice = yield* Layer.build(Voice.layer); // abode: voice, one per server (it owns the download and the model)
     return HttpRouter.add(
       "GET",
       "/ws",
@@ -3246,7 +3247,7 @@ export const layer = Layer.unwrap(
               Layer.provide(Layer.succeed(SqlClient.SqlClient, sql)),
               Layer.provide(AgentSessionScanner.layer),
               Layer.provide(Customizations.layer), // abode:
-              Layer.provide(Voice.layer), // abode: voice
+              Layer.provide(Layer.succeedContext(voice)), // abode: voice
               Layer.provide(ProviderMaintenanceRunner.layer),
               Layer.provide(Layer.succeed(ServerSelfUpdate.ServerSelfUpdate, serverSelfUpdate)),
               // One server-lifetime service means clients share the same PR caches, and a WS
