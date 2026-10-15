@@ -38,6 +38,7 @@ export function describeVoiceStatus(state: RecordingState, elapsedSeconds = 0): 
         ? `Listening ${formatElapsed(elapsedSeconds)}`
         : `Downloading voice model ${Math.round(state.downloadProgress * 100)}%…`;
     case "transcribing":
+      if (state.segment) return `Transcribing ${state.segment.current} of ${state.segment.total}…`;
       return state.downloadProgress === null
         ? "Transcribing…"
         : `Downloading speech model… ${Math.round(state.downloadProgress * 100)}%`;

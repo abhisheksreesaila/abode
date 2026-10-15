@@ -4,7 +4,7 @@
  */
 import { env, pipeline, type AutomaticSpeechRecognitionPipeline } from "@huggingface/transformers";
 
-import { segmentAudio } from "./segmentAudio";
+import { transcribeSegments } from "./transcribeSegments";
 import { createDownloadProgress, VOICE_MODEL_DTYPE, VOICE_MODEL_ID } from "./voiceModel";
 import type { WorkerRequest, WorkerResponse } from "./workerProtocol";
 
@@ -29,6 +29,8 @@ if (env.backends.onnx.wasm) {
 let recognizer: Promise<AutomaticSpeechRecognitionPipeline> | null = null;
 // Serializes requests: the model is loaded once and inference is single-threaded anyway.
 let queue: Promise<void> = Promise.resolve();
+// Ids of requests the user cancelled; their segment loop stops at the next boundary.
+const cancelled = new Set<number>();
 
 function reply(message: WorkerResponse) {
   postMessage(message);
@@ -55,23 +57,32 @@ function loadRecognizer(id: number): Promise<AutomaticSpeechRecognitionPipeline>
 
 addEventListener("message", (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
-  if (request.type !== "transcribe") return;
+  if (request.type === "cancel") {
+    // Handled between the awaits of the running request, so it takes effect before the next segment.
+    cancelled.add(request.id);
+    return;
+  }
   queue = queue.then(async () => {
     try {
       const asr = await loadRecognizer(request.id);
       // The model is trained on clips of up to 30 s and repeats or drops text on longer ones, so
       // a long recording goes through in pieces cut at pauses (segmentAudio.ts).
-      const parts: string[] = [];
-      for (const { start, end } of segmentAudio(request.audio)) {
-        const output = await asr(request.audio.subarray(start, end));
-        parts.push(Array.isArray(output) ? output.map((part) => part.text).join(" ") : output.text);
-      }
-      const text = parts
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .join(" ");
-      reply({ type: "result", id: request.id, text });
+      const text = await transcribeSegments(
+        request.audio,
+        async (segment) => {
+          const output = await asr(segment);
+          return Array.isArray(output) ? output.map((part) => part.text).join(" ") : output.text;
+        },
+        {
+          isCancelled: () => cancelled.has(request.id),
+          onSegment: (current, total) => reply({ type: "segment", id: request.id, current, total }),
+        },
+      );
+      // A cancelled request has no listener left; say nothing.
+      if (text !== null) reply({ type: "result", id: request.id, text });
+      cancelled.delete(request.id);
     } catch (error) {
+      cancelled.delete(request.id);
       reply({
         type: "error",
         id: request.id,

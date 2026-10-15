@@ -10,7 +10,12 @@ export type RecordingState =
       /** A first-time model download, started in the background while listening. */
       downloadProgress?: number;
     }
-  | { status: "transcribing"; downloadProgress: number | null }
+  | {
+      status: "transcribing";
+      downloadProgress: number | null;
+      /** Which piece of a long recording is being transcribed (recordings over 30 s only). */
+      segment?: { current: number; total: number };
+    }
   | { status: "error"; message: string };
 
 export type RecordingEvent =
@@ -18,6 +23,7 @@ export type RecordingEvent =
   | { type: "stop" }
   | { type: "cancel" }
   | { type: "progress"; fraction: number }
+  | { type: "segment"; current: number; total: number }
   /** The background model load finished (or gave up); recording shows plain listening. */
   | { type: "warmed" }
   | { type: "transcribed"; text: string }
@@ -56,6 +62,17 @@ export function reduceRecording(state: RecordingState, event: RecordingEvent): R
       }
       return state.status === "transcribing"
         ? { state: { status: "transcribing", downloadProgress: event.fraction } }
+        : { state };
+    case "segment":
+      // Segments only start once the model is loaded, so any download label is over.
+      return state.status === "transcribing"
+        ? {
+            state: {
+              status: "transcribing",
+              downloadProgress: null,
+              segment: { current: event.current, total: event.total },
+            },
+          }
         : { state };
     case "warmed":
       return state.status === "recording" ? { state: { status: "recording" } } : { state };
