@@ -9,6 +9,16 @@
   /* Roomier than VS Code's 22px so rows are easy to hit without aiming. */
   --abode-row-height: 30px;
   --abode-strip-height: 24px;
+  /* Air between the window edge and the sidebar's rows, strips and header. */
+  --abode-sidebar-gutter: 0.5rem;
+}
+
+/* Only the abode sidebar (it starts with the title strip), not the Settings nav. */
+[data-slot="sidebar-inner"]:has(> [data-abode~="title-strip"]) {
+  padding-inline: var(--abode-sidebar-gutter);
+}
+[data-slot="sidebar-inner"]:has(> [data-abode~="title-strip"]) [data-abode~="row"] {
+  border-radius: 4px;
 }
 
 /* Rows: a workspace header, a session, a draft, a subagent */
@@ -245,6 +255,7 @@
 }
 @media (min-width: 48rem) {
   [data-abode~="title-strip"] {
-    padding-left: var(--workspace-titlebar-content-left);
+    /* The floating toggle is placed from the window edge, so the gutter is already inside it. */
+    padding-left: calc(var(--workspace-titlebar-content-left) - var(--abode-sidebar-gutter));
   }
 }
