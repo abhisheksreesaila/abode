@@ -268,10 +268,11 @@ export function AbodeSidebar() {
             to="/"
             aria-label="abode home"
             data-testid="sidebar-home"
-            className="min-w-0 flex-1 truncate rounded-xs text-base font-bold tracking-tight text-primary outline-hidden ring-ring focus-visible:ring-1 focus-visible:ring-inset"
+            className="min-w-0 truncate rounded-xs text-base font-bold tracking-tight text-primary outline-hidden ring-ring focus-visible:ring-1 focus-visible:ring-inset"
           >
             abode
           </Link>
+          <span className="flex-1" />
           <Tooltip>
             <TooltipTrigger
               render={
@@ -298,7 +299,10 @@ export function AbodeSidebar() {
                   variant="ghost-muted"
                   aria-label="Search"
                   data-testid="sidebar-search"
-                  onClick={() => openCommandPalette()}
+                  onClick={() => {
+                    if (isMobile) setOpenMobile(false);
+                    openCommandPalette();
+                  }}
                 />
               }
             >
@@ -315,6 +319,7 @@ export function AbodeSidebar() {
                   size="icon-xs"
                   variant="ghost-muted"
                   aria-label="Settings"
+                  className="max-md:hidden"
                   data-testid="sidebar-settings"
                   onClick={() => void router.navigate({ to: "/settings" })}
                 />
