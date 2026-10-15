@@ -3,6 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   canUnlock,
+  customizationPageRows,
   customizationScopeForPath,
   defaultLocked,
   describeCustomizationsError,
@@ -154,5 +155,20 @@ describe("skillRefreshInstanceIds", () => {
 
   it("rescans every usable Claude and Codex instance on a draft", () => {
     expect(skillRefreshInstanceIds(undefined, providers)).toEqual(["claudeAgent", "codex"]);
+  });
+});
+
+describe("customizationPageRows", () => {
+  it("lists Pull requests then Usage where pull requests are supported", () => {
+    expect(customizationPageRows({ pullRequestsSupported: true })).toEqual([
+      { id: "pull-requests", label: "Pull requests" },
+      { id: "usage", label: "Usage" },
+    ]);
+  });
+
+  it("lists only Usage where pull requests are not supported", () => {
+    expect(customizationPageRows({ pullRequestsSupported: false })).toEqual([
+      { id: "usage", label: "Usage" },
+    ]);
   });
 });

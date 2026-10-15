@@ -12,6 +12,20 @@ const GROUP_DEFINITIONS: ReadonlyArray<{
   { kind: "instructions", label: "Instructions", emptyLabel: "No instructions yet" },
 ];
 
+export type CustomizationPageId = "pull-requests" | "usage";
+
+/** Pages listed after the customization groups. Pull requests only where an environment supports them. */
+export function customizationPageRows(input: {
+  readonly pullRequestsSupported: boolean;
+}): ReadonlyArray<{ readonly id: CustomizationPageId; readonly label: string }> {
+  return [
+    ...(input.pullRequestsSupported
+      ? [{ id: "pull-requests" as const, label: "Pull requests" }]
+      : []),
+    { id: "usage" as const, label: "Usage" },
+  ];
+}
+
 export interface CustomizationGroup {
   readonly kind: CustomizationKind;
   readonly label: string;

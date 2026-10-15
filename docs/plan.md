@@ -251,7 +251,7 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-025: Calmer sidebar chrome
 
-- **Status:** todo
+- **Status:** review
 - **What:** Workspaces lose their colors: the color picker leaves the workspace menu, and every folder icon uses the theme's default color (color store and hooks deleted). The activity bar loses Pull requests and Usage; both become rows in the Customizations list at the bottom of the sidebar (after Instructions) that open the same pages. The activity bar keeps Agents, Search and Settings.
 - **Acceptance:**
   - [ ] No workspace color code is left; existing stored colors are simply ignored.
@@ -259,14 +259,14 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-026: "+" shows the new session under its folder
 
-- **Status:** todo
+- **Status:** review
 - **What:** Like VS Code: pressing + (or starting a new session any other way) puts a "New session" row under that workspace at once, selected, while the pane opens beside it. It stays a draft: no server thread until the first message. An empty draft's row stays only while it is the open one; leaving it empty removes the row.
 - **Acceptance:**
   - [ ] The draft-row rule is pure and tested (empty and open: shown; empty and not open: gone; with text: shown).
 
 ### A-027: Remove a workspace from the sidebar
 
-- **Status:** todo
+- **Status:** review
 - **What:** "Hide from sidebar" becomes "Remove from sidebar", and the "N hidden" row is gone. Nothing is deleted on the server, so its sessions come back with it. A removed workspace returns as soon as it becomes the open one again (picked in the new-session project chip, or added again with "Add project"), and stays back.
 - **Acceptance:**
   - [ ] Remove and return are pure and tested; no "hidden" wording is left in the UI.

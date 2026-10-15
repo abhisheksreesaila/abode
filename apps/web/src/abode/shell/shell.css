@@ -227,9 +227,8 @@
   border: 1px solid var(--contrast-sidebar-muted-foreground);
 }
 
-/* Workspace header, like VS Code's: a folder in the workspace color and the name. */
-[data-slot="sidebar-content"] > section + section,
-[data-abode~="hidden-toggle"] {
+/* Workspace header, like VS Code's: a folder and the name. */
+[data-slot="sidebar-content"] > section + section {
   margin-top: 6px;
 }
 [data-abode~="workspace-header"] {
@@ -238,9 +237,6 @@
   padding-left: 0.5rem;
   font-size: 14px;
   color: var(--contrast-sidebar-foreground);
-}
-[data-abode~="workspace-folder"] {
-  color: var(--workspace-color, currentColor);
 }
 [data-abode~="workspace-pill"] {
   display: inline-flex;
@@ -300,14 +296,4 @@
   [data-abode~="title-strip"] {
     padding-left: var(--workspace-titlebar-content-left);
   }
-}
-
-/* Hidden workspaces: the "N hidden" row and the dimmed workspaces under it. */
-[data-abode~="hidden-toggle"] {
-  gap: 0.375rem;
-  padding-left: 0.5rem;
-  font-size: 12px;
-}
-[data-abode-hidden] {
-  opacity: 0.6;
 }

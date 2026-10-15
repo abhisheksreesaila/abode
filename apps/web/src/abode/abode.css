@@ -34,33 +34,6 @@ html[data-theme-id="abode-azure"] {
   --control-radius: 0;
 }
 
-/* Workspace accent colors for the sidebar (docs/design/fluent.md). Slots 5-8 are the
-   main-window.md syntax hues. workspaceColor.ts falls back to the same values. */
-html[data-theme-id="abode"],
-html[data-theme-id="abode-azure"] {
-  --ws-1: #4cc2ff;
-  --ws-2: #c586c0;
-  --ws-3: #dcdcaa;
-  --ws-4: #4ec9b0;
-  --ws-5: #f48771;
-  --ws-6: #b5cea8;
-  --ws-7: #9cdcfe;
-  --ws-8: #d7ba7d;
-}
-
-/* Light mode: deeper versions of the same hues, so the stripes and the "ab" logo stay readable. */
-html:not(.dark)[data-theme-id="abode"],
-html:not(.dark)[data-theme-id="abode-azure"] {
-  --ws-1: #0067b8;
-  --ws-2: #8e3a8a;
-  --ws-3: #7a6a00;
-  --ws-4: #0f7b6c;
-  --ws-5: #b4361f;
-  --ws-6: #4b7a2a;
-  --ws-7: #1c6e9e;
-  --ws-8: #8a5a14;
-}
-
 /* "Needs you" (sidebar tag, calm card): a bright orange apart from the amber accent, with
    dark text on it. Every theme gets it, since a waiting agent must stand out in all of them. */
 :root {

@@ -24,13 +24,10 @@ import { ThreadRow } from "./ThreadRow";
 import { deriveWorkspaceThreadState } from "./threadState";
 import type { WorkspaceGroup } from "./useWorkspaceGroups";
 import { WorkspaceDrafts } from "./WorkspaceDrafts";
-import { buildWorkspaceColorMenuItem } from "./workspaceColor";
-import { useWorkspaceColorStyle } from "./workspaceColorHooks";
-import { applyWorkspaceColorMenuChoice } from "./workspaceColorStore";
-import { workspaceHiddenMenuItem } from "./workspaceHidden";
-import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
+import { WORKSPACE_REMOVE_MENU_ITEM } from "./workspaceRemoved";
+import { useRemovedWorkspacesStore } from "./workspaceRemovedStore";
 import { resolveWorkspacePill, visibleWorkspaceThreads, workspacePillView } from "./workspaceList";
-import { threadShellKey } from "./workspaceModel";
+import { renderedDraftIds, threadShellKey } from "./workspaceModel";
 
 // A shared empty list keeps ThreadRow's memo intact for sessions without subagents.
 const NO_SUBAGENTS: ReadonlyArray<SidebarThreadSummary> = [];
@@ -51,33 +48,27 @@ function memberLabel(member: SidebarProjectGroupMember): string {
 }
 
 /**
- * One workspace: a header like VS Code's (a folder in the workspace color, the name and a
+ * One workspace: a header like VS Code's (a folder, the name and a
  * count pill) and its sessions underneath. Sessions come from upstream's thread
- * shells; the color is an abode setting kept in this browser.
+ * shells.
  */
 export const WorkspaceSection = memo(function WorkspaceSection(props: {
   readonly group: WorkspaceGroup;
   readonly showAll: boolean;
   readonly onShowAll: (workspaceKey: string, showAll: boolean) => void;
   readonly draftIds: ReadonlyArray<string>;
-  /** Listed (dimmed) under the sidebar's "N hidden" row. */
-  readonly hidden?: boolean;
 }) {
-  const { group, showAll, onShowAll, draftIds, hidden = false } = props;
+  const { group, showAll, onShowAll, draftIds } = props;
   const { project } = group;
-  const { threadKey: activeThreadKey } = useAbodeActiveRoute();
+  const { threadKey: activeThreadKey, draftId: activeDraftId } = useAbodeActiveRoute();
   const router = useRouter();
   const handleNewThread = useNewThreadHandler();
   const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
-  const color = useWorkspaceColorStyle(project.projectKey);
   const preferenceKeys = useMemo(() => expansionPreferenceKeys(group), [group]);
   const expanded = useUiStateStore((state) =>
     resolveProjectExpanded(state.projectExpandedById, preferenceKeys),
   );
   const setProjectExpanded = useUiStateStore((state) => state.setProjectExpanded);
-  const isHiddenPref = useHiddenWorkspacesStore((state) =>
-    state.hiddenKeys.includes(project.projectKey),
-  );
   const { copyToClipboard: copyPath } = useCopyToClipboard<{ path: string }>({
     onCopy: ({ path }) =>
       toastManager.add({ type: "success", title: "Path copied", description: path }),
@@ -99,6 +90,8 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   );
   const pillView = pill ? workspacePillView(pill) : null;
 
+  // The open draft's row is forced open too, so "+" shows its "New session" row at once.
+  const activeDraftIsHere = activeDraftId !== null && draftIds.includes(activeDraftId);
   const activeIsHere =
     activeThreadKey !== null &&
     group.threads.some((thread) => threadShellKey(thread) === activeThreadKey);
@@ -172,23 +165,19 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       if (!api) return;
       const items: ContextMenuItem<string>[] = [
         { id: "new-session", label: "New session" },
-        buildWorkspaceColorMenuItem(),
         ...(group.isScratch
           ? []
           : [{ id: "copy-path", label: "Copy path", separatorBefore: true }]),
-        workspaceHiddenMenuItem(isHiddenPref),
+        WORKSPACE_REMOVE_MENU_ITEM,
         { id: "project-settings", label: "Project settings", icon: "settings" },
       ];
       const clicked = await settlePromise(() =>
         api.contextMenu.show(items, { x: event.clientX, y: event.clientY }),
       );
       if (clicked._tag === "Failure" || clicked.value === null) return;
-      if (applyWorkspaceColorMenuChoice(project.projectKey, clicked.value)) return;
       if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
-      else if (clicked.value === "hide-workspace" || clicked.value === "show-workspace") {
-        useHiddenWorkspacesStore
-          .getState()
-          .setHidden(project.projectKey, clicked.value === "hide-workspace");
+      else if (clicked.value === WORKSPACE_REMOVE_MENU_ITEM.id) {
+        useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
       } else if (clicked.value === "copy-path" && firstMember) {
         copyPath(firstMember.workspaceRoot, { path: firstMember.workspaceRoot });
       } else if (clicked.value === "project-settings") {
@@ -198,25 +187,12 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         });
       }
     },
-    [
-      copyPath,
-      createSession,
-      firstMember,
-      group.isScratch,
-      isHiddenPref,
-      project.projectKey,
-      router,
-    ],
+    [copyPath, createSession, firstMember, group.isScratch, project.projectKey, router],
   );
 
   const FolderGlyph = expanded ? FolderOpenIcon : FolderIcon;
   return (
-    <section
-      aria-label={group.name}
-      data-testid={`workspace-${project.projectKey}`}
-      data-abode-hidden={hidden || undefined}
-      style={color ? ({ "--workspace-color": color.color } as React.CSSProperties) : undefined}
-    >
+    <section aria-label={group.name} data-testid={`workspace-${project.projectKey}`}>
       <div
         role="button"
         tabIndex={0}
@@ -233,7 +209,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         }}
         data-abode="row workspace-header"
       >
-        <FolderGlyph aria-hidden data-abode="workspace-folder" className="size-4 shrink-0" />
+        <FolderGlyph aria-hidden className="size-4 shrink-0" />
         <span className="min-w-0 flex-1 truncate">{group.name}</span>
         {pillView?.kind === "failed" ? (
           <span data-abode="meta" className="font-medium text-error-foreground">
@@ -267,9 +243,9 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
           <TooltipPopup side="right">New session in {group.name}</TooltipPopup>
         </Tooltip>
       </div>
-      {expanded || activeIsHere ? (
+      {expanded || activeIsHere || activeDraftIsHere ? (
         <ul data-abode="guide">
-          {expanded ? <WorkspaceDrafts draftIds={draftIds} /> : null}
+          <WorkspaceDrafts draftIds={renderedDraftIds({ expanded, draftIds, activeDraftId })} />
           {visibleThreads.map((thread) => (
             <ThreadRow
               key={`${thread.environmentId}:${thread.id}`}

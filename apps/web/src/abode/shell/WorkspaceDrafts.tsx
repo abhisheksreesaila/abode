@@ -28,10 +28,14 @@ function draftPreview(composer: ComposerThreadDraftState): string {
 const DraftRow = memo(function DraftRow({ draftId }: { draftId: string }) {
   const { navigateToDraft } = useAbodeSidebar();
   const { draftId: activeDraftId } = useAbodeActiveRoute();
-  const composer = useComposerDraftStore((store) => store.draftsByThreadKey[draftId]);
-  if (!composer) return null;
-  const preview = draftPreview(composer);
   const isActive = activeDraftId === draftId;
+  // The open draft is always "New session": its text is in the composer, and not
+  // subscribing keeps its row from repainting on every keystroke.
+  const composer = useComposerDraftStore((store) =>
+    isActive ? undefined : store.draftsByThreadKey[draftId],
+  );
+  if (!isActive && !composer) return null;
+  const preview = composer ? draftPreview(composer) : "New session";
   return (
     <li className="list-none">
       <div
