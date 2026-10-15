@@ -210,6 +210,7 @@ The card sits above the composer (where questions already open) and shows the th
 - **Acceptance:**
   - [ ] The card model (counts, grouping, emoji, needs-you) is pure and tested, including Codex subagents without a type.
   - [ ] Hidden when there's nothing to show; hidden in Detailed.
+- **Known gap:** members of a multi-agent workflow have no run of their own, so a workflow counts as one row (its coordinator).
 
 ### A-021: Needs you in the sidebar
 

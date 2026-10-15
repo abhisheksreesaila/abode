@@ -110,8 +110,8 @@ describe("buildCalmCard", () => {
 });
 
 describe("batchRunIds", () => {
-  const run = (id: string, ordinal: number, wake = false) =>
-    wake ? { id, ordinal, workStartedAt: "2026-10-14T20:00:00Z" } : { id, ordinal };
+  const run = (id: string, ordinal: number, wake = false, status = "completed") =>
+    wake ? { id, ordinal, status, workStartedAt: "2026-10-14T20:00:00Z" } : { id, ordinal, status };
 
   it("is the user's latest run plus every wake after it", () => {
     const ids = batchRunIds([run("r1", 1), run("r2", 2), run("r3", 3, true), run("r4", 4, true)]);
@@ -120,6 +120,15 @@ describe("batchRunIds", () => {
 
   it("orders by ordinal, not by array position", () => {
     const ids = batchRunIds([run("r3", 3, true), run("r1", 1), run("r2", 2)]);
+    expect([...ids].toSorted()).toEqual(["r2", "r3"]);
+  });
+
+  it("skips queued runs: a wake waiting in line is not stamped yet", () => {
+    const ids = batchRunIds([
+      run("r2", 2, false, "running"),
+      run("r3", 3, true),
+      run("r4", 4, false, "queued"),
+    ]);
     expect([...ids].toSorted()).toEqual(["r2", "r3"]);
   });
 
