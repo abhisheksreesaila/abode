@@ -35,9 +35,9 @@ const SUPPORTED_PLATFORMS = new Set([
   "win32-ia32",
 ]);
 
-/** The bundle emits `voiceWorker.mjs` beside the entry; from source it is a sibling `.ts`. */
+/** The bundle emits `abode/voice/voiceWorker.mjs` under dist; from source it is a sibling `.ts`. */
 function findWorkerFile(): string | null {
-  for (const name of ["./voiceWorker.mjs", "./voiceWorker.ts"]) {
+  for (const name of ["./abode/voice/voiceWorker.mjs", "./voiceWorker.ts"]) {
     const file = NodeURL.fileURLToPath(new URL(name, import.meta.url));
     if (NodeFS.existsSync(file)) return file;
   }
