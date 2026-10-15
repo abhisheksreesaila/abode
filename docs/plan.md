@@ -259,7 +259,7 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-026: "+" shows the new session under its folder
 
-- **Status:** todo
+- **Status:** review
 - **What:** Like VS Code: pressing + (or starting a new session any other way) puts a "New session" row under that workspace at once, selected, while the pane opens beside it. It stays a draft: no server thread until the first message. An empty draft's row stays only while it is the open one; leaving it empty removes the row.
 - **Acceptance:**
   - [ ] The draft-row rule is pure and tested (empty and open: shown; empty and not open: gone; with text: shown).

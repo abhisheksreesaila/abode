@@ -56,13 +56,14 @@ export function workspaceDisplayName(input: {
 export interface DraftRowSource<TSession, TComposer> {
   readonly draftId: string;
   readonly session: TSession;
-  readonly composer: TComposer;
+  /** Undefined for a fresh draft the composer has not touched yet. */
+  readonly composer: TComposer | undefined;
 }
 
 /**
- * Unsent drafts worth a row: not yet sent, with something typed. The draft that
- * is open right now is left out. Its row would repaint on every keystroke, and
- * the composer already shows it.
+ * Unsent drafts worth a row: not yet sent, and either with something typed or open right
+ * now. The open draft shows even when empty ("New session", selected), so starting a session
+ * any way puts a row under its folder at once; an empty draft loses its row when you leave it.
  */
 export function visibleDraftRows<
   TSession extends { readonly createdAt: string; readonly promotedTo?: unknown },
@@ -75,9 +76,10 @@ export function visibleDraftRows<
 }): Array<DraftRowSource<TSession, TComposer>> {
   const rows: Array<DraftRowSource<TSession, TComposer>> = [];
   for (const [draftId, session] of Object.entries(input.sessions)) {
-    if (session.promotedTo != null || draftId === input.routeDraftId) continue;
+    if (session.promotedTo != null) continue;
     const composer = input.composers[draftId];
-    if (composer === undefined || !input.hasContent(composer)) continue;
+    const isOpen = draftId === input.routeDraftId;
+    if (!isOpen && (composer === undefined || !input.hasContent(composer))) continue;
     rows.push({ draftId, session, composer });
   }
   rows.sort((left, right) => right.session.createdAt.localeCompare(left.session.createdAt));

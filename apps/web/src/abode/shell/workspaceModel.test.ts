@@ -80,27 +80,64 @@ describe("visibleDraftRows", () => {
     expect(rows.map((row) => row.draftId)).toEqual(["fresh", "old"]);
   });
 
-  it("skips empty, already-sent and currently open drafts", () => {
+  it("skips empty and already-sent drafts that are not open", () => {
     const rows = visibleDraftRows({
       sessions: {
         empty: session("2026-10-01"),
         sent: session("2026-10-01", "thread-1"),
-        open: session("2026-10-01"),
         kept: session("2026-10-01"),
       },
       composers: {
         empty: { prompt: "" },
         sent: { prompt: "x" },
-        open: { prompt: "x" },
         kept: { prompt: "x" },
       },
-      routeDraftId: "open",
+      routeDraftId: null,
       hasContent,
     });
     expect(rows.map((row) => row.draftId)).toEqual(["kept"]);
   });
 
-  it("skips a session with no composer state", () => {
+  it("shows the open draft even when it is empty or has no composer state yet", () => {
+    const sessions = { open: session("2026-10-01"), other: session("2026-10-02") };
+    expect(
+      visibleDraftRows({
+        sessions,
+        composers: { open: { prompt: "" }, other: { prompt: "" } },
+        routeDraftId: "open",
+        hasContent,
+      }).map((row) => row.draftId),
+    ).toEqual(["open"]);
+    expect(
+      visibleDraftRows({ sessions, composers: {}, routeDraftId: "open", hasContent }).map(
+        (row) => row.draftId,
+      ),
+    ).toEqual(["open"]);
+  });
+
+  it("drops the empty draft's row once another page is open", () => {
+    expect(
+      visibleDraftRows({
+        sessions: { was: session("2026-10-01") },
+        composers: { was: { prompt: "" } },
+        routeDraftId: null,
+        hasContent,
+      }),
+    ).toEqual([]);
+  });
+
+  it("does not show an open draft that was already sent", () => {
+    expect(
+      visibleDraftRows({
+        sessions: { open: session("2026-10-01", "thread-1") },
+        composers: {},
+        routeDraftId: "open",
+        hasContent,
+      }),
+    ).toEqual([]);
+  });
+
+  it("skips a closed session with no composer state", () => {
     expect(
       visibleDraftRows({
         sessions: { a: session("2026-10-01") },
@@ -139,5 +176,16 @@ describe("draftIdsByWorkspace", () => {
       hasContent: () => true,
     });
     expect(result).toEqual({ a: ["d2", "d1"], b: ["d3"] });
+  });
+
+  it("files the open empty draft under its workspace", () => {
+    const result = draftIdsByWorkspace({
+      groups: [group("a", ["local", "p1"])],
+      sessions: { d1: session("p1", "2026-10-01") },
+      composers: {},
+      routeDraftId: "d1",
+      hasContent: () => false,
+    });
+    expect(result).toEqual({ a: ["d1"] });
   });
 });
