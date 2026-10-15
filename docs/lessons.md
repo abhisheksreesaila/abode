@@ -14,3 +14,4 @@
 - Test against the user's real setup, not just fixtures: most of their skills are symlinks (`~/.claude/skills/x -> ~/.agents/skills/x`), which a symlink-strict path check rejected.
 - Upstream catches some keys app-wide in the capture phase (`mod+s` stashes the composer prompt). A key an abode panel needs must be excluded in that handler, or the panel never sees it.
 - Every effect that hands state to a DOM node must survive React's dev double-mount: reset any "already done" ref in the cleanup, or the second mount skips the work (A-011 avatars vanished in dev).
+- A wake (a background subagent finishing, a delegated result) is a new run. Anything shown "per turn" must group the user's run with the wake runs after it (`workStartedAt`; skip runs that never started), or it flickers or blanks mid-batch (A-020 took three review rounds).

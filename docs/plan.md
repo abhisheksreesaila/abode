@@ -204,7 +204,7 @@ The card sits above the composer (where questions already open) and shows the th
 
 ### A-020: The calm card
 
-- **Status:** review
+- **Status:** review (reviewer PASS; needs Abhishek on a real batch)
 - **Depends on:** A-018 for names (without it every subagent is 🤖 helper)
 - **What:** above the composer while a thread has a task list or subagents in its latest run: "Tickets 4 of 5" from the agent's task list, then one row per subagent type: emoji, type, finished of started, ✓ when all are done. A bright orange "Needs you" while an approval or question waits. Static: no animation. Only in Calm.
 - **Acceptance:**
@@ -214,7 +214,7 @@ The card sits above the composer (where questions already open) and shows the th
 
 ### A-021: Needs you in the sidebar
 
-- **Status:** review
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
 - **What:** a session waiting on you shows a bright orange "Needs you" tag on its sidebar row instead of only the small square.
 - **Acceptance:**
   - [ ] Shows exactly while the session waits on you (an approval, a question, or a plan ready to approve); goes away when answered.
