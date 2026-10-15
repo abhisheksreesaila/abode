@@ -2,9 +2,8 @@ import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useParams, useRouter } from "@tanstack/react-router";
-import { ChevronDownIcon, ChevronRightIcon, FolderPlusIcon, SquarePenIcon } from "lucide-react";
+import { FolderPlusIcon, SquarePenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useShallow } from "zustand/react/shallow";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
 import { SidebarThreadUndoNotice } from "~/components/sidebar/SidebarThreadUndoNotice";
@@ -49,10 +48,9 @@ import {
 } from "./sidebarContext";
 import { useAbodeThreadActions } from "./useAbodeThreadActions";
 import { useWorkspaceGroups } from "./useWorkspaceGroups";
-import { splitHiddenWorkspaces } from "./workspaceHidden";
-import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
-import { deriveWorkspaceThreadState } from "./threadState";
-import { jumpOrderKeys, resolveWorkspacePill, workspacePillView } from "./workspaceList";
+import { shownWorkspaces } from "./workspaceRemoved";
+import { useRemovedWorkspacesStore } from "./workspaceRemovedStore";
+import { jumpOrderKeys } from "./workspaceList";
 import { draftIdsByWorkspace, threadShellKey } from "./workspaceModel";
 import { expansionPreferenceKeys, WorkspaceSection } from "./WorkspaceSection";
 import "./shell.css";
@@ -142,45 +140,30 @@ export function AbodeSidebar() {
     [draftIdsJson],
   );
 
-  // Hidden workspaces sit under a "N hidden" row; the one you are in always stays listed.
-  const hiddenKeys = useHiddenWorkspacesStore((state) => state.hiddenKeys);
-  const [revealHidden, setRevealHidden] = useState(false);
-  const { shown: shownGroups, hidden: hiddenGroups } = useMemo(
+  // Removed workspaces are left out of the list. One returns when it becomes the open one
+  // (picked in the new-session chip, or added again) and stays back after that.
+  const removedKeys = useRemovedWorkspacesStore((state) => state.removedKeys);
+  const listedGroups = useMemo(
+    () => shownWorkspaces(groups, { removedKeys, keyOf: (group) => group.project.projectKey }),
+    [groups, removedKeys],
+  );
+  const openRouteId = activeThreadKey ?? activeDraftId;
+  const openWorkspaceKey = useMemo(
     () =>
-      splitHiddenWorkspaces(groups, {
-        hiddenKeys,
-        keyOf: (group) => group.project.projectKey,
-        isActive: (group) =>
+      groups.find(
+        (group) =>
           group.threads.some((thread) => threadShellKey(thread) === activeThreadKey) ||
           (activeDraftId !== null &&
             (draftIds[group.project.projectKey] ?? NO_DRAFTS).includes(activeDraftId)),
-      }),
-    [activeDraftId, activeThreadKey, draftIds, groups, hiddenKeys],
+      )?.project.projectKey ?? null,
+    [activeDraftId, activeThreadKey, draftIds, groups],
   );
-  // Forget the expanded state once nothing is hidden, so the next hide starts collapsed.
-  if (revealHidden && hiddenGroups.length === 0) setRevealHidden(false);
-  // A hidden workspace's "needs you" or running state still shows, on the "N hidden" row.
-  const hiddenThreads = useMemo(
-    () => hiddenGroups.flatMap((group) => group.threads),
-    [hiddenGroups],
-  );
-  const hiddenVisitedAts = useUiStateStore(
-    useShallow((state) =>
-      hiddenThreads.map((thread) => state.threadLastVisitedAtById[threadShellKey(thread)] ?? null),
-    ),
-  );
-  const hiddenPill = useMemo(() => {
-    const pill = resolveWorkspacePill(
-      hiddenThreads.map((thread, index) =>
-        deriveWorkspaceThreadState(thread, hiddenVisitedAts[index] ?? undefined),
-      ),
-    );
-    return pill && pill.kind !== "done" ? { pill, view: workspacePillView(pill) } : null;
-  }, [hiddenThreads, hiddenVisitedAts]);
-  const listedGroups = useMemo(
-    () => (revealHidden ? [...shownGroups, ...hiddenGroups] : shownGroups),
-    [hiddenGroups, revealHidden, shownGroups],
-  );
+  // Keyed on the route too, so removing the workspace you are in does not bring it straight back.
+  useEffect(() => {
+    if (openRouteId !== null && openWorkspaceKey !== null) {
+      useRemovedWorkspacesStore.getState().setRemoved(openWorkspaceKey, false);
+    }
+  }, [openRouteId, openWorkspaceKey]);
 
   // Ctrl+1..9 and previous/next walk exactly the rows the workspaces render.
   const orderedThreadKeys = useMemo(
@@ -294,7 +277,7 @@ export function AbodeSidebar() {
         </div>
         <div data-abode="strip">
           <span className="min-w-0 flex-1 truncate">Workspaces</span>
-          <span className="font-normal tabular-nums">{shownGroups.length}</span>
+          <span className="font-normal tabular-nums">{listedGroups.length}</span>
           <Tooltip>
             <TooltipTrigger
               render={
@@ -313,7 +296,7 @@ export function AbodeSidebar() {
           </Tooltip>
         </div>
         <SidebarContent>
-          {shownGroups.map((group) => (
+          {listedGroups.map((group) => (
             <WorkspaceSection
               key={group.project.projectKey}
               group={group}
@@ -322,50 +305,6 @@ export function AbodeSidebar() {
               draftIds={draftIds[group.project.projectKey] ?? NO_DRAFTS}
             />
           ))}
-          {hiddenGroups.length > 0 ? (
-            <button
-              type="button"
-              aria-expanded={revealHidden}
-              data-testid="sidebar-hidden-workspaces"
-              data-abode="row hidden-toggle"
-              onClick={() => setRevealHidden((current) => !current)}
-            >
-              {revealHidden ? (
-                <ChevronDownIcon aria-hidden className="size-3.5 shrink-0" />
-              ) : (
-                <ChevronRightIcon aria-hidden className="size-3.5 shrink-0" />
-              )}
-              <span className="min-w-0 flex-1 truncate text-left">
-                {hiddenGroups.length} hidden
-              </span>
-              {hiddenPill?.view.kind === "failed" ? (
-                <span data-abode="meta" className="font-medium text-error-foreground">
-                  {hiddenPill.view.text}
-                </span>
-              ) : hiddenPill?.view ? (
-                <span
-                  role="img"
-                  aria-label={hiddenPill.pill.detail}
-                  data-tone={hiddenPill.view.tone}
-                  data-abode="workspace-pill"
-                >
-                  {hiddenPill.view.text}
-                </span>
-              ) : null}
-            </button>
-          ) : null}
-          {revealHidden
-            ? hiddenGroups.map((group) => (
-                <WorkspaceSection
-                  key={group.project.projectKey}
-                  group={group}
-                  hidden
-                  showAll={showAllByWorkspace.has(group.project.projectKey)}
-                  onShowAll={handleShowAll}
-                  draftIds={draftIds[group.project.projectKey] ?? NO_DRAFTS}
-                />
-              ))
-            : null}
           {groups.length === 0 ? (
             <div className="px-3 pt-4 text-center text-xs text-sidebar-muted-foreground">
               No workspaces yet
@@ -377,7 +316,7 @@ export function AbodeSidebar() {
           <SidebarThreadUndoNotice />
           <SidebarProviderUpdatePill />
           <SidebarUpdateArchitectureWarning />
-          {/* The activity bar carries Settings, Pull requests and Usage on desktop; phones have no bar. */}
+          {/* The activity bar carries Settings on desktop; phones have no bar. */}
           <div className="md:hidden">
             <SidebarUtilityMenu />
           </div>

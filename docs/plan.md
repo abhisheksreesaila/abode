@@ -266,7 +266,7 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-027: Remove a workspace from the sidebar
 
-- **Status:** todo
+- **Status:** review
 - **What:** "Hide from sidebar" becomes "Remove from sidebar", and the "N hidden" row is gone. Nothing is deleted on the server, so its sessions come back with it. A removed workspace returns as soon as it becomes the open one again (picked in the new-session project chip, or added again with "Add project"), and stays back.
 - **Acceptance:**
   - [ ] Remove and return are pure and tested; no "hidden" wording is left in the UI.

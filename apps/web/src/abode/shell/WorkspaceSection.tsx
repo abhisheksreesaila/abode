@@ -24,8 +24,8 @@ import { ThreadRow } from "./ThreadRow";
 import { deriveWorkspaceThreadState } from "./threadState";
 import type { WorkspaceGroup } from "./useWorkspaceGroups";
 import { WorkspaceDrafts } from "./WorkspaceDrafts";
-import { workspaceHiddenMenuItem } from "./workspaceHidden";
-import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
+import { WORKSPACE_REMOVE_MENU_ITEM } from "./workspaceRemoved";
+import { useRemovedWorkspacesStore } from "./workspaceRemovedStore";
 import { resolveWorkspacePill, visibleWorkspaceThreads, workspacePillView } from "./workspaceList";
 import { threadShellKey } from "./workspaceModel";
 
@@ -57,10 +57,8 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   readonly showAll: boolean;
   readonly onShowAll: (workspaceKey: string, showAll: boolean) => void;
   readonly draftIds: ReadonlyArray<string>;
-  /** Listed (dimmed) under the sidebar's "N hidden" row. */
-  readonly hidden?: boolean;
 }) {
-  const { group, showAll, onShowAll, draftIds, hidden = false } = props;
+  const { group, showAll, onShowAll, draftIds } = props;
   const { project } = group;
   const { threadKey: activeThreadKey } = useAbodeActiveRoute();
   const router = useRouter();
@@ -71,9 +69,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
     resolveProjectExpanded(state.projectExpandedById, preferenceKeys),
   );
   const setProjectExpanded = useUiStateStore((state) => state.setProjectExpanded);
-  const isHiddenPref = useHiddenWorkspacesStore((state) =>
-    state.hiddenKeys.includes(project.projectKey),
-  );
   const { copyToClipboard: copyPath } = useCopyToClipboard<{ path: string }>({
     onCopy: ({ path }) =>
       toastManager.add({ type: "success", title: "Path copied", description: path }),
@@ -171,7 +166,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         ...(group.isScratch
           ? []
           : [{ id: "copy-path", label: "Copy path", separatorBefore: true }]),
-        workspaceHiddenMenuItem(isHiddenPref),
+        WORKSPACE_REMOVE_MENU_ITEM,
         { id: "project-settings", label: "Project settings", icon: "settings" },
       ];
       const clicked = await settlePromise(() =>
@@ -179,10 +174,8 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       );
       if (clicked._tag === "Failure" || clicked.value === null) return;
       if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
-      else if (clicked.value === "hide-workspace" || clicked.value === "show-workspace") {
-        useHiddenWorkspacesStore
-          .getState()
-          .setHidden(project.projectKey, clicked.value === "hide-workspace");
+      else if (clicked.value === WORKSPACE_REMOVE_MENU_ITEM.id) {
+        useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
       } else if (clicked.value === "copy-path" && firstMember) {
         copyPath(firstMember.workspaceRoot, { path: firstMember.workspaceRoot });
       } else if (clicked.value === "project-settings") {
@@ -192,24 +185,12 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         });
       }
     },
-    [
-      copyPath,
-      createSession,
-      firstMember,
-      group.isScratch,
-      isHiddenPref,
-      project.projectKey,
-      router,
-    ],
+    [copyPath, createSession, firstMember, group.isScratch, project.projectKey, router],
   );
 
   const FolderGlyph = expanded ? FolderOpenIcon : FolderIcon;
   return (
-    <section
-      aria-label={group.name}
-      data-testid={`workspace-${project.projectKey}`}
-      data-abode-hidden={hidden || undefined}
-    >
+    <section aria-label={group.name} data-testid={`workspace-${project.projectKey}`}>
       <div
         role="button"
         tabIndex={0}
