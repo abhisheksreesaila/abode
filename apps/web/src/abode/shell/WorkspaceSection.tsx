@@ -2,7 +2,7 @@ import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import type { ContextMenuItem } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
-import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from "lucide-react";
+import { FolderIcon, FolderOpenIcon, PlusIcon } from "lucide-react";
 import { memo, useCallback, useMemo, type MouseEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -29,12 +29,7 @@ import { useWorkspaceColorStyle } from "./workspaceColorHooks";
 import { applyWorkspaceColorMenuChoice } from "./workspaceColorStore";
 import { workspaceHiddenMenuItem } from "./workspaceHidden";
 import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
-import {
-  formatWorkspaceLocation,
-  resolveWorkspacePill,
-  visibleWorkspaceThreads,
-  workspacePillView,
-} from "./workspaceList";
+import { resolveWorkspacePill, visibleWorkspaceThreads, workspacePillView } from "./workspaceList";
 import { threadShellKey } from "./workspaceModel";
 
 // A shared empty list keeps ThreadRow's memo intact for sessions without subagents.
@@ -56,8 +51,8 @@ function memberLabel(member: SidebarProjectGroupMember): string {
 }
 
 /**
- * One workspace: a one-line header (chevron, color dot, name, folder, count
- * pill) and its sessions underneath. Sessions come from upstream's thread
+ * One workspace: a header like VS Code's (a folder in the workspace color, the name and a
+ * count pill) and its sessions underneath. Sessions come from upstream's thread
  * shells; the color is an abode setting kept in this browser.
  */
 export const WorkspaceSection = memo(function WorkspaceSection(props: {
@@ -117,11 +112,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   });
 
   const firstMember = project.memberProjects[0];
-  const location = formatWorkspaceLocation({
-    workspaceRoot: group.isScratch ? "" : (firstMember?.workspaceRoot ?? project.workspaceRoot),
-    remoteEnvironmentLabels: project.remoteEnvironmentLabels,
-    isRemoteOnly: project.environmentPresence === "remote-only",
-  });
 
   const toggle = useCallback(() => {
     setProjectExpanded(preferenceKeys, !expanded);
@@ -219,7 +209,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
     ],
   );
 
-  const ChevronIcon = expanded ? ChevronDownIcon : ChevronRightIcon;
+  const FolderGlyph = expanded ? FolderOpenIcon : FolderIcon;
   return (
     <section
       aria-label={group.name}
@@ -243,16 +233,8 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         }}
         data-abode="row workspace-header"
       >
-        <ChevronIcon aria-hidden className="size-3.5 shrink-0 text-sidebar-muted-foreground" />
-        <span aria-hidden data-abode="workspace-dot" />
-        <span className="min-w-0 truncate font-medium">{group.name}</span>
-        {location ? (
-          <span data-abode="workspace-location" className="min-w-0 flex-1 truncate">
-            {location}
-          </span>
-        ) : (
-          <span className="flex-1" />
-        )}
+        <FolderGlyph aria-hidden data-abode="workspace-folder" className="size-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{group.name}</span>
         {pillView?.kind === "failed" ? (
           <span data-abode="meta" className="font-medium text-error-foreground">
             {pillView.text}

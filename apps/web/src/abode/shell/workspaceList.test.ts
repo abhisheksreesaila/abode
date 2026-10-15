@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  formatWorkspaceLocation,
   threadListWindow,
-  homeRelativePath,
   resolveWorkspacePill,
   splitLatestThreads,
   threadMetaLabel,
@@ -12,37 +10,8 @@ import {
   workspacePillView,
   visibleWorkspaceThreads,
   jumpOrderKeys,
+  sessionPlace,
 } from "./workspaceList";
-
-describe("homeRelativePath", () => {
-  it("shortens Linux, macOS and Windows home folders", () => {
-    expect(homeRelativePath("/home/me/Projects/x")).toBe("~/Projects/x");
-    expect(homeRelativePath("/Users/me/code")).toBe("~/code");
-    expect(homeRelativePath("C:\\Users\\me\\code\\x")).toBe("~/code/x");
-    expect(homeRelativePath("/home/me")).toBe("~");
-  });
-  it("leaves other paths alone", () => {
-    expect(homeRelativePath("/srv/app")).toBe("/srv/app");
-    expect(homeRelativePath("/homework/x")).toBe("/homework/x");
-  });
-});
-
-describe("formatWorkspaceLocation", () => {
-  const base = { workspaceRoot: "/home/me/code/travel-os", remoteEnvironmentLabels: ["mac-mini"] };
-  it("is just the path for the local environment", () => {
-    expect(formatWorkspaceLocation({ ...base, isRemoteOnly: false })).toBe("~/code/travel-os");
-  });
-  it("leads with the machine for a remote environment", () => {
-    expect(formatWorkspaceLocation({ ...base, isRemoteOnly: true })).toBe(
-      "mac-mini · ~/code/travel-os",
-    );
-  });
-  it("falls back to the path when the remote has no label", () => {
-    expect(
-      formatWorkspaceLocation({ ...base, remoteEnvironmentLabels: [], isRemoteOnly: true }),
-    ).toBe("~/code/travel-os");
-  });
-});
 
 describe("resolveWorkspacePill", () => {
   const t = (attention: ThreadAttention, failed = false) => ({
@@ -203,5 +172,25 @@ describe("jumpOrderKeys", () => {
     );
     expect(rendered).toEqual([1, 2, 6, 7, 8, 9]);
     expect(jumpOrderKeys(workspaces, options)).toEqual(rendered.map(keyOf));
+  });
+});
+
+describe("sessionPlace", () => {
+  it("is a worktree when the session has a worktree path", () => {
+    expect(sessionPlace({ worktreePath: "/w/abode-A-019", branch: "A-019-calm" })).toEqual({
+      kind: "worktree",
+      branch: "A-019-calm",
+    });
+  });
+
+  it("is the workspace folder otherwise, with its branch when known", () => {
+    expect(sessionPlace({ worktreePath: null, branch: "main" })).toEqual({
+      kind: "local",
+      branch: "main",
+    });
+    expect(sessionPlace({ worktreePath: "  ", branch: null })).toEqual({
+      kind: "local",
+      branch: null,
+    });
   });
 });

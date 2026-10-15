@@ -1,35 +1,7 @@
 /**
- * Pure logic for the abode workspace list: the location line, the status pill,
- * the status square tone and the "N older" window. No React here.
+ * Pure logic for the abode workspace list: the status pill, the status square
+ * tone, a session's place and the "N older" window. No React here.
  */
-
-const HOME_PREFIX =
-  /^(?:\/home\/[^/]+|\/Users\/[^/]+|\/root|[A-Za-z]:[\\/]+Users[\\/]+[^\\/]+)(?=[\\/]|$)/;
-
-/** `/home/me/Projects/x` -> `~/Projects/x`. Anything outside a home directory is left alone. */
-export function homeRelativePath(path: string): string {
-  const trimmed = path.length > 1 ? path.replace(/[\\/]+$/, "") : path;
-  const match = HOME_PREFIX.exec(trimmed);
-  if (!match) return trimmed;
-  const rest = trimmed.slice(match[0].length).replace(/\\/g, "/");
-  return `~${rest}`;
-}
-
-/**
- * The second line of a workspace header: the home-relative folder, led by the
- * machine label when the workspace does not live on this environment.
- */
-export function formatWorkspaceLocation(input: {
-  readonly workspaceRoot: string;
-  readonly remoteEnvironmentLabels: readonly string[];
-  readonly isRemoteOnly: boolean;
-}): string {
-  const path = homeRelativePath(input.workspaceRoot);
-  const machine = input.isRemoteOnly
-    ? input.remoteEnvironmentLabels.filter((label) => label.length > 0).join(", ")
-    : "";
-  return machine ? `${machine} · ${path}` : path;
-}
 
 export type WorkspacePillKind = "needs-you" | "failed" | "running" | "done";
 
@@ -221,4 +193,15 @@ export function jumpOrderKeys<T>(
       options.keyOf,
     ),
   );
+}
+
+/** Where a session runs, for its second line: its own worktree or the workspace folder. */
+export function sessionPlace(thread: {
+  readonly worktreePath: string | null;
+  readonly branch: string | null;
+}): { readonly kind: "worktree" | "local"; readonly branch: string | null } {
+  return {
+    kind: thread.worktreePath?.trim() ? "worktree" : "local",
+    branch: thread.branch,
+  };
 }

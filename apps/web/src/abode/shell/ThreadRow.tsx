@@ -2,13 +2,14 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import { threadRuntimeCanArchive } from "@t3tools/client-runtime/state/models";
 import { AuthOrchestrationOperateScope } from "@t3tools/contracts";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/shared/threadPullRequests";
-import { ArchiveIcon } from "lucide-react";
+import { ArchiveIcon, FolderIcon } from "lucide-react";
 import { memo, useCallback, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import {
   ChangeRequestStatusIcon,
   prStatusIndicator,
   PrStatusTooltipContent,
+  ThreadWorktreeIndicator,
   useLinkedThreadPullRequest,
 } from "~/components/ThreadStatusIndicators";
 import { useSidebarRowSubscriptionLease } from "~/components/Sidebar.logic";
@@ -25,7 +26,12 @@ import { useUiStateStore } from "~/uiStateStore";
 import { useAbodeSidebar } from "./sidebarContext";
 import { SubagentRows } from "./SubagentRows";
 import { deriveWorkspaceThreadState } from "./threadState";
-import { threadMetaLabel, threadSquareTone, type ThreadSquareTone } from "./workspaceList";
+import {
+  sessionPlace,
+  threadMetaLabel,
+  threadSquareTone,
+  type ThreadSquareTone,
+} from "./workspaceList";
 
 const TONE_META_CLASS: Record<ThreadSquareTone, string> = {
   running: "text-sidebar-muted-foreground",
@@ -49,7 +55,8 @@ interface ThreadRowProps {
 }
 
 /**
- * One session: a 28px line with a status square, the title and an age. The
+ * One session, two lines like VS Code's agent sessions: a status square and the title, then
+ * where it runs (worktree or workspace folder, and the branch) and its age. The
  * shared behaviours (PR state, inline rename, archive, the context menu) call
  * the same upstream hooks and commands the other sidebars use.
  */
@@ -70,6 +77,7 @@ export const ThreadRow = memo(function ThreadRow(props: ThreadRowProps) {
   const age = formatRelativeTime(
     thread.latestUserMessageAt ?? thread.updatedAt ?? thread.createdAt,
   );
+  const place = sessionPlace(thread);
   const meta = threadMetaLabel(tone, age ? (age.suffix ? age.value : "now") : "");
 
   const linkedPullRequest = useLinkedThreadPullRequest(
@@ -174,82 +182,99 @@ export const ThreadRow = memo(function ThreadRow(props: ThreadRowProps) {
         onKeyDown={handleKeyDown}
       >
         <StatusSquare tone={tone} />
-        {renaming ? (
-          <input
-            // Autofocus on mount is the inline-rename contract: the row swaps into an editor.
-            ref={(element) => {
-              if (element && document.activeElement !== element) {
-                element.focus();
-                element.select();
-              }
-            }}
-            aria-label="Thread title"
-            className="min-w-0 flex-1 rounded-xs border border-ring bg-transparent px-1 text-sidebar-foreground outline-none"
-            value={renameValue}
-            onChange={(event) => setRenameValue(event.target.value)}
-            onClick={(event) => event.stopPropagation()}
-            onDoubleClick={(event) => event.stopPropagation()}
-            onBlur={() => finishRename(true)}
-            onKeyDown={(event) => {
-              event.stopPropagation();
-              if (event.key === "Enter") {
-                event.preventDefault();
-                finishRename(true);
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                finishRename(false);
-              }
-            }}
-          />
-        ) : (
-          <span
-            className={cn("min-w-0 flex-1 truncate", isActive && "font-medium")}
-            data-testid={`thread-title-${thread.id}`}
-          >
-            {thread.title}
+        <span data-abode="lines">
+          <span data-abode="line">
+            {renaming ? (
+              <input
+                // Autofocus on mount is the inline-rename contract: the row swaps into an editor.
+                ref={(element) => {
+                  if (element && document.activeElement !== element) {
+                    element.focus();
+                    element.select();
+                  }
+                }}
+                aria-label="Thread title"
+                className="min-w-0 flex-1 rounded-xs border border-ring bg-transparent px-1 text-sidebar-foreground outline-none"
+                value={renameValue}
+                onChange={(event) => setRenameValue(event.target.value)}
+                onClick={(event) => event.stopPropagation()}
+                onDoubleClick={(event) => event.stopPropagation()}
+                onBlur={() => finishRename(true)}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    finishRename(true);
+                  } else if (event.key === "Escape") {
+                    event.preventDefault();
+                    finishRename(false);
+                  }
+                }}
+              />
+            ) : (
+              <span
+                className={cn("min-w-0 flex-1 truncate", isActive && "font-medium")}
+                data-testid={`thread-title-${thread.id}`}
+              >
+                {thread.title}
+              </span>
+            )}
+            {prStatus && pr ? (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <a
+                      href={prStatus.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={prStatus.tooltip}
+                      className={cn(
+                        "inline-flex shrink-0 items-center justify-center rounded-sm outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
+                        prStatus.colorClass,
+                      )}
+                      onClick={handlePrClick}
+                    />
+                  }
+                >
+                  <ChangeRequestStatusIcon
+                    state={pr.state}
+                    isDraft={pr.isDraft}
+                    className="size-3"
+                  />
+                </TooltipTrigger>
+                <TooltipPopup side="top">
+                  <PrStatusTooltipContent status={prStatus} />
+                </TooltipPopup>
+              </Tooltip>
+            ) : currentLink ? (
+              <a
+                href={currentLink.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`PR #${currentLink.number}, status pending`}
+                className="inline-flex shrink-0 items-center text-muted-foreground"
+                onClick={handlePrClick}
+              >
+                <PullRequestGlyph.pullRequest className="size-3" />
+              </a>
+            ) : null}
           </span>
-        )}
-        {prStatus && pr ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <a
-                  href={prStatus.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={prStatus.tooltip}
-                  className={cn(
-                    "inline-flex shrink-0 items-center justify-center rounded-sm outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
-                    prStatus.colorClass,
-                  )}
-                  onClick={handlePrClick}
-                />
-              }
+          <span data-abode="line place">
+            {place.kind === "worktree" ? (
+              <ThreadWorktreeIndicator thread={thread} />
+            ) : (
+              <FolderIcon aria-hidden className="size-3 shrink-0" />
+            )}
+            {place.branch ? <span className="min-w-0 truncate">{place.branch}</span> : null}
+            <span aria-hidden>·</span>
+            <span
+              data-abode={canArchive ? "meta yields" : "meta"}
+              data-tone={tone}
+              className={TONE_META_CLASS[tone]}
             >
-              <ChangeRequestStatusIcon state={pr.state} isDraft={pr.isDraft} className="size-3" />
-            </TooltipTrigger>
-            <TooltipPopup side="top">
-              <PrStatusTooltipContent status={prStatus} />
-            </TooltipPopup>
-          </Tooltip>
-        ) : currentLink ? (
-          <a
-            href={currentLink.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`PR #${currentLink.number}, status pending`}
-            className="inline-flex shrink-0 items-center text-muted-foreground"
-            onClick={handlePrClick}
-          >
-            <PullRequestGlyph.pullRequest className="size-3" />
-          </a>
-        ) : null}
-        <span
-          data-abode={canArchive ? "meta yields" : "meta"}
-          data-tone={tone}
-          className={TONE_META_CLASS[tone]}
-        >
-          {meta}
+              {meta}
+            </span>
+          </span>
         </span>
         {canArchive ? (
           <button
