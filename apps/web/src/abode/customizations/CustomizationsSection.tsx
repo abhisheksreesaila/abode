@@ -110,7 +110,6 @@ function PageRows() {
       key={id}
       type="button"
       data-testid={`customization-page-${id}`}
-      data-abode="row"
       data-active={pathname === `/${id}`}
       aria-current={pathname === `/${id}` ? "page" : undefined}
       onClick={() =>
@@ -120,7 +119,7 @@ function PageRows() {
             : { to: "/usage" },
         )
       }
-      className="flex min-h-[26px] w-full cursor-pointer items-center gap-1.5 rounded-xs px-2 text-start text-xs text-sidebar-foreground outline-hidden ring-ring hover:bg-sidebar-row-hover focus-visible:ring-1 focus-visible:ring-inset"
+      className="flex min-h-[26px] w-full cursor-pointer items-center gap-1.5 rounded-xs px-2 text-start text-xs text-sidebar-foreground outline-hidden ring-ring hover:bg-sidebar-row-hover focus-visible:ring-1 focus-visible:ring-inset data-[active=true]:bg-sidebar-row-active"
     >
       <span aria-hidden className="size-3 shrink-0" />
       {id === "pull-requests" ? (
