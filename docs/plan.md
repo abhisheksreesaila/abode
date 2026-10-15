@@ -151,14 +151,14 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-014: Breathing room in the workspaces sidebar
 
-- **Status:** review
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
 - **What:** workspaces sit 16px apart (was 6px), headers are 32px and session rows 30px with 2px between them, so picking a session doesn't take focus. Spacing only, in `abode/shell/shell.css`.
 - **Acceptance:**
   - [ ] Each workspace reads as its own group; neighboring sessions are easy to hit (Abhishek in the real app).
 
 ### A-015: Drop the board; the chat gets the width
 
-- **Status:** review
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
 - **What:** the board column, its lanes, moods and poses are gone. The avatars beside messages stay (`abode/chat/ChatAvatars.tsx` hands them over, as the board did). Agent answers no longer stop at 76ch, so Settings › Chat width (Wide or Full) widens the whole chat.
 - **Acceptance:**
   - [ ] No column right of the chat; avatars still show with abode chat on.
@@ -166,7 +166,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-016: Voice: "Listening" bars instead of live text
 
-- **Status:** review
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
 - **What:** while recording, the composer shows bars that follow the mic level and "Listening 0:05"; nothing is transcribed until release. The model warms up in the background when recording starts, so the one transcription after release stays quick. Bars update about 20 times a second only while recording, and hold still under reduced motion.
 - **Acceptance:**
   - [ ] No live text appears while speaking; the transcript lands at the caret on release (Abhishek with a real mic).
