@@ -12,8 +12,8 @@ import * as NodeChildProcess from "node:child_process";
 import * as NodeCrypto from "node:crypto";
 import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
-import { Readable, Transform } from "node:stream";
-import { pipeline } from "node:stream/promises";
+import * as NodeStream from "node:stream";
+import * as NodeStreamPromises from "node:stream/promises";
 
 export interface ModelSpec {
   /** Directory name inside the archive and inside the models folder. */
@@ -75,6 +75,7 @@ export const downloadOverHttps: Downloader = async ({ url, destination, maxBytes
     if (target.protocol !== "https:") {
       throw new ModelInstallFailed("insecure_url", "The model must be downloaded over HTTPS.");
     }
+    // @effect-diagnostics-next-line globalFetch:off - a one-off 450 MB stream; every hop is checked above
     const current = await fetch(target, { redirect: "manual" }).catch((cause: unknown) => {
       throw new ModelInstallFailed("download", "Couldn't reach the download server.", { cause });
     });
@@ -90,7 +91,7 @@ export const downloadOverHttps: Downloader = async ({ url, destination, maxBytes
     throw new ModelInstallFailed("download", "The download server refused the request.");
   }
   let received = 0;
-  const counter = new Transform({
+  const counter = new NodeStream.Transform({
     transform(chunk: Buffer, _encoding, callback) {
       received += chunk.length;
       if (received > maxBytes) {
@@ -101,8 +102,8 @@ export const downloadOverHttps: Downloader = async ({ url, destination, maxBytes
       callback(null, chunk);
     },
   });
-  await pipeline(
-    Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]),
+  await NodeStreamPromises.pipeline(
+    NodeStream.Readable.fromWeb(response.body as Parameters<typeof NodeStream.Readable.fromWeb>[0]),
     counter,
     NodeFS.createWriteStream(destination),
   ).catch((cause: unknown) => {
@@ -113,7 +114,7 @@ export const downloadOverHttps: Downloader = async ({ url, destination, maxBytes
 
 async function sha256Of(file: string): Promise<string> {
   const hash = NodeCrypto.createHash("sha256");
-  await pipeline(NodeFS.createReadStream(file), hash);
+  await NodeStreamPromises.pipeline(NodeFS.createReadStream(file), hash);
   return hash.digest("hex");
 }
 
