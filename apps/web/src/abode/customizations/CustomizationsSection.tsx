@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
@@ -103,12 +103,16 @@ function ItemRow(props: {
 /** Pull requests and Usage: pages, not files, so they sit after the groups. */
 function PageRows() {
   const navigate = useNavigate();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const rows = customizationPageRows({ pullRequestsSupported: usePullRequestsSupported() });
   return rows.map(({ id, label }) => (
     <button
       key={id}
       type="button"
       data-testid={`customization-page-${id}`}
+      data-abode="row"
+      data-active={pathname === `/${id}`}
+      aria-current={pathname === `/${id}` ? "page" : undefined}
       onClick={() =>
         void navigate(
           id === "pull-requests"

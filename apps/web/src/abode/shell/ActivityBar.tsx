@@ -96,8 +96,7 @@ export function ActivityBar() {
       <Link
         to="/"
         aria-label="abode home"
-        className="flex h-[var(--workspace-topbar-height)] shrink-0 items-center justify-center text-base font-bold tracking-tight outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
-        style={{ color: "var(--primary)" }}
+        className="flex h-[var(--workspace-topbar-height)] shrink-0 text-primary items-center justify-center text-base font-bold tracking-tight outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
       >
         ab
       </Link>
