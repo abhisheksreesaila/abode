@@ -10,7 +10,7 @@ import { batchRunIds, buildCalmCard, currentWork } from "./calmCard";
 import "./calm.css";
 
 /**
- * Above the composer in Calm mode: tickets done of total, the run's subagents by type,
+ * Above the composer in Calm mode, on one line: tickets done of total, then the batch's subagents by type,
  * and an orange "Needs you" while an approval or question waits. Static: nothing animates.
  */
 export function CalmCard(props: { readonly threadRef: ScopedThreadRef | null }) {
@@ -48,45 +48,38 @@ function Card({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
           Needs you · answer below
         </p>
       ) : null}
-      {card.tickets ? (
-        <div data-abode-calm-tickets="">
-          <span data-abode-calm-label="">Tickets</span>
-          <span data-abode-calm-count="">
-            {card.tickets.done} of {card.tickets.total}
-          </span>
-          <span data-abode-calm-bar="" data-done={card.tickets.allDone} aria-hidden>
-            <span style={{ width: `${(card.tickets.done / card.tickets.total) * 100}%` }} />
-          </span>
-          {card.tickets.allDone ? (
-            <span data-abode-calm-check="" aria-label="all done">
-              ✓
+      <ul data-abode-calm-pills="">
+        {card.tickets ? (
+          <li data-abode-calm-pill="tickets" data-done={card.tickets.allDone}>
+            <span data-abode-calm-label="">Tickets</span>
+            <span data-abode-calm-count="">
+              {card.tickets.done}/{card.tickets.total}
             </span>
-          ) : null}
-        </div>
-      ) : null}
-      {card.agents.length > 0 ? (
-        <ul data-abode-calm-agents="">
-          {card.agents.map((agent) => (
-            <li key={agent.type}>
-              <span aria-hidden>{agent.emoji}</span>
-              <span data-abode-calm-name="">{agent.type}</span>
-              <span data-abode-calm-count="">
-                {agent.finished} / {agent.started}
+            {card.tickets.allDone ? (
+              <span data-abode-calm-check="" aria-label="all done">
+                ✓
               </span>
-              {agent.done ? (
-                <span data-abode-calm-check="" aria-label="done">
-                  ✓
-                </span>
-              ) : (
-                <span />
-              )}
-            </li>
-          ))}
-          {card.moreAgentTypes > 0 ? (
-            <li data-abode-calm-more="">+{card.moreAgentTypes} more</li>
-          ) : null}
-        </ul>
-      ) : null}
+            ) : null}
+          </li>
+        ) : null}
+        {card.agents.map((agent) => (
+          <li key={agent.type} data-abode-calm-pill="">
+            <span aria-hidden>{agent.emoji}</span>
+            <span data-abode-calm-name="">{agent.type}</span>
+            <span data-abode-calm-count="">
+              {agent.finished}/{agent.started}
+            </span>
+            {agent.done ? (
+              <span data-abode-calm-check="" aria-label="done">
+                ✓
+              </span>
+            ) : null}
+          </li>
+        ))}
+        {card.moreAgentTypes > 0 ? (
+          <li data-abode-calm-pill="more">+{card.moreAgentTypes} more</li>
+        ) : null}
+      </ul>
     </section>
   );
 }

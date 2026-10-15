@@ -1,7 +1,7 @@
 # Calm card: design handoff
 
 - **Canvas:** https://claude.ai/artifact/46J6LrSG43hKVgbXLr6Mv6 (options A ledger rows, B one line, C tiles; "A in every state + sidebar").
-- **Chosen:** A, ledger rows (assumed until Abhishek picks; B or C changes only the card's layout).
+- **Chosen (Abhishek, 2026-10-15):** B, one line of pills, with A's orange "Needs you" strip. Answer choices come from upstream's question panel under the card.
 
 ## Tokens (theme variables, never hex in code)
 
