@@ -179,3 +179,41 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 - **Acceptance:**
   - [ ] Asking for an artifact in an abode thread opens it in the browser panel beside that thread.
   - [ ] Installing twice changes nothing; `--remove` restores the file (tested on scratch copies).
+
+## Phase D: calm mode (brief: docs/briefs/calm-mode.md, ADR: docs/adr/0001-subagent-type-hook.md)
+
+The card sits above the composer (where questions already open) and shows the thread's current work. Earlier turns fold into upstream's "Worked for…" row; a tap opens that turn in full.
+
+### A-018: Record the subagent type
+
+- **Status:** todo
+- **What:** optional `agentType` on `OrchestrationV2Subagent` (contracts, add-only). The Claude adapter keeps the Agent tool's `subagent_type` with the pending launch and copies it onto the subagent when `task_started` arrives. Codex leaves it empty. Marked `abode:` hooks, listed in docs/upstream-sync.md.
+- **Upstream files it may touch:** `packages/contracts/src/orchestrationV2.ts`, `apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts`.
+- **Acceptance:**
+  - [ ] A server test: an Agent call with `subagent_type: "reviewer"` produces a subagent with `agentType: "reviewer"`; without it, no field.
+  - [ ] Old payloads without the field still decode (the mobile app is unaffected).
+  - [ ] Hook report stays under budget.
+
+### A-019: Calm transcript
+
+- **Status:** todo
+- **What:** the transcript menu becomes Calm / Detailed (Calm replaces Simple, default; a stored "simple" reads as Calm). Calm shows your messages and each settled turn's "Worked for…" fold row; agent text, tool calls and thinking are hidden. Opening a fold shows that turn as Detailed. Failures and errors stay visible.
+- **Acceptance:**
+  - [ ] Row filtering is pure and tested (a turn with text, tools and a failure; a running turn; an expanded fold).
+  - [ ] Detailed is unchanged.
+
+### A-020: The calm card
+
+- **Status:** todo
+- **Depends on:** A-018 for names (without it every subagent is 🤖 helper)
+- **What:** above the composer while a thread has a task list or subagents in its latest run: "Tickets 4 of 5" from the agent's task list, then one row per subagent type: emoji, type, finished of started, ✓ when all are done. A bright orange "Needs you" while an approval or question waits. Static: no animation. Only in Calm.
+- **Acceptance:**
+  - [ ] The card model (counts, grouping, emoji, needs-you) is pure and tested, including Codex subagents without a type.
+  - [ ] Hidden when there's nothing to show; hidden in Detailed.
+
+### A-021: Needs you in the sidebar
+
+- **Status:** todo
+- **What:** a session waiting on you shows a bright orange "Needs you" tag on its sidebar row instead of only the small square.
+- **Acceptance:**
+  - [ ] Shows exactly while the session's status is approval or input; goes away when answered.
