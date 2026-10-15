@@ -14,6 +14,30 @@ export function shownWorkspaces<T>(
   return groups.filter((group) => !removed.has(input.keyOf(group)));
 }
 
+export interface OpenWorkspace {
+  readonly routeId: string;
+  readonly workspaceKey: string;
+}
+
+/**
+ * The workspace to bring back, if any. Only a transition restores: the route changed, or the
+ * open workspace changed on the same route (the chip moved the draft). First mount, an unknown
+ * current workspace (groups briefly empty) and a route that did not move restore nothing, so a
+ * reload onto a removed workspace, or removing the one you are in, stays removed. The caller keeps
+ * the last non-null `current` as `previous`.
+ */
+export function workspaceToRestore(input: {
+  readonly previous: OpenWorkspace | null;
+  readonly current: OpenWorkspace | null;
+  readonly removedKeys: ReadonlyArray<string>;
+}): string | null {
+  const { previous, current, removedKeys } = input;
+  if (previous === null || current === null) return null;
+  const moved =
+    previous.routeId !== current.routeId || previous.workspaceKey !== current.workspaceKey;
+  return moved && removedKeys.includes(current.workspaceKey) ? current.workspaceKey : null;
+}
+
 /** There is no "show" item: a removed workspace is not listed, so it has no menu. */
 export const WORKSPACE_REMOVE_MENU_ITEM = {
   id: "remove-workspace",

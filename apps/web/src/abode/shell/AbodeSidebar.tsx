@@ -3,7 +3,7 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useParams, useRouter } from "@tanstack/react-router";
 import { FolderPlusIcon, SquarePenIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
 import { SidebarThreadUndoNotice } from "~/components/sidebar/SidebarThreadUndoNotice";
@@ -48,7 +48,7 @@ import {
 } from "./sidebarContext";
 import { useAbodeThreadActions } from "./useAbodeThreadActions";
 import { useWorkspaceGroups } from "./useWorkspaceGroups";
-import { shownWorkspaces } from "./workspaceRemoved";
+import { shownWorkspaces, workspaceToRestore, type OpenWorkspace } from "./workspaceRemoved";
 import { useRemovedWorkspacesStore } from "./workspaceRemovedStore";
 import { jumpOrderKeys } from "./workspaceList";
 import { draftIdsByWorkspace, threadShellKey } from "./workspaceModel";
@@ -158,11 +158,20 @@ export function AbodeSidebar() {
       )?.project.projectKey ?? null,
     [activeDraftId, activeThreadKey, draftIds, groups],
   );
-  // Keyed on the route too, so removing the workspace you are in does not bring it straight back.
+  const previousOpenRef = useRef<OpenWorkspace | null>(null);
   useEffect(() => {
-    if (openRouteId !== null && openWorkspaceKey !== null) {
-      useRemovedWorkspacesStore.getState().setRemoved(openWorkspaceKey, false);
-    }
+    const current =
+      openRouteId !== null && openWorkspaceKey !== null
+        ? { routeId: openRouteId, workspaceKey: openWorkspaceKey }
+        : null;
+    const { removedKeys: removed, setRemoved } = useRemovedWorkspacesStore.getState();
+    const key = workspaceToRestore({
+      previous: previousOpenRef.current,
+      current,
+      removedKeys: removed,
+    });
+    if (key !== null) setRemoved(key, false);
+    if (current !== null) previousOpenRef.current = current;
   }, [openRouteId, openWorkspaceKey]);
 
   // Ctrl+1..9 and previous/next walk exactly the rows the workspaces render.
