@@ -103,7 +103,7 @@ export function ChatSettingsSection() {
     <SettingsSection id="abode-chat" title="abode chat">
       <SettingsRow
         title="abode chat"
-        description="Cards for questions, warnings, tickets and wins, a board beside the chat, and the helpers. Off shows the classic chat."
+        description="Cards for questions, warnings, tickets and wins, and the helpers beside each message. Off shows the classic chat."
         control={
           <Switch
             checked={cast.enabled}

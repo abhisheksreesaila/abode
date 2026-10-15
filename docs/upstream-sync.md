@@ -56,7 +56,7 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 
 - `apps/web/src/components/ChatMarkdown.tsx`: A-009: `remarkAbodeCallouts` in the remark plugin list and `ABODE_ALERT_PRESENTATIONS` as the fallback in the blockquote renderer's alert lookup (3 lines incl. import); abode's callouts ride on upstream's GitHub-alert rendering
 
-- `apps/web/src/components/ChatView.tsx`: A-010: `<AbodeBoard threadRef=… />` right after the chat column (1 line + import); the board hands the timeline its avatars as CSS variables on the shared flex container
+- `apps/web/src/components/ChatView.tsx`: A-015: `<ChatAvatars threadRef=… />` right after the chat column (1 line + import); it hands the timeline its avatars as CSS variables on the shared flex container
 - Avatars beside messages need no hook: `abode/chat/chat.css` targets the timeline's existing `data-timeline-row-kind` / `data-message-role` attributes. If upstream renames those, avatars silently disappear (nothing breaks)
 
 Tickets add a bullet here when they add a hook.

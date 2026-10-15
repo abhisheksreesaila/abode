@@ -50,9 +50,8 @@ html[data-abode-chat] .chat-markdown [role="note"]:not(.abode-callout) {
   color: var(--foreground);
 }
 
-/* Reading style for agent answers, only with abode chat on. */
+/* Reading style for agent answers, only with abode chat on. Width follows Settings › Chat width. */
 html[data-abode-chat] [data-message-role="assistant"] .chat-markdown {
-  max-width: 76ch;
   font-size: 0.9rem;
   line-height: 1.7;
 }
