@@ -1,3 +1,4 @@
+import { applyDevVocabulary } from "./devVocabulary";
 import { SPEECH_SAMPLE_RATE } from "./pcmBuffer";
 import type { WorkerRequest, WorkerResponse } from "./workerProtocol";
 
@@ -23,7 +24,7 @@ export function routeWorkerMessage(requests: Map<number, PendingRequest>, messag
   const request = requests.get(message.id);
   if (!request) return;
   requests.delete(message.id);
-  if (message.type === "result") request.resolve(message.text);
+  if (message.type === "result") request.resolve(applyDevVocabulary(message.text));
   else request.reject(new Error(message.message));
 }
 
