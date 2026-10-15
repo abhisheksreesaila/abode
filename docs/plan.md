@@ -290,5 +290,10 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
   - [x] Final text arrives within about 1 s of stopping for a 2-minute recording on this machine: measured 161 ms (`Voice.latency.test.ts`, audio paced at speech speed in 200 ms chunks through the RPC's JSON encoding).
   - [x] Falls back to Moonshine when the host has no voice; works from a remote browser, since the audio goes to the host (not tried from a second device).
   - [x] `hook-report.sh` stays under 400 (398), and `vp build` passes the license check.
-  - [ ] security-auditor passes it (audio upload path, model download).
+  - [x] security-auditor: waived by Abhishek on 2026-10-15; the reviewer covered upload bounds, session ownership and the model download.
   - [ ] Abhishek dictates a real prompt.
+
+### A-030: Host voice follow-ups
+
+- **Status:** todo
+- **What:** from A-029's review. (1) A model load that never sends `ready` blocks server shutdown and `host.sh update`: time out `ensureEngine` (about 60 s) in `VoiceRecognizerSherpa.ts` and report `unavailable`. (2) License notices list only `sherpa-onnx-linux-x64`; a macOS or Windows desktop build fails the license check until the other platform packages are listed (mind the hook budget: 391/400).
