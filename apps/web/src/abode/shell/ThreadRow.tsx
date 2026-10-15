@@ -29,13 +29,13 @@ import { threadMetaLabel, threadSquareTone, type ThreadSquareTone } from "./work
 
 const TONE_META_CLASS: Record<ThreadSquareTone, string> = {
   running: "text-sidebar-muted-foreground",
-  "needs-you": "text-warning-foreground",
+  "needs-you": "",
   failed: "text-error-foreground",
   done: "text-sidebar-muted-foreground",
   idle: "text-sidebar-muted-foreground",
 };
 
-/** The 7px status square: green running, amber needs you, red failed, dim idle. */
+/** The 7px status square: green running, orange needs you, red failed, dim idle. */
 export function StatusSquare({ tone }: { tone: ThreadSquareTone }) {
   return <span aria-hidden data-tone={tone} data-abode="square" />;
 }
@@ -244,7 +244,11 @@ export const ThreadRow = memo(function ThreadRow(props: ThreadRowProps) {
             <PullRequestGlyph.pullRequest className="size-3" />
           </a>
         ) : null}
-        <span data-abode={canArchive ? "meta yields" : "meta"} className={TONE_META_CLASS[tone]}>
+        <span
+          data-abode={canArchive ? "meta yields" : "meta"}
+          data-tone={tone}
+          className={TONE_META_CLASS[tone]}
+        >
           {meta}
         </span>
         {canArchive ? (

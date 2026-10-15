@@ -137,7 +137,7 @@ describe("threadSquareTone", () => {
     expect(threadSquareTone("running", true)).toBe("running");
   });
   it("swaps the age for a state word only while it applies", () => {
-    expect(threadMetaLabel("needs-you", "2m")).toBe("needs you");
+    expect(threadMetaLabel("needs-you", "2m")).toBe("Needs you");
     expect(threadMetaLabel("running", "2m")).toBe("2m");
     expect(threadMetaLabel("failed", "2m")).toBe("failed");
   });

@@ -11,6 +11,9 @@
   /* Roomier than VS Code's 22px so rows are easy to hit without aiming. */
   --abode-row-height: 30px;
   --abode-strip-height: 24px;
+  /* "Needs you": a bright orange, apart from the amber accent, with dark text on it. */
+  --abode-needs-you: light-dark(#ea580c, #f97316);
+  --abode-needs-you-foreground: #1c1917;
 }
 
 @media (min-width: 48rem) {
@@ -171,7 +174,15 @@
   background: var(--success);
 }
 [data-abode~="square"][data-tone="needs-you"] {
-  background: var(--warning);
+  background: var(--abode-needs-you);
+}
+/* A session waiting on the user: its meta becomes a filled tag. */
+[data-abode~="meta"][data-tone="needs-you"] {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  background: var(--abode-needs-you);
+  color: var(--abode-needs-you-foreground);
 }
 [data-abode~="square"][data-tone="failed"] {
   background: var(--error);
@@ -226,8 +237,8 @@
   color: var(--contrast-sidebar-muted-foreground);
 }
 [data-abode~="workspace-pill"][data-tone="needs-you"] {
-  background: color-mix(in srgb, var(--warning) 25%, transparent);
-  color: var(--warning-foreground);
+  background: var(--abode-needs-you);
+  color: var(--abode-needs-you-foreground);
 }
 [data-abode~="workspace-pill"][data-tone="running"] {
   background: color-mix(in srgb, var(--success) 25%, transparent);

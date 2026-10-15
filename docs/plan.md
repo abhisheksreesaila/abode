@@ -213,7 +213,7 @@ The card sits above the composer (where questions already open) and shows the th
 
 ### A-021: Needs you in the sidebar
 
-- **Status:** todo
+- **Status:** review
 - **What:** a session waiting on you shows a bright orange "Needs you" tag on its sidebar row instead of only the small square.
 - **Acceptance:**
   - [ ] Shows exactly while the session's status is approval or input; goes away when answered.

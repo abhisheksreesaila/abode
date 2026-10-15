@@ -163,7 +163,7 @@ export function threadSquareTone(attention: ThreadAttention, failed = false): Th
 
 /** The right-hand meta label of a thread row: a state word replaces the age while it applies. */
 export function threadMetaLabel(tone: ThreadSquareTone, relativeAge: string): string {
-  if (tone === "needs-you") return "needs you";
+  if (tone === "needs-you") return "Needs you";
   if (tone === "failed") return "failed";
   return relativeAge;
 }
