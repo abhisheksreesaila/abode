@@ -56,6 +56,7 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 
 - `apps/web/src/components/ChatMarkdown.tsx`: A-009: `remarkAbodeCallouts` in the remark plugin list and `ABODE_ALERT_PRESENTATIONS` as the fallback in the blockquote renderer's alert lookup (3 lines incl. import); abode's callouts ride on upstream's GitHub-alert rendering
 
+- `apps/web/src/components/chat/DraftHeroHeadline.tsx`: A-023: the project trigger's content is `<ProjectChipLabel>` (folder, name, chevron), each picker row gets `<ProjectPathHint>`, and the popup is `w-96` (4 lines + import); abode.css draws the chip on `[data-draft-project-trigger]`
 - `apps/web/src/components/ChatView.tsx`: A-020: `<CalmCard threadRef=… />` just above the composer anchor in the composer stack (1 line + import); it reads the thread itself and shows only in Calm
 - `apps/web/src/components/ChatView.tsx`: A-015: `<ChatAvatars threadRef=… />` right after the chat column (1 line + import); it hands the timeline its avatars as CSS variables on the shared flex container
 - Avatars beside messages need no hook: `abode/chat/chat.css` targets the timeline's existing `data-timeline-row-kind` / `data-message-role` attributes. If upstream renames those, avatars silently disappear (nothing breaks)

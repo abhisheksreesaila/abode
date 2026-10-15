@@ -226,3 +226,11 @@ The card sits above the composer (where questions already open) and shows the th
 - **Acceptance:**
   - [ ] Matches the reference in the real app (Abhishek).
   - [ ] Session place logic is pure and tested.
+
+### A-023: Project chip on a new session
+
+- **Status:** review
+- **What:** Abhishek's reference (VS Code's project chip): upstream's new-session project picker ("What should we build in [project]?") becomes a rounded chip with a folder, the name and a chevron; each project in its list shows its parent folder in grey (`~/Projects`), and "Add project" stays last. Same picker, same behaviour; only its look and the path hint change.
+- **Acceptance:**
+  - [ ] The chip opens the searchable list; picking a project switches the draft as before (Abhishek in the real app).
+  - [ ] The path hint is pure and tested.

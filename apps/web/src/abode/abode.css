@@ -67,3 +67,31 @@ html:not(.dark)[data-theme-id="abode-azure"] {
   --abode-needs-you: light-dark(#ea580c, #f97316);
   --abode-needs-you-foreground: #1c1917;
 }
+
+/* The new-session project picker as a VS Code style chip (ProjectChip.tsx fills it).
+   Every theme gets it: the headline is the same in all of them. */
+[data-draft-project-trigger] {
+  display: inline-flex;
+  max-width: 20rem;
+  align-items: center;
+  gap: 0.4em;
+  margin-inline: 0.15em;
+  padding: 0.2em 0.7em;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.6em;
+  line-height: 1.4;
+  vertical-align: 0.25em;
+  text-decoration-line: none;
+}
+[data-draft-project-trigger]:hover {
+  border-color: color-mix(in srgb, var(--foreground) 25%, var(--border));
+}
+[data-abode-chip-icon] {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}

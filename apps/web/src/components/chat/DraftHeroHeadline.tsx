@@ -41,6 +41,7 @@ import {
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { InlineButton } from "../ui/button";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
+import { ProjectChipLabel, ProjectPathHint } from "~/abode/chat/ProjectChip"; // abode: project chip
 
 // Picker value for the "Add project" row; real entries are keyed by logical
 // project key.
@@ -308,15 +309,16 @@ export function DraftHeroHeadline({
             />
           }
         >
-          <span className="min-w-0 truncate">
+          <ProjectChipLabel>
+            {/* abode: project chip */}
             {isScratchDraft ? "No project" : (activeProjectDisplayName ?? "Choose a project")}
-          </span>
+          </ProjectChipLabel>
         </TooltipTrigger>
         {activeProjectDisplayName && !isScratchDraft ? (
           <TooltipPopup side="top">{activeProjectDisplayName}</TooltipPopup>
         ) : null}
       </Tooltip>
-      <ComboboxPopup align="center" className="w-72 overflow-hidden">
+      <ComboboxPopup align="center" className="w-96 overflow-hidden" /* abode: room for paths */>
         <ComboboxSearchInput
           aria-label="Search projects"
           placeholder="Search projects..."
@@ -340,6 +342,9 @@ export function DraftHeroHeadline({
                   </TooltipTrigger>
                   <TooltipPopup side="top">{item.label}</TooltipPopup>
                 </Tooltip>
+                {entry ? (
+                  <ProjectPathHint workspaceRoot={entry.targetProject.workspaceRoot} />
+                ) : null}
                 {entry && showProjectEnvironments ? (
                   <ProjectEnvironmentBadge
                     group={entry.group}
