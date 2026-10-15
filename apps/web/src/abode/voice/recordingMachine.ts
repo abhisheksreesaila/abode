@@ -18,6 +18,8 @@ export type RecordingEvent =
   | { type: "stop" }
   | { type: "cancel" }
   | { type: "progress"; fraction: number }
+  /** The background model load finished (or gave up); recording shows plain listening. */
+  | { type: "warmed" }
   | { type: "transcribed"; text: string }
   | { type: "failed"; message: string }
   | { type: "dismiss" };
@@ -55,6 +57,8 @@ export function reduceRecording(state: RecordingState, event: RecordingEvent): R
       return state.status === "transcribing"
         ? { state: { status: "transcribing", downloadProgress: event.fraction } }
         : { state };
+    case "warmed":
+      return state.status === "recording" ? { state: { status: "recording" } } : { state };
     case "transcribed": {
       if (state.status !== "transcribing") return { state };
       const text = event.text.trim();

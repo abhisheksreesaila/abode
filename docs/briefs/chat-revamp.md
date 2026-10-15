@@ -19,26 +19,24 @@ Status: approved (2026-10-11, "experiment is the name of the game")
 
 - **Core job:** make an agent's answer skimmable at a glance.
 - **v1:**
-  1. **Message cards by kind.** Agents tag content with callouts (`> [!QUESTION]`, `> [!WARNING]`, `> [!INFO]`, `> [!TICKETS]`, `> [!DONE]`); abode renders each as a colored card with an icon. A shipped skill/CLAUDE.md snippet tells agents to use them. Untagged answers get abode's best guess (questions, warnings, ticket lists); a wrong guess is fine, the text is still all there.
-  2. **A pleasant reading style** for all agent text: proportional font, comfortable line length and spacing, softer contrast, nicer headings, lists and tables. Code stays monospace.
-  3. **Dropped 2026-10-14 (Abhishek never used it; the chat gets the width instead):** ~~**Two columns on desktop** (mockup C): the readable chat on the left; on the right a board that collects every card from the thread into lanes (Needs you, Watch out, Tickets, Done), with answer buttons on questions and a jump back to the message. On a narrow window the board is a tab.~~ The moods and poses that lived on the board went with it; the avatars beside messages stay.
-  4. **The cast with moods:** original Pixar-style helpers, Sunny (Claude) and Pip (Codex), whose face shows the mood (asking, worried, working, done, idle) at the top of the board and next to each turn. I'm the Boss: built from parts (face, hat/crown/hair, brows, eyes/glasses, scarf color) or a photo, with my own name; helpers can be renamed. Off-switch in Settings.
-  5. **Activity poses:** the helper's pose follows what the agent is doing (typing for file edits, a terminal for commands, glasses and a magnifier for reading and search, painting for a designer subagent, glasses and clipboard for a reviewer, a thought bubble for thinking). One short motion per real event, then still; nothing loops.
-  6. **Thumbs up on answers:** answering a question from the board turns its buttons into a "👍 your choice · on it" chip (with "change"), and the helper hops once into a done/happy mood.
-- **Not doing:** pins and flags (sessions end and context fills, so a pin in a dead thread is never reopened; the board collects what matters automatically); rewriting upstream's timeline (virtualization, tool calls, diffs stay upstream's); a model that classifies messages; Minion/Gru images or names; changing what the agent sends over the wire; mobile.
+  1. **Message cards by kind.** Agents tag content with callouts (`> [!QUESTION]`, `> [!WARNING]`, `> [!INFO]`, `> [!TICKETS]`, `> [!DONE]`); abode renders each as a colored card. A shipped CLAUDE.md snippet tells agents to use them.
+  2. **A pleasant reading style** for all agent text: proportional font, comfortable spacing, softer contrast, nicer headings, lists and tables. Code stays monospace. Width follows Settings › Chat width.
+  3. **The cast:** original Pixar-style helpers, Sunny (Claude) and Pip (Codex), beside the agent's messages; I'm the Boss beside mine, built from parts (face, hat/crown/hair, brows, eyes/glasses, scarf color) or a photo, with my own name; helpers can be renamed. Off-switch in Settings.
+- **Dropped 2026-10-14:** the board column (lanes, answer buttons, 👍 chip) and the helper's moods and activity poses that lived on it. Abhishek never used it; the chat gets the width instead.
+- **Not doing:** pins and flags (sessions end and context fills, so a pin in a dead thread is never reopened); rewriting upstream's timeline (virtualization, tool calls, diffs stay upstream's); a model that classifies messages; Minion/Gru images or names; changing what the agent sends over the wire; mobile.
 
 ## How it should look and feel
 
 - **Three words:** fun, useful, focused.
 - **Feels like:** Linear/Notion docs for reading comfort, GitHub callouts for the cards, a touch of Pixar warmth in the avatars only.
 - **Style:** abode's themes (Amber default), not Terminal Ledger.
-- **The one screen:** a thread with a long agent answer: the board on the right shows Sunny asking one question and one warning; you answer with a button without scrolling the chat.
+- **The one screen:** a thread with a long agent answer whose question and warning stand out as cards.
 - **Mockups:** https://claude.ai/artifact/6GkVJ5rYWzpZWqjMUgRAqm (`design/chat-revamp.html`): picked C's layout, the cast and the Boss builder.
 
 ## How we'll know it worked
 
-- I can tell what an answer needs from me without reading it all, and answer it from the board.
-- **Done for v1:** cards render for all five kinds in Amber, Azure and Omarchy themes; the board fills from tags and guesses; moods follow the thread's state; my Boss and helper names survive reload; the agent skill is installed; Abhishek checks it on a real thread.
+- I can tell what an answer needs from me without reading it all.
+- **Done for v1:** cards render for all five kinds in Amber, Azure and Omarchy themes; my Boss and helper names survive reload; the agent skill is installed; Abhishek checks it on a real thread.
 
 ## Constraints and risks
 

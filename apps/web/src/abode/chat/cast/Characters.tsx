@@ -5,11 +5,10 @@ import type { BossLook } from "./bossConfig";
 
 /**
  * abode's original cast, drawn as small inline SVGs: Sunny (Claude's helper), Pip
- * (Codex's helper) and the Boss (the user). A mood mark sits on top-right of a helper.
+ * (Codex's helper) and the Boss (the user).
  */
 
 export type Helper = "sunny" | "pip";
-export type MoodMark = "asking" | "worried" | "done" | "agreed" | "idle" | null;
 
 function Frame(props: {
   readonly label: string;
@@ -122,84 +121,15 @@ function PipBody({ id }: { id: string }) {
   );
 }
 
-function Mood({ mark }: { mark: MoodMark }) {
-  switch (mark) {
-    case "asking":
-      return (
-        <g>
-          <circle cx="84" cy="18" r="13" fill="#7cb7ff" />
-          <path
-            d="M80 13 q4 -5 8 0 q0 4 -4 6 v3"
-            stroke="#0e1726"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <circle cx="84" cy="26" r="1.8" fill="#0e1726" />
-        </g>
-      );
-    case "worried":
-      return (
-        <g>
-          <path d="M86 22 q-6 10 0 14 q6 -4 0 -14z" fill="#9fd3ff" />
-          <circle cx="18" cy="16" r="12" fill="#fb7a5a" />
-          <path d="M18 9 v8" stroke="#1c0f0a" strokeWidth="3.5" strokeLinecap="round" />
-          <circle cx="18" cy="22" r="1.8" fill="#1c0f0a" />
-        </g>
-      );
-    case "done":
-      return (
-        <g>
-          <circle cx="84" cy="18" r="13" fill="#8ee6a0" />
-          <path
-            d="M78 18 l4 4 l8 -9"
-            stroke="#0e2614"
-            strokeWidth="3.5"
-            fill="none"
-            strokeLinecap="round"
-          />
-        </g>
-      );
-    case "agreed":
-      return (
-        <g>
-          <circle cx="82" cy="20" r="17" fill="#8ee6a0" />
-          <path
-            d="M74 22 h5 v12 h-5z M80 34 h10 q4 0 4 -4 l2 -8 q1 -4 -3 -4 h-6 l1 -6 q0 -5 -4 -5 l-4 9 z"
-            fill="#0e2614"
-          />
-        </g>
-      );
-    case "idle":
-      return (
-        <g fill="#a8a29e" fontWeight="800" fontFamily="var(--font-sans, sans-serif)">
-          <text x="76" y="24" fontSize="16">
-            z
-          </text>
-          <text x="86" y="12" fontSize="11">
-            z
-          </text>
-        </g>
-      );
-    default:
-      return null;
-  }
-}
-
 export function HelperAvatar(props: {
   readonly helper: Helper;
   readonly name: string;
-  readonly mood?: MoodMark;
   readonly className?: string;
-  /** Activity props drawn in front of the helper (laptop, glasses, …). */
-  readonly children?: ReactNode;
 }) {
   const id = useId().replace(/:/g, "");
   return (
     <Frame label={props.name} className={props.className}>
       {props.helper === "sunny" ? <SunnyBody id={id} /> : <PipBody id={id} />}
-      {props.children}
-      <Mood mark={props.mood ?? null} />
     </Frame>
   );
 }

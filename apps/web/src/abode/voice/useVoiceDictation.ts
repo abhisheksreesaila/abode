@@ -118,8 +118,10 @@ export function useVoiceDictation(input: {
     send({ type: "start" });
     const token = ++tokenRef.current;
     // Load the model while the user talks, so transcription after release is quick.
-    warmTranscriber((fraction) => {
+    void warmTranscriber((fraction) => {
       if (token === tokenRef.current) send({ type: "progress", fraction });
+    }).then(() => {
+      if (token === tokenRef.current) send({ type: "warmed" });
     });
     startRecording().then(
       (recorder) => {

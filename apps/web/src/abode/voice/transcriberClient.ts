@@ -58,24 +58,31 @@ export function transcribe(audio: Float32Array, onProgress: (fraction: number) =
   });
 }
 
-let warmed = false;
+let warming: Promise<void> | null = null;
+let onWarmProgress: ((fraction: number) => void) | null = null;
 
 /**
  * Loads the model in the background (a tiny silent transcription) so the real one after
- * release is quick. Once per worker; progress reports a first-time download.
+ * release is quick. One load per worker: a later call joins the one in flight and takes over
+ * its progress. Settles when the model is ready, or when loading failed (it retries next time).
  */
-export function warmTranscriber(onProgress: (fraction: number) => void) {
-  if (warmed) return;
-  warmed = true;
-  transcribe(new Float32Array(SPEECH_SAMPLE_RATE / 2), onProgress).catch(() => {
-    warmed = false;
-  });
+export function warmTranscriber(onProgress: (fraction: number) => void): Promise<void> {
+  onWarmProgress = onProgress;
+  warming ??= transcribe(new Float32Array(SPEECH_SAMPLE_RATE / 2), (fraction) =>
+    onWarmProgress?.(fraction),
+  ).then(
+    () => undefined,
+    () => {
+      warming = null;
+    },
+  );
+  return warming;
 }
 
 /** Drops the loaded model from memory (used after deleting it from disk). */
 export function resetTranscriber() {
   worker?.terminate();
   worker = null;
-  warmed = false;
+  warming = null;
   failAll(new Error("Speech model reset."));
 }

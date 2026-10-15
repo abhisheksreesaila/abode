@@ -17,19 +17,13 @@ export function ListeningWave({ level }: { level: () => number }) {
     const bars = barsRef.current?.children;
     if (!bars) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let frame = 0;
-    let last = 0;
-    const tick = (now: number) => {
-      frame = requestAnimationFrame(tick);
-      if (now - last < FRAME_MS) return;
-      last = now;
+    const timer = setInterval(() => {
       const heights = waveHeights(level());
       for (let index = 0; index < bars.length; index++) {
         (bars[index] as HTMLElement).style.transform = `scaleY(${heights[index]})`;
       }
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    }, FRAME_MS);
+    return () => clearInterval(timer);
   }, [level]);
   return (
     <span ref={barsRef} aria-hidden className="flex h-4 shrink-0 items-center gap-0.75">

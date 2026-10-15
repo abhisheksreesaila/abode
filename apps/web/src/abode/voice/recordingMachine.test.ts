@@ -93,4 +93,11 @@ describe("listening", () => {
     const downloading = reduceRecording(recording(), { type: "progress", fraction: 0.43 }).state;
     expect(downloading).toEqual({ status: "recording", downloadProgress: 0.43 });
   });
+
+  it("goes back to plain listening once the model is ready", () => {
+    const downloading = reduceRecording(recording(), { type: "progress", fraction: 1 }).state;
+    expect(reduceRecording(downloading, { type: "warmed" }).state).toEqual({ status: "recording" });
+    const transcribing = { status: "transcribing", downloadProgress: 0.5 } as const;
+    expect(reduceRecording(transcribing, { type: "warmed" }).state).toBe(transcribing);
+  });
 });
