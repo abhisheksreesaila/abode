@@ -181,6 +181,12 @@ export async function installModel(input: {
     throw new ModelInstallFailed("insecure_url", "The model must be downloaded over HTTPS.");
   }
   await NodeFS.promises.mkdir(modelsRoot, { recursive: true });
+  // A server stopped mid-download leaves a scratch directory of hundreds of MB behind.
+  for (const entry of await NodeFS.promises.readdir(modelsRoot)) {
+    if (entry.startsWith(".install-")) {
+      await NodeFS.promises.rm(NodePath.join(modelsRoot, entry), { recursive: true, force: true });
+    }
+  }
   const work = await NodeFS.promises.mkdtemp(NodePath.join(modelsRoot, ".install-"));
   try {
     const archive = NodePath.join(work, "model.tar.bz2");

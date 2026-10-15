@@ -85,6 +85,22 @@ describe("installModel", () => {
     expect(NodeFS.readdirSync(modelsRoot)).toEqual(["model-a"]);
   });
 
+  it("clears scratch directories left by an interrupted download", async () => {
+    const archive = makeModelArchive("model-g", goodFiles);
+    const modelsRoot = NodePath.join(sandbox, "models");
+    NodeFS.mkdirSync(NodePath.join(modelsRoot, ".install-old"), { recursive: true });
+    NodeFS.writeFileSync(NodePath.join(modelsRoot, ".install-old", "model.tar.bz2"), "partial");
+
+    await installModel({
+      spec: specFor("model-g", archive),
+      modelsRoot,
+      onProgress: () => {},
+      download: copyFrom(archive),
+    });
+
+    expect(NodeFS.readdirSync(modelsRoot)).toEqual(["model-g"]);
+  });
+
   it("rejects an archive whose checksum differs and installs nothing", async () => {
     const archive = makeModelArchive("model-b", goodFiles);
     const spec = specFor("model-b", archive, { sha256: "0".repeat(64) });

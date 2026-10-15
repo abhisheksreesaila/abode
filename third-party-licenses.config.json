@@ -663,6 +663,8 @@
       }
     },
     { "name": "guid-typescript", "generatedNotice": { "licenseId": "ISC" } },
+    { "name": "sherpa-onnx-node", "generatedNotice": { "licenseId": "Apache-2.0" } },
+    { "name": "sherpa-onnx-linux-x64", "generatedNotice": { "licenseId": "Apache-2.0" } },
     {
       "name": "@img/sharp-libvips-linux-x64",
       "generatedNotice": { "licenseId": "LGPL-3.0-or-later" }
