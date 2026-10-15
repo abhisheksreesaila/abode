@@ -10,6 +10,8 @@ export type VoiceCall = (input: VoiceSessionInput) => Promise<VoiceSessionResult
 export const CHUNK_SAMPLES = SPEECH_SAMPLE_RATE / 5;
 /** Chunks on the wire at once. The host puts them back in order by sequence number. */
 const MAX_IN_FLIGHT = 4;
+/** How long `finish` may take, from the call, before the browser takes over. */
+export const HOST_FINISH_TIMEOUT_MS = 10_000;
 
 /** Float samples in -1..1 to 16-bit little-endian PCM, the wire format. */
 export function floatToPcm16(samples: Float32Array): Uint8Array {
@@ -46,6 +48,7 @@ export function createHostDictation(call: VoiceCall): HostDictation {
   let failure: Error | null = null;
   let cancelled = false;
   let onSettled: (() => void) | null = null;
+  let onCancelled: (() => void) | null = null;
 
   const toError = (cause: unknown) => (cause instanceof Error ? cause : new Error(String(cause)));
   const settled = () => {
@@ -113,32 +116,50 @@ export function createHostDictation(call: VoiceCall): HostDictation {
       while (bufferedSamples >= CHUNK_SAMPLES) cut(CHUNK_SAMPLES);
       pump();
     },
-    finish: async () => {
-      if (bufferedSamples > 0) cut(bufferedSamples);
-      buffered = [];
-      await started;
-      pump();
-      while (isWorking()) {
-        await new Promise<void>((resolve) => {
-          onSettled = resolve;
-        });
-      }
-      onSettled = null;
-      if (failure !== null) throw failure;
-      if (sessionId === null) throw new Error("The host did not start a dictation.");
-      const result = await call({ op: "finish", sessionId, chunks: nextSeq });
-      if (result.op !== "text") throw new Error("The host did not return text.");
-      return result.text;
+    finish: () => {
+      if (cancelled) return Promise.reject(new Error("The dictation was cancelled."));
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const limit = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          failure ??= new Error("The host took too long.");
+          if (sessionId !== null) void call({ op: "cancel", sessionId }).catch(() => undefined);
+          reject(failure);
+        }, HOST_FINISH_TIMEOUT_MS);
+        onCancelled = () => reject(new Error("The dictation was cancelled."));
+      });
+      return Promise.race([finishInner(), limit]).finally(() => {
+        clearTimeout(timer);
+        onCancelled = null;
+      });
     },
     cancel: () => {
       if (cancelled) return;
       cancelled = true;
+      onCancelled?.();
       queue.length = 0;
       buffered = [];
       bufferedSamples = 0;
       if (sessionId !== null) void call({ op: "cancel", sessionId }).catch(() => undefined);
     },
   };
+
+  async function finishInner(): Promise<string> {
+    if (bufferedSamples > 0) cut(bufferedSamples);
+    buffered = [];
+    await started;
+    pump();
+    while (isWorking()) {
+      await new Promise<void>((resolve) => {
+        onSettled = resolve;
+      });
+    }
+    onSettled = null;
+    if (failure !== null) throw failure;
+    if (sessionId === null) throw new Error("The host did not start a dictation.");
+    const result = await call({ op: "finish", sessionId, chunks: nextSeq });
+    if (result.op !== "text") throw new Error("The host did not return text.");
+    return result.text;
+  }
 }
 
 /**
@@ -149,11 +170,14 @@ export function createHostDictation(call: VoiceCall): HostDictation {
 export async function textFromHostOrBrowser(
   dictation: HostDictation | null,
   browser: () => Promise<string>,
+  /** False once the dictation was cancelled: then nothing falls back to the browser. */
+  isCurrent: () => boolean = () => true,
 ): Promise<string> {
   if (dictation) {
     try {
       return applyDevVocabulary(await dictation.finish());
     } catch {
+      if (!isCurrent()) throw new DOMException("Dictation cancelled.", "AbortError");
       // Fall through: the recording is complete in the browser.
     }
   }

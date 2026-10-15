@@ -1,8 +1,9 @@
 import type { VoiceSessionInput, VoiceSessionResult } from "@t3tools/contracts";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import {
   CHUNK_SAMPLES,
+  HOST_FINISH_TIMEOUT_MS,
   createHostDictation,
   floatToPcm16,
   textFromHostOrBrowser,
@@ -141,5 +142,43 @@ describe("textFromHostOrBrowser", () => {
     expect(await textFromHostOrBrowser(null, async () => "from the browser")).toBe(
       "from the browser",
     );
+  });
+});
+
+describe("a dictation that is cancelled or stuck", () => {
+  it("does not hand a cancelled recording to the browser when Esc arrives during finish", async () => {
+    const host = fakeHost();
+    const dictation = createHostDictation(host.call);
+    dictation.push(seconds(1));
+    let current = true;
+    let browserRuns = 0;
+
+    const result = textFromHostOrBrowser(
+      dictation,
+      async () => {
+        browserRuns += 1;
+        return "browser";
+      },
+      () => current,
+    );
+    current = false;
+    dictation.cancel();
+
+    await expect(result).rejects.toMatchObject({ name: "AbortError" });
+    expect(browserRuns).toBe(0);
+  });
+
+  it("falls back to the browser when the host never answers, about 10 s after finish", async () => {
+    vi.useFakeTimers();
+    try {
+      const call: VoiceCall = () => new Promise(() => undefined);
+      const dictation = createHostDictation(call);
+      dictation.push(seconds(1));
+      const text = textFromHostOrBrowser(dictation, async () => "from the browser");
+      await vi.advanceTimersByTimeAsync(HOST_FINISH_TIMEOUT_MS);
+      expect(await text).toBe("from the browser");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

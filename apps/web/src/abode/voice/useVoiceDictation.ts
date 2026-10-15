@@ -118,21 +118,25 @@ export function useVoiceDictation(input: {
       try {
         const controller = new AbortController();
         // The host's text when it delivers it; otherwise the recording goes to the browser model.
-        const text = await textFromHostOrBrowser(dictation, async () => {
-          abortRef.current = controller;
-          return transcribe(
-            audio,
-            (fraction) => {
-              if (token === tokenRef.current) send({ type: "progress", fraction });
-            },
-            {
-              signal: controller.signal,
-              onSegment: (current, total) => {
-                if (token === tokenRef.current) send({ type: "segment", current, total });
+        const text = await textFromHostOrBrowser(
+          dictation,
+          async () => {
+            abortRef.current = controller;
+            return transcribe(
+              audio,
+              (fraction) => {
+                if (token === tokenRef.current) send({ type: "progress", fraction });
               },
-            },
-          );
-        });
+              {
+                signal: controller.signal,
+                onSegment: (current, total) => {
+                  if (token === tokenRef.current) send({ type: "segment", current, total });
+                },
+              },
+            );
+          },
+          () => token === tokenRef.current,
+        );
         if (abortRef.current === controller) abortRef.current = null;
         if (dictationRef.current === dictation) dictationRef.current = null;
         if (token === tokenRef.current) send({ type: "transcribed", text });

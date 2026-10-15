@@ -7,6 +7,7 @@ import { DEFAULT_VOICE_SHORTCUT, voiceShortcutLabel } from "./shortcut";
 import { describeHostModel, describeVoiceEngine, pickVoiceEngine } from "./hostVoiceStatus";
 import { captureVoiceShortcut, findVoiceShortcutConflict } from "./shortcutCapture";
 import { resetTranscriber } from "./transcriberClient";
+import { usePrimaryEnvironmentId, useEnvironment } from "../../state/environments";
 import { useHostVoice } from "./useHostVoice";
 import { deleteVoiceModelFiles, formatModelSize, readVoiceModelBytes } from "./voiceModel";
 import { useVoiceSettings } from "./voiceSettings";
@@ -122,11 +123,18 @@ function HostVoiceRows() {
   const host = useHostVoice();
   const engine = pickVoiceEngine(host.status);
   const hostModel = describeHostModel(host.status);
+  const hostLabel = useEnvironment(usePrimaryEnvironmentId())?.label;
   return (
     <>
       <SettingsRow
         title="Speech engine"
-        description={host.known ? describeVoiceEngine(engine) : "Checking…"}
+        description={
+          !host.known
+            ? "Checking…"
+            : engine === "host" && hostLabel
+              ? `${describeVoiceEngine(engine)}. Dictation runs on ${hostLabel}.`
+              : describeVoiceEngine(engine)
+        }
       />
       {host.known && host.status !== null ? (
         <SettingsRow

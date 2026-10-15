@@ -233,53 +233,57 @@ const makeWith = (limits: VoiceLimits) =>
         : Effect.fail(voiceError("unknown_session", "This dictation is no longer running."));
     };
 
+    // Uninterruptible: an interrupt between opening the recognizer stream and registering the
+    // session would leave the stream open with nobody to close it.
     const start = (owner: number) =>
-      Effect.gen(function* () {
-        const current = yield* status;
-        if (current.model !== "ready") {
-          return yield* voiceError(
-            "unavailable",
-            "The speech model is not ready on this computer.",
-          );
-        }
-        if (sessions.size + opening >= limits.maxSessions) {
-          return yield* voiceError("busy", "Too many dictations are running on this computer.");
-        }
-        opening += 1;
-        if (unloadTimer) yield* Fiber.interrupt(unloadTimer);
-        const opened = yield* recognizer.open(store.modelDir).pipe(
-          Effect.mapError((error) => {
-            problem = { kind: "failed", message: error.message };
-            return voiceError("unavailable", error.message, error);
-          }),
-          Effect.ensuring(
-            Effect.sync(() => {
-              opening -= 1;
+      Effect.uninterruptible(
+        Effect.gen(function* () {
+          const current = yield* status;
+          if (current.model !== "ready") {
+            return yield* voiceError(
+              "unavailable",
+              "The speech model is not ready on this computer.",
+            );
+          }
+          if (sessions.size + opening >= limits.maxSessions) {
+            return yield* voiceError("busy", "Too many dictations are running on this computer.");
+          }
+          opening += 1;
+          if (unloadTimer) yield* Fiber.interrupt(unloadTimer);
+          const opened = yield* recognizer.open(store.modelDir).pipe(
+            Effect.mapError((error) => {
+              problem = { kind: "failed", message: error.message };
+              return voiceError("unavailable", error.message, error);
             }),
-          ),
-          Effect.onError(() =>
-            sessions.size === 0 && opening === 0 ? scheduleUnload : Effect.void,
-          ),
-        );
-        const now = yield* Clock.currentTimeMillis;
-        const session: Session = {
-          id: `v${nextId++}`,
-          owner,
-          recognizer: opened,
-          startedAt: now,
-          lastActivityAt: now,
-          lock: yield* Semaphore.make(1),
-          pending: new Map(),
-          complete: yield* Deferred.make<void>(),
-          watchdog: undefined,
-          bytes: 0,
-          nextSeq: 0,
-          expectedChunks: null,
-        };
-        sessions.set(session.id, session);
-        session.watchdog = yield* Effect.forkIn(watch(session), scope);
-        return session.id;
-      });
+            Effect.ensuring(
+              Effect.sync(() => {
+                opening -= 1;
+              }),
+            ),
+            Effect.onError(() =>
+              sessions.size === 0 && opening === 0 ? scheduleUnload : Effect.void,
+            ),
+          );
+          const now = yield* Clock.currentTimeMillis;
+          const session: Session = {
+            id: `v${nextId++}`,
+            owner,
+            recognizer: opened,
+            startedAt: now,
+            lastActivityAt: now,
+            lock: yield* Semaphore.make(1),
+            pending: new Map(),
+            complete: yield* Deferred.make<void>(),
+            watchdog: undefined,
+            bytes: 0,
+            nextSeq: 0,
+            expectedChunks: null,
+          };
+          sessions.set(session.id, session);
+          session.watchdog = yield* Effect.forkIn(watch(session), scope);
+          return session.id;
+        }),
+      );
 
     /** Feeds every chunk that is next in line to the recognizer. */
     const drain = (session: Session) =>
