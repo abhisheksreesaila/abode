@@ -251,7 +251,7 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-025: Calmer sidebar chrome
 
-- **Status:** todo
+- **Status:** review
 - **What:** Workspaces lose their colors: the color picker leaves the workspace menu, and every folder icon uses the theme's default color (color store and hooks deleted). The activity bar loses Pull requests and Usage; both become rows in the Customizations list at the bottom of the sidebar (after Instructions) that open the same pages. The activity bar keeps Agents, Search and Settings.
 - **Acceptance:**
   - [ ] No workspace color code is left; existing stored colors are simply ignored.

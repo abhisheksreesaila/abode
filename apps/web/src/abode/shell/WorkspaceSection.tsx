@@ -24,9 +24,6 @@ import { ThreadRow } from "./ThreadRow";
 import { deriveWorkspaceThreadState } from "./threadState";
 import type { WorkspaceGroup } from "./useWorkspaceGroups";
 import { WorkspaceDrafts } from "./WorkspaceDrafts";
-import { buildWorkspaceColorMenuItem } from "./workspaceColor";
-import { useWorkspaceColorStyle } from "./workspaceColorHooks";
-import { applyWorkspaceColorMenuChoice } from "./workspaceColorStore";
 import { workspaceHiddenMenuItem } from "./workspaceHidden";
 import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
 import { resolveWorkspacePill, visibleWorkspaceThreads, workspacePillView } from "./workspaceList";
@@ -51,9 +48,9 @@ function memberLabel(member: SidebarProjectGroupMember): string {
 }
 
 /**
- * One workspace: a header like VS Code's (a folder in the workspace color, the name and a
+ * One workspace: a header like VS Code's (a folder, the name and a
  * count pill) and its sessions underneath. Sessions come from upstream's thread
- * shells; the color is an abode setting kept in this browser.
+ * shells.
  */
 export const WorkspaceSection = memo(function WorkspaceSection(props: {
   readonly group: WorkspaceGroup;
@@ -69,7 +66,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   const router = useRouter();
   const handleNewThread = useNewThreadHandler();
   const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
-  const color = useWorkspaceColorStyle(project.projectKey);
   const preferenceKeys = useMemo(() => expansionPreferenceKeys(group), [group]);
   const expanded = useUiStateStore((state) =>
     resolveProjectExpanded(state.projectExpandedById, preferenceKeys),
@@ -172,7 +168,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       if (!api) return;
       const items: ContextMenuItem<string>[] = [
         { id: "new-session", label: "New session" },
-        buildWorkspaceColorMenuItem(),
         ...(group.isScratch
           ? []
           : [{ id: "copy-path", label: "Copy path", separatorBefore: true }]),
@@ -183,7 +178,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         api.contextMenu.show(items, { x: event.clientX, y: event.clientY }),
       );
       if (clicked._tag === "Failure" || clicked.value === null) return;
-      if (applyWorkspaceColorMenuChoice(project.projectKey, clicked.value)) return;
       if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
       else if (clicked.value === "hide-workspace" || clicked.value === "show-workspace") {
         useHiddenWorkspacesStore
@@ -215,7 +209,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       aria-label={group.name}
       data-testid={`workspace-${project.projectKey}`}
       data-abode-hidden={hidden || undefined}
-      style={color ? ({ "--workspace-color": color.color } as React.CSSProperties) : undefined}
     >
       <div
         role="button"

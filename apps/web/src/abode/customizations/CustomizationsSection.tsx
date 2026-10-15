@@ -10,6 +10,7 @@ import { AsyncResult } from "effect/reactivity";
 import {
   BookOpenIcon,
   BotIcon,
+  ChartNoAxesColumnIcon,
   ChevronRightIcon,
   LightbulbIcon,
   PlusIcon,
@@ -18,9 +19,14 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useNavigate } from "@tanstack/react-router";
+
+import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
+import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
 import { Badge } from "~/components/ui/badge";
 import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
+import { usePullRequestsSupported } from "~/state/environments";
 import { useThreadShell } from "~/state/entities";
 import { observeResize } from "~/lib/observeResize";
 import { cn } from "~/lib/utils";
@@ -33,6 +39,7 @@ import {
   saveCustomizationsFraction,
 } from "./customizationsHeight";
 import {
+  customizationPageRows,
   describeCustomizationsError,
   groupCustomizations,
   rememberCustomizations,
@@ -91,6 +98,41 @@ function ItemRow(props: {
       <TooltipPopup side="right">{item.description || item.name}</TooltipPopup>
     </Tooltip>
   );
+}
+
+/** Pull requests and Usage: pages, not files, so they sit after the groups. */
+function PageRows() {
+  const navigate = useNavigate();
+  const rows = customizationPageRows({ pullRequestsSupported: usePullRequestsSupported() });
+  return rows.map(({ id, label }) => (
+    <button
+      key={id}
+      type="button"
+      data-testid={`customization-page-${id}`}
+      onClick={() =>
+        void navigate(
+          id === "pull-requests"
+            ? { to: "/pull-requests", search: readPullRequestListPreferences() }
+            : { to: "/usage" },
+        )
+      }
+      className="flex min-h-[26px] w-full cursor-pointer items-center gap-1.5 rounded-xs px-2 text-start text-xs text-sidebar-foreground outline-hidden ring-ring hover:bg-sidebar-row-hover focus-visible:ring-1 focus-visible:ring-inset"
+    >
+      <span aria-hidden className="size-3 shrink-0" />
+      {id === "pull-requests" ? (
+        <PullRequestGlyph.pullRequest
+          aria-hidden
+          className="size-3.5 shrink-0 text-sidebar-muted-foreground"
+        />
+      ) : (
+        <ChartNoAxesColumnIcon
+          aria-hidden
+          className="size-3.5 shrink-0 text-sidebar-muted-foreground"
+        />
+      )}
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+    </button>
+  ));
 }
 
 function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }) {
@@ -333,6 +375,7 @@ export const CustomizationsSection = memo(function CustomizationsSection() {
             Open a session to see its skills and agents
           </div>
         )}
+        <PageRows />
       </section>
     </>
   );

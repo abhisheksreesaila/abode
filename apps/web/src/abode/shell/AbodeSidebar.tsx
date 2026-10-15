@@ -49,7 +49,6 @@ import {
 } from "./sidebarContext";
 import { useAbodeThreadActions } from "./useAbodeThreadActions";
 import { useWorkspaceGroups } from "./useWorkspaceGroups";
-import { useEnsureWorkspaceColors } from "./workspaceColorStore";
 import { splitHiddenWorkspaces } from "./workspaceHidden";
 import { useHiddenWorkspacesStore } from "./workspaceHiddenStore";
 import { deriveWorkspaceThreadState } from "./threadState";
@@ -87,8 +86,6 @@ export function AbodeSidebar() {
   );
   const activeThreadKey = routeThreadRef ? scopedThreadKey(routeThreadRef) : null;
   const activeDraftId = routeTarget?.kind === "draft" ? routeTarget.draftId : null;
-
-  useEnsureWorkspaceColors(groups.map((group) => group.project.projectKey));
 
   const navigateToThread = useCallback(
     (threadRef: ScopedThreadRef) => {

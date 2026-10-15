@@ -1,16 +1,13 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { ChartNoAxesColumnIcon, MessagesSquareIcon, SearchIcon, SettingsIcon } from "lucide-react";
+import { MessagesSquareIcon, SearchIcon, SettingsIcon } from "lucide-react";
 import { useCallback, type ReactNode } from "react";
 
-import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
-import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
 import { useNavigateToMainApp } from "~/components/sidebar/mainAppLocation";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useSidebar } from "~/components/ui/sidebar";
 import { openCommandPalette } from "~/commandPaletteBus";
 import { useAtomValue } from "@effect/atom-react";
 import { shortcutLabelForCommand } from "~/keybindings";
-import { usePullRequestsSupported } from "~/state/environments";
 import { primaryServerKeybindingsAtom } from "~/state/server";
 import {
   activeActivityItem,
@@ -18,13 +15,10 @@ import {
   visibleActivityItems,
   type ActivityItemId,
 } from "./activityBar";
-import { workspaceColorCss } from "./workspaceColor";
 
 const ICONS: Record<ActivityItemId, ReactNode> = {
   agents: <MessagesSquareIcon />,
   search: <SearchIcon />,
-  "pull-requests": <PullRequestGlyph.pullRequest />,
-  usage: <ChartNoAxesColumnIcon />,
   settings: <SettingsIcon />,
 };
 
@@ -37,10 +31,9 @@ export function ActivityBar() {
   const navigateToMainApp = useNavigateToMainApp();
   const { open, setOpen } = useSidebar();
   const pathname = useLocation({ select: (location) => location.pathname });
-  const pullRequestsSupported = usePullRequestsSupported();
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const active = activeActivityItem(pathname);
-  const items = visibleActivityItems({ pullRequestsSupported });
+  const items = visibleActivityItems();
 
   const handleClick = useCallback(
     (id: ActivityItemId) => {
@@ -55,12 +48,6 @@ export function ActivityBar() {
           return;
         case "search":
           openCommandPalette();
-          return;
-        case "pull-requests":
-          void navigate({ to: "/pull-requests", search: readPullRequestListPreferences() });
-          return;
-        case "usage":
-          void navigate({ to: "/usage" });
           return;
         case "settings":
           void navigate({ to: "/settings" });
@@ -110,8 +97,7 @@ export function ActivityBar() {
         to="/"
         aria-label="abode home"
         className="flex h-[var(--workspace-topbar-height)] shrink-0 items-center justify-center text-base font-bold tracking-tight outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
-        // The logo mark is the one purple in the chrome (workspace slot 2).
-        style={{ color: workspaceColorCss(1) }}
+        style={{ color: "var(--primary)" }}
       >
         ab
       </Link>

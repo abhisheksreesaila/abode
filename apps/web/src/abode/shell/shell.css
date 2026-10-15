@@ -227,7 +227,7 @@
   border: 1px solid var(--contrast-sidebar-muted-foreground);
 }
 
-/* Workspace header, like VS Code's: a folder in the workspace color and the name. */
+/* Workspace header, like VS Code's: a folder and the name. */
 [data-slot="sidebar-content"] > section + section,
 [data-abode~="hidden-toggle"] {
   margin-top: 6px;
@@ -238,9 +238,6 @@
   padding-left: 0.5rem;
   font-size: 14px;
   color: var(--contrast-sidebar-foreground);
-}
-[data-abode~="workspace-folder"] {
-  color: var(--workspace-color, currentColor);
 }
 [data-abode~="workspace-pill"] {
   display: inline-flex;
