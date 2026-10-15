@@ -234,3 +234,39 @@ The card sits above the composer (where questions already open) and shows the th
 - **Acceptance:**
   - [ ] The chip opens the searchable list; picking a project switches the draft as before (Abhishek in the real app).
   - [ ] The path hint is pure and tested.
+
+## Phase E: from using it (2026-10-15)
+
+Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and a trial merge with the latest nightly must stay as clean as before.
+
+### A-024: Voice that hears you
+
+- **Status:** todo
+- **What:** Abhishek struggled with dictation on 2026-10-14. Today it is Moonshine Base q8 on the CPU (wasm). Measure, then switch: run the same real speech clips (developer-style sentences with code words, 5 to 30 seconds) through Moonshine Base and Whisper candidates (base.en, small.en, large-v3-turbo; wasm and WebGPU where transformers.js supports it) and record word error rate, time to transcribe a 15-second clip on this machine, and download size. Pick the most accurate one that transcribes 15 seconds in about 3 seconds or less; use WebGPU when it is there and fall back to wasm. Record the numbers in `docs/research/voice-spike.md`. Settings shows the new model's size, and a model already cached under the old id is cleaned up or ignored.
+- **Acceptance:**
+  - [ ] The comparison is a script someone can rerun, and its table is in `docs/research/voice-spike.md`.
+  - [ ] The chosen model transcribes the clips with a clearly lower error rate than Moonshine Base.
+  - [ ] `vp build` passes (license check) if a dependency changes.
+  - [ ] Abhishek dictates a real prompt in the app.
+
+### A-025: Calmer sidebar chrome
+
+- **Status:** todo
+- **What:** Workspaces lose their colors: the color picker leaves the workspace menu, and every folder icon uses the theme's default color (color store and hooks deleted). The activity bar loses Pull requests and Usage; both become rows in the Customizations list at the bottom of the sidebar (after Instructions) that open the same pages. The activity bar keeps Agents, Search and Settings.
+- **Acceptance:**
+  - [ ] No workspace color code is left; existing stored colors are simply ignored.
+  - [ ] Pull requests (only where supported) and Usage open from Customizations; their activity-bar buttons are gone.
+
+### A-026: "+" shows the new session under its folder
+
+- **Status:** todo
+- **What:** Like VS Code: pressing + (or starting a new session any other way) puts a "New session" row under that workspace at once, selected, while the pane opens beside it. It stays a draft: no server thread until the first message. An empty draft's row stays only while it is the open one; leaving it empty removes the row.
+- **Acceptance:**
+  - [ ] The draft-row rule is pure and tested (empty and open: shown; empty and not open: gone; with text: shown).
+
+### A-027: Remove a workspace from the sidebar
+
+- **Status:** todo
+- **What:** "Hide from sidebar" becomes "Remove from sidebar", and the "N hidden" row is gone. Nothing is deleted on the server, so its sessions come back with it. A removed workspace returns as soon as it becomes the open one again (picked in the new-session project chip, or added again with "Add project"), and stays back.
+- **Acceptance:**
+  - [ ] Remove and return are pure and tested; no "hidden" wording is left in the UI.
