@@ -145,7 +145,7 @@ export function anchorMarkdownOffset(doc: ProseMirrorNode, anchor: number): numb
 export function provisionalTextFor(state: RecordingState): string | null | undefined {
   switch (state.status) {
     case "recording":
-      return state.interim ?? "";
+      return "";
     case "transcribing":
       return undefined;
     default:

@@ -114,7 +114,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-010: The board column
 
-- **Status:** review (reviewer PASS; the 👍 chip has no "change" (a sent message can't be unsent); hides when the chat area is under 58rem. Needs Abhishek)
+- **Status:** dropped (2026-10-14: Abhishek never used the board; removed in A-015)
 - **Depends on:** A-009
 - **What:** on wide windows a column right of the chat: a header with the helper, then lanes Needs you (open questions from the latest answer, plus upstream's pending approvals/inputs linking to the composer), Watch out, Tickets, Done. Question options are buttons that send the choice as a user message (`startTurn`) and turn into a "👍 choice · on it" chip with "change". Each item jumps to its message. Hidden on narrow windows and when abode chat is off.
 - **Acceptance:**
@@ -124,7 +124,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-011: The cast with moods and activity poses
 
-- **Status:** review (reviewer PASS; handed-off threads show the current helper on every row. Needs Abhishek)
+- **Status:** review (reviewer PASS; handed-off threads show the current helper on every row. 2026-10-14: moods and poses removed with the board (A-015); avatars stay. Needs Abhishek)
 - **Depends on:** A-010
 - **What:** Sunny (Claude) / Pip (Codex) avatars beside assistant messages and the Boss beside the user's, via CSS. The board header shows the helper's mood (asking, worried, working, done, idle, agreed) and an activity pose from the latest work item (typing for file changes, terminal for commands, magnifier for search, thought bubble for reasoning). One ~0.5s motion per new work item, no loops, off under reduced motion.
 - **Acceptance:**
@@ -146,3 +146,28 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 - **Acceptance:**
   - [ ] Running it twice changes nothing; `--remove` restores the files.
   - [ ] Abhishek agrees before it touches his global files.
+
+## Phase C: polish from using it (2026-10-14)
+
+### A-014: Breathing room in the workspaces sidebar
+
+- **Status:** review
+- **What:** workspaces sit 16px apart (was 6px), headers are 32px and session rows 30px with 2px between them, so picking a session doesn't take focus. Spacing only, in `abode/shell/shell.css`.
+- **Acceptance:**
+  - [ ] Each workspace reads as its own group; neighboring sessions are easy to hit (Abhishek in the real app).
+
+### A-015: Drop the board; the chat gets the width
+
+- **Status:** review
+- **What:** the board column, its lanes, moods and poses are gone. The avatars beside messages stay (`abode/chat/ChatAvatars.tsx` hands them over, as the board did). Agent answers no longer stop at 76ch, so Settings › Chat width (Wide or Full) widens the whole chat.
+- **Acceptance:**
+  - [ ] No column right of the chat; avatars still show with abode chat on.
+  - [ ] With Chat width set to Wide, answers use the full lane.
+
+### A-016: Voice: "Listening" bars instead of live text
+
+- **Status:** review
+- **What:** while recording, the composer shows bars that follow the mic level and "Listening 0:05"; nothing is transcribed until release. The model warms up in the background when recording starts, so the one transcription after release stays quick. Bars update about 20 times a second only while recording, and hold still under reduced motion.
+- **Acceptance:**
+  - [ ] No live text appears while speaking; the transcript lands at the caret on release (Abhishek with a real mic).
+  - [ ] Level math is tested; no animation runs when not recording.

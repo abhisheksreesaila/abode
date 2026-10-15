@@ -141,12 +141,9 @@ describe("provisional dictation", () => {
 });
 
 describe("provisionalTextFor", () => {
-  it("shows only heard words, never download progress", () => {
+  it("pins the insertion point while recording but shows no text", () => {
     expect(provisionalTextFor({ status: "recording" })).toBe("");
     expect(provisionalTextFor({ status: "recording", downloadProgress: 0.4 })).toBe("");
-    expect(provisionalTextFor({ status: "recording", interim: "…hello there" })).toBe(
-      "…hello there",
-    );
   });
 
   it("leaves the heard words in place while transcribing and clears otherwise", () => {

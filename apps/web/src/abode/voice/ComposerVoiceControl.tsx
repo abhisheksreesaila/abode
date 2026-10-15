@@ -4,6 +4,7 @@ import { MicIcon, SquareIcon } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../components/ui/tooltip";
 import type { RecordingState } from "./recordingMachine";
+import { ListeningWave } from "./ListeningWave";
 import { provisionalTextFor } from "./provisionalDictation";
 import { voiceShortcutLabel } from "./shortcut";
 import { useVoiceDictation } from "./useVoiceDictation";
@@ -33,8 +34,8 @@ export function describeVoiceStatus(state: RecordingState, elapsedSeconds = 0): 
     case "idle":
       return null;
     case "recording":
-      return state.downloadProgress === undefined || state.interim
-        ? `Listening ${formatElapsed(elapsedSeconds)} · Release to insert · Esc cancel`
+      return state.downloadProgress === undefined
+        ? `Listening ${formatElapsed(elapsedSeconds)}`
         : `Downloading voice model ${Math.round(state.downloadProgress * 100)}%…`;
     case "transcribing":
       return state.downloadProgress === null
@@ -61,7 +62,7 @@ export function ComposerVoiceControl({
   resetKey: string;
   /** Recording began: pin the insertion point. */
   onProvisionalStart: () => void;
-  /** The live text to show (empty string for none yet). Called at most once per interim tick. */
+  /** Text to show at the insertion point while recording (always empty: no live text). */
   onProvisionalText: (text: string) => void;
   /** Dictation ended without a transcript (cancelled or failed): drop the provisional text. */
   onProvisionalEnd: () => void;
@@ -73,7 +74,7 @@ export function ComposerVoiceControl({
   const { settings } = useVoiceSettings();
   // Only when the composer cannot take the text is it shown here, so it is never lost.
   const [fallbackText, setFallbackText] = useState<string | null>(null);
-  const { state, toggle, cancel } = useVoiceDictation({
+  const { state, toggle, cancel, level } = useVoiceDictation({
     enabled: settings.enabled,
     canStart: !disabled,
     shortcut: settings.shortcut,
@@ -137,9 +138,7 @@ export function ComposerVoiceControl({
           role={state.status === "error" ? "alert" : "status"}
           className="flex min-w-0 max-w-56 items-center gap-1.5 truncate text-xs text-muted-foreground"
         >
-          {recording ? (
-            <span aria-hidden className="size-2 shrink-0 rounded-full bg-destructive" />
-          ) : null}
+          {recording ? <ListeningWave level={level} /> : null}
           <span className="truncate">{status}</span>
         </span>
       ) : null}
@@ -161,7 +160,9 @@ export function ComposerVoiceControl({
           {recording ? <SquareIcon /> : <MicIcon />}
         </TooltipTrigger>
         <TooltipPopup>
-          {label} (hold {voiceShortcutLabel(settings.shortcut)})
+          {recording
+            ? "Stop and transcribe · Esc to cancel"
+            : `${label} (hold ${voiceShortcutLabel(settings.shortcut)})`}
         </TooltipPopup>
       </Tooltip>
     </div>

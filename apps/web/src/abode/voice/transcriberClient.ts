@@ -1,3 +1,4 @@
+import { SPEECH_SAMPLE_RATE } from "./pcmBuffer";
 import type { WorkerRequest, WorkerResponse } from "./workerProtocol";
 
 export interface PendingRequest {
@@ -57,9 +58,24 @@ export function transcribe(audio: Float32Array, onProgress: (fraction: number) =
   });
 }
 
+let warmed = false;
+
+/**
+ * Loads the model in the background (a tiny silent transcription) so the real one after
+ * release is quick. Once per worker; progress reports a first-time download.
+ */
+export function warmTranscriber(onProgress: (fraction: number) => void) {
+  if (warmed) return;
+  warmed = true;
+  transcribe(new Float32Array(SPEECH_SAMPLE_RATE / 2), onProgress).catch(() => {
+    warmed = false;
+  });
+}
+
 /** Drops the loaded model from memory (used after deleting it from disk). */
 export function resetTranscriber() {
   worker?.terminate();
   worker = null;
+  warmed = false;
   failAll(new Error("Speech model reset."));
 }

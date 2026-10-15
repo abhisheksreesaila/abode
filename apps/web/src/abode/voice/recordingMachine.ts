@@ -7,7 +7,7 @@ export type RecordingState =
   | { status: "idle" }
   | {
       status: "recording";
-      /** Muted live preview of the words heard so far. */ interim?: string;
+      /** A first-time model download, started in the background while listening. */
       downloadProgress?: number;
     }
   | { status: "transcribing"; downloadProgress: number | null }
@@ -16,7 +16,6 @@ export type RecordingState =
 export type RecordingEvent =
   | { type: "start" }
   | { type: "stop" }
-  | { type: "interim"; text: string }
   | { type: "cancel" }
   | { type: "progress"; fraction: number }
   | { type: "transcribed"; text: string }
@@ -44,20 +43,14 @@ export function reduceRecording(state: RecordingState, event: RecordingEvent): R
       return state.status === "recording"
         ? { state: { status: "transcribing", downloadProgress: null } }
         : { state };
-    case "interim":
-      return state.status === "recording"
-        ? { state: { status: "recording", interim: event.text } }
-        : { state };
     case "cancel":
       return state.status === "recording" || state.status === "transcribing"
         ? { state: idleState, discardAudio: true }
         : { state };
     case "progress":
-      // The first interim job may be the one downloading the model, while still recording.
+      // Warming the model on the first dictation downloads it while still recording.
       if (state.status === "recording") {
-        return {
-          state: state.interim ? state : { status: "recording", downloadProgress: event.fraction },
-        };
+        return { state: { status: "recording", downloadProgress: event.fraction } };
       }
       return state.status === "transcribing"
         ? { state: { status: "transcribing", downloadProgress: event.fraction } }

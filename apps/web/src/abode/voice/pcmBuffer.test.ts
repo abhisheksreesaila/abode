@@ -30,15 +30,11 @@ describe("createDownsampler", () => {
 });
 
 describe("createPcmStore", () => {
-  it("returns everything, or a bounded tail flagged as truncated", () => {
+  it("returns everything pushed, in order", () => {
     const store = createPcmStore();
     store.push(Float32Array.from([1, 2, 3]));
     store.push(Float32Array.from([4, 5]));
     expect([...store.all()]).toEqual([1, 2, 3, 4, 5]);
-    expect(store.tail(10)).toEqual({ audio: Float32Array.from([1, 2, 3, 4, 5]), truncated: false });
-    const tail = store.tail(4);
-    expect([...tail.audio]).toEqual([2, 3, 4, 5]);
-    expect(tail.truncated).toBe(true);
     expect(store.length).toBe(5);
   });
 });

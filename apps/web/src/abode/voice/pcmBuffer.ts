@@ -53,13 +53,7 @@ export function createDownsampler(inputRate: number, outputRate = SPEECH_SAMPLE_
   return Object.assign(downsample, { flush });
 }
 
-export interface PcmSnapshot {
-  audio: Float32Array;
-  /** True when older audio was left out to keep the window bounded. */
-  truncated: boolean;
-}
-
-/** Append-only store of 16 kHz chunks with cheap whole and tail reads. */
+/** Append-only store of 16 kHz chunks. */
 export function createPcmStore() {
   const chunks: Float32Array[] = [];
   let total = 0;
@@ -74,19 +68,6 @@ export function createPcmStore() {
     },
     all(): Float32Array {
       return concat(chunks, total);
-    },
-    /** A copy of the last `maxSamples` samples (the whole recording if it is shorter). */
-    tail(maxSamples: number): PcmSnapshot {
-      if (total <= maxSamples) return { audio: concat(chunks, total), truncated: false };
-      const audio = new Float32Array(maxSamples);
-      let filled = maxSamples;
-      for (let i = chunks.length - 1; i >= 0 && filled > 0; i--) {
-        const chunk = chunks[i]!;
-        const take = Math.min(chunk.length, filled);
-        audio.set(chunk.subarray(chunk.length - take), filled - take);
-        filled -= take;
-      }
-      return { audio, truncated: true };
     },
   };
 }

@@ -1,12 +1,13 @@
-import { createDownsampler, createPcmStore, type PcmSnapshot } from "./pcmBuffer";
+import { createDownsampler, createPcmStore } from "./pcmBuffer";
+import { levelOf } from "./voiceLevel";
 
 export interface ActiveRecording {
   /** Stops capturing and resolves with 16 kHz mono samples. */
   finish: () => Promise<Float32Array>;
   /** Stops capturing and throws the audio away. */
   discard: () => void;
-  /** Audio so far, capped to the last maxSamples; null while shorter than minSamples. */
-  snapshot: (maxSamples: number, minSamples: number) => PcmSnapshot | null;
+  /** 0..1 loudness of the latest audio, for the listening bars. */
+  level: () => number;
 }
 
 export const INSECURE_CONTEXT_MESSAGE = "Voice needs HTTPS (use Tailscale HTTPS or localhost).";
@@ -54,6 +55,7 @@ export async function startRecording(): Promise<ActiveRecording> {
   };
   const store = createPcmStore();
   const downsample = createDownsampler(context.sampleRate);
+  let level = 0;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const source = context.createMediaStreamSource(stream);
@@ -61,7 +63,10 @@ export async function startRecording(): Promise<ActiveRecording> {
     // deprecated, so move to an AudioWorklet later. A small buffer limits the unflushed tail.
     processor = context.createScriptProcessor(2048, 1, 1);
     processor.onaudioprocess = (event) => {
-      if (!released) store.push(downsample(event.inputBuffer.getChannelData(0)));
+      if (released) return;
+      const samples = event.inputBuffer.getChannelData(0);
+      level = levelOf(samples);
+      store.push(downsample(samples));
     };
     // A processor only runs while connected to the destination; the zero gain keeps it silent.
     const mute = context.createGain();
@@ -80,7 +85,6 @@ export async function startRecording(): Promise<ActiveRecording> {
       store.push(downsample.flush());
       return store.all();
     },
-    snapshot: (maxSamples, minSamples) =>
-      released || store.length < minSamples ? null : store.tail(maxSamples),
+    level: () => (released ? 0 : level),
   };
 }
