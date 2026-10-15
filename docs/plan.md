@@ -141,7 +141,7 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 
 ### A-013: Tell the agents about cards
 
-- **Status:** blocked (Abhishek: say "install the card instructions" to run it on your real ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md; tested on scratch copies: idempotent, --remove restores)
+- **Status:** blocked (Abhishek: say "install the card instructions" to run `install-instructions.sh cards` on your real ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md; tested on scratch copies: idempotent, --remove restores)
 - **What:** `scripts/abode/chat/install-instructions.sh` appends a marked, idempotent block to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` explaining the five callouts (and removes it with `--remove`). Upstream has no custom-instructions setting, so this is the engine-free route.
 - **Acceptance:**
   - [ ] Running it twice changes nothing; `--remove` restores the files.
@@ -171,3 +171,11 @@ Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitH
 - **Acceptance:**
   - [ ] No live text appears while speaking; the transcript lands at the caret on release (Abhishek with a real mic).
   - [ ] Level math is tested; no animation runs when not recording.
+
+### A-017: Pages open in the browser next to the chat
+
+- **Status:** review (installed 2026-10-14 in ~/.claude/CLAUDE.md; needs Abhishek to ask for an artifact in a real thread)
+- **What:** Claude was never told about T3 Code's in-app browser (upstream gives those instructions to Codex only), so pages went to the system browser in another Omarchy workspace. `install-instructions.sh browser` adds a block to `~/.claude/CLAUDE.md` telling Claude to show pages with the `t3-code` server's `preview_open` and its `url`. No engine change. If Claude ignores it, the fallback is a hook in the Claude adapter, which needs Abhishek's sign-off.
+- **Acceptance:**
+  - [ ] Asking for an artifact in an abode thread opens it in the browser panel beside that thread.
+  - [ ] Installing twice changes nothing; `--remove` restores the file (tested on scratch copies).
