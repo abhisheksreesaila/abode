@@ -14,7 +14,7 @@ export interface CalmSubagent {
     | "failed"
     | "cancelled"
     | "interrupted";
-  readonly agentType?: string;
+  readonly agentType?: string | undefined;
 }
 
 export interface CalmStep {
