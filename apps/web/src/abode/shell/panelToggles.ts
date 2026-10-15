@@ -12,7 +12,7 @@ import { isMacPlatform } from "../../lib/utils";
  * Ctrl+J, Ctrl+Alt+B) and each owner handles its own command: the sidebar in
  * `AppSidebarLayout`, the terminal drawer and right panel in `ChatView`. abode
  * adds no second state for them. Anything outside those components (the
- * command palette, the activity bar) presses the user's own binding, so it
+ * command palette, the sidebar header) presses the user's own binding, so it
  * always runs the same code path as the keyboard and follows rebinding.
  */
 export type PanelToggleId = "sidebar" | "terminal" | "rightPanel";

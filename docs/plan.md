@@ -273,7 +273,7 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-028: No activity bar
 
-- **Status:** todo
+- **Status:** review
 - **What:** Abhishek doesn't use the activity bar. It goes; the sidebar gets its width. Its jobs move to the sidebar's own header row: the "abode" mark on the left goes home (`/`, the sessions), and on the right a Search button (opens the command palette, tooltip shows its shortcut) and a Settings gear. Upstream's own sidebar toggle and Ctrl+B are how a collapsed sidebar comes back. The `ActivityBar` lines in `AppSidebarLayout.tsx` and the activity-bar width in `shellLayout.ts` go, so the upstream hook shrinks.
 - **Acceptance:**
   - [ ] No activity bar on any route; home, search and settings reachable from the sidebar header; a collapsed sidebar can be reopened without the keyboard.

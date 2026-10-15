@@ -1,8 +1,8 @@
 import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { useParams, useRouter } from "@tanstack/react-router";
-import { FolderPlusIcon, SquarePenIcon } from "lucide-react";
+import { Link, useParams, useRouter } from "@tanstack/react-router";
+import { FolderPlusIcon, SearchIcon, SettingsIcon, SquarePenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
@@ -245,6 +245,7 @@ export function AbodeSidebar() {
     },
     [groups.length, isMobile, newThreadContext, setOpenMobile],
   );
+  const searchShortcut = shortcutLabelForCommand(keybindings, "commandPalette.toggle");
   const newSessionShortcut =
     shortcutLabelForCommand(keybindings, "chat.new") ??
     shortcutLabelForCommand(keybindings, "chat.newLocal");
@@ -263,9 +264,15 @@ export function AbodeSidebar() {
       <AbodeActiveRouteContext value={activeRoute}>
         <div data-abode="title-strip" className={isElectron ? "drag-region" : undefined}>
           <SidebarTrigger className="md:hidden" />
-          <span data-abode="strip" className="min-w-0 flex-1 truncate p-0">
-            Agents
-          </span>
+          <Link
+            to="/"
+            aria-label="abode home"
+            data-testid="sidebar-home"
+            className="min-w-0 truncate rounded-xs text-base font-bold tracking-tight text-primary outline-hidden ring-ring focus-visible:ring-1 focus-visible:ring-inset"
+          >
+            abode
+          </Link>
+          <span className="flex-1" />
           <Tooltip>
             <TooltipTrigger
               render={
@@ -283,6 +290,44 @@ export function AbodeSidebar() {
             <TooltipPopup side="bottom">
               New session{newSessionShortcut ? ` (${newSessionShortcut})` : ""}
             </TooltipPopup>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon-xs"
+                  variant="ghost-muted"
+                  aria-label="Search"
+                  data-testid="sidebar-search"
+                  onClick={() => {
+                    if (isMobile) setOpenMobile(false);
+                    openCommandPalette();
+                  }}
+                />
+              }
+            >
+              <SearchIcon className="size-3.5" />
+            </TooltipTrigger>
+            <TooltipPopup side="bottom">
+              Search{searchShortcut ? ` (${searchShortcut})` : ""}
+            </TooltipPopup>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon-xs"
+                  variant="ghost-muted"
+                  aria-label="Settings"
+                  className="max-md:hidden"
+                  data-testid="sidebar-settings"
+                  onClick={() => void router.navigate({ to: "/settings" })}
+                />
+              }
+            >
+              <SettingsIcon className="size-3.5" />
+            </TooltipTrigger>
+            <TooltipPopup side="bottom">Settings</TooltipPopup>
           </Tooltip>
         </div>
         <div data-abode="strip">
@@ -326,7 +371,7 @@ export function AbodeSidebar() {
           <SidebarThreadUndoNotice />
           <SidebarProviderUpdatePill />
           <SidebarUpdateArchitectureWarning />
-          {/* The activity bar carries Settings on desktop; phones have no bar. */}
+          {/* Desktop has Settings in the header; phones keep the utility menu. */}
           <div className="md:hidden">
             <SidebarUtilityMenu />
           </div>
