@@ -60,7 +60,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
 }) {
   const { group, showAll, onShowAll, draftIds } = props;
   const { project } = group;
-  const { threadKey: activeThreadKey } = useAbodeActiveRoute();
+  const { threadKey: activeThreadKey, draftId: activeDraftId } = useAbodeActiveRoute();
   const router = useRouter();
   const handleNewThread = useNewThreadHandler();
   const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
@@ -90,6 +90,8 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   );
   const pillView = pill ? workspacePillView(pill) : null;
 
+  // The open draft's row is forced open too, so "+" shows its "New session" row at once.
+  const activeDraftIsHere = activeDraftId !== null && draftIds.includes(activeDraftId);
   const activeIsHere =
     activeThreadKey !== null &&
     group.threads.some((thread) => threadShellKey(thread) === activeThreadKey);
@@ -207,7 +209,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
         }}
         data-abode="row workspace-header"
       >
-        <FolderGlyph aria-hidden data-abode="workspace-folder" className="size-4 shrink-0" />
+        <FolderGlyph aria-hidden className="size-4 shrink-0" />
         <span className="min-w-0 flex-1 truncate">{group.name}</span>
         {pillView?.kind === "failed" ? (
           <span data-abode="meta" className="font-medium text-error-foreground">
@@ -243,7 +245,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       </div>
       {expanded || activeIsHere ? (
         <ul data-abode="guide">
-          {expanded ? <WorkspaceDrafts draftIds={draftIds} /> : null}
+          {expanded || activeDraftIsHere ? <WorkspaceDrafts draftIds={draftIds} /> : null}
           {visibleThreads.map((thread) => (
             <ThreadRow
               key={`${thread.environmentId}:${thread.id}`}
