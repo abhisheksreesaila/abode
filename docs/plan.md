@@ -280,7 +280,7 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 
 ### A-029: Voice on the host: Nemotron streaming
 
-- **Status:** review
+- **Status:** done
 - **What:** Abhishek wants VS Code's dictation. VS Code runs NVIDIA Nemotron 3.5 ASR streaming natively on the machine; the spike (`docs/research/voice-nemotron.md`) shows it from Node via `sherpa-onnx-node` (Apache-2.0): 5.4% WER (Moonshine 6.7%), 3.3% on 3-minute prompts, final text 0.13 s after you stop, RTF about 0.12 on 4 CPU threads. Do the same through the abode server:
   - **Server** (`apps/server/src/abode/`): a voice service running Nemotron 3.5 560 ms int8 (k2-fsa's sherpa build, OpenMDW-1.1) in a worker thread with 4 threads. The model (about 453 MB) downloads on first use into T3 home with its checksum pinned, reporting progress; nothing loads until someone dictates, and it unloads after a few idle minutes.
   - **Wire:** mic audio streams as 16 kHz PCM from the client to the host while you talk; the final text returns when you stop. Add-only `abode*` contracts and RPCs, an existing permission scope, bounded buffers and session counts.
@@ -291,9 +291,17 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
   - [x] Falls back to Moonshine when the host has no voice; works from a remote browser, since the audio goes to the host (not tried from a second device).
   - [x] `hook-report.sh` stays under 400 (398), and `vp build` passes the license check.
   - [x] security-auditor: waived by Abhishek on 2026-10-15; the reviewer covered upload bounds, session ownership and the model download.
-  - [ ] Abhishek dictates a real prompt.
+  - [x] Abhishek dictates a real prompt: "now it works really well" (2026-10-16).
 
 ### A-030: Host voice follow-ups
 
 - **Status:** todo
 - **What:** from A-029's review. (1) A model load that never sends `ready` blocks server shutdown and `host.sh update`: time out `ensureEngine` (about 60 s) in `VoiceRecognizerSherpa.ts` and report `unavailable`. (2) License notices list only `sherpa-onnx-linux-x64`; a macOS or Windows desktop build fails the license check until the other platform packages are listed (mind the hook budget: 391/400).
+
+### A-031: Dictation survives the screensaver
+
+- **Status:** review
+- **What:** A mic-button dictation stopped when Omarchy's idle screensaver opened: the screensaver is a fullscreen window, the browser lost focus, and the blur rule meant for hold-to-talk (a keyup never arrives) stopped every recording. Now blur stops only a dictation started by holding the key, and the page holds a screen wake lock while recording, so the screensaver and idle lock don't start while you talk.
+- **Acceptance:**
+  - [ ] A mic-button dictation keeps recording when another window takes focus; a held-key dictation still stops on blur.
+  - [ ] Talking past the idle timeout without touching anything: no screensaver, and the text arrives.

@@ -61,6 +61,8 @@ export function useVoiceDictation(input: {
   const hostVoiceRef = useRef(hostVoice);
   const dictationRef = useRef<HostDictation | null>(null);
   const ownerRef = useRef(Symbol("voice-dictation"));
+  /** True while the dictation in flight was started by holding the shortcut. */
+  const heldRef = useRef(false);
   const onTranscriptRef = useRef(input.onTranscript);
   const { onTranscript } = input;
   const { canStart } = input;
@@ -192,6 +194,7 @@ export function useVoiceDictation(input: {
   }, [runTranscription, send]);
 
   const end = useCallback(() => {
+    heldRef.current = false;
     if (stateRef.current.status !== "recording") return;
     send({ type: "stop" });
     const recorder = recorderRef.current;
@@ -204,8 +207,31 @@ export function useVoiceDictation(input: {
 
   const toggle = useCallback(() => {
     if (stateRef.current.status === "recording") end();
-    else begin();
+    else {
+      heldRef.current = false;
+      begin();
+    }
   }, [begin, end]);
+
+  // Keep the screen awake while recording, so an idle screensaver or lock does not start while
+  // the user talks without touching anything. Best effort: some browsers have no wake lock API.
+  const recording = state.status === "recording";
+  useEffect(() => {
+    if (!recording || !("wakeLock" in navigator)) return;
+    let released = false;
+    let lock: WakeLockSentinel | null = null;
+    navigator.wakeLock.request("screen").then(
+      (sentinel) => {
+        if (released) void sentinel.release();
+        else lock = sentinel;
+      },
+      () => {},
+    );
+    return () => {
+      released = true;
+      void lock?.release();
+    };
+  }, [recording]);
 
   useEffect(() => {
     if (!enabled) {
@@ -223,13 +249,19 @@ export function useVoiceDictation(input: {
       }
       if (!matchesVoiceShortcut(event, shortcut)) return;
       event.preventDefault();
-      if (!event.repeat) begin();
+      if (event.repeat) return;
+      const wasIdle = stateRef.current.status === "idle" || stateRef.current.status === "error";
+      begin();
+      heldRef.current = wasIdle && stateRef.current.status === "recording";
     };
     const onKeyUp = (event: KeyboardEvent) => {
       if (stateRef.current.status === "recording" && isShortcutRelease(event, shortcut)) end();
     };
-    // A keyup never arrives if the window loses focus mid-hold.
-    const onBlur = () => end();
+    // A keyup never arrives if the window loses focus mid-hold. A dictation started with the
+    // mic button keeps going: a screensaver or another window taking focus is not a "stop".
+    const onBlur = () => {
+      if (heldRef.current) end();
+    };
     window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("keyup", onKeyUp, true);
     window.addEventListener("blur", onBlur);
