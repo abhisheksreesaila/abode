@@ -3,7 +3,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import { WS_METHODS, type VoiceStatus } from "@t3tools/contracts";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { connectionAtomRuntime } from "~/connection/runtime";
 import { usePrimaryEnvironmentId } from "~/state/environments";
@@ -50,36 +50,30 @@ export function useHostVoice(): HostVoice {
     };
   }, []);
 
-  const call = useMemo<VoiceCall>(
-    () => async (input) => {
-      if (environmentId === null) throw new Error("Not connected to a host.");
-      const result = await run({ environmentId, input });
-      if (result._tag === "Success") return result.value;
-      const failure = squashAtomCommandFailure(result);
-      throw failure instanceof Error ? failure : new Error("The host voice request failed.");
-    },
-    [environmentId, run],
-  );
+  const call: VoiceCall = async (input) => {
+    if (environmentId === null) throw new Error("Not connected to a host.");
+    const result = await run({ environmentId, input });
+    if (result._tag === "Success") return result.value;
+    const failure = squashAtomCommandFailure(result);
+    throw failure instanceof Error ? failure : new Error("The host voice request failed.");
+  };
 
-  const ask = useCallback(
-    async (op: "status" | "prepare") => {
-      let next: VoiceStatus | null = null;
-      try {
-        const result = await call({ op });
-        if (result.op === "status") next = result.status;
-      } catch {
-        next = null;
-      }
-      if (mounted.current) {
-        setStatus(next);
-        setKnown(true);
-      }
-      return next;
-    },
-    [call],
-  );
-  const refresh = useCallback(() => ask("status"), [ask]);
-  const prepare = useCallback(() => ask("prepare"), [ask]);
+  const ask = async (op: "status" | "prepare") => {
+    let next: VoiceStatus | null = null;
+    try {
+      const result = await call({ op });
+      if (result.op === "status") next = result.status;
+    } catch {
+      next = null;
+    }
+    if (mounted.current) {
+      setStatus(next);
+      setKnown(true);
+    }
+    return next;
+  };
+  const refresh = () => ask("status");
+  const prepare = () => ask("prepare");
 
   useEffect(() => {
     void refresh();
@@ -95,6 +89,6 @@ export function useHostVoice(): HostVoice {
     return () => clearInterval(timer);
   }, [downloading, refresh]);
 
-  const begin = useCallback(() => createHostDictation(call), [call]);
+  const begin = () => createHostDictation(call);
   return { status, known, refresh, prepare, begin };
 }

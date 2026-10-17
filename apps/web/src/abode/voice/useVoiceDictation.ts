@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { describeMicrophoneError, startRecording, type ActiveRecording } from "./audioRecorder";
 import {
@@ -72,7 +72,7 @@ export function useVoiceDictation(input: {
     hostVoiceRef.current = hostVoice;
   }, [onTranscript, canStart, hostVoice]);
 
-  const send = useCallback((event: RecordingEvent) => {
+  const send = (event: RecordingEvent) => {
     const transition = reduceRecording(stateRef.current, event);
     stateRef.current = transition.state;
     setState(transition.state);
@@ -97,60 +97,56 @@ export function useVoiceDictation(input: {
       stateRef.current = failed.state;
       setState(failed.state);
     }
-  }, []);
+  };
 
-  const runTranscription = useCallback(
-    async (recorder: ActiveRecording, token: number) => {
-      const dictation = dictationRef.current;
-      let audio: Float32Array;
-      try {
-        audio = await recorder.finish();
-      } catch {
-        // Empty or very short audio cannot be decoded; that is "heard nothing", not a model fault.
-        dictation?.cancel();
-        if (token === tokenRef.current) send({ type: "transcribed", text: "" });
-        return;
-      }
-      if (token !== tokenRef.current) return;
-      if (audio.length < MIN_SAMPLES) {
-        dictation?.cancel();
-        send({ type: "transcribed", text: "" });
-        return;
-      }
-      try {
-        const controller = new AbortController();
-        // The host's text when it delivers it; otherwise the recording goes to the browser model.
-        const text = await textFromHostOrBrowser(
-          dictation,
-          async () => {
-            abortRef.current = controller;
-            return transcribe(
-              audio,
-              (fraction) => {
-                if (token === tokenRef.current) send({ type: "progress", fraction });
+  const runTranscription = async (recorder: ActiveRecording, token: number) => {
+    const dictation = dictationRef.current;
+    let audio: Float32Array;
+    try {
+      audio = await recorder.finish();
+    } catch {
+      // Empty or very short audio cannot be decoded; that is "heard nothing", not a model fault.
+      dictation?.cancel();
+      if (token === tokenRef.current) send({ type: "transcribed", text: "" });
+      return;
+    }
+    if (token !== tokenRef.current) return;
+    if (audio.length < MIN_SAMPLES) {
+      dictation?.cancel();
+      send({ type: "transcribed", text: "" });
+      return;
+    }
+    try {
+      const controller = new AbortController();
+      // The host's text when it delivers it; otherwise the recording goes to the browser model.
+      const text = await textFromHostOrBrowser(
+        dictation,
+        async () => {
+          abortRef.current = controller;
+          return transcribe(
+            audio,
+            (fraction) => {
+              if (token === tokenRef.current) send({ type: "progress", fraction });
+            },
+            {
+              signal: controller.signal,
+              onSegment: (current, total) => {
+                if (token === tokenRef.current) send({ type: "segment", current, total });
               },
-              {
-                signal: controller.signal,
-                onSegment: (current, total) => {
-                  if (token === tokenRef.current) send({ type: "segment", current, total });
-                },
-              },
-            );
-          },
-          () => token === tokenRef.current,
-        );
-        if (abortRef.current === controller) abortRef.current = null;
-        if (dictationRef.current === dictation) dictationRef.current = null;
-        if (token === tokenRef.current) send({ type: "transcribed", text });
-      } catch {
-        if (token === tokenRef.current)
-          send({ type: "failed", message: TRANSCRIBE_FAILED_MESSAGE });
-      }
-    },
-    [send],
-  );
+            },
+          );
+        },
+        () => token === tokenRef.current,
+      );
+      if (abortRef.current === controller) abortRef.current = null;
+      if (dictationRef.current === dictation) dictationRef.current = null;
+      if (token === tokenRef.current) send({ type: "transcribed", text });
+    } catch {
+      if (token === tokenRef.current) send({ type: "failed", message: TRANSCRIBE_FAILED_MESSAGE });
+    }
+  };
 
-  const begin = useCallback(() => {
+  const begin = () => {
     const status = stateRef.current.status;
     if (status !== "idle" && status !== "error") return;
     if (!canStartRef.current) return;
@@ -191,9 +187,9 @@ export function useVoiceDictation(input: {
         }
       },
     );
-  }, [runTranscription, send]);
+  };
 
-  const end = useCallback(() => {
+  const end = () => {
     heldRef.current = false;
     if (stateRef.current.status !== "recording") return;
     send({ type: "stop" });
@@ -201,17 +197,17 @@ export function useVoiceDictation(input: {
     if (!recorder) return;
     recorderRef.current = null;
     void runTranscription(recorder, tokenRef.current);
-  }, [runTranscription, send]);
+  };
 
-  const cancel = useCallback(() => send({ type: "cancel" }), [send]);
+  const cancel = () => send({ type: "cancel" });
 
-  const toggle = useCallback(() => {
+  const toggle = () => {
     if (stateRef.current.status === "recording") end();
     else {
       heldRef.current = false;
       begin();
     }
-  }, [begin, end]);
+  };
 
   // Keep the screen awake while recording, so an idle screensaver or lock does not start while
   // the user talks without touching anything. Best effort: some browsers have no wake lock API.
@@ -281,7 +277,7 @@ export function useVoiceDictation(input: {
   // Release the mic if the composer unmounts mid-recording.
   useEffect(() => cancel, [cancel]);
 
-  const level = useCallback(() => recorderRef.current?.level() ?? 0, []);
+  const level = () => recorderRef.current?.level() ?? 0;
 
   return { state, toggle, cancel, level };
 }

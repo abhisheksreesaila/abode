@@ -3,7 +3,7 @@ import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime
 import type { ContextMenuItem } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
 import { FolderIcon, FolderOpenIcon, PlusIcon } from "lucide-react";
-import { memo, useCallback, useMemo, type MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
@@ -64,7 +64,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   const router = useRouter();
   const handleNewThread = useNewThreadHandler();
   const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
-  const preferenceKeys = useMemo(() => expansionPreferenceKeys(group), [group]);
+  const preferenceKeys = expansionPreferenceKeys(group);
   const expanded = useUiStateStore((state) =>
     resolveProjectExpanded(state.projectExpandedById, preferenceKeys),
   );
@@ -79,14 +79,10 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
       group.threads.map((thread) => state.threadLastVisitedAtById[threadShellKey(thread)] ?? null),
     ),
   );
-  const pill = useMemo(
-    () =>
-      resolveWorkspacePill(
-        group.threads.map((thread, index) =>
-          deriveWorkspaceThreadState(thread, visitedAts[index] ?? undefined),
-        ),
-      ),
-    [group.threads, visitedAts],
+  const pill = resolveWorkspacePill(
+    group.threads.map((thread, index) =>
+      deriveWorkspaceThreadState(thread, visitedAts[index] ?? undefined),
+    ),
   );
   const pillView = pill ? workspacePillView(pill) : null;
 
@@ -106,89 +102,78 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
 
   const firstMember = project.memberProjects[0];
 
-  const toggle = useCallback(() => {
+  const toggle = () => {
     setProjectExpanded(preferenceKeys, !expanded);
-  }, [expanded, preferenceKeys, setProjectExpanded]);
+  };
 
-  const createSession = useCallback(
-    async (member: SidebarProjectGroupMember) => {
-      // No options: branch, worktree and env mode come from the user's defaults.
-      const result = await settlePromise(() =>
-        handleNewThread(scopeProjectRef(member.environmentId, member.id)),
+  const createSession = async (member: SidebarProjectGroupMember) => {
+    // No options: branch, worktree and env mode come from the user's defaults.
+    const result = await settlePromise(() =>
+      handleNewThread(scopeProjectRef(member.environmentId, member.id)),
+    );
+    if (result._tag === "Failure") {
+      const error = squashAtomCommandFailure(result);
+      toastManager.add(
+        stackedThreadToast({
+          type: "error",
+          title: "Could not create session",
+          description: error instanceof Error ? error.message : "An error occurred.",
+        }),
       );
-      if (result._tag === "Failure") {
-        const error = squashAtomCommandFailure(result);
-        toastManager.add(
-          stackedThreadToast({
-            type: "error",
-            title: "Could not create session",
-            description: error instanceof Error ? error.message : "An error occurred.",
-          }),
-        );
-      }
-    },
-    [handleNewThread],
-  );
+    }
+  };
 
-  const handleNewSession = useCallback(
-    async (event: MouseEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (project.memberProjects.length === 1) {
-        void createSession(project.memberProjects[0]!);
-        return;
-      }
-      const api = readLocalApi();
-      if (!api) return;
-      const clicked = await settlePromise(() =>
-        api.contextMenu.show(
-          project.memberProjects.map((member) => ({
-            id: member.physicalProjectKey,
-            label: memberLabel(member),
-          })),
-          { x: event.clientX, y: event.clientY },
-        ),
-      );
-      if (clicked._tag === "Failure" || clicked.value === null) return;
-      const member = project.memberProjects.find(
-        (candidate) => candidate.physicalProjectKey === clicked.value,
-      );
-      if (member) void createSession(member);
-    },
-    [createSession, project.memberProjects],
-  );
+  const handleNewSession = async (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (project.memberProjects.length === 1) {
+      void createSession(project.memberProjects[0]!);
+      return;
+    }
+    const api = readLocalApi();
+    if (!api) return;
+    const clicked = await settlePromise(() =>
+      api.contextMenu.show(
+        project.memberProjects.map((member) => ({
+          id: member.physicalProjectKey,
+          label: memberLabel(member),
+        })),
+        { x: event.clientX, y: event.clientY },
+      ),
+    );
+    if (clicked._tag === "Failure" || clicked.value === null) return;
+    const member = project.memberProjects.find(
+      (candidate) => candidate.physicalProjectKey === clicked.value,
+    );
+    if (member) void createSession(member);
+  };
 
-  const handleContextMenu = useCallback(
-    async (event: MouseEvent) => {
-      event.preventDefault();
-      const api = readLocalApi();
-      if (!api) return;
-      const items: ContextMenuItem<string>[] = [
-        { id: "new-session", label: "New session" },
-        ...(group.isScratch
-          ? []
-          : [{ id: "copy-path", label: "Copy path", separatorBefore: true }]),
-        WORKSPACE_REMOVE_MENU_ITEM,
-        { id: "project-settings", label: "Project settings", icon: "settings" },
-      ];
-      const clicked = await settlePromise(() =>
-        api.contextMenu.show(items, { x: event.clientX, y: event.clientY }),
-      );
-      if (clicked._tag === "Failure" || clicked.value === null) return;
-      if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
-      else if (clicked.value === WORKSPACE_REMOVE_MENU_ITEM.id) {
-        useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
-      } else if (clicked.value === "copy-path" && firstMember) {
-        copyPath(firstMember.workspaceRoot, { path: firstMember.workspaceRoot });
-      } else if (clicked.value === "project-settings") {
-        void router.navigate({
-          to: "/projects/$projectKey",
-          params: { projectKey: project.projectKey },
-        });
-      }
-    },
-    [copyPath, createSession, firstMember, group.isScratch, project.projectKey, router],
-  );
+  const handleContextMenu = async (event: MouseEvent) => {
+    event.preventDefault();
+    const api = readLocalApi();
+    if (!api) return;
+    const items: ContextMenuItem<string>[] = [
+      { id: "new-session", label: "New session" },
+      ...(group.isScratch ? [] : [{ id: "copy-path", label: "Copy path", separatorBefore: true }]),
+      WORKSPACE_REMOVE_MENU_ITEM,
+      { id: "project-settings", label: "Project settings", icon: "settings" },
+    ];
+    const clicked = await settlePromise(() =>
+      api.contextMenu.show(items, { x: event.clientX, y: event.clientY }),
+    );
+    if (clicked._tag === "Failure" || clicked.value === null) return;
+    if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
+    else if (clicked.value === WORKSPACE_REMOVE_MENU_ITEM.id) {
+      useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
+    } else if (clicked.value === "copy-path" && firstMember) {
+      copyPath(firstMember.workspaceRoot, { path: firstMember.workspaceRoot });
+    } else if (clicked.value === "project-settings") {
+      void router.navigate({
+        to: "/projects/$projectKey",
+        params: { projectKey: project.projectKey },
+      });
+    }
+  };
 
   const FolderGlyph = expanded ? FolderOpenIcon : FolderIcon;
   return (

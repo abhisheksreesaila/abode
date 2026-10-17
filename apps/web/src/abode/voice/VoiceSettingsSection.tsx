@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 
 import { Button } from "../../components/ui/button";
 import { Switch } from "../../components/ui/switch";
@@ -77,9 +77,9 @@ function ModelRow() {
   const [bytes, setBytes] = useState<number | null | undefined>(undefined);
   const [deleting, setDeleting] = useState(false);
 
-  const refresh = useCallback(() => {
+  const refresh = () => {
     void readVoiceModelBytes().then(setBytes, () => setBytes(null));
-  }, []);
+  };
   useEffect(refresh, [refresh]);
 
   const remove = () => {

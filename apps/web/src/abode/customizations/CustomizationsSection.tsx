@@ -17,7 +17,7 @@ import {
   ServerIcon,
   type LucideIcon,
 } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
@@ -147,7 +147,7 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
   const refresh = useAtomRefresh(atom);
   const items = Option.getOrNull(AsyncResult.value(result))?.items ?? null;
   const failure = result._tag === "Failure" ? Cause.squash(result.cause) : null;
-  const groups = useMemo(() => (items ? groupCustomizations(items) : null), [items]);
+  const groups = items ? groupCustomizations(items) : null;
   const [openKinds, setOpenKinds] = useState<ReadonlySet<CustomizationKind>>(new Set(["skill"]));
   const [creating, setCreating] = useState<CustomizationKind | null>(null);
   const shell = useThreadShell(scope.threadRef);
@@ -171,12 +171,9 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
     return () => window.removeEventListener("focus", refresh);
   }, [refresh]);
 
-  const openFile = useCallback(
-    (path: string) => {
-      if (scope.threadRef) useRightPanelStore.getState().openFile(scope.threadRef, path);
-    },
-    [scope.threadRef],
-  );
+  const openFile = (path: string) => {
+    if (scope.threadRef) useRightPanelStore.getState().openFile(scope.threadRef, path);
+  };
   const toggle = (kind: CustomizationKind) =>
     setOpenKinds((current) => {
       const next = new Set(current);
@@ -310,23 +307,20 @@ export const CustomizationsSection = memo(function CustomizationsSection() {
     });
   }, [fraction]);
 
-  const getContainerHeight = useCallback(
-    () => sidebarOf(sectionRef.current)?.clientHeight ?? 0,
-    [],
-  );
+  const getContainerHeight = () => sidebarOf(sectionRef.current)?.clientHeight ?? 0;
   // Written straight to the element while dragging; React state follows on release.
-  const preview = useCallback((next: number) => {
+  const preview = (next: number) => {
     const section = sectionRef.current;
     if (!section) return;
     section.style.height = `${next * 100}%`;
     section.style.minHeight = `${COLLAPSED_HEIGHT_PX}px`;
     section.style.maxHeight = "none";
-  }, []);
-  const commit = useCallback((next: number) => {
+  };
+  const commit = (next: number) => {
     setFraction(next);
     saveCustomizationsFraction(next);
-  }, []);
-  const reset = useCallback(() => {
+  };
+  const reset = () => {
     const section = sectionRef.current;
     if (section) {
       section.style.height = "";
@@ -335,7 +329,7 @@ export const CustomizationsSection = memo(function CustomizationsSection() {
     }
     setFraction(null);
     saveCustomizationsFraction(null);
-  }, []);
+  };
 
   return (
     <>

@@ -1,7 +1,6 @@
 import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useParams } from "@tanstack/react-router";
-import { useMemo } from "react";
 
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { useProject, useThreadShell } from "~/state/entities";
@@ -28,16 +27,12 @@ export function useActiveCustomizationsScope(): CustomizationsScope | null {
   const serverThreadRef = resolveActiveThreadRouteRef(routeTarget, routeDraft);
   const shell = useThreadShell(serverThreadRef);
   // A draft has no server thread yet, but ChatView already keys its side panel by the draft's id.
-  const draftThreadRef = useMemo(
-    () => (routeDraft ? scopeThreadRef(routeDraft.environmentId, routeDraft.threadId) : null),
-    [routeDraft],
-  );
+  const draftThreadRef = routeDraft
+    ? scopeThreadRef(routeDraft.environmentId, routeDraft.threadId)
+    : null;
   const threadRef = serverThreadRef ?? draftThreadRef;
   const source = shell ?? routeDraft;
-  const projectRef = useMemo(
-    () => (source ? scopeProjectRef(source.environmentId, source.projectId) : null),
-    [source],
-  );
+  const projectRef = source ? scopeProjectRef(source.environmentId, source.projectId) : null;
   const project = useProject(projectRef);
   if (!source || !project?.workspaceRoot) return null;
   return {

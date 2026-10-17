@@ -3,7 +3,7 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { Link, useParams, useRouter } from "@tanstack/react-router";
 import { FolderPlusIcon, SearchIcon, SettingsIcon, SquarePenIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { SidebarProviderUpdatePill } from "~/components/sidebar/SidebarProviderUpdatePill";
 import { SidebarThreadUndoNotice } from "~/components/sidebar/SidebarThreadUndoNotice";
@@ -80,35 +80,26 @@ export function AbodeSidebar() {
   const routeDraftThread = useComposerDraftStore((store) =>
     routeTarget?.kind === "draft" ? store.getDraftSession(routeTarget.draftId) : null,
   );
-  const routeThreadRef = useMemo(
-    () => resolveActiveThreadRouteRef(routeTarget, routeDraftThread),
-    [routeDraftThread, routeTarget],
-  );
+  const routeThreadRef = resolveActiveThreadRouteRef(routeTarget, routeDraftThread);
   const activeThreadKey = routeThreadRef ? scopedThreadKey(routeThreadRef) : null;
   const activeDraftId = routeTarget?.kind === "draft" ? routeTarget.draftId : null;
 
-  const navigateToThread = useCallback(
-    (threadRef: ScopedThreadRef) => {
-      if (isMobile) setOpenMobile(false);
-      void router.navigate({
-        to: "/$environmentId/$threadId",
-        params: buildThreadRouteParams(threadRef),
-      });
-    },
-    [isMobile, router, setOpenMobile],
-  );
-  const navigateToDraft = useCallback(
-    (draftId: string) => {
-      if (isMobile) setOpenMobile(false);
-      void router.navigate({ to: "/draft/$draftId", params: { draftId: DraftId.make(draftId) } });
-    },
-    [isMobile, router, setOpenMobile],
-  );
+  const navigateToThread = (threadRef: ScopedThreadRef) => {
+    if (isMobile) setOpenMobile(false);
+    void router.navigate({
+      to: "/$environmentId/$threadId",
+      params: buildThreadRouteParams(threadRef),
+    });
+  };
+  const navigateToDraft = (draftId: string) => {
+    if (isMobile) setOpenMobile(false);
+    void router.navigate({ to: "/draft/$draftId", params: { draftId: DraftId.make(draftId) } });
+  };
 
   const [showAllByWorkspace, setShowAllByWorkspace] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const handleShowAll = useCallback((workspaceKey: string, showAll: boolean) => {
+  const handleShowAll = (workspaceKey: string, showAll: boolean) => {
     setShowAllByWorkspace((current) => {
       if (current.has(workspaceKey) === showAll) return current;
       const next = new Set(current);
@@ -116,12 +107,11 @@ export function AbodeSidebar() {
       else next.delete(workspaceKey);
       return next;
     });
-  }, []);
+  };
   const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
 
-  const threadByKey = useMemo(
-    () => new Map(groups.flatMap((group) => group.threads).map((t) => [threadShellKey(t), t])),
-    [groups],
+  const threadByKey = new Map(
+    groups.flatMap((group) => group.threads).map((t) => [threadShellKey(t), t]),
   );
 
   // Draft ids per workspace, computed once. The selector returns a string so typing
@@ -137,29 +127,23 @@ export function AbodeSidebar() {
       }),
     ),
   );
-  const draftIds = useMemo(
-    () => JSON.parse(draftIdsJson) as Record<string, string[]>,
-    [draftIdsJson],
-  );
+  const draftIds = JSON.parse(draftIdsJson) as Record<string, string[]>;
 
   // Removed workspaces are left out of the list. One returns when it becomes the open one
   // (picked in the new-session chip, or added again) and stays back after that.
   const removedKeys = useRemovedWorkspacesStore((state) => state.removedKeys);
-  const listedGroups = useMemo(
-    () => shownWorkspaces(groups, { removedKeys, keyOf: (group) => group.project.projectKey }),
-    [groups, removedKeys],
-  );
+  const listedGroups = shownWorkspaces(groups, {
+    removedKeys,
+    keyOf: (group) => group.project.projectKey,
+  });
   const openRouteId = activeThreadKey ?? activeDraftId;
-  const openWorkspaceKey = useMemo(
-    () =>
-      groups.find(
-        (group) =>
-          group.threads.some((thread) => threadShellKey(thread) === activeThreadKey) ||
-          (activeDraftId !== null &&
-            (draftIds[group.project.projectKey] ?? NO_DRAFTS).includes(activeDraftId)),
-      )?.project.projectKey ?? null,
-    [activeDraftId, activeThreadKey, draftIds, groups],
-  );
+  const openWorkspaceKey =
+    groups.find(
+      (group) =>
+        group.threads.some((thread) => threadShellKey(thread) === activeThreadKey) ||
+        (activeDraftId !== null &&
+          (draftIds[group.project.projectKey] ?? NO_DRAFTS).includes(activeDraftId)),
+    )?.project.projectKey ?? null;
   useEffect(() => {
     const current =
       openRouteId !== null && openWorkspaceKey !== null
@@ -176,17 +160,13 @@ export function AbodeSidebar() {
   }, [openRouteId, openWorkspaceKey]);
 
   // Ctrl+1..9 and previous/next walk exactly the rows the workspaces render.
-  const orderedThreadKeys = useMemo(
-    () =>
-      jumpOrderKeys(
-        listedGroups.map((group) => ({
-          threads: group.threads,
-          expanded: resolveProjectExpanded(projectExpandedById, expansionPreferenceKeys(group)),
-          showAll: showAllByWorkspace.has(group.project.projectKey),
-        })),
-        { latest: previewCount, activeKey: activeThreadKey, keyOf: threadShellKey },
-      ),
-    [activeThreadKey, listedGroups, previewCount, projectExpandedById, showAllByWorkspace],
+  const orderedThreadKeys = jumpOrderKeys(
+    listedGroups.map((group) => ({
+      threads: group.threads,
+      expanded: resolveProjectExpanded(projectExpandedById, expansionPreferenceKeys(group)),
+      showAll: showAllByWorkspace.has(group.project.projectKey),
+    })),
+    { latest: previewCount, activeKey: activeThreadKey, keyOf: threadShellKey },
   );
 
   useEffect(() => {
@@ -228,36 +208,27 @@ export function AbodeSidebar() {
   }, [activeThreadKey, keybindings, navigateToThread, orderedThreadKeys, threadByKey]);
 
   // Like the other sidebars: one workspace (or Shift) starts right here, several ask first.
-  const handleNewSession = useCallback(
-    (event: React.MouseEvent) => {
-      if (shouldCreateNewThreadInCurrentProject(event.shiftKey, groups.length)) {
-        if (isMobile) setOpenMobile(false);
-        void startNewThreadFromContext({
-          activeDraftThread: newThreadContext.activeDraftThread,
-          activeThread: newThreadContext.activeThread ?? undefined,
-          defaultProjectRef: newThreadContext.defaultProjectRef,
-          handleNewThread: newThreadContext.handleNewThread,
-        });
-        return;
-      }
+  const handleNewSession = (event: React.MouseEvent) => {
+    if (shouldCreateNewThreadInCurrentProject(event.shiftKey, groups.length)) {
       if (isMobile) setOpenMobile(false);
-      openCommandPalette({ open: "new-thread-in" });
-    },
-    [groups.length, isMobile, newThreadContext, setOpenMobile],
-  );
+      void startNewThreadFromContext({
+        activeDraftThread: newThreadContext.activeDraftThread,
+        activeThread: newThreadContext.activeThread ?? undefined,
+        defaultProjectRef: newThreadContext.defaultProjectRef,
+        handleNewThread: newThreadContext.handleNewThread,
+      });
+      return;
+    }
+    if (isMobile) setOpenMobile(false);
+    openCommandPalette({ open: "new-thread-in" });
+  };
   const searchShortcut = shortcutLabelForCommand(keybindings, "commandPalette.toggle");
   const newSessionShortcut =
     shortcutLabelForCommand(keybindings, "chat.new") ??
     shortcutLabelForCommand(keybindings, "chat.newLocal");
 
-  const context = useMemo<AbodeSidebarContextValue>(
-    () => ({ actions, navigateToThread, navigateToDraft }),
-    [actions, navigateToDraft, navigateToThread],
-  );
-  const activeRoute = useMemo<AbodeActiveRoute>(
-    () => ({ threadKey: activeThreadKey, draftId: activeDraftId }),
-    [activeDraftId, activeThreadKey],
-  );
+  const context: AbodeSidebarContextValue = { actions, navigateToThread, navigateToDraft };
+  const activeRoute: AbodeActiveRoute = { threadKey: activeThreadKey, draftId: activeDraftId };
 
   return (
     <AbodeSidebarContext value={context}>

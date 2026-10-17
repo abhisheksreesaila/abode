@@ -1,6 +1,5 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
-import { useCallback } from "react";
 
 import { primaryServerProvidersAtom, serverEnvironment } from "~/state/server";
 import { useThreadShell } from "~/state/entities";
@@ -27,9 +26,9 @@ export function useRefreshProviderSkills(input: {
   });
   const threadInstanceId = shell?.modelSelection.instanceId;
   const cwd = shell?.worktreePath ?? workspaceRoot;
-  return useCallback(() => {
+  return () => {
     for (const instanceId of skillRefreshInstanceIds(threadInstanceId, providers)) {
       void refreshProviders({ environmentId, input: { instanceId, cwd, fresh: true } });
     }
-  }, [cwd, environmentId, providers, refreshProviders, threadInstanceId]);
+  };
 }

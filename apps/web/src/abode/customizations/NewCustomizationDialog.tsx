@@ -7,7 +7,7 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { useId, useMemo, useState } from "react";
+import { useId, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -75,10 +75,7 @@ export function NewCustomizationDialog(props: {
 
   const scopes = availableScopes(kind, harness);
   const effectiveScope = coerceScope(kind, harness, chosenScope);
-  const plan = useMemo(
-    () => planNewCustomization({ kind, harness, scope: effectiveScope, name, cwd: scope.cwd }),
-    [effectiveScope, harness, kind, name, scope.cwd],
-  );
+  const plan = planNewCustomization({ kind, harness, scope: effectiveScope, name, cwd: scope.cwd });
   const problem = nameProblem(kind, name);
   const target = plan ? displayCustomizationPath(plan.path, scope.cwd) : null;
 
@@ -87,7 +84,8 @@ export function NewCustomizationDialog(props: {
     if (!plan || problem !== null || busy) return;
     setBusy(true);
     setError(null);
-    try {
+    // No try/finally: the React Compiler skips any component that uses one.
+    const run = async () => {
       const input = { cwd: scope.cwd, path: plan.path };
       const openExisting = async () => {
         const existing = await readFile({ environmentId: scope.environmentId, input });
@@ -132,9 +130,8 @@ export function NewCustomizationDialog(props: {
         return;
       }
       setError(describeCustomizationsError(failure));
-    } finally {
-      setBusy(false);
-    }
+    };
+    await run().finally(() => setBusy(false));
   };
 
   return (

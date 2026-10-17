@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
 import type { TimelineEntry } from "~/session-logic";
 import { simplifyRowsForMode } from "./simplifyRows";
@@ -16,7 +14,7 @@ export function useSimpleRows(
   identity: string,
 ): { rows: MessagesTimelineRow[]; identity: string } {
   const mode = useTranscriptModeStore((store) => store.mode);
-  const simple = useMemo(() => simplifyRowsForMode(rows, entries, mode), [rows, entries, mode]);
+  const simple = simplifyRowsForMode(rows, entries, mode);
   // The stable-rows pass ignores spacing flags, so each mode gets its own identity.
   return { rows: simple, identity: `${identity}:${mode}` };
 }

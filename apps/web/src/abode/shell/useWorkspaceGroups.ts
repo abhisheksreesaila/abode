@@ -1,5 +1,4 @@
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
-import { useMemo } from "react";
 
 import { orderItemsByPreferredIds } from "../../components/Sidebar.logic";
 import { useClientSettings } from "../../hooks/useSettings";
@@ -27,7 +26,7 @@ export function useWorkspaceGroups(): ReadonlyArray<WorkspaceGroup> {
   const threadSortOrder = useClientSettings((settings) => settings.sidebarThreadSortOrder);
   const groupingSettings = useClientSettings(selectProjectGroupingSettings);
 
-  return useMemo(() => {
+  return (() => {
     const environmentLabelById = new Map(
       environments.map((environment) => [environment.environmentId, environment.label] as const),
     );
@@ -57,15 +56,5 @@ export function useWorkspaceGroups(): ReadonlyArray<WorkspaceGroup> {
       isScratchMember: (member) =>
         isScratchProject(member, serverConfigs.get(member.environmentId)?.scratchWorkspaceRoot),
     });
-  }, [
-    environments,
-    groupingSettings,
-    primaryEnvironmentId,
-    projectOrder,
-    projectSortOrder,
-    projects,
-    serverConfigs,
-    threadSortOrder,
-    threads,
-  ]);
+  })();
 }

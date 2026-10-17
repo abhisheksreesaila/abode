@@ -12,7 +12,6 @@ import {
   type ThreadId,
 } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
-import { useCallback, useMemo } from "react";
 
 import {
   buildThreadActionMenuItems,
@@ -98,190 +97,167 @@ export function useAbodeThreadActions() {
     onError: (error) => reportError("Failed to copy thread ID", error),
   });
 
-  const renameThread = useCallback(
-    async (threadRef: ScopedThreadRef, newTitle: string, originalTitle: string) => {
-      const trimmed = newTitle.trim();
-      if (trimmed.length === 0) {
-        toastManager.add({ type: "warning", title: "Thread title cannot be empty" });
-        return;
-      }
-      if (trimmed === originalTitle) return;
-      const result = await updateThreadMetadata({
-        environmentId: threadRef.environmentId,
-        input: { threadId: threadRef.threadId, title: trimmed },
-      });
-      if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-        reportError("Failed to rename thread", squashAtomCommandFailure(result));
-      }
-    },
-    [updateThreadMetadata],
-  );
+  const renameThread = async (
+    threadRef: ScopedThreadRef,
+    newTitle: string,
+    originalTitle: string,
+  ) => {
+    const trimmed = newTitle.trim();
+    if (trimmed.length === 0) {
+      toastManager.add({ type: "warning", title: "Thread title cannot be empty" });
+      return;
+    }
+    if (trimmed === originalTitle) return;
+    const result = await updateThreadMetadata({
+      environmentId: threadRef.environmentId,
+      input: { threadId: threadRef.threadId, title: trimmed },
+    });
+    if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+      reportError("Failed to rename thread", squashAtomCommandFailure(result));
+    }
+  };
 
-  const attemptArchive = useCallback(
-    async (threadRef: ScopedThreadRef) => {
-      if (!checkOperatePermission(threadRef.environmentId)) return;
-      let didArchive = false;
-      const result = await archiveThread(threadRef, {
-        onArchived: () => {
-          didArchive = true;
-        },
-      });
-      if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-        reportError(archiveFailureTitle(didArchive), squashAtomCommandFailure(result));
-      }
-    },
-    [archiveThread],
-  );
+  const attemptArchive = async (threadRef: ScopedThreadRef) => {
+    if (!checkOperatePermission(threadRef.environmentId)) return;
+    let didArchive = false;
+    const result = await archiveThread(threadRef, {
+      onArchived: () => {
+        didArchive = true;
+      },
+    });
+    if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+      reportError(archiveFailureTitle(didArchive), squashAtomCommandFailure(result));
+    }
+  };
 
   /** The row's archive button and the menu's Archive item share this confirmation. */
-  const archiveWithConfirm = useCallback(
-    async (threadRef: ScopedThreadRef, title: string) => {
-      if (!checkOperatePermission(threadRef.environmentId)) return;
-      if (confirmThreadArchive) {
-        const api = readLocalApi();
-        if (!api) return;
-        const confirmed = await settlePromise(() =>
-          api.dialogs.confirm(`Archive thread "${title}"?`),
-        );
-        if (confirmed._tag === "Failure" || !confirmed.value) return;
-      }
-      await attemptArchive(threadRef);
-    },
-    [attemptArchive, confirmThreadArchive],
-  );
-
-  const showThreadMenu = useCallback(
-    async (request: ThreadMenuRequest) => {
+  const archiveWithConfirm = async (threadRef: ScopedThreadRef, title: string) => {
+    if (!checkOperatePermission(threadRef.environmentId)) return;
+    if (confirmThreadArchive) {
       const api = readLocalApi();
       if (!api) return;
-      const { thread } = request;
-      const threadRef = scopeThreadRef(thread.environmentId, thread.id);
-      const capabilities = serverConfigs.get(thread.environmentId)?.environment.capabilities;
-      const workspacePath = thread.worktreePath ?? request.workspaceRoot;
-      const clicked = await settlePromise(() =>
-        api.contextMenu.show(
-          buildThreadActionMenuItems({
-            canOperate: readEnvironmentScope(thread.environmentId, AuthOrchestrationOperateScope),
-            branch: thread.branch ?? null,
-            projectFilter: null,
-            isPinned: false,
-            isSettled: false,
-            autoSettleEnabled: true,
-            isSnoozed: false,
-            canSnoozeNow: false,
-            isRegeneratingTitle: thread.titleRegeneration != null,
-            isRunning: !threadRuntimeCanArchive(thread.runtime),
-            supports: {
-              settlement: false,
-              autoSettleOptOut: false,
-              snooze: false,
-              pinning: false,
-              titleRegeneration: capabilities?.threadTitleRegeneration === true,
-            },
-            snoozePresets: [],
-          }),
-          request.position,
-        ),
+      const confirmed = await settlePromise(() =>
+        api.dialogs.confirm(`Archive thread "${title}"?`),
       );
-      if (clicked._tag === "Failure" || clicked.value === null) return;
-      const action = clicked.value;
-      if (threadActionRequiresOperate(action) && !checkOperatePermission(thread.environmentId)) {
+      if (confirmed._tag === "Failure" || !confirmed.value) return;
+    }
+    await attemptArchive(threadRef);
+  };
+
+  const showThreadMenu = async (request: ThreadMenuRequest) => {
+    const api = readLocalApi();
+    if (!api) return;
+    const { thread } = request;
+    const threadRef = scopeThreadRef(thread.environmentId, thread.id);
+    const capabilities = serverConfigs.get(thread.environmentId)?.environment.capabilities;
+    const workspacePath = thread.worktreePath ?? request.workspaceRoot;
+    const clicked = await settlePromise(() =>
+      api.contextMenu.show(
+        buildThreadActionMenuItems({
+          canOperate: readEnvironmentScope(thread.environmentId, AuthOrchestrationOperateScope),
+          branch: thread.branch ?? null,
+          projectFilter: null,
+          isPinned: false,
+          isSettled: false,
+          autoSettleEnabled: true,
+          isSnoozed: false,
+          canSnoozeNow: false,
+          isRegeneratingTitle: thread.titleRegeneration != null,
+          isRunning: !threadRuntimeCanArchive(thread.runtime),
+          supports: {
+            settlement: false,
+            autoSettleOptOut: false,
+            snooze: false,
+            pinning: false,
+            titleRegeneration: capabilities?.threadTitleRegeneration === true,
+          },
+          snoozePresets: [],
+        }),
+        request.position,
+      ),
+    );
+    if (clicked._tag === "Failure" || clicked.value === null) return;
+    const action = clicked.value;
+    if (threadActionRequiresOperate(action) && !checkOperatePermission(thread.environmentId)) {
+      return;
+    }
+    switch (action) {
+      case "rename":
+        request.startRename();
+        return;
+      case "mark-unread":
+        markThreadUnread(threadRef);
+        return;
+      case "copy-path":
+        if (!workspacePath) {
+          reportError("Path unavailable", new Error("This thread has no workspace path."));
+          return;
+        }
+        copyPath(workspacePath, { path: workspacePath });
+        return;
+      case "copy-branch":
+        if (thread.branch) copyBranch(thread.branch, { branch: thread.branch });
+        return;
+      case "copy-thread-id":
+        copyThreadId(thread.id, { threadId: thread.id });
+        return;
+      case "project-settings":
+        void router.navigate({
+          to: "/projects/$projectKey",
+          params: { projectKey: request.workspaceKey },
+        });
+        return;
+      case "new-thread-on-branch": {
+        const result = await settlePromise(() =>
+          handleNewThread(scopeProjectRef(thread.environmentId, thread.projectId), {
+            branch: thread.branch,
+            worktreePath: thread.worktreePath,
+            envMode: thread.worktreePath ? "worktree" : "local",
+            startFromOrigin: false,
+          }),
+        );
+        if (result._tag === "Failure") {
+          reportError("Could not create thread", squashAtomCommandFailure(result));
+        }
         return;
       }
-      switch (action) {
-        case "rename":
-          request.startRename();
-          return;
-        case "mark-unread":
-          markThreadUnread(threadRef);
-          return;
-        case "copy-path":
-          if (!workspacePath) {
-            reportError("Path unavailable", new Error("This thread has no workspace path."));
-            return;
-          }
-          copyPath(workspacePath, { path: workspacePath });
-          return;
-        case "copy-branch":
-          if (thread.branch) copyBranch(thread.branch, { branch: thread.branch });
-          return;
-        case "copy-thread-id":
-          copyThreadId(thread.id, { threadId: thread.id });
-          return;
-        case "project-settings":
-          void router.navigate({
-            to: "/projects/$projectKey",
-            params: { projectKey: request.workspaceKey },
-          });
-          return;
-        case "new-thread-on-branch": {
-          const result = await settlePromise(() =>
-            handleNewThread(scopeProjectRef(thread.environmentId, thread.projectId), {
-              branch: thread.branch,
-              worktreePath: thread.worktreePath,
-              envMode: thread.worktreePath ? "worktree" : "local",
-              startFromOrigin: false,
-            }),
-          );
-          if (result._tag === "Failure") {
-            reportError("Could not create thread", squashAtomCommandFailure(result));
-          }
-          return;
+      case "regenerate-title": {
+        if (thread.titleRegeneration != null) return;
+        const result = await updateThreadMetadata({
+          environmentId: threadRef.environmentId,
+          input: { threadId: threadRef.threadId, regenerateTitle: true },
+        });
+        if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+          reportError("Failed to regenerate thread title", squashAtomCommandFailure(result));
         }
-        case "regenerate-title": {
-          if (thread.titleRegeneration != null) return;
-          const result = await updateThreadMetadata({
-            environmentId: threadRef.environmentId,
-            input: { threadId: threadRef.threadId, regenerateTitle: true },
-          });
-          if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-            reportError("Failed to regenerate thread title", squashAtomCommandFailure(result));
-          }
-          return;
-        }
-        case "archive":
-          await archiveWithConfirm(threadRef, thread.title);
-          return;
-        case "delete": {
-          if (confirmThreadDelete) {
-            const confirmed = await settlePromise(() =>
-              api.dialogs.confirm(
-                [
-                  `Delete thread "${thread.title}"?`,
-                  "This permanently clears conversation history for this thread.",
-                ].join("\n"),
-                { variant: "destructive" },
-              ),
-            );
-            if (confirmed._tag === "Failure" || !confirmed.value) return;
-          }
-          const result = await deleteThread(threadRef);
-          if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-            reportError("Failed to delete thread", squashAtomCommandFailure(result));
-          }
-          return;
-        }
-        default:
-          return;
+        return;
       }
-    },
-    [
-      archiveWithConfirm,
-      confirmThreadDelete,
-      copyBranch,
-      copyPath,
-      copyThreadId,
-      deleteThread,
-      handleNewThread,
-      markThreadUnread,
-      router,
-      serverConfigs,
-      updateThreadMetadata,
-    ],
-  );
+      case "archive":
+        await archiveWithConfirm(threadRef, thread.title);
+        return;
+      case "delete": {
+        if (confirmThreadDelete) {
+          const confirmed = await settlePromise(() =>
+            api.dialogs.confirm(
+              [
+                `Delete thread "${thread.title}"?`,
+                "This permanently clears conversation history for this thread.",
+              ].join("\n"),
+              { variant: "destructive" },
+            ),
+          );
+          if (confirmed._tag === "Failure" || !confirmed.value) return;
+        }
+        const result = await deleteThread(threadRef);
+        if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+          reportError("Failed to delete thread", squashAtomCommandFailure(result));
+        }
+        return;
+      }
+      default:
+        return;
+    }
+  };
 
-  return useMemo(
-    () => ({ archiveWithConfirm, renameThread, showThreadMenu }),
-    [archiveWithConfirm, renameThread, showThreadMenu],
-  );
+  return { archiveWithConfirm, renameThread, showThreadMenu };
 }

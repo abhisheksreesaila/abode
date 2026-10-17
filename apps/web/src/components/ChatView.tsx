@@ -8438,9 +8438,8 @@ export default function ChatView(props: ChatViewProps) {
               onPrepared={handlePreparedPullRequestThreadStable}
             />
           </ThreadFindCanvas>
-          {/* end chat column */}
-          <ChatAvatars threadRef={isServerThread ? activeThreadRef : null} />{" "}
           {/* abode: message avatars */}
+          <ChatAvatars threadRef={isServerThread ? activeThreadRef : null} />
         </div>
 
         {mountedTerminalThreadRefs.map(({ key: mountedThreadKey, threadRef: mountedThreadRef }) => (

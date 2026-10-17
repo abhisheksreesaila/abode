@@ -3,7 +3,7 @@ import { threadRuntimeCanArchive } from "@t3tools/client-runtime/state/models";
 import { AuthOrchestrationOperateScope } from "@t3tools/contracts";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/shared/threadPullRequests";
 import { ArchiveIcon, FolderGit2Icon, FolderIcon } from "lucide-react";
-import { memo, useCallback, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { memo, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import {
   ChangeRequestStatusIcon,
@@ -97,72 +97,51 @@ export const ThreadRow = memo(function ThreadRow(props: ThreadRowProps) {
   const [renameValue, setRenameValue] = useState(thread.title);
   // Enter and Escape finish the edit themselves; the blur that follows must not commit twice.
   const renameSettledRef = useRef(false);
-  const startRename = useCallback(() => {
+  const startRename = () => {
     setRenameValue(thread.title);
     renameSettledRef.current = false;
     setRenaming(true);
-  }, [thread.title]);
-  const finishRename = useCallback(
-    (commit: boolean) => {
-      if (renameSettledRef.current) return;
-      renameSettledRef.current = true;
-      setRenaming(false);
-      if (commit) void actions.renameThread(threadRef, renameValue, thread.title);
-    },
-    [actions, renameValue, thread.title, threadRef],
-  );
+  };
+  const finishRename = (commit: boolean) => {
+    if (renameSettledRef.current) return;
+    renameSettledRef.current = true;
+    setRenaming(false);
+    if (commit) void actions.renameThread(threadRef, renameValue, thread.title);
+  };
 
-  const handleClick = useCallback(
-    (event: MouseEvent) => {
-      // A double-click starts a rename; its second click must not navigate again.
-      if (event.detail > 1) return;
-      if ((event.target as HTMLElement).closest("a, button, input")) return;
+  const handleClick = (event: MouseEvent) => {
+    // A double-click starts a rename; its second click must not navigate again.
+    if (event.detail > 1) return;
+    if ((event.target as HTMLElement).closest("a, button, input")) return;
+    navigateToThread(threadRef);
+  };
+  const handleDoubleClick = (event: MouseEvent) => {
+    if (!canOperate || (event.target as HTMLElement).closest("a, button, input")) return;
+    event.preventDefault();
+    startRename();
+  };
+  const openMenu = (position: { x: number; y: number }) => {
+    void actions.showThreadMenu({ thread, workspaceKey, workspaceRoot, position, startRename });
+  };
+  const handleContextMenu = (event: MouseEvent) => {
+    event.preventDefault();
+    openMenu({ x: event.clientX, y: event.clientY });
+  };
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if ((event.target as HTMLElement).closest("input, button, a")) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
       navigateToThread(threadRef);
-    },
-    [navigateToThread, threadRef],
-  );
-  const handleDoubleClick = useCallback(
-    (event: MouseEvent) => {
-      if (!canOperate || (event.target as HTMLElement).closest("a, button, input")) return;
+    } else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
       event.preventDefault();
-      startRename();
-    },
-    [canOperate, startRename],
-  );
-  const openMenu = useCallback(
-    (position: { x: number; y: number }) => {
-      void actions.showThreadMenu({ thread, workspaceKey, workspaceRoot, position, startRename });
-    },
-    [actions, startRename, thread, workspaceKey, workspaceRoot],
-  );
-  const handleContextMenu = useCallback(
-    (event: MouseEvent) => {
-      event.preventDefault();
-      openMenu({ x: event.clientX, y: event.clientY });
-    },
-    [openMenu],
-  );
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement).closest("input, button, a")) return;
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        navigateToThread(threadRef);
-      } else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
-        event.preventDefault();
-        const rect = event.currentTarget.getBoundingClientRect();
-        openMenu({ x: rect.left, y: rect.bottom });
-      }
-    },
-    [navigateToThread, openMenu, threadRef],
-  );
-  const handlePrClick = useCallback(
-    (event: MouseEvent<HTMLAnchorElement>) => {
-      const url = prStatus?.url ?? currentLink?.url;
-      if (url) openPrLink(event, url, isActive ? threadRef : undefined);
-    },
-    [currentLink, isActive, openPrLink, prStatus, threadRef],
-  );
+      const rect = event.currentTarget.getBoundingClientRect();
+      openMenu({ x: rect.left, y: rect.bottom });
+    }
+  };
+  const handlePrClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    const url = prStatus?.url ?? currentLink?.url;
+    if (url) openPrLink(event, url, isActive ? threadRef : undefined);
+  };
 
   const canArchive = canOperate && threadRuntimeCanArchive(thread.runtime);
 

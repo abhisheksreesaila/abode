@@ -4,7 +4,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import { AlertTriangleIcon, EyeIcon, LockIcon, LockOpenIcon, SaveIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FileMarkdownPreview } from "~/components/files/FileMarkdownPreview";
 import { Badge } from "~/components/ui/badge";
@@ -64,7 +64,7 @@ export function CustomizationFilePanel(props: {
     threadRef,
     workspaceRoot: cwd,
   });
-  const draftKey = useMemo(() => ({ environmentId, path }), [environmentId, path]);
+  const draftKey = { environmentId, path };
   const known = findKnownCustomization(path);
 
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
@@ -115,10 +115,7 @@ export function CustomizationFilePanel(props: {
   const readOnly = load.status === "ready" ? load.readOnly : (known?.readOnly ?? false);
   const locked = resolveLocked({ scope, readOnly, choice: lockChoice });
   const dirty = load.status === "ready" && isDirty(saved, contents);
-  const hints = useMemo(
-    () => (load.status === "ready" ? validateCustomization({ path, contents }) : []),
-    [contents, load.status, path],
-  );
+  const hints = load.status === "ready" ? validateCustomization({ path, contents }) : [];
   const isMarkdown = languageForPath(path) === "markdown";
   const display = displayCustomizationPath(path, cwd);
 
@@ -130,7 +127,8 @@ export function CustomizationFilePanel(props: {
   const write = async (toWrite: string) => {
     setSaving(true);
     setError(null);
-    try {
+    // No try/finally: the React Compiler skips any component that uses one.
+    const run = async () => {
       const result = await writeFile({ environmentId, input: { cwd, path, contents: toWrite } });
       if (result._tag === "Success") {
         setSaved(toWrite);
@@ -155,9 +153,8 @@ export function CustomizationFilePanel(props: {
       toastManager.add(
         stackedThreadToast({ type: "error", title: "Couldn't save", description: message }),
       );
-    } finally {
-      setSaving(false);
-    }
+    };
+    await run().finally(() => setSaving(false));
   };
 
   const save = async () => {

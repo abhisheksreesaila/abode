@@ -1,5 +1,4 @@
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { useMemo } from "react";
 
 import { resolveSidebarThreadStatus } from "~/components/Sidebar.logic";
 import { deriveActivePlanState } from "~/session-logic";
@@ -25,7 +24,7 @@ function Card({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
   const status = shell ? resolveSidebarThreadStatus(shell) : null;
   const needsYou = status === "approval" || status === "input";
 
-  const card = useMemo(() => {
+  const card = (() => {
     if (projection === null) return null;
     const batch = batchRunIds(projection.runs);
     const latestRunId = projection.runs.reduce<(typeof projection.runs)[number] | null>(
@@ -38,7 +37,7 @@ function Card({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
       subagents: projection.subagents,
     });
     return buildCalmCard({ ...work, needsYou });
-  }, [projection, needsYou]);
+  })();
   if (card === null) return null;
 
   return (
