@@ -115,6 +115,7 @@ const agentTypesFor = (frames: ReadonlyArray<SDKMessage>) =>
               applyFlagSettings: () => Effect.void,
               setPermissionMode: () => Effect.void,
               stopTask: () => Effect.void,
+              backgroundTasks: () => Effect.succeed(false),
               interrupt: Effect.void,
               close: Effect.void,
             }),
