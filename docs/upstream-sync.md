@@ -63,6 +63,7 @@ Fonts: use upstream's Settings › Appearance › Typography (an inline style on
 - Avatars beside messages need no hook: `abode/chat/chat.css` targets the timeline's existing `data-timeline-row-kind` / `data-message-role` attributes. If upstream renames those, avatars silently disappear (nothing breaks)
 - `packages/contracts/src/orchestrationV2.ts`: A-018: optional `agentType` on `OrchestrationV2Subagent` (1 line, add-only; ADR 0001)
 - `apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts`: A-018: the `task_started` and `task_progress` calls spread `abodeAgentType(message)` (`apps/server/src/abode/subagentType.ts`, reads the frame's `subagent_type`); `updateClaudeSubagentNode` takes `agentType` and fills it when the subagent has none yet (8 lines, marked `abode:`). Known gap: a subagent recovered after a restart (`recoverResumedClaudeSubagent`) is rebuilt without the type until a later frame carrying it arrives. If upstream stores the type itself, drop this and read theirs
+- `apps/web/src/routes/_chat.index.tsx`: A-032: `/` renders `<ControlRoomRoute fallback={<IndexDraftLanding />} />` (abode/controlRoom): the Control room table when there are projects, upstream's landing (no-projects hero) otherwise. The auto-opened draft on `/` is gone, so the app opens on the Control room; the + button and New session still create drafts (2 lines + import)
 
 Tickets add a bullet here when they add a hook.
 

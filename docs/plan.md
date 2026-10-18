@@ -312,7 +312,7 @@ Tables, not tiles. Data comes from what the client already has (`useWorkspaceGro
 
 ### A-032: Home is the control room: workspaces table
 
-- **Status:** todo
+- **Status:** review
 - **What:** `/` (the abode logo) shows "Control room" instead of jumping into a draft: a Workspaces table, one row per workspace from `useWorkspaceGroups()`: name, status (Needs you / Running / Failed / Done / Idle from `deriveWorkspaceThreadState` over its sessions, needs-you first), progress (done/total over the task lists of its running and needs-you sessions, from their projections; bar plus percent), agents running (running sessions plus running subagents), machine (environment label; several when it spans), last activity. A needs-you row shows the waiting question's text when the shell or projection has it. Clicking a row opens the workspace's most relevant session (needs-you, else running, else latest) in Calm. The + button and "New session" still start drafts.
 - **Upstream files it may touch:** `apps/web/src/routes/_chat.index.tsx` (one hook: render the abode view in place of `IndexDraftLanding` when there are projects).
 - **Acceptance:**
