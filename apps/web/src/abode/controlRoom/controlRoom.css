@@ -18,19 +18,22 @@
     padding: 24px 40px 40px;
   }
 }
-[data-abode-cr-heading] {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 14px;
+[data-abode-cr-top] {
+  padding-top: env(safe-area-inset-top);
 }
-[data-abode-cr-heading] h1 {
+[data-abode-cr-title] {
   margin: 0;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 600;
+  white-space: nowrap;
 }
-[data-abode-cr-heading] span {
+[data-abode-cr-summary] {
+  min-width: 0;
+  overflow: hidden;
   color: var(--muted-foreground);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 [data-abode-cr-section] {
   margin: 6px 0 0;
@@ -143,6 +146,12 @@ button[data-abode-cr-name] {
   font-size: 12px;
   font-weight: 600;
 }
+@media (pointer: coarse), (max-width: 767px) {
+  [data-abode-cr-chips] button {
+    min-height: 48px;
+    padding: 0 18px;
+  }
+}
 [data-abode-cr-chips] button[aria-pressed="true"] {
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 14%, transparent);
@@ -194,10 +203,10 @@ button[data-abode-cr-name] {
   border-radius: 3px;
   background: var(--primary);
 }
-[data-abode-cr-progress][data-status="failed"] [data-abode-cr-bar] span {
+[data-abode-cr-progress][data-tone="failed"] [data-abode-cr-bar] span {
   background: var(--destructive);
 }
-[data-abode-cr-progress][data-status="done"] [data-abode-cr-bar] span {
+[data-abode-cr-progress][data-tone="done"] [data-abode-cr-bar] span {
   background: var(--success);
 }
 

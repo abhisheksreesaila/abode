@@ -1,7 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import { describe, expect, it } from "vite-plus/test";
 
-import { deriveSessionDetail } from "./sessionDetail";
+import { deriveSessionDetail, sameSessionDetail } from "./sessionDetail";
 
 const run = (id: string, ordinal: number) => ({
   id,
@@ -57,5 +57,17 @@ describe("deriveSessionDetail", () => {
       userInputs: [],
     });
     expect(plain.question).toBe("Waiting for your approval");
+  });
+});
+
+describe("sameSessionDetail", () => {
+  it("compares counts and question only", () => {
+    const base = { progress: { done: 1, total: 3 }, question: null };
+    expect(sameSessionDetail(base, { progress: { done: 1, total: 3 }, question: null })).toBe(true);
+    expect(sameSessionDetail(base, { progress: { done: 2, total: 3 }, question: null })).toBe(
+      false,
+    );
+    expect(sameSessionDetail(base, { ...base, question: "Q?" })).toBe(false);
+    expect(sameSessionDetail(base, { progress: null, question: null })).toBe(false);
   });
 });

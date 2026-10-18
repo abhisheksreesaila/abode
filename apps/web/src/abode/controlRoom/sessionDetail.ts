@@ -35,3 +35,12 @@ export function deriveSessionDetail(
     question,
   };
 }
+
+/** Streamed deltas that change neither the counts nor the question are not news. */
+export function sameSessionDetail(left: SessionDetail, right: SessionDetail): boolean {
+  return (
+    left.question === right.question &&
+    left.progress?.done === right.progress?.done &&
+    left.progress?.total === right.progress?.total
+  );
+}

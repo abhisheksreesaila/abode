@@ -41,6 +41,8 @@ export interface WorkspaceRow {
     readonly done: number;
     readonly total: number;
     readonly percent: number;
+    /** Bar colour: green at 100%, red when a summed session failed, amber otherwise. */
+    readonly tone: "working" | "done" | "failed";
   } | null;
   readonly agents: number;
   /** Environment labels, once each. */
@@ -50,6 +52,27 @@ export interface WorkspaceRow {
   readonly question: string | null;
   /** The session a click opens: needs-you, else running, else the most recent. */
   readonly openSessionKey: string | null;
+}
+
+/**
+ * When a session last did something: a live session counts its latest update, an idle one
+ * the last user message (a bookkeeping update to an old session is not activity).
+ */
+export function sessionActivityAt(
+  state: WorkspaceThreadState,
+  times: {
+    readonly latestUserMessageAt: string | null;
+    readonly updatedAt: string;
+    readonly runtimeUpdatedAt?: string | null;
+    readonly createdAt: string;
+  },
+): string {
+  if (!needsSessionDetail(state)) {
+    return times.latestUserMessageAt ?? times.updatedAt ?? times.createdAt;
+  }
+  return [times.latestUserMessageAt, times.updatedAt, times.runtimeUpdatedAt, times.createdAt]
+    .filter((time): time is string => typeof time === "string")
+    .reduce((latest, time) => (time > latest ? time : latest));
 }
 
 /** Only these sessions are worth a projection subscription. */
@@ -65,11 +88,11 @@ function sessionStatus(state: WorkspaceThreadState): WorkspaceStatus {
   return "idle";
 }
 
-/** A workspace shows its most pressing session status. */
+/** A workspace shows its most pressing session status; live work outranks an old failure. */
 const STATUS_RANK: Record<WorkspaceStatus, number> = {
   "needs-you": 0,
-  failed: 1,
-  running: 2,
+  running: 1,
+  failed: 2,
   done: 3,
   idle: 4,
 };
@@ -108,7 +131,20 @@ function buildRow(
     key: workspace.key,
     name: workspace.name,
     status,
-    progress: total === 0 ? null : { done, total, percent: Math.round((done / total) * 100) },
+    progress:
+      total === 0
+        ? null
+        : {
+            done,
+            total,
+            percent: Math.round((done / total) * 100),
+            tone:
+              done === total
+                ? "done"
+                : active.some((session) => session.state.failed)
+                  ? "failed"
+                  : "working",
+          },
     agents: running.length + sessions.reduce((sum, session) => sum + session.runningSubagents, 0),
     machines: [...machines.values()],
     environmentIds: [...machines.keys()],

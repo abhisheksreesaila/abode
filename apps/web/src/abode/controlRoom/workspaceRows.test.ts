@@ -3,6 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   buildWorkspaceRows,
   needsSessionDetail,
+  sessionActivityAt,
   summarizeRows,
   type SessionDetail,
   type SessionSummary,
@@ -32,12 +33,12 @@ const detail = (done: number, total: number, question: string | null = null): Se
 });
 
 describe("buildWorkspaceRows", () => {
-  it("ranks status: needs you, then failed, running, done, idle", () => {
+  it("ranks status: needs you, then running, failed, done, idle", () => {
     const rows = buildWorkspaceRows(
       [
         workspace("a", [session("a1", { state: running }), session("a2", { state: needsYou })]),
         workspace("b", [session("b1", { state: running }), session("b2", { state: failed })]),
-        workspace("c", [session("c1", { state: running })]),
+        workspace("c", [session("c1", { state: failed })]),
         workspace("d", [session("d1", { state: { attention: "done", failed: false } })]),
         workspace("e", [session("e1")]),
       ],
@@ -45,8 +46,8 @@ describe("buildWorkspaceRows", () => {
     );
     expect(rows.map((row) => [row.key, row.status])).toEqual([
       ["a", "needs-you"],
-      ["b", "failed"],
-      ["c", "running"],
+      ["b", "running"],
+      ["c", "failed"],
       ["d", "done"],
       ["e", "idle"],
     ]);
@@ -79,7 +80,16 @@ describe("buildWorkspaceRows", () => {
         ["s3", detail(1, 1)],
       ]),
     );
-    expect(rows[0]?.progress).toEqual({ done: 7, total: 10, percent: 70 });
+    expect(rows[0]?.progress).toEqual({ done: 7, total: 10, percent: 70, tone: "working" });
+  });
+
+  it("colours the bar green at 100%, red when a summed session failed, else amber", () => {
+    const tone = (state: SessionSummary["state"], d: SessionDetail) =>
+      buildWorkspaceRows([workspace("w", [session("s", { state })])], new Map([["s", d]]))[0]
+        ?.progress?.tone;
+    expect(tone(running, detail(9, 9))).toBe("done");
+    expect(tone(running, detail(3, 9))).toBe("working");
+    expect(tone({ attention: "running", failed: true }, detail(3, 9))).toBe("failed");
   });
 
   it("has no progress when no active session keeps a task list", () => {
@@ -183,5 +193,22 @@ describe("summarizeRows", () => {
       new Map(),
     );
     expect(summarizeRows(rows)).toBe("1 needs you · 2 running · 1 idle · 1 failed");
+  });
+});
+
+describe("sessionActivityAt", () => {
+  const times = {
+    latestUserMessageAt: "2026-10-17T08:00:00.000Z",
+    updatedAt: "2026-10-17T09:00:00.000Z",
+    runtimeUpdatedAt: "2026-10-17T10:00:00.000Z",
+    createdAt: "2026-10-01T00:00:00.000Z",
+  };
+  it("uses the latest update of a running session", () => {
+    expect(sessionActivityAt(running, times)).toBe("2026-10-17T10:00:00.000Z");
+  });
+  it("uses the last user message of an idle session", () => {
+    expect(sessionActivityAt({ attention: null, failed: false }, times)).toBe(
+      "2026-10-17T08:00:00.000Z",
+    );
   });
 });

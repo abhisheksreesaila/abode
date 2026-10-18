@@ -9,7 +9,6 @@ import { useNowMinute } from "~/hooks/useNowMinute";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTime } from "~/timestampFormat";
 
-import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
 import { buildMachineRows, filterRowsByMachine, type MachineRow } from "./machineRows";
 import { useControlRoomRows } from "./useControlRoomRows";
 import { useMachineInputs } from "./useMachineInputs";
@@ -49,7 +48,6 @@ export function ControlRoomView() {
   useNowMinute();
 
   const open = (ref: ScopedThreadRef) => {
-    useTranscriptModeStore.getState().setMode("calm");
     void router.navigate({
       to: "/$environmentId/$threadId",
       params: buildThreadRouteParams(ref),
@@ -59,12 +57,13 @@ export function ControlRoomView() {
   return (
     <SidebarInset className="h-dvh min-h-0 overflow-hidden overscroll-y-none">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden bg-background">
-        {isElectron ? <WorkspacePageHeader electron /> : null}
+        <div data-abode-cr-top="">
+          <WorkspacePageHeader electron={isElectron} className="border-b border-border">
+            <h1 data-abode-cr-title="">Control room</h1>
+            <span data-abode-cr-summary="">{summarizeRows(rows)}</span>
+          </WorkspacePageHeader>
+        </div>
         <main data-abode-control-room="">
-          <header data-abode-cr-heading="">
-            <h1>Control room</h1>
-            <span>{summarizeRows(rows)}</span>
-          </header>
           <h2 data-abode-cr-section="">Workspaces</h2>
           {filteredMachine ? (
             <div data-abode-cr-chips="">
@@ -177,7 +176,6 @@ function WorkspaceTableRow(props: {
             params={buildThreadRouteParams(openRef)}
             onClick={(event) => {
               event.stopPropagation();
-              useTranscriptModeStore.getState().setMode("calm");
             }}
           >
             {row.name}
@@ -197,7 +195,7 @@ function WorkspaceTableRow(props: {
       </td>
       <td data-wide="">
         {progress ? (
-          <div data-abode-cr-progress="" data-status={row.status}>
+          <div data-abode-cr-progress="" data-tone={progress.tone}>
             <div
               data-abode-cr-bar=""
               role="progressbar"

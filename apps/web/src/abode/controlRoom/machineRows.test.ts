@@ -116,28 +116,29 @@ describe("filterRowsByMachine", () => {
 });
 
 describe("machineRouteLabel", () => {
-  it("names how a machine is reached", () => {
-    expect(machineRouteLabel({ isPrimary: true, relayManaged: false, displayUrl: null })).toBe(
-      "Local",
-    );
-    expect(
-      machineRouteLabel({ isPrimary: false, relayManaged: true, displayUrl: "relay.example" }),
-    ).toBe("Relay");
-    expect(
-      machineRouteLabel({
-        isPrimary: false,
-        relayManaged: false,
-        displayUrl: "mac.tail1.ts.net:3773",
-      }),
-    ).toBe("Tailscale");
-    expect(
-      machineRouteLabel({ isPrimary: false, relayManaged: false, displayUrl: "100.64.0.7:3773" }),
-    ).toBe("Tailscale");
-    expect(
-      machineRouteLabel({ isPrimary: false, relayManaged: false, displayUrl: "192.168.1.5:3773" }),
-    ).toBe("192.168.1.5:3773");
-    expect(machineRouteLabel({ isPrimary: false, relayManaged: false, displayUrl: null })).toBe(
-      "Remote",
-    );
+  const label = (displayUrl: string | null, over = {}) =>
+    machineRouteLabel({ isPrimary: false, relayManaged: false, displayUrl, ...over });
+
+  it("names Local and Relay machines", () => {
+    expect(label(null, { isPrimary: true })).toBe("Local");
+    expect(label(null, { relayManaged: true })).toBe("Relay");
+  });
+  it("recognises Tailscale by name or by its 100.64.0.0/10 address", () => {
+    expect(label("http://mac.tail1.ts.net:3773")).toBe("Tailscale");
+    expect(label("http://100.101.1.2:3773")).toBe("Tailscale");
+    expect(label("http://100.63.1.2:3773")).toBe("100.63.1.2");
+    expect(label("http://100.128.1.2:3773")).toBe("100.128.1.2");
+  });
+  it("shows the host of any other address", () => {
+    expect(label("http://192.168.1.5:3773")).toBe("192.168.1.5");
+    expect(label("https://box.example.com")).toBe("box.example.com");
+  });
+  it("reads the host of an ssh target", () => {
+    expect(label("me@mac.tail1.ts.net")).toBe("Tailscale");
+    expect(label("me@build-box")).toBe("build-box");
+  });
+  it("falls back to Remote when there is no usable address", () => {
+    expect(label(null)).toBe("Remote");
+    expect(label("http://")).toBe("Remote");
   });
 });

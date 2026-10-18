@@ -88,6 +88,29 @@ export function filterRowsByMachine<Row extends { readonly environmentIds: Reado
     : rows.filter((row) => row.environmentIds.includes(environmentId));
 }
 
+function hostOf(displayUrl: string): string | null {
+  // SSH targets display as `user@host`; everything else is an http(s) base URL.
+  if (!displayUrl.includes("://")) return displayUrl.split("@").at(-1) || null;
+  try {
+    return new URL(displayUrl).hostname || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Tailscale names end in .ts.net; its addresses are the CGNAT range 100.64.0.0/10. */
+function isTailscaleHost(host: string): boolean {
+  if (host.endsWith(".ts.net")) return true;
+  const octets = host.split(".").map(Number);
+  return (
+    octets.length === 4 &&
+    octets.every((n) => Number.isInteger(n) && n >= 0 && n <= 255) &&
+    octets[0] === 100 &&
+    octets[1]! >= 64 &&
+    octets[1]! <= 127
+  );
+}
+
 /** How a machine is reached, for the small line under its name. */
 export function machineRouteLabel(input: {
   readonly isPrimary: boolean;
@@ -96,8 +119,7 @@ export function machineRouteLabel(input: {
 }): string {
   if (input.isPrimary) return "Local";
   if (input.relayManaged) return "Relay";
-  const url = input.displayUrl;
-  if (url === null) return "Remote";
-  const host = url.split(":")[0] ?? url;
-  return host.endsWith(".ts.net") || host.startsWith("100.") ? "Tailscale" : url;
+  const host = input.displayUrl === null ? null : hostOf(input.displayUrl);
+  if (host === null) return "Remote";
+  return isTailscaleHost(host) ? "Tailscale" : host;
 }

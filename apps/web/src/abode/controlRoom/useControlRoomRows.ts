@@ -11,6 +11,7 @@ import { useSessionDetails } from "./useSessionDetails";
 import {
   buildWorkspaceRows,
   needsSessionDetail,
+  sessionActivityAt,
   type SessionSummary,
   type WorkspaceInput,
 } from "./workspaceRows";
@@ -42,7 +43,12 @@ export function useControlRoomRows() {
         environmentId: thread.environmentId,
         environmentLabel: labelById.get(thread.environmentId) ?? "Unknown machine",
         state,
-        activityAt: thread.latestUserMessageAt ?? thread.updatedAt ?? thread.createdAt,
+        activityAt: sessionActivityAt(state, {
+          latestUserMessageAt: thread.latestUserMessageAt,
+          updatedAt: thread.updatedAt,
+          runtimeUpdatedAt: thread.runtime?.updatedAt ?? null,
+          createdAt: thread.createdAt,
+        }),
         runningSubagents:
           group.runningSubagentsByParentKey.get(`${thread.environmentId}:${thread.id}`)?.length ??
           0,
