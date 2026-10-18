@@ -1,79 +1,294 @@
 /*
- * The calm card (docs/design/calm-mode.md, option B: one line of pills, with A's orange
- * "Needs you" strip). Theme tokens only; the orange is abode.css's --abode-needs-you.
+ * Calm's plan table (A-033, docs/design/control-room.md, "Calm: plan table while working"
+ * and "Calm: finished"). It covers the timeline in its wrapper, above it and below the
+ * composer overlay. Theme tokens only; the orange is abode.css's --abode-needs-you.
  * Nothing here animates.
  */
-[data-abode-calm-card] {
-  margin-bottom: 8px;
+[data-abode-calm-table] {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px 16px calc(var(--abode-composer-inset, 14rem) + 16px);
+  background: var(--background);
   color: var(--foreground);
-  font-size: 13px;
+  font-size: 14px;
 }
-[data-abode-calm-card][data-needs-you="true"] {
-  overflow: hidden;
-  border: 2px solid var(--abode-needs-you);
-  border-radius: 10px;
+[data-abode-calm-table] > * {
+  width: 100%;
+  max-width: var(--chat-content-max-width, 56rem);
+  margin-inline: auto;
+  flex: none;
 }
-[data-abode-calm-card][data-needs-you="true"] [data-abode-calm-pills] {
-  padding: 8px 10px;
+[data-abode-calm-muted] {
+  color: var(--muted-foreground);
 }
-[data-abode-calm-card][data-needs-you="true"] [data-abode-calm-pills]:empty {
-  display: none;
-}
-[data-abode-calm-alert] {
-  margin: 0;
-  padding: 7px 12px;
-  background: var(--abode-needs-you);
-  color: var(--abode-needs-you-foreground);
-  font-weight: 700;
-}
-[data-abode-calm-pills] {
+
+/* Header and end-of-run summary */
+[data-abode-calm-header],
+[data-abode-calm-summary] {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-[data-abode-calm-pill] {
-  display: inline-flex;
-  min-width: 0;
-  max-width: 100%;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
+  gap: 12px 24px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 9999px;
+  border-radius: 8px;
   background: var(--card);
 }
-[data-abode-calm-pill="tickets"] {
-  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
-  background: color-mix(in srgb, var(--primary) 10%, var(--card));
+[data-abode-calm-percent] {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
-[data-abode-calm-pill="tickets"] [data-abode-calm-count] {
-  color: var(--primary);
+[data-abode-calm-percent] > span:first-child {
+  font-family: var(--font-mono);
+  font-size: 28px;
   font-weight: 600;
 }
-[data-abode-calm-pill="tickets"][data-done="true"] [data-abode-calm-count] {
-  color: var(--success);
+[data-abode-calm-bar] {
+  flex: 1 1 200px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
 }
-[data-abode-calm-pill="more"] {
+[data-abode-calm-bar] > div {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary);
+}
+[data-abode-calm-meta] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
   color: var(--muted-foreground);
+  font-size: 13px;
 }
-[data-abode-calm-label] {
-  color: var(--muted-foreground);
+[data-abode-calm-summary] {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 2px solid var(--success);
 }
-[data-abode-calm-name] {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+[data-abode-calm-summary][data-complete="false"] {
+  border-color: var(--border);
 }
-[data-abode-calm-count] {
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+[data-abode-calm-summary-head] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+[data-abode-calm-summary-head] h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
 }
 [data-abode-calm-check] {
-  color: var(--success);
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--success);
+  color: var(--background);
   font-weight: 700;
+}
+[data-abode-calm-final] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+/* Needs-you banner */
+[data-abode-calm-banner] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 14px 18px;
+  border: 2px solid var(--abode-needs-you);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--abode-needs-you) 14%, var(--background));
+}
+[data-abode-calm-badge] {
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--abode-needs-you);
+  color: var(--abode-needs-you-foreground);
+  font-size: 12px;
+  font-weight: 700;
+}
+[data-abode-calm-question] {
+  flex: 1 1 280px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.4;
+}
+[data-abode-calm-banner] button {
+  min-width: 96px;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--abode-needs-you);
+  color: var(--abode-needs-you-foreground);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* The table */
+[data-abode-calm-scroll] {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+[data-abode-calm-table] table {
+  width: 100%;
+  border-collapse: collapse;
+}
+[data-abode-calm-table] th {
+  padding: 10px 16px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+[data-abode-calm-table] th:last-child,
+[data-abode-calm-time] {
+  text-align: right;
+}
+[data-abode-calm-table] tbody tr {
+  border-top: 1px solid var(--border);
+}
+[data-abode-calm-table] td {
+  padding: 12px 16px;
+}
+[data-abode-calm-table] tr[data-status="done"] [data-abode-calm-task],
+[data-abode-calm-table] tr[data-status="done"] [data-abode-calm-who],
+[data-abode-calm-table] tr[data-status="not-started"] [data-abode-calm-who] {
+  color: var(--muted-foreground);
+}
+[data-abode-calm-id] {
+  margin-right: 8px;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+}
+[data-abode-calm-time] {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+[data-abode-calm-pill] {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+[data-abode-calm-pill="done"] {
+  background: color-mix(in srgb, var(--success) 18%, var(--background));
+  color: var(--success);
+}
+[data-abode-calm-pill="in-progress"] {
+  background: color-mix(in srgb, var(--warning) 18%, var(--background));
+  color: var(--warning);
+}
+[data-abode-calm-pill="not-started"] {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+[data-abode-calm-pill="needs-you"] {
+  background: var(--abode-needs-you);
+  color: var(--abode-needs-you-foreground);
+}
+
+/* Phone: one row per task, two lines, the status pill on the right. */
+@media (max-width: 640px) {
+  [data-abode-calm-banner] button {
+    width: 100%;
+    height: 48px;
+  }
+  [data-abode-calm-table] thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  [data-abode-calm-table] tbody tr {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "task task status"
+      "who time status";
+    align-items: center;
+    gap: 4px 10px;
+    padding: 10px 14px;
+  }
+  [data-abode-calm-table] td {
+    padding: 0;
+  }
+  [data-abode-calm-task] {
+    grid-area: task;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  [data-abode-calm-status] {
+    grid-area: status;
+  }
+  [data-abode-calm-who] {
+    grid-area: who;
+    font-size: 13px;
+  }
+  [data-abode-calm-time] {
+    grid-area: time;
+    text-align: left;
+  }
+  /* The banner sits at the bottom, just above the composer. */
+  [data-abode-calm-banner] {
+    position: sticky;
+    bottom: var(--abode-composer-inset, 0px);
+    order: 99;
+  }
+}
+
+@media (pointer: coarse) {
+  [data-abode-calm-banner] button {
+    min-height: 48px;
+  }
+}
+
+/* The timeline under the overlay stays mounted (Detailed keeps its scroll position) but is
+   neither visible nor reachable: the overlay's later siblings are the timeline and its
+   scroll-to-end button. */
+[data-abode-calm-table] ~ * {
+  visibility: hidden;
+}
+
+/* A batch that failed, was interrupted or cancelled: no green check. */
+[data-abode-calm-summary][data-stopped="true"] {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 8%, var(--card));
+}
+
+[data-abode-calm-pill="waiting"] {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+[data-abode-calm-table] tbody tr[data-status="needs-you"] {
+  background: color-mix(in srgb, var(--abode-needs-you) 8%, transparent);
 }

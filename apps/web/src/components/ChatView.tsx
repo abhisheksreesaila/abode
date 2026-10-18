@@ -557,7 +557,7 @@ const EMPTY_PROVIDER_MODELS: ServerProvider["models"] = [];
 const EMPTY_USAGE_LIMIT_SOURCES: UsageLimitSourceSnapshots = [];
 import type { CodexArtifactTemplate } from "@t3tools/shared/codexArtifactTemplates";
 import { ChatAvatars } from "~/abode/chat/ChatAvatars"; // abode: message avatars
-import { CalmCard } from "~/abode/calm/CalmCard"; // abode: calm card
+import { CalmTable } from "~/abode/calm/CalmTable"; // abode: A-033 calm plan table
 
 const TIMELINE_SCROLL_CANCEL_SENTINEL = Object.freeze({});
 const EMPTY_FEEDBACK_SUBMISSIONS: ReadonlyArray<CodexFeedbackSubmission> = [];
@@ -7888,6 +7888,10 @@ export default function ChatView(props: ChatViewProps) {
               />
             </div>
             <div className="relative flex min-h-0 flex-1 flex-col bg-background">
+              {/* abode: A-033 */}
+              <CalmTable
+                threadRef={isServerThread && !paintOnlyDisplayedTimeline ? activeThreadRef : null}
+              />
               <MessagesTimeline
                 citationRequest={paintOnlyDisplayedTimeline ? null : citationRequest}
                 citationHistoryLoading={threadDetailLoading}
@@ -8067,8 +8071,6 @@ export default function ChatView(props: ChatViewProps) {
                       </div>
                     </div>
                   ) : null}
-                  {/* abode: calm card */}
-                  <CalmCard threadRef={isServerThread ? activeThreadRef : null} />
                   <div
                     ref={draftHeroComposerAnchorRef}
                     className="relative z-10"
