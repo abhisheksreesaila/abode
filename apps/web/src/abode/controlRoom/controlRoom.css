@@ -1,0 +1,228 @@
+/*
+ * The Control room (docs/design/control-room.md, "Chosen: Home as tables"). Theme
+ * variables only; the orange is abode.css's --abode-needs-you. Nothing animates.
+ */
+[data-abode-control-room] {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding: 24px 16px 40px;
+  color: var(--foreground);
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  [data-abode-control-room] {
+    padding: 24px 40px 40px;
+  }
+}
+[data-abode-cr-top] {
+  padding-top: env(safe-area-inset-top);
+}
+[data-abode-cr-title] {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+[data-abode-cr-summary] {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-abode-cr-section] {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-abode-cr-table] {
+  max-width: 1180px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+[data-abode-cr-table] table {
+  width: 100%;
+  border-collapse: collapse;
+}
+[data-abode-cr-table] thead tr {
+  background: var(--sidebar);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+[data-abode-cr-table] th {
+  padding: 10px 16px;
+  font-weight: 600;
+}
+[data-abode-cr-table] td {
+  padding: 12px 16px;
+  vertical-align: top;
+}
+[data-abode-cr-table] tbody tr {
+  border-top: 1px solid var(--border);
+}
+[data-abode-cr-table] tbody tr[data-status="needs-you"] {
+  background: color-mix(in srgb, var(--abode-needs-you) 10%, transparent);
+}
+[data-abode-cr-table] tbody tr[data-clickable="true"] {
+  cursor: pointer;
+}
+[data-abode-cr-table] tbody tr[data-clickable="true"]:hover {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+[data-abode-cr-table] [data-end] {
+  text-align: right;
+}
+[data-abode-cr-name] {
+  color: var(--foreground);
+  font-weight: 600;
+  text-decoration: none;
+}
+[data-abode-cr-question] {
+  margin-top: 4px;
+  color: var(--abode-needs-you);
+  font-size: 13px;
+}
+[data-abode-cr-mono] {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+[data-abode-cr-muted] {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+/* Machines: a machine row is a filter; the chosen one stays marked. */
+[data-abode-cr-table] tbody tr[data-chosen="true"] {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+button[data-abode-cr-name] {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+[data-abode-cr-route] {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+[data-abode-cr-progress][data-load] [data-abode-cr-bar] {
+  height: 5px;
+  min-width: 48px;
+}
+[data-abode-cr-progress][data-load] [data-abode-cr-bar] span {
+  background: var(--muted-foreground);
+}
+[data-abode-cr-progress][data-load] [data-abode-cr-mono] {
+  width: 36px;
+  text-align: right;
+}
+[data-abode-cr-chips] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+[data-abode-cr-chips] button {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+@media (pointer: coarse), (max-width: 767px) {
+  [data-abode-cr-chips] button {
+    min-height: 48px;
+    padding: 0 18px;
+  }
+}
+[data-abode-cr-chips] button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+/* Status pills: tinted by state, the needs-you pill is solid orange. */
+[data-abode-cr-pill] {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted-foreground) 14%, transparent);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+[data-abode-cr-pill="running"],
+[data-abode-cr-pill="done"],
+[data-abode-cr-pill="online"] {
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success-foreground);
+}
+[data-abode-cr-pill="failed"] {
+  background: color-mix(in srgb, var(--destructive) 16%, transparent);
+  color: var(--destructive-foreground);
+}
+[data-abode-cr-pill="needs-you"] {
+  background: var(--abode-needs-you);
+  color: var(--abode-needs-you-foreground);
+}
+
+/* Progress: a 6px bar on the border color; amber while working, green at the end. */
+[data-abode-cr-progress] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+[data-abode-cr-bar] {
+  height: 6px;
+  min-width: 60px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--border);
+}
+[data-abode-cr-bar] span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--primary);
+}
+[data-abode-cr-progress][data-tone="done"] [data-abode-cr-bar] span {
+  background: var(--success);
+}
+
+/* Phone: the secondary columns move under the name. */
+[data-abode-cr-narrow] {
+  display: none;
+}
+@media (max-width: 767px) {
+  [data-abode-cr-table] [data-wide] {
+    display: none;
+  }
+  [data-abode-cr-narrow] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin-top: 6px;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+}

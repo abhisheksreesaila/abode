@@ -22,6 +22,7 @@ import {
 import { useEnvironments } from "../state/environments";
 import { APP_DISPLAY_NAME } from "~/branding";
 import { hasCloudPublicConfig } from "~/cloud/publicConfig";
+import { ControlRoomRoute } from "~/abode/controlRoom/ControlRoomRoute"; // abode: A-032
 
 function ChatIndexRouteView() {
   const { authGateState } = Route.useRouteContext();
@@ -32,7 +33,8 @@ function ChatIndexRouteView() {
     if (environments.length === 0) return <HostedStaticOnboardingState />;
   }
 
-  return <IndexDraftLanding />;
+  // abode: A-032: the Control room replaces the auto-opened draft when there are projects
+  return <ControlRoomRoute fallback={<IndexDraftLanding />} />;
 }
 
 function IndexDraftLanding() {

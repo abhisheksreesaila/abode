@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
@@ -48,6 +48,7 @@ import { customizationsEnvironment } from "./customizationsState";
 import { isSkillFile } from "./editorModel";
 import { useRefreshProviderSkills } from "./useRefreshProviderSkills";
 import { harnessFromProviderInstance } from "./newCustomization";
+import { buildThreadRouteParams } from "~/threadRoutes";
 import { NewCustomizationDialog } from "./NewCustomizationDialog";
 import { useActiveCustomizationsScope, type CustomizationsScope } from "./useCustomizationsScope";
 
@@ -151,6 +152,7 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
   const [openKinds, setOpenKinds] = useState<ReadonlySet<CustomizationKind>>(new Set(["skill"]));
   const [creating, setCreating] = useState<CustomizationKind | null>(null);
   const shell = useThreadShell(scope.threadRef);
+  const router = useRouter();
   const refreshSkills = useRefreshProviderSkills({
     environmentId: scope.environmentId,
     threadRef: scope.threadRef,
@@ -172,7 +174,15 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
   }, [refresh]);
 
   const openFile = (path: string) => {
-    if (scope.threadRef) useRightPanelStore.getState().openFile(scope.threadRef, path);
+    if (!scope.threadRef) return;
+    useRightPanelStore.getState().openFile(scope.threadRef, path);
+    // On the Control room there is no panel to show it: go to the session whose panel holds the file.
+    if (scope.borrowed) {
+      void router.navigate({
+        to: "/$environmentId/$threadId",
+        params: buildThreadRouteParams(scope.threadRef),
+      });
+    }
   };
   const toggle = (kind: CustomizationKind) =>
     setOpenKinds((current) => {

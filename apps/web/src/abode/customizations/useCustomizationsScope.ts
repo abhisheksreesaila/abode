@@ -2,8 +2,9 @@ import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environ
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useParams } from "@tanstack/react-router";
 
+import { pickFallbackThread } from "./scopeFallback";
 import { useComposerDraftStore } from "~/composerDraftStore";
-import { useProject, useThreadShell } from "~/state/entities";
+import { useProject, useThreadShell, useThreadShells } from "~/state/entities";
 import { resolveActiveThreadRouteRef, resolveThreadRouteTarget } from "~/threadRoutes";
 
 export interface CustomizationsScope {
@@ -13,6 +14,8 @@ export interface CustomizationsScope {
   readonly projectName: string;
   /** The side panel to open files in: the thread's, or a new-thread draft's own. */
   readonly threadRef: ScopedThreadRef | null;
+  /** No session is open: the scope borrows the latest session's workspace, and opening a file goes to that session. */
+  readonly borrowed: boolean;
 }
 
 /** The active session's workspace. Null until a session or draft is open. */
@@ -30,8 +33,15 @@ export function useActiveCustomizationsScope(): CustomizationsScope | null {
   const draftThreadRef = routeDraft
     ? scopeThreadRef(routeDraft.environmentId, routeDraft.threadId)
     : null;
-  const threadRef = serverThreadRef ?? draftThreadRef;
-  const source = shell ?? routeDraft;
+  const fallbackShell = pickFallbackThread(useThreadShells());
+  const borrowed = serverThreadRef === null && draftThreadRef === null;
+  const threadRef =
+    serverThreadRef ??
+    draftThreadRef ??
+    (borrowed && fallbackShell
+      ? scopeThreadRef(fallbackShell.environmentId, fallbackShell.id)
+      : null);
+  const source = shell ?? routeDraft ?? (borrowed ? fallbackShell : null);
   const projectRef = source ? scopeProjectRef(source.environmentId, source.projectId) : null;
   const project = useProject(projectRef);
   if (!source || !project?.workspaceRoot) return null;
@@ -40,5 +50,6 @@ export function useActiveCustomizationsScope(): CustomizationsScope | null {
     cwd: project.workspaceRoot,
     projectName: project.title,
     threadRef,
+    borrowed,
   };
 }
