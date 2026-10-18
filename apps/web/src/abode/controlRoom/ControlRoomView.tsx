@@ -1,5 +1,6 @@
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { Link, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { SidebarInset } from "~/components/ui/sidebar";
 import { WorkspacePageHeader } from "~/components/WorkspacePageHeader";
@@ -9,7 +10,9 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTime } from "~/timestampFormat";
 
 import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
+import { buildMachineRows, filterRowsByMachine, type MachineRow } from "./machineRows";
 import { useControlRoomRows } from "./useControlRoomRows";
+import { useMachineInputs } from "./useMachineInputs";
 import { summarizeRows, type WorkspaceRow, type WorkspaceStatus } from "./workspaceRows";
 import "./controlRoom.css";
 
@@ -33,7 +36,15 @@ function ageLabel(activityAt: string | null): string {
  */
 export function ControlRoomView() {
   const router = useRouter();
-  const { rows, refByKey } = useControlRoomRows();
+  const { workspaces, rows: allRows, refByKey } = useControlRoomRows();
+  const machines = buildMachineRows(useMachineInputs(), workspaces);
+  const [chosenMachine, setChosenMachine] = useState<string | null>(null);
+  // A machine that disappeared (unpaired) cannot keep filtering the table.
+  const machineFilter = machines.some((machine) => machine.environmentId === chosenMachine)
+    ? chosenMachine
+    : null;
+  const rows = filterRowsByMachine(allRows, machineFilter);
+  const filteredMachine = machines.find((machine) => machine.environmentId === machineFilter);
   // Re-render each minute so the activity ages do not freeze.
   useNowMinute();
 
@@ -55,6 +66,16 @@ export function ControlRoomView() {
             <span>{summarizeRows(rows)}</span>
           </header>
           <h2 data-abode-cr-section="">Workspaces</h2>
+          {filteredMachine ? (
+            <div data-abode-cr-chips="">
+              <button type="button" onClick={() => setChosenMachine(null)}>
+                All machines
+              </button>
+              <button type="button" aria-pressed="true" onClick={() => setChosenMachine(null)}>
+                {filteredMachine.name}
+              </button>
+            </div>
+          ) : null}
           <div data-abode-cr-table="">
             <table>
               <thead>
@@ -84,6 +105,45 @@ export function ControlRoomView() {
                     row={row}
                     openRef={row.openSessionKey ? (refByKey.get(row.openSessionKey) ?? null) : null}
                     onOpen={open}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <h2 data-abode-cr-section="">Machines</h2>
+          <div data-abode-cr-table="">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Machine</th>
+                  <th scope="col" data-wide="">
+                    Status
+                  </th>
+                  <th scope="col" data-wide="">
+                    CPU
+                  </th>
+                  <th scope="col" data-wide="">
+                    Memory
+                  </th>
+                  <th scope="col" data-wide="">
+                    Agents
+                  </th>
+                  <th scope="col" data-wide="" data-end="">
+                    Workspaces
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {machines.map((machine) => (
+                  <MachineTableRow
+                    key={machine.environmentId}
+                    machine={machine}
+                    chosen={machine.environmentId === machineFilter}
+                    onToggle={() =>
+                      setChosenMachine(
+                        machine.environmentId === machineFilter ? null : machine.environmentId,
+                      )
+                    }
                   />
                 ))}
               </tbody>
@@ -164,6 +224,78 @@ function WorkspaceTableRow(props: {
       </td>
       <td data-wide="" data-end="" data-abode-cr-mono="" data-abode-cr-muted="">
         {ageLabel(row.activityAt)}
+      </td>
+    </tr>
+  );
+}
+
+function LoadBar(props: { readonly label: string; readonly percent: number | null }) {
+  const { label, percent } = props;
+  if (percent === null) return <span data-abode-cr-muted="">—</span>;
+  return (
+    <div data-abode-cr-progress="" data-load="">
+      <div
+        data-abode-cr-bar=""
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+      >
+        <span style={{ width: `${percent}%` }} />
+      </div>
+      <span data-abode-cr-mono="">{percent}%</span>
+    </div>
+  );
+}
+
+const MACHINE_STATUS_LABEL = { online: "Online", connecting: "Connecting", offline: "Offline" };
+
+function MachineTableRow(props: {
+  readonly machine: MachineRow;
+  readonly chosen: boolean;
+  readonly onToggle: () => void;
+}) {
+  const { machine, chosen, onToggle } = props;
+  const pill = (
+    <span data-abode-cr-pill={machine.status}>{MACHINE_STATUS_LABEL[machine.status]}</span>
+  );
+  const cpu = machine.cpu === null ? "—" : `${machine.cpu}%`;
+  const memory = machine.memory === null ? "—" : `${machine.memory}%`;
+  return (
+    <tr data-clickable="true" data-chosen={chosen} onClick={onToggle}>
+      <td>
+        <button
+          type="button"
+          data-abode-cr-name=""
+          aria-pressed={chosen}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle();
+          }}
+        >
+          {machine.name}
+        </button>
+        <div data-abode-cr-route="">{machine.route}</div>
+        <div data-abode-cr-narrow="">
+          {pill}
+          <span>
+            CPU {cpu} · Mem {memory} · {machine.agents} agents · {machine.workspaces} workspaces
+          </span>
+        </div>
+      </td>
+      <td data-wide="">{pill}</td>
+      <td data-wide="">
+        <LoadBar label={`${machine.name} CPU`} percent={machine.cpu} />
+      </td>
+      <td data-wide="">
+        <LoadBar label={`${machine.name} memory`} percent={machine.memory} />
+      </td>
+      <td data-wide="" data-abode-cr-mono="">
+        {machine.agents}
+      </td>
+      <td data-wide="" data-end="" data-abode-cr-mono="" data-abode-cr-muted="">
+        {machine.workspaces}
       </td>
     </tr>
   );

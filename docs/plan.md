@@ -330,7 +330,7 @@ Tables, not tiles. Data comes from what the client already has (`useWorkspaceGro
 
 ### A-034: Machines table and filter
 
-- **Status:** todo
+- **Status:** review
 - **Depends on:** A-032
 - **What:** under the workspaces table, a Machines table: one row per environment from `useEnvironments()`: name and route (local, Tailscale, relay), status (Online / Connecting / Offline from the connection phase), CPU and memory bars from `server.getHostResources` (polled only while the page is open, "—" when unavailable), agents running and workspaces on it. Clicking a machine filters the workspaces table; an "All machines" chip clears it.
 - **Acceptance:**

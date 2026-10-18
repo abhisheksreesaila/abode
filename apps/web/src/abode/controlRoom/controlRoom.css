@@ -101,6 +101,53 @@
   font-size: 13px;
 }
 
+/* Machines: a machine row is a filter; the chosen one stays marked. */
+[data-abode-cr-table] tbody tr[data-chosen="true"] {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+button[data-abode-cr-name] {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+[data-abode-cr-route] {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+[data-abode-cr-progress][data-load] [data-abode-cr-bar] {
+  height: 5px;
+  min-width: 48px;
+}
+[data-abode-cr-progress][data-load] [data-abode-cr-bar] span {
+  background: var(--muted-foreground);
+}
+[data-abode-cr-progress][data-load] [data-abode-cr-mono] {
+  width: 36px;
+  text-align: right;
+}
+[data-abode-cr-chips] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+[data-abode-cr-chips] button {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+[data-abode-cr-chips] button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
 /* Status pills: tinted by state, the needs-you pill is solid orange. */
 [data-abode-cr-pill] {
   display: inline-block;
