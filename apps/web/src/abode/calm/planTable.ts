@@ -39,7 +39,7 @@ export interface PlanTableMessage {
   readonly streaming: boolean;
 }
 
-export type PlanRowStatus = "not-started" | "in-progress" | "done" | "needs-you";
+export type PlanRowStatus = "not-started" | "in-progress" | "done" | "needs-you" | "waiting";
 
 export interface PlanRow {
   /** Position in the task list: tasks have no ID of their own. */
@@ -53,7 +53,9 @@ export interface PlanRow {
 }
 
 export interface PlanTable {
-  readonly state: "working" | "needs-you" | "settled";
+  /** "stopped": every run ended, and at least one failed, was interrupted or cancelled. */
+  readonly state: "working" | "needs-you" | "settled" | "stopped";
+  readonly stopReason: "failed" | "stopped" | null;
   /** Settled with every task done. */
   readonly complete: boolean;
   readonly progress: {
@@ -68,8 +70,23 @@ export interface PlanTable {
 }
 
 const ACTIVE = new Set<PlanTableSubagentStatus>(["pending", "running", "waiting"]);
-const TICKET = /\b[A-Z]{1,5}-\d{1,4}\b/;
+const TERMINAL_RUN = new Set(["completed", "interrupted", "failed", "cancelled", "rolled_back"]);
+const BAD_RUN = new Set(["failed", "interrupted", "cancelled"]);
 const MAIN_AGENT = "main agent";
+
+/** Ticket IDs lead the task ("A-034: ..."). Mid-text they need two digits and a ticket-like prefix. */
+const AT_START = /^[A-Z]{1,5}-\d{1,4}\b/;
+const MID_TEXT = /(?<![A-Za-z0-9-])([A-Z]{1,5})-(\d{2,4})\b/g;
+const NOT_TICKET_PREFIX = new Set(["UTF", "GPT", "SHA", "ISO", "RFC", "AES", "MD", "CVE", "TLS"]);
+
+function ticketOf(text: string): string | null {
+  const start = AT_START.exec(text)?.[0];
+  if (start !== undefined) return start;
+  for (const match of text.matchAll(MID_TEXT)) {
+    if (!NOT_TICKET_PREFIX.has(match[1]!)) return match[0];
+  }
+  return null;
+}
 
 const typeOf = (subagent: Pick<PlanTableSubagent, "agentType">) =>
   subagent.agentType?.trim().toLowerCase() || "helper";
@@ -80,7 +97,7 @@ function namesTicket(text: string, ticket: string): boolean {
 
 /** "A-034: Review it" -> { id: "A-034", task: "Review it" }; anything else stays whole. */
 function splitTicket(text: string): { id: string | null; task: string; ticket: string | null } {
-  const ticket = TICKET.exec(text)?.[0] ?? null;
+  const ticket = ticketOf(text);
   if (ticket !== null && text.startsWith(ticket)) {
     const task = text.slice(ticket.length).replace(/^[\s:.\-–—)]+/, "");
     if (task.length > 0) return { id: ticket, task, ticket };
@@ -88,16 +105,45 @@ function splitTicket(text: string): { id: string | null; task: string; ticket: s
   return { id: null, task: text, ticket };
 }
 
-/** The subagent started last (one not yet started counts as latest) among those naming the ticket. */
-function latestFor(ticket: string, subagents: ReadonlyArray<PlanTableSubagent>) {
-  let latest: PlanTableSubagent | null = null;
-  for (const subagent of subagents) {
-    if (!namesTicket(`${subagent.title}\n${subagent.prompt}`, ticket)) continue;
-    const at = subagent.startedAtMs ?? Number.POSITIVE_INFINITY;
-    if (latest === null || at >= (latest.startedAtMs ?? Number.POSITIVE_INFINITY))
-      latest = subagent;
+/** "reviewer" fits "Review: A-034 ...", "developer" fits "Develop ...". */
+function fitsRow(subagent: PlanTableSubagent, rowText: string): boolean {
+  const stem = typeOf(subagent).replace(/(er|or|e)$/, "");
+  return stem.length >= 4 && rowText.toLowerCase().includes(stem);
+}
+
+/**
+ * The subagent behind each task. Rows sharing a ticket ID share its subagents: each row
+ * takes the one whose type its text names, else the earliest started; the last row takes
+ * the latest (so one ticket with a developer then a reviewer shows the reviewer).
+ */
+function assignOwners(
+  steps: ReadonlyArray<PlanTableStep>,
+  subagents: ReadonlyArray<PlanTableSubagent>,
+): Array<PlanTableSubagent | null> {
+  const owners: Array<PlanTableSubagent | null> = steps.map(() => null);
+  const rowsByTicket = new Map<string, number[]>();
+  steps.forEach((step, index) => {
+    const ticket = ticketOf(step.step);
+    if (ticket !== null) rowsByTicket.set(ticket, [...(rowsByTicket.get(ticket) ?? []), index]);
+  });
+  for (const [ticket, indices] of rowsByTicket) {
+    const pool = subagents
+      .filter((subagent) => namesTicket(`${subagent.title}\n${subagent.prompt}`, ticket))
+      .toSorted(
+        (left, right) =>
+          (left.startedAtMs ?? Number.POSITIVE_INFINITY) -
+          (right.startedAtMs ?? Number.POSITIVE_INFINITY),
+      );
+    indices.forEach((rowIndex, nth) => {
+      if (pool.length === 0) return;
+      const pick =
+        pool.find((subagent) => fitsRow(subagent, steps[rowIndex]!.step)) ??
+        (nth === indices.length - 1 ? pool.at(-1)! : pool[0]!);
+      pool.splice(pool.indexOf(pick), 1);
+      owners[rowIndex] = pick;
+    });
   }
-  return latest;
+  return owners;
 }
 
 export function buildPlanTable(input: {
@@ -105,17 +151,18 @@ export function buildPlanTable(input: {
   readonly subagents: ReadonlyArray<PlanTableSubagent>;
   readonly messages: ReadonlyArray<PlanTableMessage>;
   readonly batch: ReadonlySet<string>;
-  /** Every run of the batch has finished. */
-  readonly runsSettled: boolean;
+  /** Status of every run in the batch. */
+  readonly runs: ReadonlyArray<string>;
   /** The question or approval waiting for the user, or null. */
   readonly needsYou: string | null;
 }): PlanTable {
   const { steps, subagents, needsYou } = input;
   const done = steps.filter((step) => step.status === "completed").length;
+  const owners = assignOwners(steps, subagents);
 
   const rows: PlanRow[] = steps.map((step, position) => {
-    const { id, task, ticket } = splitTicket(step.step);
-    const owner = ticket === null ? null : latestFor(ticket, subagents);
+    const { id, task } = splitTicket(step.step);
+    const owner = owners[position]!;
     const duration =
       owner?.startedAtMs != null && owner.completedAtMs != null
         ? Math.max(0, owner.completedAtMs - owner.startedAtMs)
@@ -126,7 +173,9 @@ export function buildPlanTable(input: {
       step.status === "completed"
         ? "done"
         : owner?.status === "waiting"
-          ? "needs-you"
+          ? needsYou !== null
+            ? "needs-you"
+            : "waiting"
           : step.status === "inProgress"
             ? "in-progress"
             : "not-started";
@@ -139,10 +188,6 @@ export function buildPlanTable(input: {
       durationMs: duration,
     };
   });
-  if (needsYou !== null && !rows.some((row) => row.status === "needs-you")) {
-    const first = rows.findIndex((row) => row.status === "in-progress");
-    if (first >= 0) rows[first] = { ...rows[first]!, status: "needs-you" };
-  }
 
   const counts = new Map<string, number>();
   for (const subagent of subagents) {
@@ -150,10 +195,14 @@ export function buildPlanTable(input: {
       counts.set(typeOf(subagent), (counts.get(typeOf(subagent)) ?? 0) + 1);
   }
 
-  const settled = input.runsSettled && !subagents.some((subagent) => ACTIVE.has(subagent.status));
-  const state = needsYou !== null ? "needs-you" : settled ? "settled" : "working";
+  const ended =
+    input.runs.length > 0 &&
+    input.runs.every((status) => TERMINAL_RUN.has(status)) &&
+    !subagents.some((subagent) => ACTIVE.has(subagent.status));
+  const bad = input.runs.some((status) => BAD_RUN.has(status));
+  const state = needsYou !== null ? "needs-you" : !ended ? "working" : bad ? "stopped" : "settled";
   const finalMessage =
-    state === "settled"
+    state === "settled" || state === "stopped"
       ? (input.messages.findLast(
           (message) =>
             message.role === "assistant" &&
@@ -166,6 +215,7 @@ export function buildPlanTable(input: {
 
   return {
     state,
+    stopReason: state === "stopped" ? (input.runs.includes("failed") ? "failed" : "stopped") : null,
     complete: state === "settled" && steps.length > 0 && done === steps.length,
     progress:
       steps.length === 0

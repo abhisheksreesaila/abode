@@ -11,6 +11,8 @@ import {
 } from "./planTable";
 
 const MIN = 60_000;
+const DONE = ["completed"];
+const RUNNING = ["running"];
 
 const step = (text: string, status: PlanTableStep["status"], durationMs?: number): PlanTableStep =>
   durationMs === undefined ? { step: text, status } : { step: text, status, durationMs };
@@ -39,7 +41,7 @@ const base = {
   subagents: [] as PlanTableSubagent[],
   messages: [] as PlanTableMessage[],
   batch: new Set(["r1"]),
-  runsSettled: false,
+  runs: RUNNING,
   needsYou: null as string | null,
 };
 
@@ -179,7 +181,7 @@ describe("buildPlanTable rows", () => {
     expect(table.rows[0]).toMatchObject({ who: "reviewer", durationMs: null });
   });
 
-  it("marks the row of a waiting subagent as needing you", () => {
+  it("marks the row of a waiting subagent as needing you when a question is pending", () => {
     const table = buildPlanTable({
       ...base,
       steps: [step("A-034: A", "inProgress"), step("A-035: B", "inProgress")],
@@ -189,17 +191,106 @@ describe("buildPlanTable rows", () => {
     expect(table.rows.map((r) => r.status)).toEqual(["in-progress", "needs-you"]);
   });
 
-  it("falls back to the first in-progress row when you are needed and no subagent waits", () => {
+  it("shows a waiting subagent as plain Waiting when nothing needs the user, header still running", () => {
+    const table = buildPlanTable({
+      ...base,
+      steps: [step("A-035: B", "inProgress")],
+      subagents: [agent({ title: "A-035", agentType: "developer", status: "waiting" })],
+    });
+    expect(table.rows.map((r) => r.status)).toEqual(["waiting"]);
+    expect(table.state).toBe("working");
+  });
+
+  it("does not turn another row into Needs you when no subagent waits", () => {
+    const table = buildPlanTable({
+      ...base,
+      steps: [step("A: done", "completed"), step("B: now", "inProgress")],
+      needsYou: "Which one?",
+    });
+    expect(table.rows.map((r) => r.status)).toEqual(["done", "in-progress"]);
+    expect(table.state).toBe("needs-you");
+  });
+
+  it("gives rows that share a ticket ID their own subagent, by type then by start order", () => {
     const table = buildPlanTable({
       ...base,
       steps: [
-        step("A: done", "completed"),
-        step("B: now", "inProgress"),
-        step("C: also", "inProgress"),
+        step("A-034: Table model", "completed"),
+        step("Review: A-034 table model", "inProgress"),
       ],
-      needsYou: "Which one?",
+      subagents: [
+        agent({
+          id: "r",
+          title: "A-034 review",
+          agentType: "reviewer",
+          status: "running",
+          startedAtMs: 20 * MIN,
+        }),
+        agent({
+          id: "d",
+          title: "A-034 build",
+          agentType: "developer",
+          status: "completed",
+          startedAtMs: 0,
+          completedAtMs: 15 * MIN,
+        }),
+      ],
     });
-    expect(table.rows.map((r) => r.status)).toEqual(["done", "needs-you", "in-progress"]);
+    expect(table.rows.map((r) => [r.who, r.durationMs])).toEqual([
+      ["developer", 15 * MIN],
+      ["reviewer", null],
+    ]);
+  });
+
+  it("falls back to start order when the row text does not name the type", () => {
+    const table = buildPlanTable({
+      ...base,
+      steps: [step("A-034: First pass", "completed"), step("A-034: Second pass", "inProgress")],
+      subagents: [
+        agent({
+          id: "b",
+          title: "A-034",
+          agentType: "reviewer",
+          status: "running",
+          startedAtMs: 20 * MIN,
+        }),
+        agent({
+          id: "a",
+          title: "A-034",
+          agentType: "developer",
+          status: "completed",
+          startedAtMs: 0,
+          completedAtMs: MIN,
+        }),
+      ],
+    });
+    expect(table.rows.map((r) => r.who)).toEqual(["developer", "reviewer"]);
+  });
+
+  it("does not take GPT-4 or UTF-8 in a task for a ticket ID", () => {
+    const table = buildPlanTable({
+      ...base,
+      steps: [
+        step("Use GPT-4 and UTF-8 output", "inProgress"),
+        step("Fix UTF-16 handling", "pending"),
+      ],
+      subagents: [
+        agent({ title: "GPT-4 UTF-8 UTF-16", agentType: "developer", status: "running" }),
+      ],
+    });
+    expect(table.rows.map((r) => [r.id, r.who])).toEqual([
+      [null, "main agent"],
+      [null, "main agent"],
+    ]);
+  });
+
+  it("takes a mid-text ID with two or more digits", () => {
+    const table = buildPlanTable({
+      ...base,
+      steps: [step("Review: A-034 table", "inProgress")],
+      subagents: [agent({ title: "A-034", agentType: "reviewer", status: "running" })],
+    });
+    expect(table.rows[0]).toMatchObject({ id: null, who: "reviewer" });
   });
 });
 
@@ -260,24 +351,38 @@ describe("buildPlanTable header and end state", () => {
 
   it("is settled once every run in the batch and every subagent is finished", () => {
     const steps = [step("a", "completed"), step("b", "completed")];
-    expect(buildPlanTable({ ...base, steps, runsSettled: true }).state).toBe("settled");
-    expect(buildPlanTable({ ...base, steps, runsSettled: false }).state).toBe("working");
+    expect(buildPlanTable({ ...base, steps, runs: DONE }).state).toBe("settled");
+    expect(buildPlanTable({ ...base, steps, runs: RUNNING }).state).toBe("working");
     expect(
-      buildPlanTable({
-        ...base,
-        steps,
-        runsSettled: true,
-        subagents: [agent({ status: "running" })],
-      }).state,
+      buildPlanTable({ ...base, steps, runs: DONE, subagents: [agent({ status: "running" })] })
+        .state,
     ).toBe("working");
   });
 
+  it("is not settled while runs are queued or none have started", () => {
+    const steps = [step("a", "completed")];
+    expect(buildPlanTable({ ...base, steps, runs: [] }).state).toBe("working");
+    expect(buildPlanTable({ ...base, steps, runs: ["queued"] }).state).toBe("working");
+    expect(buildPlanTable({ ...base, steps, runs: ["completed", "preparing"] }).state).toBe(
+      "working",
+    );
+  });
+
+  it("is stopped, not complete, when a run failed, was interrupted or cancelled", () => {
+    const steps = [step("a", "completed"), step("b", "pending")];
+    const failed = buildPlanTable({ ...base, steps, runs: ["completed", "failed"] });
+    const interrupted = buildPlanTable({ ...base, steps, runs: ["interrupted"] });
+    expect([failed.state, failed.stopReason]).toEqual(["stopped", "failed"]);
+    expect([interrupted.state, interrupted.stopReason]).toEqual(["stopped", "stopped"]);
+    expect(failed.complete).toBe(false);
+  });
+
   it("says complete only when every task is done", () => {
-    const done = buildPlanTable({ ...base, steps: [step("a", "completed")], runsSettled: true });
+    const done = buildPlanTable({ ...base, steps: [step("a", "completed")], runs: DONE });
     const partial = buildPlanTable({
       ...base,
       steps: [step("a", "completed"), step("b", "pending")],
-      runsSettled: true,
+      runs: DONE,
     });
     expect([done.complete, partial.complete]).toEqual([true, false]);
   });
@@ -290,12 +395,10 @@ describe("buildPlanTable header and end state", () => {
       say("", { runId: "r2" }),
     ];
     const batch = new Set(["r1", "r2"]);
-    expect(buildPlanTable({ ...base, batch, messages, runsSettled: true }).finalMessage).toBe(
+    expect(buildPlanTable({ ...base, batch, messages, runs: DONE }).finalMessage).toBe(
       "The final word.",
     );
-    expect(
-      buildPlanTable({ ...base, batch, messages, runsSettled: false }).finalMessage,
-    ).toBeNull();
+    expect(buildPlanTable({ ...base, batch, messages, runs: RUNNING }).finalMessage).toBeNull();
   });
 
   it("ignores user messages and a message still streaming", () => {
@@ -304,7 +407,7 @@ describe("buildPlanTable header and end state", () => {
       say("typing...", { runId: "r1", streaming: true }),
       say("question", { runId: "r1", role: "user" }),
     ];
-    expect(buildPlanTable({ ...base, messages, runsSettled: true }).finalMessage).toBe("Answer");
+    expect(buildPlanTable({ ...base, messages, runs: DONE }).finalMessage).toBe("Answer");
   });
 });
 
@@ -366,9 +469,8 @@ describe("currentWork", () => {
     statuses.map((status) => ({ step: "x", status }));
 
   it("keeps a task list written in this batch, finished or not", () => {
-    expect(
-      currentWork({ batch, plan: { runId: "r2", steps: steps("completed") }, subagents: [] }).steps,
-    ).toHaveLength(1);
+    const plan = { runId: "r2", steps: [{ step: "one", status: "completed" as const }] };
+    expect(currentWork({ batch, plan, subagents: [] }).steps).toEqual(plan.steps);
   });
 
   it("drops a task list from before the user's latest message, even an unfinished one", () => {
@@ -382,12 +484,12 @@ describe("currentWork", () => {
       batch,
       plan: null,
       subagents: [
-        { runId: "r1", status: "completed" },
-        { runId: "r2", status: "running" },
-        { runId: "r2", status: "completed" },
-        { runId: "r3", status: "running" },
+        { runId: "r1", status: "completed" as const, tag: "a" },
+        { runId: "r2", status: "running" as const, tag: "b" },
+        { runId: "r2", status: "completed" as const, tag: "c" },
+        { runId: "r3", status: "running" as const, tag: "d" },
       ],
     });
-    expect(work.subagents).toHaveLength(3);
+    expect(work.subagents.map((subagent) => subagent.tag)).toEqual(["b", "c", "d"]);
   });
 });

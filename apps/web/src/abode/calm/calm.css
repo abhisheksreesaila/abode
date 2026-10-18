@@ -257,4 +257,38 @@
     grid-area: time;
     text-align: left;
   }
+  /* The banner sits at the bottom, just above the composer. */
+  [data-abode-calm-banner] {
+    position: sticky;
+    bottom: var(--abode-composer-inset, 0px);
+    order: 99;
+  }
+}
+
+@media (pointer: coarse) {
+  [data-abode-calm-banner] button {
+    min-height: 48px;
+  }
+}
+
+/* The timeline under the overlay stays mounted (Detailed keeps its scroll position) but is
+   neither visible nor reachable: the overlay's later siblings are the timeline and its
+   scroll-to-end button. */
+[data-abode-calm-table] ~ * {
+  visibility: hidden;
+}
+
+/* A batch that failed, was interrupted or cancelled: no green check. */
+[data-abode-calm-summary][data-stopped="true"] {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 8%, var(--card));
+}
+
+[data-abode-calm-pill="waiting"] {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+[data-abode-calm-table] tbody tr[data-status="needs-you"] {
+  background: color-mix(in srgb, var(--abode-needs-you) 8%, transparent);
 }

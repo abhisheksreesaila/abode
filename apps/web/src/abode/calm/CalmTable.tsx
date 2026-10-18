@@ -3,11 +3,14 @@ import type { OrchestrationV2ThreadProjection, ScopedThreadRef } from "@t3tools/
 import * as DateTime from "effect/DateTime";
 import { useEffect, useRef } from "react";
 
+import { projectScriptCwd } from "@t3tools/shared/projectScripts";
+import { scopeProjectRef } from "@t3tools/client-runtime/environment";
+
 import ChatMarkdown from "~/components/ChatMarkdown";
 import { observeResize } from "~/lib/observeResize";
 import { resolveSidebarThreadStatus } from "~/components/Sidebar.logic";
 import { deriveActivePlanState } from "~/session-logic";
-import { useThreadProjection, useThreadShell } from "~/state/entities";
+import { useProject, useThreadProjection, useThreadShell } from "~/state/entities";
 
 import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
 import {
@@ -24,8 +27,8 @@ const STATUS_LABEL: Record<PlanRowStatus, string> = {
   "in-progress": "In progress",
   done: "Done",
   "needs-you": "Needs you",
+  waiting: "Waiting",
 };
-const SETTLED_RUN = new Set(["completed", "interrupted", "failed", "cancelled", "rolled_back"]);
 
 const ms = (value: DateTime.DateTime | null | undefined) =>
   value == null ? null : DateTime.toEpochMillis(value);
@@ -57,6 +60,13 @@ function Body({
   readonly projection: OrchestrationV2ThreadProjection;
 }) {
   const shell = useThreadShell(threadRef);
+  const project = useProject(shell ? scopeProjectRef(shell.environmentId, shell.projectId) : null);
+  const cwd = project
+    ? projectScriptCwd({
+        project: { cwd: project.workspaceRoot },
+        worktreePath: shell?.worktreePath ?? null,
+      })
+    : undefined;
   const status = shell ? resolveSidebarThreadStatus(shell) : null;
   const waiting = status === "approval" || status === "input";
   const pending = derivePendingThreadRequests(projection);
@@ -94,7 +104,7 @@ function Body({
     })),
     messages: projection.messages,
     batch,
-    runsSettled: batchRuns.every((run) => SETTLED_RUN.has(run.status)),
+    runs: batchRuns.map((run) => run.status),
     needsYou,
   });
 
@@ -103,7 +113,9 @@ function Body({
   );
   const finishedAt = Math.max(...batchRuns.map((run) => ms(run.completedAt) ?? 0));
   const took =
-    table.state === "settled" && Number.isFinite(startedAt) && finishedAt > startedAt
+    (table.state === "settled" || table.state === "stopped") &&
+    Number.isFinite(startedAt) &&
+    finishedAt > startedAt
       ? formatDuration(finishedAt - startedAt)
       : null;
 
@@ -126,24 +138,34 @@ function Body({
 
   return (
     <section ref={rootRef} aria-label="Plan" data-abode-calm-table="" data-state={table.state}>
-      {table.state === "settled" ? (
-        <div data-abode-calm-summary="" data-complete={table.complete}>
+      {table.state === "settled" || table.state === "stopped" ? (
+        <div
+          data-abode-calm-summary=""
+          data-complete={table.complete}
+          data-stopped={table.state === "stopped"}
+        >
           <div data-abode-calm-summary-head="">
-            <span data-abode-calm-check="" aria-hidden>
-              ✓
-            </span>
+            {table.state === "settled" ? (
+              <span data-abode-calm-check="" aria-hidden>
+                ✓
+              </span>
+            ) : null}
             <h2>
-              {table.progress === null
-                ? "Finished"
-                : table.complete
-                  ? `${table.progress.total} of ${table.progress.total} complete`
-                  : `${table.progress.done} of ${table.progress.total} done`}
+              {table.state === "stopped"
+                ? table.stopReason === "failed"
+                  ? "Failed"
+                  : "Stopped"
+                : table.progress === null
+                  ? "Finished"
+                  : table.complete
+                    ? `${table.progress.total} of ${table.progress.total} complete`
+                    : `${table.progress.done} of ${table.progress.total} done`}
             </h2>
             {took ? <span data-abode-calm-muted="">Took {took}</span> : null}
           </div>
           {table.finalMessage ? (
             <div data-abode-calm-final="">
-              <ChatMarkdown text={table.finalMessage} cwd={undefined} threadRef={threadRef} />
+              <ChatMarkdown text={table.finalMessage} cwd={cwd} threadRef={threadRef} />
             </div>
           ) : null}
         </div>
@@ -187,7 +209,7 @@ function Body({
         <div data-abode-calm-banner="" role="status">
           <span data-abode-calm-badge="">Needs you</span>
           <span data-abode-calm-question="">{table.needsYou}</span>
-          <button type="button" onClick={answer}>
+          <button type="button" onClick={() => answer(rootRef.current)}>
             Answer
           </button>
         </div>
@@ -228,16 +250,27 @@ function Body({
   );
 }
 
-/** Opens and focuses upstream's pending question or approval panel in the composer. */
-function answer() {
-  const form = document.querySelector<HTMLElement>('[data-chat-composer-form="true"]');
+/**
+ * Opens and focuses upstream's pending question or approval panel in the composer of this
+ * thread (found from our own root, not the document). Never focuses a decision button.
+ * Couples to upstream's `data-chat-composer-overlay`, `data-chat-composer-form="true"`,
+ * `data-pending-user-input-toggle` and `data-approval-detail` (docs/upstream-sync.md).
+ */
+function answer(root: HTMLElement | null) {
+  const overlay = root?.parentElement?.parentElement?.querySelector<HTMLElement>(
+    "[data-chat-composer-overlay]",
+  );
+  const form = overlay?.querySelector<HTMLElement>('[data-chat-composer-form="true"]');
   if (!form) return;
-  const toggle = form.querySelector<HTMLElement>('[data-pending-user-input-toggle="collapsed"]');
-  toggle?.click();
+  form.querySelector<HTMLElement>('[data-pending-user-input-toggle="collapsed"]')?.click();
   form.scrollIntoView({ block: "nearest" });
-  form
-    .querySelector<HTMLElement>(
-      "[data-pending-user-input-toggle], button:not([disabled]), textarea, [contenteditable='true']",
-    )
-    ?.focus();
+  const target =
+    form.querySelector<HTMLElement>("[data-pending-user-input-toggle]") ??
+    form.querySelector<HTMLElement>("[data-approval-detail]");
+  if (target) {
+    target.focus();
+    return;
+  }
+  form.tabIndex = -1;
+  form.focus();
 }
