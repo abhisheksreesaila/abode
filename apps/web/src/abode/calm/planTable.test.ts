@@ -368,6 +368,16 @@ describe("buildPlanTable header and end state", () => {
     );
   });
 
+  it("decides the outcome from the last run: a cancelled run resumed by a continuation is settled", () => {
+    const steps = [step("a", "completed")];
+    expect(buildPlanTable({ ...base, steps, runs: ["cancelled", "completed"] }).state).toBe(
+      "settled",
+    );
+    expect(buildPlanTable({ ...base, steps, runs: ["completed", "failed"] }).stopReason).toBe(
+      "failed",
+    );
+  });
+
   it("is stopped, not complete, when a run failed, was interrupted or cancelled", () => {
     const steps = [step("a", "completed"), step("b", "pending")];
     const failed = buildPlanTable({ ...base, steps, runs: ["completed", "failed"] });

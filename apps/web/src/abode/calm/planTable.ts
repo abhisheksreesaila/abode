@@ -151,7 +151,7 @@ export function buildPlanTable(input: {
   readonly subagents: ReadonlyArray<PlanTableSubagent>;
   readonly messages: ReadonlyArray<PlanTableMessage>;
   readonly batch: ReadonlySet<string>;
-  /** Status of every run in the batch. */
+  /** Status of every run in the batch, in run order; the last one decides how it ended. */
   readonly runs: ReadonlyArray<string>;
   /** The question or approval waiting for the user, or null. */
   readonly needsYou: string | null;
@@ -199,7 +199,8 @@ export function buildPlanTable(input: {
     input.runs.length > 0 &&
     input.runs.every((status) => TERMINAL_RUN.has(status)) &&
     !subagents.some((subagent) => ACTIVE.has(subagent.status));
-  const bad = input.runs.some((status) => BAD_RUN.has(status));
+  const last = input.runs.at(-1) ?? "";
+  const bad = BAD_RUN.has(last);
   const state = needsYou !== null ? "needs-you" : !ended ? "working" : bad ? "stopped" : "settled";
   const finalMessage =
     state === "settled" || state === "stopped"
@@ -215,7 +216,7 @@ export function buildPlanTable(input: {
 
   return {
     state,
-    stopReason: state === "stopped" ? (input.runs.includes("failed") ? "failed" : "stopped") : null,
+    stopReason: state === "stopped" ? (last === "failed" ? "failed" : "stopped") : null,
     complete: state === "settled" && steps.length > 0 && done === steps.length,
     progress:
       steps.length === 0

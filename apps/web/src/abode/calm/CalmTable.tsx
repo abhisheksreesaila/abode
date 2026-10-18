@@ -104,7 +104,7 @@ function Body({
     })),
     messages: projection.messages,
     batch,
-    runs: batchRuns.map((run) => run.status),
+    runs: batchRuns.toSorted((a, b) => a.ordinal - b.ordinal).map((run) => run.status),
     needsYou,
   });
 
@@ -271,6 +271,5 @@ function answer(root: HTMLElement | null) {
     target.focus();
     return;
   }
-  form.tabIndex = -1;
-  form.focus();
+  form.querySelector<HTMLElement>("[contenteditable='true'], textarea")?.focus();
 }
