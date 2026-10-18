@@ -322,7 +322,7 @@ Tables, not tiles. Data comes from what the client already has (`useWorkspaceGro
 
 ### A-033: Calm is the plan table
 
-- **Status:** todo
+- **Status:** review
 - **What:** in Calm, the session shows no chat: a header (status, "N of M done · P%" bar, agents running by type), the orange Needs-you banner with the question and an Answer button that opens upstream's panel, then a table of the current batch's task-list items: Task, Status (Not started / In progress / Done / Needs you), Who (the subagent whose title or prompt names the task's ticket ID, by `agentType`; else "main agent"), Time (that subagent's duration when known). When the batch finishes: "N of N complete" and the model's own final assistant message of the batch in full, rendered as chat markdown. Detailed is unchanged. Replaces the A-020 card and A-019 rows in Calm.
 - **Acceptance:**
   - [ ] The table model (rows from plan steps, ticket-ID matching to subagents, who/time, header counts, final message pick across wake runs) is pure and tested, including a Codex session without types and a session with no task list.
