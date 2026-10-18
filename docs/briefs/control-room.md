@@ -18,9 +18,9 @@ Status: approved
 
 - The core job: show where every workspace and machine stands at a glance, and each workspace's agreed plan as a table.
 - v1:
-  1. **Workspace tiles (the home page).** Clicking the abode logo shows one tile per workspace in a bento grid. Each tile: a status light (green running, orange "Needs you", grey idle, red failed), a progress bar with a percentage from the agents' task lists, and stats: agents running, sessions, tickets done of total, last activity. Busy and "Needs you" workspaces get bigger tiles. (sizes assumed) Clicking a tile opens that workspace in Calm.
-  2. **Calm becomes the plan table.** No chat at all. While the agents work: one row per task-list item with columns Task, Status (not started / in progress / done / blocked), Who (the subagent type working on it, or "main agent"), and a progress bar with "N of M" on top. "Needs you" is an orange banner with the question. When the run finishes: "9 of 9 complete" and an executive summary below the table (the agent's final message, with its links pulled out as buttons). Everything else is behind the Calm / Detailed switch, as today.
-  3. **Machine tiles.** The same tile design for each connected machine (this computer, paired Macs, cloud boxes): online or offline, agents running, workspaces on it, CPU and memory load, and the same status light. Clicking a machine filters the workspace tiles to it.
+  1. **Workspaces table (the home page).** Clicking the abode logo shows a table with one row per workspace, in the Calm table's look: status (green running, orange "Needs you", grey idle, red failed), progress (a bar with the percentage from the agents' task lists, and tickets done of total), agents running, sessions, machine, last activity. "Needs you" rows sort first and show the waiting question. Clicking a row opens that workspace in Calm.
+  2. **Calm becomes the plan table.** No chat at all. While the agents work: one row per task-list item with columns Task, Status (not started / in progress / done / needs you), Who (the subagent type working on it, or "main agent"), Time, and a progress bar with "N of M" on top. "Needs you" is an orange banner with the question. When the run finishes: "9 of 9 complete" and, below the table, the model's own final output in full (rendered as markdown, links clickable). Everything else is behind the Calm / Detailed switch, as today.
+  3. **Machines section.** On the home page, a second table in the same style, one row per connected machine (this computer, paired Macs, cloud boxes): online or offline, agents running, workspaces on it, CPU and memory load. Clicking a machine filters the workspaces table to it.
 - Rows come from the agents' own task lists (decided). A task matches a ticket when the agent names it with the ID ("A-031: ...").
 - Not doing: reading docs/plan.md; changing what agents send; live log streams on tiles; animations that repaint continuously (static progress bars only); starting or managing cloud machines (pairing stays as upstream does it).
 
@@ -51,6 +51,8 @@ Status: approved
 - Rows from the agent's task list (Abhishek): works everywhere, live; con: the agent's wording, not plan.md's.
 - Calm shows the table and summary only, no messages (Abhishek): exactly the glance he wants; con: what he asked is only in Detailed.
 - Home page becomes the tile board, reached from the logo. (assumed)
+- Tables, not tiles (Abhishek, 2026-10-17, after the canvas): the Calm plan table "is the best one, it fits". The home page uses the same table look: a Workspaces table (status, progress, agents, sessions, machine, last activity) and a Machines section in the same style. More columns later if needed; no bento grid.
+- The end-of-run section shows the model's own final output in full (its details, links clickable), not a shortened summary (Abhishek).
 
 ## Open questions
 

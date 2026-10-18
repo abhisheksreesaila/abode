@@ -305,3 +305,34 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
 - **Acceptance:**
   - [ ] A mic-button dictation keeps recording when another window takes focus; a held-key dictation still stops on blur.
   - [ ] Talking past the idle timeout without touching anything: no screensaver, and the text arrives.
+
+## Phase F: control room (brief: docs/briefs/control-room.md, design: docs/design/control-room.md)
+
+Tables, not tiles. Data comes from what the client already has (`useWorkspaceGroups`, thread shells, `deriveWorkspaceThreadState`, environments, `server.getHostResources`, per-thread projections for task lists). One new upstream hook at most: the `/` route.
+
+### A-032: Home is the control room: workspaces table
+
+- **Status:** todo
+- **What:** `/` (the abode logo) shows "Control room" instead of jumping into a draft: a Workspaces table, one row per workspace from `useWorkspaceGroups()`: name, status (Needs you / Running / Failed / Done / Idle from `deriveWorkspaceThreadState` over its sessions, needs-you first), progress (done/total over the task lists of its running and needs-you sessions, from their projections; bar plus percent), agents running (running sessions plus running subagents), machine (environment label; several when it spans), last activity. A needs-you row shows the waiting question's text when the shell or projection has it. Clicking a row opens the workspace's most relevant session (needs-you, else running, else latest) in Calm. The + button and "New session" still start drafts.
+- **Upstream files it may touch:** `apps/web/src/routes/_chat.index.tsx` (one hook: render the abode view in place of `IndexDraftLanding` when there are projects).
+- **Acceptance:**
+  - [ ] The row model (status priority, progress sums, agent counts, sort, chosen session) is pure and tested.
+  - [ ] Only running and needs-you sessions subscribe to their projections; idle rows don't.
+  - [ ] Matches the chosen design; no-projects still shows upstream's hero.
+
+### A-033: Calm is the plan table
+
+- **Status:** todo
+- **What:** in Calm, the session shows no chat: a header (status, "N of M done · P%" bar, agents running by type), the orange Needs-you banner with the question and an Answer button that opens upstream's panel, then a table of the current batch's task-list items: Task, Status (Not started / In progress / Done / Needs you), Who (the subagent whose title or prompt names the task's ticket ID, by `agentType`; else "main agent"), Time (that subagent's duration when known). When the batch finishes: "N of N complete" and the model's own final assistant message of the batch in full, rendered as chat markdown. Detailed is unchanged. Replaces the A-020 card and A-019 rows in Calm.
+- **Acceptance:**
+  - [ ] The table model (rows from plan steps, ticket-ID matching to subagents, who/time, header counts, final message pick across wake runs) is pure and tested, including a Codex session without types and a session with no task list.
+  - [ ] Detailed still shows everything; switching back and forth keeps the scroll position sane.
+
+### A-034: Machines table and filter
+
+- **Status:** todo
+- **Depends on:** A-032
+- **What:** under the workspaces table, a Machines table: one row per environment from `useEnvironments()`: name and route (local, Tailscale, relay), status (Online / Connecting / Offline from the connection phase), CPU and memory bars from `server.getHostResources` (polled only while the page is open, "—" when unavailable), agents running and workspaces on it. Clicking a machine filters the workspaces table; an "All machines" chip clears it.
+- **Acceptance:**
+  - [ ] The machine row model is pure and tested (offline, no resources, a workspace spanning two machines).
+  - [ ] Resource polling stops when the page is closed.
