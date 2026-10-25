@@ -1,7 +1,7 @@
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { threadRuntimeCanArchive } from "@t3tools/client-runtime/state/models";
 import { AuthOrchestrationOperateScope } from "@t3tools/contracts";
-import { resolveThreadCurrentPullRequestLink } from "@t3tools/shared/threadPullRequests";
+import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import { ArchiveIcon, FolderGit2Icon, FolderIcon } from "lucide-react";
 import { memo, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 

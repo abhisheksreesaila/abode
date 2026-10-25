@@ -3,7 +3,7 @@ import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useLayoutEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 
-import { getProviderInstanceEntry } from "~/providerInstances";
+import { deriveProviderInstanceEntries } from "~/providerInstances";
 import { primaryServerProvidersAtom } from "~/state/server";
 import { useThreadShell } from "~/state/entities";
 
@@ -41,7 +41,9 @@ function Avatars({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
 
   const helper = helperFor(
     shell
-      ? getProviderInstanceEntry(providers, shell.modelSelection.instanceId)?.driverKind
+      ? deriveProviderInstanceEntries(providers).find(
+          (entry) => entry.instanceId === shell.modelSelection.instanceId,
+        )?.driverKind
       : undefined,
   );
   const helperName = helper === "pip" ? cast.codexName : cast.claudeName;

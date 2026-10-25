@@ -309,6 +309,7 @@ export function CustomizationFilePanel(props: {
             relativePath={path}
             text={contents}
             threadRef={threadRef}
+            workspaceMutationId={null}
           />
         </div>
       ) : (

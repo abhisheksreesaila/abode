@@ -7,7 +7,7 @@ const run = (id: string, ordinal: number) => ({
   id,
   ordinal,
   status: "running",
-  startedAt: "2026-10-17T10:00:00.000Z",
+  startedAt: DateTime.makeUnsafe("2026-10-17T10:00:00.000Z"),
 });
 const plan = (runId: string, statuses: string[]) => ({
   kind: "todo_list",
