@@ -17,12 +17,15 @@ import {
   buildThreadActionMenuItems,
   threadActionRequiresOperate,
 } from "../../components/threadActionMenu.logic";
+import { canShareWithGuestAtom } from "../../components/chat/guestShareAvailability";
+import { openGuestShareDialog } from "../../components/chat/guestShareDialogState";
 import { stackedThreadToast, toastManager } from "../../components/ui/toast";
 import { useNewThreadHandler } from "../../hooks/useHandleNewThread";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import { useClientSettings } from "../../hooks/useSettings";
 import { useThreadActions } from "../../hooks/useThreadActions";
 import { readLocalApi } from "../../localApi";
+import { appAtomRegistry } from "../../rpc/atomRegistry";
 import { useServerConfigs } from "../../state/entities";
 import { readEnvironmentScope } from "../../state/session";
 import { threadEnvironment } from "../../state/threads";
@@ -164,6 +167,7 @@ export function useAbodeThreadActions() {
           canSnoozeNow: false,
           isRegeneratingTitle: thread.titleRegeneration != null,
           isRunning: !threadRuntimeCanArchive(thread.runtime),
+          canShareWithGuest: appAtomRegistry.get(canShareWithGuestAtom(thread.environmentId)),
           supports: {
             settlement: false,
             autoSettleOptOut: false,
@@ -187,6 +191,9 @@ export function useAbodeThreadActions() {
         return;
       case "mark-unread":
         markThreadUnread(threadRef);
+        return;
+      case "share-guest":
+        openGuestShareDialog(threadRef);
         return;
       case "copy-path":
         if (!workspacePath) {
