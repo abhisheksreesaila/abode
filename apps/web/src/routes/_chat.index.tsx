@@ -30,7 +30,7 @@ function ChatIndexRouteView() {
     if (environments.length === 0) return <HostedEmptyState />;
   }
 
-  return <ControlRoomRoute fallback={<IndexDraftLanding />} />;
+  return <ControlRoomRoute fallback={<IndexDraftLanding />} />; // abode: A-032
 }
 
 function IndexDraftLanding() {

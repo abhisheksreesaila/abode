@@ -1943,7 +1943,7 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
-      <AbodeSettingsSections />
+      <AbodeSettingsSections /* abode: voice, chat */ />
 
       <LegacyFeaturesSection />
     </SettingsPageContainer>

@@ -17,7 +17,7 @@ export function ControlRoomRoute(props: { readonly fallback: ReactNode }) {
 
 /**
  * What stays behind Settings and Usage when no thread or draft opened them (they
- * opened from "/"). Inert like upstream's background thread, and `contents` so the
+ * e.g. from "/", Pull requests, or a direct /settings load). Inert like upstream's background thread, and `contents` so the
  * wrapper does not disturb the sidebar layout.
  */
 export function ControlRoomBackdrop(props: { readonly fallback: ReactNode }) {
