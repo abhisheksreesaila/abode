@@ -336,3 +336,39 @@ Tables, not tiles. Data comes from what the client already has (`useWorkspaceGro
 - **Acceptance:**
   - [ ] The machine row model is pure and tested (offline, no resources, a workspace spanning two machines).
   - [ ] Resource polling stops when the page is closed.
+
+## Phase B: follow-ups from the v0.1.3 sync (2026-10-25)
+
+Upstream `v0.1.3-nightly.20261025.3669` made Settings and Usage modals, added guest sharing and new test lint rules. Hook budget is 398/400: free lines by trimming or moving an existing hook rather than raising the budget.
+
+### A-035: Settings over the Control room
+
+- **Status:** todo
+- **What:** opening Settings (or Usage) from `/` shows the Control room behind the modal, not an empty backdrop. Upstream's `ChatRouteLayout` (`apps/web/src/routes/_chat.tsx`) only keeps a thread or draft behind the modal.
+- **Acceptance:**
+  - [ ] From `/`, Settings opens over the Control room; closing it returns to `/` with the table intact.
+  - [ ] From a thread or draft, behaviour is unchanged.
+  - [ ] Any logic deciding what stays behind the modal is tested; hook report stays at or under 400.
+
+### A-036: Settings search finds abode's settings
+
+- **Status:** todo
+- **What:** upstream's Settings search uses a static index; abode's chat and voice sections (`AbodeSettingsSections`) never match. Add abode's entries to the index so searching e.g. "voice", "dictation", "calm" finds and opens them.
+- **Acceptance:**
+  - [ ] Searching an abode setting's label returns it and navigates to its section.
+  - [ ] Abode's entries live in `abode/`; the upstream hook is one line. Tested.
+
+### A-037: Share with guest from the sidebar
+
+- **Status:** todo
+- **What:** abode's sidebar thread menu (`useAbodeThreadActions.ts`) passes `canShareWithGuest` like upstream's sidebar, so "Share with guest" appears on right-click where upstream offers it.
+- **Acceptance:**
+  - [ ] The item appears under the same conditions as upstream's header menu and opens the same share flow. No upstream file edits.
+
+### A-038: Voice benchmarks pass upstream's test lint
+
+- **Status:** todo
+- **What:** `apps/server/src/abode/voice/Voice.latency.test.ts` and `Voice.real.test.ts` fail `no-test-timeout-or-unreasoned-skip` / `no-wall-clock-in-tests` / `no-real-time-wait-in-tests`. Move the wall-clock latency benchmark out of `*.test.ts` into a script (e.g. `apps/server/scripts/abode/voice-latency.ts`), and make the real-model test assert on events, not timings. Don't silence the rules.
+- **Acceptance:**
+  - [ ] `vp lint apps/server/src/abode` is clean with no new disables.
+  - [ ] The benchmark still runs on demand and prints its numbers.
