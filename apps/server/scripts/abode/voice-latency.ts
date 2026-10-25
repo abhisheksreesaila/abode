@@ -1,14 +1,9 @@
 #!/usr/bin/env node
 // @effect-diagnostics nodeBuiltinImport:off - reads a wav fixture from outside the repo.
 /**
- * Real-model latency benchmark: from the last 200 ms chunk (sent at speech pace, JSON-encoded as on
- * the wire) to `finish` returning text. Run on demand, it prints its numbers and exits non-zero
- * over one second:
- *
- *   ABODE_VOICE_MODEL_DIR=<dir> ABODE_VOICE_LATENCY_CLIP=<16 kHz mono wav, ~2 minutes> \
- *     node scripts/abode/voice-latency.ts
- */
-import * as NodeFS from "node:fs";
+ * Real-model latency from the last speech-paced chunk to `finish`; exits 1 at 1 s or more:
+ *   ABODE_VOICE_MODEL_DIR=<dir> ABODE_VOICE_LATENCY_CLIP=<16 kHz mono wav> node scripts/abode/voice-latency.ts
+ */ import * as NodeFS from "node:fs";
 
 import { VoiceSessionInput } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
