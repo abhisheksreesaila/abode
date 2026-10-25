@@ -360,14 +360,14 @@ Upstream `v0.1.3-nightly.20261025.3669` made Settings and Usage modals, added gu
 
 ### A-037: Share with guest from the sidebar
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after a comment trim)
 - **What:** abode's sidebar thread menu (`useAbodeThreadActions.ts`) passes `canShareWithGuest` like upstream's sidebar, so "Share with guest" appears on right-click where upstream offers it.
 - **Acceptance:**
   - [ ] The item appears under the same conditions as upstream's header menu and opens the same share flow. No upstream file edits.
 
 ### A-038: Voice benchmarks pass upstream's test lint
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after a comment trim)
 - **What:** `apps/server/src/abode/voice/Voice.latency.test.ts` and `Voice.real.test.ts` fail `no-test-timeout-or-unreasoned-skip` / `no-wall-clock-in-tests` / `no-real-time-wait-in-tests`. Move the wall-clock latency benchmark out of `*.test.ts` into a script (e.g. `apps/server/scripts/abode/voice-latency.ts`), and make the real-model test assert on events, not timings. Don't silence the rules.
 - **Acceptance:**
   - [ ] `vp lint apps/server/src/abode` is clean with no new disables.
