@@ -287,7 +287,7 @@ Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and
   - **Client** (`apps/web/src/abode/voice/`): use the host when it has voice, and Moonshine in the browser (A-024) when not. Same mic button, hold-to-talk key, listening bars, Esc and Enter. Settings › Voice shows which engine is active and the host model's download state.
 - **Acceptance:**
   - [x] Service and session logic tested with a fake recognizer; one real-model test runs when the model is present and is skipped otherwise.
-  - [x] Final text arrives within about 1 s of stopping for a 2-minute recording on this machine: measured 161 ms (`Voice.latency.test.ts`, audio paced at speech speed in 200 ms chunks through the RPC's JSON encoding).
+  - [x] Final text arrives within about 1 s of stopping for a 2-minute recording on this machine: measured 161 ms (`scripts/abode/voice-latency.ts`, audio paced at speech speed in 200 ms chunks through the RPC's JSON encoding).
   - [x] Falls back to Moonshine when the host has no voice; works from a remote browser, since the audio goes to the host (not tried from a second device).
   - [x] `hook-report.sh` stays under 400 (398), and `vp build` passes the license check.
   - [x] security-auditor: waived by Abhishek on 2026-10-15; the reviewer covered upload bounds, session ownership and the model download.

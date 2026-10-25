@@ -35,46 +35,40 @@ function readPcm(file: string): Uint8Array {
 }
 
 describe.skipIf(!ready)("Voice with the real Nemotron model", () => {
-  it.live(
-    "turns a spoken clip into its words",
-    () => {
-      const store = VoiceModelStore.of({
-        modelDir: modelDir ?? "",
-        archiveBytes: 1,
-        installedBytes: Effect.succeed(1),
-        install: () => Effect.void,
-      });
-      const layer = Voice.layer.pipe(
-        Layer.provide(VoiceRecognizerSherpa.layer),
-        Layer.provide(Layer.succeed(VoiceModelStore, store)),
-      );
-      return Effect.gen(function* () {
-        const voice = yield* Voice.Voice;
-        const started = yield* voice.handle({ op: "start" }, 1);
-        if (started.op !== "started") return expect.fail("expected a session");
-        const pcm = readPcm(clip ?? "");
-        // 200 ms chunks, like the browser sends.
-        const chunkBytes = 16_000 * 2 * 0.2;
-        let seq = 0;
-        for (let at = 0; at < pcm.length; at += chunkBytes, seq += 1) {
-          yield* voice.handle(
-            { op: "audio", sessionId: started.sessionId, seq, pcm: pcm.slice(at, at + chunkBytes) },
-            1,
-          );
-        }
-        const done = yield* voice.handle(
-          { op: "finish", sessionId: started.sessionId, chunks: seq },
+  it.live("turns a spoken clip into its words", () => {
+    const store = VoiceModelStore.of({
+      modelDir: modelDir ?? "",
+      archiveBytes: 1,
+      installedBytes: Effect.succeed(1),
+      install: () => Effect.void,
+    });
+    const layer = Voice.layer.pipe(
+      Layer.provide(VoiceRecognizerSherpa.layer),
+      Layer.provide(Layer.succeed(VoiceModelStore, store)),
+    );
+    return Effect.gen(function* () {
+      const voice = yield* Voice.Voice;
+      const started = yield* voice.handle({ op: "start" }, 1);
+      if (started.op !== "started") return expect.fail("expected a session");
+      const pcm = readPcm(clip ?? "");
+      // 200 ms chunks, like the browser sends.
+      const chunkBytes = 16_000 * 2 * 0.2;
+      let seq = 0;
+      for (let at = 0; at < pcm.length; at += chunkBytes, seq += 1) {
+        yield* voice.handle(
+          { op: "audio", sessionId: started.sessionId, seq, pcm: pcm.slice(at, at + chunkBytes) },
           1,
         );
-        if (done.op !== "text") return expect.fail("expected text");
+      }
+      const done = yield* voice.handle(
+        { op: "finish", sessionId: started.sessionId, chunks: seq },
+        1,
+      );
+      if (done.op !== "text") return expect.fail("expected text");
 
-        const reference = words(
-          NodeFS.readFileSync((clip ?? "").replace(/\.wav$/, ".txt"), "utf8"),
-        );
-        expect(words(done.text)).toEqual(reference);
-        expect(yield* voice.status).toMatchObject({ model: "ready", loaded: true });
-      }).pipe(Effect.provide(layer));
-    },
-    120_000,
-  );
+      const reference = words(NodeFS.readFileSync((clip ?? "").replace(/\.wav$/, ".txt"), "utf8"));
+      expect(words(done.text)).toEqual(reference);
+      expect(yield* voice.status).toMatchObject({ model: "ready", loaded: true });
+    }).pipe(Effect.provide(layer));
+  });
 });
