@@ -343,7 +343,7 @@ Upstream `v0.1.3-nightly.20261025.3669` made Settings and Usage modals, added gu
 
 ### A-035: Settings over the Control room
 
-- **Status:** todo
+- **Status:** done (reviewer PASS with notes; backdrop shows for any thread-less modal)
 - **What:** opening Settings (or Usage) from `/` shows the Control room behind the modal, not an empty backdrop. Upstream's `ChatRouteLayout` (`apps/web/src/routes/_chat.tsx`) only keeps a thread or draft behind the modal.
 - **Acceptance:**
   - [ ] From `/`, Settings opens over the Control room; closing it returns to `/` with the table intact.
@@ -352,7 +352,7 @@ Upstream `v0.1.3-nightly.20261025.3669` made Settings and Usage modals, added gu
 
 ### A-036: Settings search finds abode's settings
 
-- **Status:** todo
+- **Status:** done (reviewer PASS with notes; backdrop shows for any thread-less modal)
 - **What:** upstream's Settings search uses a static index; abode's chat and voice sections (`AbodeSettingsSections`) never match. Add abode's entries to the index so searching e.g. "voice", "dictation", "calm" finds and opens them.
 - **Acceptance:**
   - [ ] Searching an abode setting's label returns it and navigates to its section.
