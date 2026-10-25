@@ -5,6 +5,7 @@
 #   scripts/abode/host.sh update [ref]     build <ref> (default abode-next), switch, health-check, roll back on failure
 #   scripts/abode/host.sh status           show the running release and service state
 #   scripts/abode/host.sh rollback         switch back to the previous release
+#   scripts/abode/host.sh awake [on|off]   refuse suspend/hibernate while the host runs (default on)
 #
 # `update` and `rollback` restart the server that agents run under, so they re-launch
 # themselves as a transient systemd unit and survive the restart. Follow progress with
@@ -17,6 +18,7 @@ PORT="${ABODE_PORT:-3773}"
 NODE="${ABODE_NODE:-$HOME/.local/share/vite-plus/js_runtime/node/24.21.0/bin/node}"
 VP_ENV="$HOME/.config/vite-plus/env"
 UNIT=abode.service
+AWAKE_UNIT=abode-awake.service
 KEEP=3
 
 log() { printf '[abode] %s\n' "$*"; }
@@ -92,6 +94,36 @@ EOF
   systemctl --user daemon-reload
 }
 
+# A suspended machine can't answer the phone, so a block inhibitor rides along with the
+# server. It is its own unit so a polkit refusal (e.g. at boot before login) only fails
+# this unit, never the server. `systemctl suspend -i` still overrides it on purpose.
+cmd_awake() {
+  local path="$HOME/.config/systemd/user/$AWAKE_UNIT"
+  if [[ "${1:-on}" == off ]]; then
+    systemctl --user disable --now "$AWAKE_UNIT" 2>/dev/null || true
+    rm -f "$path"; systemctl --user daemon-reload
+    log "sleep is allowed again"; return
+  fi
+  mkdir -p "$(dirname "$path")"
+  cat >"$path" <<EOF
+[Unit]
+Description=Keep this machine awake while abode runs
+PartOf=$UNIT
+After=$UNIT
+
+[Service]
+ExecStart=/usr/bin/systemd-inhibit --what=sleep --who=abode --why="abode is serving your other devices" --mode=block sleep infinity
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=$UNIT
+EOF
+  systemctl --user daemon-reload
+  systemctl --user enable --now "$AWAKE_UNIT"
+  log "suspend and hibernate are blocked while abode runs (undo: host.sh awake off)"
+}
+
 seed_home() {
   local src="$HOME/.t3/userdata" dst="$ROOT/home/userdata"
   if [[ -f "$dst/state.sqlite" ]]; then log "home already seeded"; return; fi
@@ -116,6 +148,7 @@ cmd_install() {
   switch_to "$rel"
   write_unit
   systemctl --user enable --now "$UNIT"
+  cmd_awake
   if healthy; then log "abode is up on http://127.0.0.1:$PORT ($(basename "$rel"))"; else log "abode failed to start; see journalctl --user -u abode"; exit 1; fi
 }
 
@@ -162,9 +195,10 @@ case "${1:-}" in
   rollback) detach __rollback ;;
   __update) shift; cmd_update_inner "$@" ;;
   __rollback) cmd_rollback_inner ;;
+  awake) shift; cmd_awake "$@" ;;
   status)
     log "current: $(basename "$(readlink -f "$ROOT/current" 2>/dev/null)" 2>/dev/null || echo none)"
     log "previous: $(basename "$(readlink -f "$ROOT/previous" 2>/dev/null)" 2>/dev/null || echo none)"
     systemctl --user --no-pager status "$UNIT" | head -5 || true ;;
-  *) sed -n '2,12p' "$0"; exit 2 ;;
+  *) sed -n '2,13p' "$0"; exit 2 ;;
 esac
