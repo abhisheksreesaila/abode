@@ -24,9 +24,9 @@ const STATUS_LABEL: Record<WorkspaceStatus, string> = {
 };
 
 function ageLabel(activityAt: string | null): string {
-  if (activityAt === null) return "—";
+  if (activityAt === null) return "–";
   const age = formatRelativeTime(activityAt);
-  return age ? (age.suffix ? age.value : "now") : "—";
+  return age ? (age.suffix ? age.value : "now") : "–";
 }
 
 /**
@@ -229,7 +229,7 @@ function WorkspaceTableRow(props: {
 
 function LoadBar(props: { readonly label: string; readonly percent: number | null }) {
   const { label, percent } = props;
-  if (percent === null) return <span data-abode-cr-muted="">—</span>;
+  if (percent === null) return <span data-abode-cr-muted="">–</span>;
   return (
     <div data-abode-cr-progress="" data-load="">
       <div
@@ -258,8 +258,8 @@ function MachineTableRow(props: {
   const pill = (
     <span data-abode-cr-pill={machine.status}>{MACHINE_STATUS_LABEL[machine.status]}</span>
   );
-  const cpu = machine.cpu === null ? "—" : `${machine.cpu}%`;
-  const memory = machine.memory === null ? "—" : `${machine.memory}%`;
+  const cpu = machine.cpu === null ? "–" : `${machine.cpu}%`;
+  const memory = machine.memory === null ? "–" : `${machine.memory}%`;
   return (
     <tr data-clickable="true" data-chosen={chosen} onClick={onToggle}>
       <td>

@@ -1,12 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off - streaming a 450 MB download and calling tar are not in the Effect FileSystem.
 /**
- * Downloads and installs the speech model. Plain async functions (no framework in them) so the
- * checksum and archive rules are testable with local fixtures; `Voice` wraps them in a service.
- *
- * The archive is untrusted until proven otherwise: HTTPS only (every redirect hop too), a pinned
- * SHA-256, a bounded size, entry names checked before anything is extracted, extraction into a
- * scratch directory next to the final one, and a walk of what came out (regular files only)
- * before one atomic rename puts it in place.
+ * Plain async model install, testable with local fixtures. The archive is untrusted: HTTPS on
+ * every redirect hop, a pinned SHA-256, a bounded size, entry names checked before extraction
+ * into a sibling scratch dir, then a regular-files-only walk before one atomic rename.
  */
 import * as NodeChildProcess from "node:child_process";
 import * as NodeCrypto from "node:crypto";

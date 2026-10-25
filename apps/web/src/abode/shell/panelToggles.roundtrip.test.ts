@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import { DEFAULT_RESOLVED_KEYBINDINGS } from "@t3tools/shared/keybindings";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -16,7 +14,16 @@ describe("panel toggles round trip", () => {
           keybindings: DEFAULT_RESOLVED_KEYBINDINGS,
           platform,
           press: (init) => {
-            const event = new KeyboardEvent("keydown", init);
+            // The fields a KeyboardEvent built from `init` would carry (unset modifiers are false).
+            const event = {
+              type: "keydown",
+              key: init.key ?? "",
+              code: init.code ?? "",
+              metaKey: init.metaKey ?? false,
+              ctrlKey: init.ctrlKey ?? false,
+              shiftKey: init.shiftKey ?? false,
+              altKey: init.altKey ?? false,
+            };
             resolved = resolveShortcutCommand(event, DEFAULT_RESOLVED_KEYBINDINGS, { platform });
           },
         });

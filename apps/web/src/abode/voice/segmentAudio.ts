@@ -116,11 +116,10 @@ function trimToSpeech(
 }
 
 /**
- * Splits a recording into segments of at most 30 s, cutting in the middle of a pause. Prefers
- * the longest pause 20 to 25 s into the segment, else the latest pause before 30 s, else the
- * quietest moment in the last 3 s. Each segment is then trimmed to its speech (plus 0.15 s),
- * segments that are only silence are dropped, and a final piece under 1 s is joined to the one
- * before it (which may then reach 31 s). Audio that already fits comes back as one untouched segment.
+ * Splits audio into segments of at most 30 s, cutting mid-pause: the longest pause 20 to 25 s in,
+ * else the latest before 30 s, else the quietest moment of the last 3 s. Segments are trimmed to
+ * speech (+0.15 s), silent ones dropped, and a final piece under 1 s joins the previous one
+ * (up to 31 s). Audio that already fits comes back as one untouched segment.
  */
 export function segmentAudio(audio: Float32Array, sampleRate = SPEECH_SAMPLE_RATE): Segment[] {
   const max = MAX_SEGMENT_SECONDS * sampleRate;

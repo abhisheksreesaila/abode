@@ -1,11 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off - reads a wav fixture from outside the repo.
 /**
- * The real model, end to end: Voice -> worker thread -> sherpa-onnx -> Nemotron. Skipped unless
- * the model and a clip are on disk, because the model is 450 MB and never lives in the repo:
- *
- *   ABODE_VOICE_MODEL_DIR=<dir with encoder.int8.onnx ...> \
- *   ABODE_VOICE_CLIP=<16 kHz mono wav, with the spoken words in a sibling .txt> \
- *   vp test run src/abode/voice/Voice.real.test.ts
+ * The real 450 MB model end to end, skipped unless it and a clip are on disk:
+ * `ABODE_VOICE_MODEL_DIR=<dir> ABODE_VOICE_CLIP=<16 kHz mono wav + sibling .txt of its words>
+ * vp test run src/abode/voice/Voice.real.test.ts`
  */
 import * as NodeFS from "node:fs";
 

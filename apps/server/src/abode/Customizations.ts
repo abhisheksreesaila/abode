@@ -1,13 +1,7 @@
 /**
- * Customizations - lists, reads and saves the Claude Code files that shape a
- * workspace: skills, agents, MCP server declarations and instruction files.
- *
- * Every file operation is confined to a small allow-list of roots, checked
- * after symlinks are resolved (see `resolveTarget`). MCP entries expose only
- * their name and the file that declares them; the values inside (env, headers,
- * args, urls) are never parsed out of the file.
- *
- * @module abode/Customizations
+ * Lists, reads and saves the Claude Code files that shape a workspace. Every file operation is
+ * confined to an allow-list of roots checked after symlinks resolve (`resolveTarget`). MCP
+ * entries expose only their name and declaring file; env, headers, args and urls are never parsed.
  */
 import * as NodeOS from "node:os";
 
@@ -219,30 +213,29 @@ const make = Effect.gen(function* () {
    * appended. A dangling symlink is followed to where it would create the file,
    * so a link pointing outside the roots cannot be written through.
    */
-  const realPathAllowingMissing = (absolutePath: string): Effect.Effect<string> =>
-    Effect.gen(function* () {
-      const tail: Array<string> = [];
-      let current = absolutePath;
-      let links = 0;
-      while (true) {
-        const real = yield* fileSystem
-          .realPath(current)
-          .pipe(Effect.orElseSucceed(() => undefined));
-        if (real !== undefined) return path.join(real, ...tail);
-        const target = yield* fileSystem
-          .readLink(current)
-          .pipe(Effect.orElseSucceed(() => undefined));
-        if (target !== undefined && links < 40) {
-          links += 1;
-          current = path.resolve(path.dirname(current), target);
-          continue;
-        }
-        const parent = path.dirname(current);
-        if (parent === current) return absolutePath;
-        tail.unshift(path.basename(current));
-        current = parent;
+  const realPathAllowingMissing = Effect.fn("Customizations.realPathAllowingMissing")(function* (
+    absolutePath: string,
+  ) {
+    const tail: Array<string> = [];
+    let current = absolutePath;
+    let links = 0;
+    while (true) {
+      const real = yield* fileSystem.realPath(current).pipe(Effect.orElseSucceed(() => undefined));
+      if (real !== undefined) return path.join(real, ...tail);
+      const target = yield* fileSystem
+        .readLink(current)
+        .pipe(Effect.orElseSucceed(() => undefined));
+      if (target !== undefined && links < 40) {
+        links += 1;
+        current = path.resolve(path.dirname(current), target);
+        continue;
       }
-    });
+      const parent = path.dirname(current);
+      if (parent === current) return absolutePath;
+      tail.unshift(path.basename(current));
+      current = parent;
+    }
+  });
 
   const isInside = (root: string, candidate: string) => {
     const relative = path.relative(root, candidate);
@@ -258,34 +251,33 @@ const make = Effect.gen(function* () {
    * and only inside what that one link points at. A workspace link must also point inside the
    * workspace, so a cloned repo can't link its way to files elsewhere on the machine.
    */
-  const insideLinkedEntry = (
+  const insideLinkedEntry = Effect.fn("Customizations.insideLinkedEntry")(function* (
     absolutePath: string,
     realTarget: string,
     configDir: string,
     workspaceRoot: string,
-  ) =>
-    Effect.gen(function* () {
-      const roots = [
-        { root: configDir, bound: null },
-        { root: codexHomeDir(), bound: null },
-        { root: path.join(workspaceRoot, ".claude"), bound: workspaceRoot },
-      ];
-      for (const { root, bound } of roots) {
-        if (!isInside(root, absolutePath)) continue;
-        const [folder, name] = path.relative(root, absolutePath).split(path.sep);
-        if ((folder !== "skills" && folder !== "agents") || !name) continue;
-        const entry = path.join(root, folder, name);
-        const isLink = yield* fileSystem.readLink(entry).pipe(
-          Effect.as(true),
-          Effect.orElseSucceed(() => false),
-        );
-        if (!isLink) continue;
-        const realEntry = yield* realPathAllowingMissing(entry);
-        if (bound !== null && !isInside(yield* realPathAllowingMissing(bound), realEntry)) continue;
-        if (isInside(realEntry, realTarget)) return true;
-      }
-      return false;
-    });
+  ) {
+    const roots = [
+      { root: configDir, bound: null },
+      { root: codexHomeDir(), bound: null },
+      { root: path.join(workspaceRoot, ".claude"), bound: workspaceRoot },
+    ];
+    for (const { root, bound } of roots) {
+      if (!isInside(root, absolutePath)) continue;
+      const [folder, name] = path.relative(root, absolutePath).split(path.sep);
+      if ((folder !== "skills" && folder !== "agents") || !name) continue;
+      const entry = path.join(root, folder, name);
+      const isLink = yield* fileSystem.readLink(entry).pipe(
+        Effect.as(true),
+        Effect.orElseSucceed(() => false),
+      );
+      if (!isLink) continue;
+      const realEntry = yield* realPathAllowingMissing(entry);
+      if (bound !== null && !isInside(yield* realPathAllowingMissing(bound), realEntry)) continue;
+      if (isInside(realEntry, realTarget)) return true;
+    }
+    return false;
+  });
 
   const requireRegisteredCwd = Effect.fn("Customizations.requireRegisteredCwd")(function* (
     cwd: string,
@@ -305,18 +297,10 @@ const make = Effect.gen(function* () {
   });
 
   /**
-   * Resolves a requested path to the real path an operation may touch. The
-   * request is rejected when it contains a `..` segment, and again when its
-   * symlink-resolved location is outside the allowed roots, so neither
-   * traversal nor a symlink pointing out can escape.
-   *
-   * Writable: anything under the Claude config dir (except `.credentials*` and
-   * the global state file) and, in the workspace, `.claude/`, `.mcp.json`,
-   * `CLAUDE.md`, `CLAUDE.local.md` and `AGENTS.md`. The global state file is readable but
-   * never writable, since it also holds private state.
-   *
-   * Codex: only `<codex home>/skills/**` and `<codex home>/prompts/*.md` are writable;
-   * `config.toml` opens read-only, and everything else there (`auth.json` included) is denied.
+   * Rejects `..` segments and symlink-resolved locations outside the roots. Writable: the Claude
+   * config dir (not `.credentials*` or the read-only global state file), the workspace's `.claude/`,
+   * `.mcp.json`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, and Codex `skills/**` and
+   * `prompts/*.md`; Codex `config.toml` is read-only and the rest of Codex home (`auth.json`) denied.
    */
   const resolveTarget = Effect.fn("Customizations.resolveTarget")(function* (
     input: { readonly cwd: string; readonly path: string },

@@ -1,13 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off - reads a wav fixture from outside the repo.
 /**
- * How long after the user stops talking the final text arrives, measured on the real service:
- * Voice -> worker thread -> sherpa-onnx -> Nemotron, with audio sent at the pace of speech in
- * 200 ms chunks (each one passed through the RPC's JSON encoding, as on the wire). The clock
- * runs from the moment the last chunk is handed over to the moment `finish` returns the text.
- * Skipped unless both files are given:
- *
- *   ABODE_VOICE_MODEL_DIR=<model dir> ABODE_VOICE_LATENCY_CLIP=<16 kHz mono wav, 2 minutes> \
- *   vp test run src/abode/voice/Voice.latency.test.ts
+ * Real-model latency from the last 200 ms chunk (sent at speech pace, JSON-encoded as on the wire)
+ * to `finish` returning text. Skipped unless `ABODE_VOICE_MODEL_DIR` and
+ * `ABODE_VOICE_LATENCY_CLIP` (16 kHz mono wav, 2 minutes) are given.
  */
 import * as NodeFS from "node:fs";
 

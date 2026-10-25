@@ -8,12 +8,9 @@ import { effectiveShortcutsForCommand } from "../../keybindings";
 import { isMacPlatform } from "../../lib/utils";
 
 /**
- * VS Code's three panel toggles. Upstream already binds all three (Ctrl+B,
- * Ctrl+J, Ctrl+Alt+B) and each owner handles its own command: the sidebar in
- * `AppSidebarLayout`, the terminal drawer and right panel in `ChatView`. abode
- * adds no second state for them. Anything outside those components (the
- * command palette, the sidebar header) presses the user's own binding, so it
- * always runs the same code path as the keyboard and follows rebinding.
+ * VS Code's three panel toggles. Upstream binds all three and each owner handles its own
+ * command, so abode keeps no second state: the palette and sidebar header press the user's
+ * own binding, running the keyboard's code path and following rebinding.
  */
 export type PanelToggleId = "sidebar" | "terminal" | "rightPanel";
 

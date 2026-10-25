@@ -20,11 +20,9 @@ export interface OpenWorkspace {
 }
 
 /**
- * The workspace to bring back, if any. Only a transition restores: the route changed, or the
- * open workspace changed on the same route (the chip moved the draft). First mount, an unknown
- * current workspace (groups briefly empty) and a route that did not move restore nothing, so a
- * reload onto a removed workspace, or removing the one you are in, stays removed. The caller keeps
- * the last non-null `current` as `previous`.
+ * Only a transition restores a removed workspace (route changed, or the chip moved the draft),
+ * so a reload onto it, or removing the one you are in, keeps it removed. First mount and an
+ * unknown current workspace restore nothing. The caller keeps the last non-null `current`.
  */
 export function workspaceToRestore(input: {
   readonly previous: OpenWorkspace | null;

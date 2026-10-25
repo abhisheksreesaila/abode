@@ -5,12 +5,9 @@ import { EnvironmentAuthorizationError } from "./auth.ts";
 import { TrimmedNonEmptyString } from "./baseSchemas.ts";
 
 /**
- * Voice dictation on the host: the client streams 16 kHz mono PCM while the user talks and
- * gets the final text back when they stop. One RPC with an `op` discriminator keeps the wire
- * surface (and the hooks into `rpc.ts`) to a single add-only method.
- *
- * Audio travels as 16-bit little-endian PCM, base64 on the JSON wire (the RPC layer is JSON).
- * Chunks carry a sequence number because unary calls can be served out of order.
+ * Host dictation: the client streams 16 kHz mono 16-bit LE PCM (base64, the RPC is JSON) and
+ * gets the text when the user stops. One RPC with an `op` discriminator keeps the hook into
+ * `rpc.ts` a single add-only method. Chunks carry a sequence number: unary calls can reorder.
  */
 export const VOICE_SAMPLE_RATE = 16_000;
 

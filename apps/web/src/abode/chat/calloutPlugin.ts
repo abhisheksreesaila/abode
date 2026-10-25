@@ -1,12 +1,10 @@
 import { calloutKind, type CardKind } from "./cards";
 
 /**
- * Remark plugin for abode's own callouts (`[!QUESTION]`, `[!INFO]`, `[!TICKETS]`,
- * `[!DONE]`, …): lifts them into `data-alert="abode-<kind>"` the way upstream's
- * GitHub-alert plugin lifts NOTE/TIP/IMPORTANT/WARNING/CAUTION, so upstream's blockquote
- * renderer draws them. GitHub's five stay upstream's, so classic chat is unchanged; abode
- * chat restyles them in chat.css. A title may follow the marker on its line
- * (`> [!DONE] Shipped`); it becomes a bold first line.
+ * Lifts abode's callouts (`[!QUESTION]`, `[!DONE]`, …) into `data-alert="abode-<kind>"`
+ * like upstream's GitHub-alert plugin, so upstream's blockquote renderer draws them and
+ * GitHub's five stay upstream's. A title after the marker (`> [!DONE] Shipped`) becomes
+ * a bold first line.
  */
 
 interface MdNode {

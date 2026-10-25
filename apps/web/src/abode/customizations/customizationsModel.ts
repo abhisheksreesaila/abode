@@ -122,12 +122,10 @@ function normalizeRoot(cwd: string): string {
 }
 
 /**
- * Whether a path opens in the customizations editor even when the list has not
- * been loaded this session (a restored side panel tab). Workspace files are only
- * the project root's `CLAUDE.md`, `CLAUDE.local.md`, `.mcp.json` and `.claude/`
- * (never `.claude/worktrees/`), `AGENTS.md`; outside the project, only `~/.claude*` and `~/.codex/` paths.
- * `panelCwd` is the thread's own cwd: a worktree's files belong to the normal
- * file panel. The server enforces its own allowlist regardless.
+ * Whether a path opens in the customizations editor without the list loaded (a restored tab):
+ * the project root's `CLAUDE.md`, `CLAUDE.local.md`, `.mcp.json`, `AGENTS.md`, `.claude/` (not
+ * `.claude/worktrees/`), plus `~/.claude*` and `~/.codex/`. A worktree `panelCwd`'s files stay
+ * with the normal file panel. The server enforces its own allowlist regardless.
  */
 export function isCustomizationPath(input: {
   readonly path: string;

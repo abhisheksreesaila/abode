@@ -1,9 +1,7 @@
 /**
- * Calm's plan table (A-033): the agent's own task list as rows, who is working each one,
- * and, once the batch settles, the model's final message. Pure: the component feeds it
- * plain values. Tickets come from the task list; a subagent belongs to a ticket when its
- * title or prompt names the ticket's ID. Codex records no `agentType`, so its subagents
- * are "helper".
+ * Calm's plan table (A-033), pure over plain values: task-list rows, who works each one,
+ * and the final message once the batch settles. A subagent belongs to a ticket when its
+ * title or prompt names the ticket's ID; Codex records no `agentType`, so it is "helper".
  */
 
 export type PlanTableSubagentStatus =
@@ -241,11 +239,9 @@ export function formatDuration(ms: number): string {
 }
 
 /**
- * The runs of the current batch: the user's latest run plus every wake run after it (a
- * background subagent finishing, a delegated result). Wake runs carry `workStartedAt`;
- * a run the user started does not. A run that never started is skipped unless it is about
- * to: the stamp lands only when a wake starts, so a queued wake (or a queued message later
- * turned into a steer, which cancels its run) would otherwise end the batch.
+ * The user's latest run plus every wake run after it (wake runs carry `workStartedAt`).
+ * Runs that never started are skipped unless about to start: a queued wake, or a queued
+ * message later turned into a steer (which cancels its run), would otherwise end the batch.
  */
 export function batchRunIds(
   runs: ReadonlyArray<{

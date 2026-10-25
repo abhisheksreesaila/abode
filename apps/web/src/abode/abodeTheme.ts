@@ -3,12 +3,9 @@ import type { ThemeColors, ThemeDefinition } from "@t3tools/shared/themePalettes
 export const ABODE_THEME_ID = "abode";
 
 /**
- * Warm dark: charcoal surfaces, warm off-white text and an amber accent. Buttons on the amber
- * take dark text, since white on amber is hard to read.
- *
- * abode is not in shared `BUILT_IN_THEMES`: that list is mirrored by the mobile
- * app's theme ids, and abode is a web and desktop look. The web theme runtime
- * adds it next to the built-ins (see the `abode:` hook in themePalette.ts).
+ * Warm dark with an amber accent; buttons on amber take dark text for contrast.
+ * Not in shared `BUILT_IN_THEMES`: the mobile app mirrors that list's ids, so the
+ * web theme runtime adds abode's themes itself (the `abode:` hook in themePalette.ts).
  */
 export const ABODE_DARK_THEME_COLORS: ThemeColors = {
   canvas: "#1c1917",

@@ -43,7 +43,7 @@ export function expansionPreferenceKeys(group: WorkspaceGroup): string[] {
 
 function memberLabel(member: SidebarProjectGroupMember): string {
   return member.environmentLabel
-    ? `${member.environmentLabel} — ${member.workspaceRoot}`
+    ? `${member.environmentLabel}: ${member.workspaceRoot}`
     : member.workspaceRoot;
 }
 

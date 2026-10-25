@@ -8,12 +8,9 @@ import { flatToMarkdown, pmToFlat, serializeEditorDoc } from "../../composer-ric
 import type { RecordingState } from "./recordingMachine";
 
 /**
- * Live dictation text shown in the composer while the user is still speaking.
- *
- * The provisional text is a widget decoration pinned to a mapped document position, not document
- * content. That is deliberate: it can never enter the undo history, the draft, or a sent message,
- * and edits elsewhere in the editor cannot disturb it (the anchor just maps through them). The
- * final transcript is the only thing that becomes real text.
+ * Live dictation text is a widget decoration at a mapped position, not document content, so it
+ * never enters undo history, the draft or a sent message, and other edits just map the anchor.
+ * Only the final transcript becomes real text.
  */
 export interface ProvisionalDictationState {
   /** A dictation is in flight (the anchor may still have been lost to a rewrite of the doc). */

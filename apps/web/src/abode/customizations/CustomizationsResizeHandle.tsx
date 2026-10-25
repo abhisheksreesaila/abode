@@ -9,12 +9,9 @@ import {
 } from "./customizationsHeight";
 
 /**
- * The horizontal handle above the Customizations section (abode F-046). Drag up to grow the
- * section, down to shrink it; arrow keys step it, double-click or Enter resets.
- *
- * While dragging, pointer moves are coalesced to one `onPreview` per animation frame (the
- * parent writes the height straight to the element, so React does not re-render per frame);
- * `onCommit` fires once on release. Nothing runs between moves.
+ * Resize handle above the Customizations section (F-046): drag, arrow keys, or reset.
+ * Pointer moves coalesce to one `onPreview` per frame (the parent writes the height to the
+ * element, so React does not re-render per frame); `onCommit` fires once on release.
  */
 export function CustomizationsResizeHandle({
   fraction,

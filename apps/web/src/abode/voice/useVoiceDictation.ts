@@ -35,11 +35,9 @@ export interface VoiceDictation {
 }
 
 /**
- * Drives dictation: mic capture -> transcription -> `onTranscript`. Transcription happens on the
- * host (Nemotron, audio streamed while you talk) when it has a ready model, and otherwise in a
- * browser worker (Moonshine); a host that fails mid-dictation falls back to the browser with the
- * audio recorded meanwhile. The hold-to-talk key is handled on `window` so it works wherever
- * focus is in the app.
+ * Mic capture -> transcription -> `onTranscript`, on the host (Nemotron, streamed) when its model
+ * is ready, else in a browser worker (Moonshine); a host failing mid-dictation falls back to the
+ * browser with the audio so far. The hold-to-talk key listens on `window` to work from any focus.
  */
 export function useVoiceDictation(input: {
   enabled: boolean;

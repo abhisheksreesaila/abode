@@ -7,11 +7,9 @@ import type { SidebarThreadSummary } from "../../types";
 import type { WorkspaceThreadState } from "./workspaceList";
 
 /**
- * Collapses upstream's status resolvers into what the abode sidebar draws.
- * The typed thread status decides needs-you, running and failed; the status
- * pill is only consulted for what it alone knows: a plan waiting for approval
- * and a finished run the user has not visited yet. `localLastVisitedAt` is the
- * browser-side visit time, used when the server does not track visits.
+ * The typed thread status decides needs-you, running and failed; the status pill only adds
+ * what it alone knows (a plan awaiting approval, an unvisited finished run).
+ * `localLastVisitedAt` is the browser's visit time, for servers that do not track visits.
  */
 export function deriveWorkspaceThreadState(
   thread: SidebarThreadSummary,
