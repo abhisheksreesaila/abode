@@ -8,6 +8,7 @@ import { isCommandPaletteOpen } from "../commandPaletteBus";
 import { ThreadRouteView } from "../components/ThreadRouteView";
 import { isAppModalPage } from "../components/sidebar/mainAppLocation";
 import { SidebarInset } from "../components/ui/sidebar";
+import { ControlRoomBackdrop } from "../abode/controlRoom/ControlRoomRoute"; // abode: A-035
 import type { ThreadRouteTarget } from "../threadRoutes";
 import { ThreadLinkPrompt } from "../components/promptLinks/ThreadLinkPrompt";
 import { useClientSettings, useLegacySidebarEnabled } from "../hooks/useSettings";
@@ -224,7 +225,7 @@ function ChatRouteLayout() {
       {shownTarget ? (
         <ThreadRouteView target={shownTarget} background={modalOpen} />
       ) : modalOpen ? (
-        <SidebarInset className="h-dvh" />
+        <ControlRoomBackdrop fallback={<SidebarInset className="h-dvh" />} />
       ) : (
         <Outlet />
       )}

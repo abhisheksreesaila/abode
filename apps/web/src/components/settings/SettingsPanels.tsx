@@ -1943,8 +1943,6 @@ export function GeneralSettingsPanel() {
           }
         />
       </SettingsSection>
-
-      {/* abode:voice */}
       <AbodeSettingsSections />
 
       <LegacyFeaturesSection />

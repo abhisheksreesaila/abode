@@ -30,7 +30,6 @@ function ChatIndexRouteView() {
     if (environments.length === 0) return <HostedEmptyState />;
   }
 
-  // abode: A-032: the Control room replaces the auto-opened draft when there are projects
   return <ControlRoomRoute fallback={<IndexDraftLanding />} />;
 }
 
