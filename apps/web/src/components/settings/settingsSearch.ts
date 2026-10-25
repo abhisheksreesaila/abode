@@ -10,6 +10,7 @@ import {
 } from "@t3tools/client-runtime/source-control-clients";
 import { DEFAULT_KEYBINDINGS } from "@t3tools/shared/keybindings";
 import { commandLabel } from "./KeybindingsSettings.logic";
+import { ABODE_SETTINGS_SEARCH_ITEMS } from "~/abode/settings/abodeSettingsSearch";
 import {
   validateSettingsScopeSearch,
   type ResolvedSettingsScope,
@@ -154,6 +155,7 @@ const SOURCE_CONTROL_HOST_TERMS = sourceControlClients.definitions
   .join(" ");
 
 export const SETTINGS_SEARCH_ITEMS = [
+  ...ABODE_SETTINGS_SEARCH_ITEMS, // abode: A-036
   {
     id: "storage-worktree-keep-when",
     targetId: "storage-worktrees",
