@@ -38,8 +38,7 @@ import {
   usePanelNavigationSuppression,
 } from "../panelAnimations";
 import { BackgroundThreadAnnouncer } from "./BackgroundThreadAnnouncer";
-// abode: the workspace sidebar replaces upstream's two thread sidebars.
-import { AbodeSidebar } from "../abode/shell/AbodeSidebar";
+import { AbodeSidebar } from "../abode/shell/AbodeSidebar"; // abode: replaces both thread sidebars
 import { useThreadVisitedMigration } from "../hooks/useThreadVisitedMigration";
 import { SidebarBrandWidthProbe } from "./sidebar/SidebarChrome";
 import { isAppModalPage, MainAppLocationTracker } from "./sidebar/mainAppLocation";
