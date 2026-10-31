@@ -379,7 +379,7 @@ Upstream `v0.1.6-nightly.20261031.3956` (966 commits, protocol still 2): new des
 
 ### A-039: Merge v0.1.6 into abode
 
-- **Status:** review
+- **Status:** review (reviewer PASS; waiting on the real-app check and host update)
 - **What:** branch `sync-v0.1.6`. 21 conflicts, all hook lines. Copied into `abode/` what upstream deleted or made private (`deriveActivePlanState`, PR tooltip, operate-denied text, the preview-count setting). Gave the 24 abode effects the reason upstream's new `no-unreasoned-state-sync` rule asks for. Added the LGPL-3.0 SPDX template the voice notice needs.
 - **Acceptance:**
   - [x] Web and server typecheck; `vp lint` on abode is clean; abode web (45 files) and server tests pass; web and server production builds pass.
@@ -392,3 +392,10 @@ Upstream `v0.1.6-nightly.20261031.3956` (966 commits, protocol still 2): new des
 - **What:** the pre-commit `knip:check` fails (it already did before the v0.1.6 sync): abode's voice scripts and `voiceWorker.ts` are entry points knip can't trace, `sherpa-onnx-node` is loaded by the worker, and upstream's sidebar files are unused on purpose (we never delete upstream files). The fix is entries in `knip.jsonc`, which is an upstream file, and the hook budget is 399/400, so first free lines from another hook.
 - **Acceptance:**
   - [ ] `vp run knip:check` passes with no new suppression of real unused code; hook report at or under 400.
+
+### A-041: Tidy abode voice effects
+
+- **Status:** todo
+- **What:** reviewer notes from A-039. `ComposerVoiceControl.tsx` resets state on `resetKey` in an effect (use `key` or reset during render; keep `cancel()` as the only effect). The latest-ref effects in `ComposerVoiceControl.tsx` and `useVoiceDictation.ts` can become `useStableCallback`. `VoiceSettingsSection.tsx` runs `useEffect(refresh, [refresh])` with an unstable function. `useHostVoice.ts:46`'s reason should say it guards setState after unmount.
+- **Acceptance:**
+  - [ ] Fewer `no-unreasoned-state-sync` disables in `abode/voice`, voice tests pass, and dictation still works with a real mic.
