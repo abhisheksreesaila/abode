@@ -79,15 +79,16 @@ const make = Effect.gen(function* () {
     installedBytes: Effect.promise(async () =>
       (await isModelInstalled(spec, modelsRoot)) ? installedModelBytes(spec, modelsRoot) : null,
     ),
-    install: (onProgress) =>
-      Effect.tryPromise({
+    install: Effect.fn("VoiceModelStore.install")(function* (onProgress) {
+      return yield* Effect.tryPromise({
         try: () => installModel({ spec, modelsRoot, onProgress }),
         catch: (cause) =>
           new VoiceModelInstallError({
             failure: cause instanceof ModelInstallFailed ? cause.failure : "install",
             cause,
           }),
-      }),
+      });
+    }),
   });
 });
 

@@ -42,6 +42,7 @@ export function useMachineInputs(): ReadonlyArray<MachineInput> {
   const connectedKey = connectedIds.join("\n");
   const resources = useAtomValue(resourcesAtom(connectedKey));
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- interval that refreshes host resource atoms in the registry for connected environments
   useEffect(() => {
     if (connectedKey === "") return;
     const ids = connectedKey.split("\n") as EnvironmentId[];

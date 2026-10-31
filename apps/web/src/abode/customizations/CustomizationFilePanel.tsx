@@ -83,6 +83,7 @@ export function CustomizationFilePanel(props: {
     readonly mine: string;
   } | null>(null);
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- reads the file from the host and reconciles it with the unsaved local draft when the path changes
   useEffect(() => {
     let cancelled = false;
     void readFile({ environmentId, input: { cwd, path } }).then((result) => {

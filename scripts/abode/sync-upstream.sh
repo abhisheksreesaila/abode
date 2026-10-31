@@ -35,4 +35,9 @@ if ! git merge --no-ff --no-edit -m "Merge upstream $target into abode" "$target
 fi
 
 scripts/abode/hook-report.sh || true
-log "merged. Next: vp i, then cd apps/web && vp test run src/abode, typecheck, check the app, then update the host."
+log "merged. Next:"
+log "  vp i   (then delete package-level node_modules/.bin/tsc shims that still point at an old typescript)"
+log "  typecheck apps/web + apps/server, vp lint apps/web/src/abode apps/server/src/abode"
+log "  cd apps/web && vp test run src/abode"
+log "  vp run licenses:sync, then cd apps/web && vp build --outDir <scratch>  (the license check only runs in the build)"
+log "  check the app, then update the host"

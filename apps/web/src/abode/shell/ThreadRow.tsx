@@ -8,7 +8,6 @@ import { memo, useRef, useState, type KeyboardEvent, type MouseEvent } from "rea
 import {
   ChangeRequestStatusIcon,
   prStatusIndicator,
-  PrStatusTooltipContent,
   useLinkedThreadPullRequest,
 } from "~/components/ThreadStatusIndicators";
 import { useSidebarRowSubscriptionLease } from "~/components/Sidebar.logic";
@@ -41,6 +40,21 @@ const TONE_META_CLASS: Record<ThreadSquareTone, string> = {
 };
 
 /** The 7px status square: green running, orange needs you, red failed, dim idle. */
+// Copy of upstream's tooltip body, private since 0.1.6.
+function PrStatusTooltipContent({
+  status,
+}: {
+  status: NonNullable<ReturnType<typeof prStatusIndicator>>;
+}) {
+  return (
+    <span className="flex max-w-[min(34rem,calc(100vw-2rem))] items-stretch overflow-hidden whitespace-nowrap">
+      <span className="shrink-0 pr-2 font-medium">{status.tooltipLead}</span>
+      <span className="min-h-4 shrink-0 border-border/70 border-l" aria-hidden="true" />
+      <span className="min-w-0 truncate pl-2">{status.tooltipTitle}</span>
+    </span>
+  );
+}
+
 export function StatusSquare({ tone }: { tone: ThreadSquareTone }) {
   return <span aria-hidden data-tone={tone} data-abode="square" />;
 }

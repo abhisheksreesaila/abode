@@ -17,6 +17,7 @@ export function formatElapsed(seconds: number): string {
 /** Whole seconds since recording began; ticks at 1 Hz so it never repaints continuously. */
 function useElapsedSeconds(active: boolean): number {
   const [seconds, setSeconds] = useState(0);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- 1 Hz interval that counts recording seconds while recording
   useEffect(() => {
     if (!active) return;
     const startedAt = Date.now();
@@ -86,10 +87,12 @@ export function ComposerVoiceControl({
     },
   });
   const handlersRef = useRef({ onProvisionalStart, onProvisionalText, onProvisionalEnd });
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes the latest provisional text handlers to a ref read by the dictation status effect
   useEffect(() => {
     handlersRef.current = { onProvisionalStart, onProvisionalText, onProvisionalEnd };
   });
   const resetKeyRef = useRef(resetKey);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- stops the recorder and microphone when the composer's reset key changes
   useEffect(() => {
     if (resetKeyRef.current === resetKey) return;
     resetKeyRef.current = resetKey;
@@ -97,6 +100,7 @@ export function ComposerVoiceControl({
     setFallbackText(null);
   }, [cancel, resetKey]);
   const previousStatusRef = useRef(state.status);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- pushes provisional dictation text into the imperative composer editor as recording status changes
   useEffect(() => {
     const handlers = handlersRef.current;
     const wasRecording = previousStatusRef.current === "recording";

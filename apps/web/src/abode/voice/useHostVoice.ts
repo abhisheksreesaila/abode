@@ -43,6 +43,7 @@ export function useHostVoice(): HostVoice {
   const [status, setStatus] = useState<VoiceStatus | null>(null);
   const [known, setKnown] = useState(false);
   const mounted = useRef(true);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- tracks mount so host voice requests that settle after unmount skip their state updates
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -75,6 +76,7 @@ export function useHostVoice(): HostVoice {
   const refresh = () => ask("status");
   const prepare = () => ask("prepare");
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- asks the host for voice status on mount and on window focus
   useEffect(() => {
     void refresh();
     const onFocus = () => void refresh();
@@ -83,6 +85,7 @@ export function useHostVoice(): HostVoice {
   }, [refresh]);
 
   const downloading = status?.model === "downloading";
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- interval that polls the host while its voice model downloads
   useEffect(() => {
     if (!downloading) return;
     const timer = setInterval(() => void refresh(), DOWNLOAD_POLL_MS);

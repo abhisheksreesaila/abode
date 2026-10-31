@@ -29,12 +29,12 @@ import { appAtomRegistry } from "../../rpc/atomRegistry";
 import { useServerConfigs } from "../../state/entities";
 import { readEnvironmentScope } from "../../state/session";
 import { threadEnvironment } from "../../state/threads";
-import {
-  ORCHESTRATION_OPERATE_DENIED_MESSAGE,
-  useOrchestrationCommand,
-} from "../../state/use-orchestration-command";
+import { useOrchestrationCommand } from "../../state/use-orchestration-command";
 import { archiveFailureTitle } from "./archiveFailure";
 import type { SidebarThreadSummary } from "../../types";
+
+// Same text as upstream's (private) denial in use-orchestration-command.
+const ORCHESTRATION_OPERATE_DENIED_MESSAGE = "This connection cannot change threads or projects.";
 
 function reportError(title: string, error: unknown) {
   toastManager.add(

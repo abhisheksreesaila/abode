@@ -1,8 +1,11 @@
+import {
+  getProjectOrderKey,
+  selectProjectGroupingSettings,
+} from "@t3tools/client-runtime/state/project-grouping";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
 
 import { orderItemsByPreferredIds } from "../../components/Sidebar.logic";
 import { useClientSettings } from "../../hooks/useSettings";
-import { getProjectOrderKey, selectProjectGroupingSettings } from "../../logicalProject";
 import { buildSidebarProjectSnapshots } from "../../sidebarProjectGrouping";
 import { useEnvironments, usePrimaryEnvironmentId } from "../../state/environments";
 import { useProjects, useServerConfigs, useThreadShells } from "../../state/entities";

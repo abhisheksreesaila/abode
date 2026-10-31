@@ -10,7 +10,6 @@ import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import { useClientSettings } from "~/hooks/useSettings";
 import { readLocalApi } from "~/localApi";
 import {
   legacyProjectCwdPreferenceKey,
@@ -26,7 +25,12 @@ import type { WorkspaceGroup } from "./useWorkspaceGroups";
 import { WorkspaceDrafts } from "./WorkspaceDrafts";
 import { WORKSPACE_REMOVE_MENU_ITEM } from "./workspaceRemoved";
 import { useRemovedWorkspacesStore } from "./workspaceRemovedStore";
-import { resolveWorkspacePill, visibleWorkspaceThreads, workspacePillView } from "./workspaceList";
+import {
+  WORKSPACE_PREVIEW_COUNT,
+  resolveWorkspacePill,
+  visibleWorkspaceThreads,
+  workspacePillView,
+} from "./workspaceList";
 import { renderedDraftIds, threadShellKey } from "./workspaceModel";
 
 // A shared empty list keeps ThreadRow's memo intact for sessions without subagents.
@@ -63,7 +67,6 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   const { threadKey: activeThreadKey, draftId: activeDraftId } = useAbodeActiveRoute();
   const router = useRouter();
   const handleNewThread = useNewThreadHandler();
-  const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
   const preferenceKeys = expansionPreferenceKeys(group);
   const expanded = useUiStateStore((state) =>
     resolveProjectExpanded(state.projectExpandedById, preferenceKeys),
@@ -95,7 +98,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
   const { rows: visibleThreads, window: threadWindow } = visibleWorkspaceThreads(group.threads, {
     expanded,
     showAll,
-    latest: previewCount,
+    latest: WORKSPACE_PREVIEW_COUNT,
     activeKey: activeThreadKey,
     keyOf: threadShellKey,
   });

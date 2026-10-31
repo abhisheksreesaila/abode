@@ -80,6 +80,7 @@ function ModelRow() {
   const refresh = () => {
     void readVoiceModelBytes().then(setBytes, () => setBytes(null));
   };
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- reads the downloaded voice model's size from browser storage on mount
   useEffect(refresh, [refresh]);
 
   const remove = () => {

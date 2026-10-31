@@ -19,7 +19,6 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { openCommandPalette, isCommandPaletteOpen } from "~/commandPaletteBus";
 import { composerDraftHasUserContent, DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { isElectron } from "~/env";
-import { useClientSettings } from "~/hooks/useSettings";
 import { useHandleNewThread } from "~/hooks/useHandleNewThread";
 import {
   resolveShortcutCommand,
@@ -50,7 +49,7 @@ import { useAbodeThreadActions } from "./useAbodeThreadActions";
 import { useWorkspaceGroups } from "./useWorkspaceGroups";
 import { shownWorkspaces, workspaceToRestore, type OpenWorkspace } from "./workspaceRemoved";
 import { useRemovedWorkspacesStore } from "./workspaceRemovedStore";
-import { jumpOrderKeys } from "./workspaceList";
+import { WORKSPACE_PREVIEW_COUNT, jumpOrderKeys } from "./workspaceList";
 import { draftIdsByWorkspace, threadShellKey } from "./workspaceModel";
 import { expansionPreferenceKeys, WorkspaceSection } from "./WorkspaceSection";
 import "./shell.css";
@@ -108,7 +107,6 @@ export function AbodeSidebar() {
       return next;
     });
   };
-  const previewCount = useClientSettings((settings) => settings.sidebarThreadPreviewCount);
 
   const threadByKey = new Map(
     groups.flatMap((group) => group.threads).map((t) => [threadShellKey(t), t]),
@@ -144,6 +142,7 @@ export function AbodeSidebar() {
         (activeDraftId !== null &&
           (draftIds[group.project.projectKey] ?? NO_DRAFTS).includes(activeDraftId)),
     )?.project.projectKey ?? null;
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- un-removes a workspace in the removed-workspaces store when navigation opens one of its threads
   useEffect(() => {
     const current =
       openRouteId !== null && openWorkspaceKey !== null
@@ -166,9 +165,10 @@ export function AbodeSidebar() {
       expanded: resolveProjectExpanded(projectExpandedById, expansionPreferenceKeys(group)),
       showAll: showAllByWorkspace.has(group.project.projectKey),
     })),
-    { latest: previewCount, activeKey: activeThreadKey, keyOf: threadShellKey },
+    { latest: WORKSPACE_PREVIEW_COUNT, activeKey: activeThreadKey, keyOf: threadShellKey },
   );
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window keydown listener for thread jump and previous/next shortcuts
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat || isCommandPaletteOpen() || isModelPickerOpen()) {

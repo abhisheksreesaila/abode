@@ -13,6 +13,7 @@ const BAR_COUNT = waveHeights(0).length;
  */
 export function ListeningWave({ level }: { level: () => number }) {
   const barsRef = useRef<HTMLSpanElement>(null);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- interval that writes the mic level into the bar elements' transforms while mounted
   useEffect(() => {
     const bars = barsRef.current?.children;
     if (!bars) return;

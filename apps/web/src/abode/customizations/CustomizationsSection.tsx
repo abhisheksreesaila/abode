@@ -163,11 +163,13 @@ function CustomizationFolders({ scope }: { readonly scope: CustomizationsScope }
   );
 
   // The editor tells user files from workspace ones by looking them up here.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- writes the listed customizations into the module registry the file editor looks paths up in
   useEffect(() => {
     if (items) rememberCustomizations(items);
   }, [items]);
 
   // Skills are edited on disk by Claude itself and by other tools: re-read when the window returns.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window focus listener that re-reads customizations edited on disk by other tools
   useEffect(() => {
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
@@ -305,6 +307,7 @@ export const CustomizationsSection = memo(function CustomizationsSection() {
   // The share the content-sized section takes now, for the handle's aria-valuenow.
   const [autoFraction, setAutoFraction] = useState(0.2);
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- observes the section and sidebar sizes to report the content-sized share for the resize handle
   useEffect(() => {
     const section = sectionRef.current;
     const container = sidebarOf(section);

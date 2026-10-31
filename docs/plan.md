@@ -372,3 +372,23 @@ Upstream `v0.1.3-nightly.20261025.3669` made Settings and Usage modals, added gu
 - **Acceptance:**
   - [ ] `vp lint apps/server/src/abode` is clean with no new disables.
   - [ ] The benchmark still runs on demand and prints its numbers.
+
+## Phase C: v0.1.6 sync (2026-10-30)
+
+Upstream `v0.1.6-nightly.20261031.3956` (966 commits, protocol still 2): new design on by default, simpler composer, thread state at the end of the timeline, linked environments (Labs), provider fallback when out of usage, Vercel fx provider, more file previews. Hook budget 399/400.
+
+### A-039: Merge v0.1.6 into abode
+
+- **Status:** review
+- **What:** branch `sync-v0.1.6`. 21 conflicts, all hook lines. Copied into `abode/` what upstream deleted or made private (`deriveActivePlanState`, PR tooltip, operate-denied text, the preview-count setting). Gave the 24 abode effects the reason upstream's new `no-unreasoned-state-sync` rule asks for. Added the LGPL-3.0 SPDX template the voice notice needs.
+- **Acceptance:**
+  - [x] Web and server typecheck; `vp lint` on abode is clean; abode web (45 files) and server tests pass; web and server production builds pass.
+  - [ ] Real app: sidebar, Control room, Calm table, chat cards, voice and Customizations Ctrl+S work on the new design.
+  - [ ] Reviewer passes it, then merge into `abode-next` and update the host (ask first).
+
+### A-040: knip passes on abode
+
+- **Status:** todo
+- **What:** the pre-commit `knip:check` fails (it already did before the v0.1.6 sync): abode's voice scripts and `voiceWorker.ts` are entry points knip can't trace, `sherpa-onnx-node` is loaded by the worker, and upstream's sidebar files are unused on purpose (we never delete upstream files). The fix is entries in `knip.jsonc`, which is an upstream file, and the hook budget is 399/400, so first free lines from another hook.
+- **Acceptance:**
+  - [ ] `vp run knip:check` passes with no new suppression of real unused code; hook report at or under 400.

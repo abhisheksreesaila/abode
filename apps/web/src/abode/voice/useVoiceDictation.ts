@@ -64,6 +64,7 @@ export function useVoiceDictation(input: {
   const onTranscriptRef = useRef(input.onTranscript);
   const { onTranscript } = input;
   const { canStart } = input;
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes the latest transcript handler, start gate and host voice to refs read by key listeners and async recorder callbacks
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
     canStartRef.current = canStart;
@@ -210,6 +211,7 @@ export function useVoiceDictation(input: {
   // Keep the screen awake while recording, so an idle screensaver or lock does not start while
   // the user talks without touching anything. Best effort: some browsers have no wake lock API.
   const recording = state.status === "recording";
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- holds a screen wake lock while recording and releases it when recording stops
   useEffect(() => {
     if (!recording || !("wakeLock" in navigator)) return;
     let released = false;
@@ -227,6 +229,7 @@ export function useVoiceDictation(input: {
     };
   }, [recording]);
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window keydown, keyup and blur listeners for the push-to-talk shortcut and Esc
   useEffect(() => {
     if (!enabled) {
       cancel();
@@ -266,6 +269,7 @@ export function useVoiceDictation(input: {
     };
   }, [begin, cancel, enabled, end, shortcut]);
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- timer that dismisses the error state after it has been visible long enough
   useEffect(() => {
     if (state.status !== "error") return;
     const timer = setTimeout(() => send({ type: "dismiss" }), ERROR_VISIBLE_MS);
@@ -273,6 +277,7 @@ export function useVoiceDictation(input: {
   }, [send, state]);
 
   // Release the mic if the composer unmounts mid-recording.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- releases the microphone and recorder if the composer unmounts mid-recording
   useEffect(() => cancel, [cancel]);
 
   const level = () => recorderRef.current?.level() ?? 0;

@@ -205,3 +205,6 @@ export function sessionPlace(thread: {
     branch: thread.branch,
   };
 }
+
+// Upstream dropped its sidebarThreadPreviewCount setting in 0.1.6; 6 was its default.
+export const WORKSPACE_PREVIEW_COUNT = 6;

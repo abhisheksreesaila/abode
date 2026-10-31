@@ -38,7 +38,7 @@ const store = VoiceModelStore.of({
   modelDir,
   archiveBytes: 1,
   installedBytes: Effect.succeed(1),
-  install: () => Effect.void,
+  install: Effect.fn("VoiceModelStore.install")(function* () {}),
 });
 const layer = Voice.layer.pipe(
   Layer.provide(VoiceRecognizerSherpa.layer),

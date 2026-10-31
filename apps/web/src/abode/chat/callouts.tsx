@@ -7,12 +7,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { abodeAlertValue } from "./calloutPlugin";
+import type { PluggableList } from "unified";
+
+import { abodeAlertValue, remarkAbodeCallouts } from "./calloutPlugin";
 import type { CardKind } from "./cards";
 import "./chat.css";
 import "./chatFlag";
 
-export { remarkAbodeCallouts } from "./calloutPlugin";
+/** Appends abode's callout plugin to each of upstream's shared (cached) remark plugin lists. */
+export function withAbodeCallouts<T extends Record<string, PluggableList>>(sets: T): T {
+  return Object.fromEntries(
+    Object.entries(sets).map(([key, list]) => [key, [...list, remarkAbodeCallouts]]),
+  ) as T;
+}
 
 /**
  * How upstream's blockquote renderer draws abode's callouts (same shape as its GitHub-alert

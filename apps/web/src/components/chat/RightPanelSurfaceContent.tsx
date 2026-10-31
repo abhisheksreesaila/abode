@@ -33,12 +33,12 @@ const DevicePanel = lazy(() =>
 // abode: A-006: routes customization files to the abode editor, everything else to upstream's panel
 const FilePreviewPanel = lazy(() => import("../../abode/customizations/FilePreviewPanelRouter"));
 
-export type RightPanelTerminalProps = Omit<
+type RightPanelTerminalProps = Omit<
   PersistentThreadTerminalPanelProps,
   "visible" | "threadRef" | "surface"
 >;
 
-export interface RightPanelPullRequestProps {
+interface RightPanelPullRequestProps {
   readonly capabilityKnown: boolean;
   readonly supported: boolean;
   readonly projectId: ProjectId | null;
@@ -48,7 +48,7 @@ export interface RightPanelPullRequestProps {
   readonly onBack: (() => void) | undefined;
 }
 
-export interface RightPanelFileProps {
+interface RightPanelFileProps {
   readonly projectName: string | null;
   readonly workspaceRoot: string | undefined;
   readonly availableEditors: ReadonlyArray<EditorId>;

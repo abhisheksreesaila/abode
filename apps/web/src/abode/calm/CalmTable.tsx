@@ -9,7 +9,7 @@ import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import ChatMarkdown from "~/components/ChatMarkdown";
 import { observeResize } from "~/lib/observeResize";
 import { resolveSidebarThreadStatus } from "~/components/Sidebar.logic";
-import { deriveActivePlanState } from "~/session-logic";
+import { deriveActivePlanState } from "~/abode/activePlan";
 import { useProject, useThreadProjection, useThreadShell } from "~/state/entities";
 
 import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
@@ -121,6 +121,7 @@ function Body({
 
   const rootRef = useRef<HTMLElement | null>(null);
   // Keep the last rows clear of the composer, which floats over the bottom of this area.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- observes the floating composer's height and writes it as a bottom inset on the table element
   useEffect(() => {
     const root = rootRef.current;
     const overlay = root?.parentElement?.parentElement?.querySelector<HTMLElement>(

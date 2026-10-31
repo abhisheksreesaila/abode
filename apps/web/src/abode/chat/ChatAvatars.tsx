@@ -51,6 +51,7 @@ function Avatars({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
   // The signature changes whenever a drawing does, which re-reads the hidden copies.
   const drawingSignature = JSON.stringify([helper, cast, helperName]);
   const handedOver = useRef("");
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- hands the hidden avatar drawings to the host element as CSS custom properties before paint
   useLayoutEffect(() => {
     const host = drawingsRef.current?.parentElement;
     const drawings = drawingsRef.current?.children;
@@ -66,6 +67,7 @@ function Avatars({ threadRef }: { readonly threadRef: ScopedThreadRef }) {
     host.style.setProperty("--abode-helper-avatar", asUrl(drawings[0]!));
     host.style.setProperty("--abode-boss-avatar", asUrl(drawings[1]!));
   }, [drawingSignature]);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- removes the avatar CSS custom properties from the host element on unmount
   useLayoutEffect(() => {
     const host = drawingsRef.current?.parentElement;
     return () => {

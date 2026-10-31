@@ -602,9 +602,11 @@ const make = Effect.gen(function* () {
     }
     // `wx` also fails if the file appears between the check and the write.
     yield* fileSystem
-      .writeFileString(realTarget, input.contents, {
-        ...(input.createOnly === true ? { flag: "wx" as const } : {}),
-      })
+      .writeFileString(
+        realTarget,
+        input.contents,
+        input.createOnly === true ? { flag: "wx" as const } : {},
+      )
       .pipe(Effect.mapError(fileError));
     return { path: resolvedPath, byteLength: Buffer.byteLength(input.contents) };
   });

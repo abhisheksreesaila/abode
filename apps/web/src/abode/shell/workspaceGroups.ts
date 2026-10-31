@@ -3,7 +3,7 @@ import type {
   SidebarProjectSnapshot,
 } from "../../sidebarProjectGrouping";
 import { sortSidebarV2ProjectGroups } from "../../components/Sidebar.logic";
-import { sortThreads } from "../../lib/threadSort";
+import { sortThreads } from "@t3tools/client-runtime/state/thread-sort";
 import type { SidebarThreadSummary } from "../../types";
 import { nestRunningSubagents } from "./subagentNesting";
 import { groupThreadsByWorkspace, workspaceDisplayName } from "./workspaceModel";
@@ -22,6 +22,9 @@ export interface WorkspaceGroup {
  * The workspace tree from upstream's project groups and thread shells: sorted
  * like upstream's sidebar, with subagents nested under their top-level session.
  */
+// Tasks run on linked environments (a Labs beta) stay top-level rows here.
+const NO_DELEGATED_TASKS: ReadonlySet<string> = new Set();
+
 export function buildWorkspaceGroups(input: {
   readonly snapshots: ReadonlyArray<SidebarProjectSnapshot>;
   readonly threads: ReadonlyArray<SidebarThreadSummary>;
@@ -29,7 +32,12 @@ export function buildWorkspaceGroups(input: {
   readonly threadSortOrder: Parameters<typeof sortThreads>[1];
   readonly isScratchMember: (member: SidebarProjectGroupMember) => boolean;
 }): WorkspaceGroup[] {
-  const sorted = sortSidebarV2ProjectGroups(input.snapshots, input.threads, input.projectSortOrder);
+  const sorted = sortSidebarV2ProjectGroups(
+    input.snapshots,
+    input.threads,
+    input.projectSortOrder,
+    NO_DELEGATED_TASKS,
+  );
   const { topLevel, runningByParentKey } = nestRunningSubagents(input.threads);
   const threadsByWorkspace = groupThreadsByWorkspace(sorted, topLevel);
   return sorted.map((project): WorkspaceGroup => {

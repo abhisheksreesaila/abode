@@ -1,7 +1,7 @@
 import type { OrchestrationV2ThreadProjection } from "@t3tools/contracts";
 import type { PendingThreadRequests } from "@t3tools/client-runtime/state/thread-requests";
 
-import { deriveActivePlanState } from "~/session-logic";
+import { deriveActivePlanState } from "~/abode/activePlan";
 
 import { batchRunIds, currentWork } from "../calm/planTable";
 import type { SessionDetail } from "./workspaceRows";
