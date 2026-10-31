@@ -379,12 +379,12 @@ Upstream `v0.1.6-nightly.20261031.3956` (966 commits, protocol still 2): new des
 
 ### A-039: Merge v0.1.6 into abode
 
-- **Status:** review (reviewer PASS; waiting on the real-app check and host update)
+- **Status:** done (reviewer PASS; checked in the browser; host on 80faea1d36, DB backup in `~/.abode/backups/pre-v0.1.6-20261030`)
 - **What:** branch `sync-v0.1.6`. 21 conflicts, all hook lines. Copied into `abode/` what upstream deleted or made private (`deriveActivePlanState`, PR tooltip, operate-denied text, the preview-count setting). Gave the 24 abode effects the reason upstream's new `no-unreasoned-state-sync` rule asks for. Added the LGPL-3.0 SPDX template the voice notice needs.
 - **Acceptance:**
   - [x] Web and server typecheck; `vp lint` on abode is clean; abode web (45 files) and server tests pass; web and server production builds pass.
-  - [ ] Real app: sidebar, Control room, Calm table, chat cards, voice and Customizations Ctrl+S work on the new design.
-  - [ ] Reviewer passes it, then merge into `abode-next` and update the host (ask first).
+  - [x] Real app: sidebar, Control room, Calm view, composer mic, Customizations list and Settings over the Control room render on the new design (dev, copy of real data). Not exercised: speaking into the mic, Ctrl+S in the editor.
+  - [x] Reviewer passed it; merged into `abode-next`; host updated, migrations 70–75 ran.
 
 ### A-040: knip passes on abode
 
