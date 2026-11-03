@@ -460,12 +460,12 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-048: Overview (P5)
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; checked in the browser: 13 workspaces fit 1440×900, meters + mascot, row click opens the workspace; milestones-since waits for A-049)
 - **Depends on:** A-043, A-044
 - **What:** ⊞ or `o` zooms out: hero line (need you · red · milestones since last look · sessions running), usage meters from the usage service (labelled estimates), one section per environment with its mascot (load face from `getHostResources`), rows sorted need → jam → move → quiet with mode icon, milestone bar and status word. Clicking a row zooms in. The omnibox target becomes "all workspaces".
 - **Acceptance:**
-  - [ ] Every workspace on both machines fits 1440 × 900 without scrolling.
-  - [ ] Resource polling runs only while the overview is open.
+  - [x] Every workspace on both machines fits 1440 × 900 without scrolling.
+  - [x] Resource polling runs only while the overview is open.
 
 ### A-049: Since you last looked (P5)
 
