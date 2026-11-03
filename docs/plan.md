@@ -484,9 +484,9 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-051: One Window at phone width
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; checked at 390×844: list → workspace → back, no sideways overflow, omnibox inside the viewport; desktop unchanged)
 - **What:** spec 6: at phone width the canvas is a workspace list, then the workspace with a back button, same omnibox; the Kit and design sessions show a one-line desktop-only note. Today the canvas overflows sideways at 390px and the sidebar sheet sits over it (checked 2026-11-03). The flag is per device, so phones without it are unaffected.
 - **Acceptance:**
-  - [ ] At 390 × 844: no sideways scroll, list → workspace → back works, omnibox usable, 48px targets.
+  - [x] At 390 × 844: no sideways scroll, list → workspace → back works, omnibox usable, 48px targets.
 
 Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.
