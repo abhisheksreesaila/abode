@@ -23,7 +23,7 @@ import {
 import { usageMeters, type OverviewWorkspace, type UsageMeter } from "./overviewModel";
 import type { CanvasWorkspace } from "./useCanvasWorkspaces";
 
-/** Done milestones each open Row read from plan.md; only filled while the overview is open. */
+/** Done milestones each Row last read from plan.md; rows overwrite their entry, nothing clears it. */
 const useLiveDoneStore = create<{
   readonly byWorkspace: Readonly<Record<string, ReadonlyArray<DoneMilestone>>>;
   publish: (workspaceKey: string, done: ReadonlyArray<DoneMilestone>) => void;

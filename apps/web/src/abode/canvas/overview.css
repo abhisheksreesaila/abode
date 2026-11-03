@@ -145,7 +145,8 @@
 [data-cv-ov-hero] p {
   margin: 0;
   flex: 1;
-  font-size: 20px;
+  white-space: nowrap;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--cv-ink-2);
@@ -168,7 +169,9 @@
 }
 [data-cv-ov-meters] {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 6px 10px;
 }
 [data-cv-ov-meter] {
   display: inline-flex;

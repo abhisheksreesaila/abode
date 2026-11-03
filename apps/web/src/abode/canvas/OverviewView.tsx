@@ -111,26 +111,6 @@ export function OverviewView(props: {
             <i>·</i>
             <b>{hero.running}</b> sessions running
           </p>
-          <div data-cv-ov-meters="" aria-label="Usage, estimate">
-            {meters.map((meter) => (
-              <span key={meter.driver} data-cv-ov-meter="">
-                <i
-                  data-cv-ov-dot=""
-                  style={{ background: METER_COLOUR[meter.driver] ?? "#a9a9b1" }}
-                />
-                {meter.name}
-                <span data-cv-ov-bar="">
-                  <i
-                    style={{
-                      width: `${Math.min(100, meter.percent)}%`,
-                      background: METER_COLOUR[meter.driver] ?? "#a9a9b1",
-                    }}
-                  />
-                </span>
-                {Math.round(meter.percent)}%<small>estimate</small>
-              </span>
-            ))}
-          </div>
         </div>
         {lastSeenAt !== null ? (
           <small data-cv-ov-seen="">
@@ -187,6 +167,26 @@ export function OverviewView(props: {
       </div>
       <aside data-cv-ov-feed="" aria-label="Since you last looked">
         <h3>Since you last looked</h3>
+        <div data-cv-ov-meters="" aria-label="Usage, estimate">
+          {meters.map((meter) => (
+            <span key={meter.driver} data-cv-ov-meter="">
+              <i
+                data-cv-ov-dot=""
+                style={{ background: METER_COLOUR[meter.driver] ?? "#a9a9b1" }}
+              />
+              {meter.name}
+              <span data-cv-ov-bar="">
+                <i
+                  style={{
+                    width: `${Math.min(100, meter.percent)}%`,
+                    background: METER_COLOUR[meter.driver] ?? "#a9a9b1",
+                  }}
+                />
+              </span>
+              {Math.round(meter.percent)}%<small>estimate</small>
+            </span>
+          ))}
+        </div>
         {feed.items.length === 0 ? (
           <p>
             {lastSeenAt === null
