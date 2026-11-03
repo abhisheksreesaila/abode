@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
-import { SidebarInset } from "~/components/ui/sidebar";
+import { SidebarInset, useSidebar } from "~/components/ui/sidebar";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
-import { useCanvasWorkspaces } from "./useCanvasWorkspaces";
+import { useCanvasWorkspaces, type CanvasWorkspace } from "./useCanvasWorkspaces";
+import { currentMilestoneName, planBlock } from "./planBlock";
+import { usePlanFile } from "./usePlanFile";
 import { workspaceInitials, type RailGroup } from "./railGroups";
 import { OmniboxBar } from "./omnibox/OmniboxBar";
 import { buildRouteContext, findSession } from "./omnibox/omniboxLogic";
@@ -15,6 +17,7 @@ import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
 import "./canvas.css";
 import "./modes.css";
+import "./phone.css";
 
 const GROUP_LABEL: Record<RailGroup, string> = {
   need: "needs you",
@@ -23,11 +26,46 @@ const GROUP_LABEL: Record<RailGroup, string> = {
   quiet: "quiet",
 };
 
+const PHONE_QUERY = "(max-width: 640px)";
+const subscribePhone = (notify: () => void) => {
+  const query = window.matchMedia(PHONE_QUERY);
+  query.addEventListener("change", notify);
+  return () => query.removeEventListener("change", notify);
+};
+const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
+
+/** One phone list row (spec 6): initials, name, status word, current milestone. */
+function PhoneRow(props: { readonly workspace: CanvasWorkspace; readonly onOpen: () => void }) {
+  const { workspace, onOpen } = props;
+  const root = workspace.newSessionTarget;
+  const file = usePlanFile(root?.environmentId, root?.workspaceRoot, workspace.turnSignal);
+  const milestone = file.pending ? undefined : currentMilestoneName(planBlock(file));
+  return (
+    <button type="button" data-cv-prow="" data-group={workspace.group} onClick={onOpen}>
+      <span data-cv-ptile="">{workspaceInitials(workspace.name)}</span>
+      <span data-cv-ptext="">
+        <b>{workspace.name}</b>
+        {milestone ? <span>{milestone}</span> : null}
+      </span>
+      {workspace.group === "need" ? <i data-cv-dot="" aria-hidden /> : null}
+      <span data-cv-pstatus="">{GROUP_LABEL[workspace.group]}</span>
+    </button>
+  );
+}
+
 /** One Window (flag on): top bar, workspace rail, workspace view and omnibox. */
 export function CanvasShell() {
   const { workspaces, hidden } = useCanvasWorkspaces();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = workspaces.find((workspace) => workspace.key === selectedKey) ?? workspaces[0];
+  const phone = useSyncExternalStore(subscribePhone, isPhone, () => false);
+  const [phoneView, setPhoneView] = useState<"list" | "workspace">("list");
+  const { isMobile, setOpenMobile } = useSidebar();
+  // Upstream's mobile sidebar sheet stays open after its logo link navigates here.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- closes an overlay owned by the sidebar
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+  }, [isMobile, setOpenMobile]);
   const [overview, setOverview] = useState(false);
   const closeOverview = () => {
     if (overview) useLastSeenStore.getState().markSeen();
@@ -54,6 +92,7 @@ export function CanvasShell() {
     <SidebarInset
       data-cv-root=""
       data-overview={overview ? "" : undefined}
+      data-cv-phone={phone ? phoneView : undefined}
       className="h-dvh min-h-0 overflow-hidden overscroll-y-none"
     >
       <header data-cv-top="">
@@ -134,9 +173,31 @@ export function CanvasShell() {
             +
           </button>
         </nav>
-        <main data-cv-main="" data-mode={targetMode ?? undefined}>
-          {selected ? <WorkspaceView workspace={selected} /> : <h2>No workspace</h2>}
-        </main>
+        {phone && phoneView === "list" ? (
+          <nav data-cv-plist="" aria-label="Workspaces">
+            {workspaces.map((workspace) => (
+              <PhoneRow
+                key={workspace.key}
+                workspace={workspace}
+                onOpen={() => {
+                  setSelectedKey(workspace.key);
+                  setPhoneView("workspace");
+                }}
+              />
+            ))}
+          </nav>
+        ) : (
+          <main data-cv-main="" data-mode={targetMode ?? undefined}>
+            {selected ? (
+              <WorkspaceView
+                workspace={selected}
+                onBack={phone ? () => setPhoneView("list") : undefined}
+              />
+            ) : (
+              <h2>No workspace</h2>
+            )}
+          </main>
+        )}
       </div>
       {overview ? (
         <OverviewView

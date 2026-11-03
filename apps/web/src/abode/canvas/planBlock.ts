@@ -24,3 +24,10 @@ export function planBlock(state: PlanFileState): PlanBlock {
   if (state.error !== null) return { kind: "error", message: state.error };
   return { kind: "loading" };
 }
+
+/** The milestone in progress, for the phone list row; undefined while loading or without a plan. */
+export function currentMilestoneName(block: PlanBlock): string | undefined {
+  return block.kind === "ready"
+    ? block.rows.find((row) => row.state === "current")?.name
+    : undefined;
+}

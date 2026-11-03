@@ -130,8 +130,12 @@ function PlanBody(props: { readonly block: PlanBlock }) {
 }
 
 /** The selected workspace: its name and menu, then one pill per live session, "N done" and "+". */
-export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
-  const { workspace } = props;
+export function WorkspaceView(props: {
+  readonly workspace: CanvasWorkspace;
+  /** Phone only: back to the workspace list. */
+  readonly onBack?: (() => void) | undefined;
+}) {
+  const { workspace, onBack } = props;
   const router = useRouter();
   const handleNewThread = useNewThreadHandler();
   const [showDone, setShowDone] = useState(false);
@@ -194,6 +198,11 @@ export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
   return (
     <div data-cv-ws="" data-fresh={fresh ? "" : undefined}>
       <div data-cv-head="">
+        {onBack ? (
+          <button type="button" data-cv-back="" onClick={onBack}>
+            ← workspaces
+          </button>
+        ) : null}
         <h2>{workspace.name}</h2>
         <Menu>
           <MenuTrigger data-cv-xbtn="" aria-label="Workspace menu">

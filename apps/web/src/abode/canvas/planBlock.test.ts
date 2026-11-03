@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { planBlock } from "./planBlock";
+import { currentMilestoneName, planBlock } from "./planBlock";
 
 const PLAN = `Goal: ship it
 
@@ -43,5 +43,11 @@ describe("planBlock", () => {
     expect(block.rows.map((r) => [r.key, r.state, r.done, r.total])).toEqual([
       ["0-First", "current", 1, 2],
     ]);
+  });
+
+  it("names the current milestone for the phone list, and nothing without a plan", () => {
+    const block = planBlock({ error: null, file: { exists: true, contents: PLAN } });
+    expect(currentMilestoneName(block)).toBe("First");
+    expect(currentMilestoneName({ kind: "missing" })).toBeUndefined();
   });
 });
