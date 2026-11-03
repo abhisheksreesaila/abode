@@ -60,6 +60,8 @@ export function CanvasShell() {
   const selected = workspaces.find((workspace) => workspace.key === selectedKey) ?? workspaces[0];
   const phone = useSyncExternalStore(subscribePhone, isPhone, () => false);
   const [phoneView, setPhoneView] = useState<"list" | "workspace">("list");
+  // Phone shows the workspace only while the chosen one still exists; otherwise the list.
+  const showWorkspace = phoneView === "workspace" && workspaces.some((w) => w.key === selectedKey);
   const { isMobile, setOpenMobile } = useSidebar();
   // Upstream's mobile sidebar sheet stays open after its logo link navigates here.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- closes an overlay owned by the sidebar
@@ -92,7 +94,6 @@ export function CanvasShell() {
     <SidebarInset
       data-cv-root=""
       data-overview={overview ? "" : undefined}
-      data-cv-phone={phone ? phoneView : undefined}
       className="h-dvh min-h-0 overflow-hidden overscroll-y-none"
     >
       <header data-cv-top="">
@@ -173,8 +174,9 @@ export function CanvasShell() {
             +
           </button>
         </nav>
-        {phone && phoneView === "list" ? (
+        {phone && !showWorkspace ? (
           <nav data-cv-plist="" aria-label="Workspaces">
+            {workspaces.length === 0 ? <p data-cv-pempty="">No workspaces yet</p> : null}
             {workspaces.map((workspace) => (
               <PhoneRow
                 key={workspace.key}
