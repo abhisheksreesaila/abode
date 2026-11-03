@@ -20,6 +20,8 @@ export interface CanvasWorkspace {
   readonly sessions: SessionPills;
   /** Where "+" starts a session: the first member project, like the sidebar's "+". */
   readonly newSessionTarget: SidebarProjectGroupMember | undefined;
+  /** Changes when any session finishes a run: the plan block re-reads plan.md then. */
+  readonly turnSignal: string;
 }
 
 export interface HiddenWorkspace {
@@ -59,6 +61,7 @@ export function useCanvasWorkspaces(): {
           driverOf: (thread) => driverByInstance.get(thread.modelSelection.instanceId),
         }),
         newSessionTarget: group.project.memberProjects[0],
+        turnSignal: group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|"),
       }),
     ),
   );

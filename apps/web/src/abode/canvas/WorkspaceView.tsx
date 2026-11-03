@@ -9,7 +9,10 @@ import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
+import { planBlock, type PlanBlock } from "./planBlock";
+import type { Milestone, Ticket } from "./plan/parsePlan";
 import type { SessionPill } from "./sessionPills";
+import { usePlanFile } from "./usePlanFile";
 import type { CanvasWorkspace } from "./useCanvasWorkspaces";
 
 /** Autopilot for every session until the mode picker lands (A-045): a paper plane. */
@@ -47,6 +50,74 @@ function Pill(props: { readonly pill: SessionPill; readonly onOpen: () => void }
   );
 }
 
+const GLYPH: Record<Ticket["state"], string> = {
+  done: "✓",
+  running: "●",
+  stopped: "‖",
+  failed: "✕",
+  todo: "○",
+};
+
+function MilestoneRow(props: { readonly milestone: Milestone }) {
+  const { milestone } = props;
+  const [open, setOpen] = useState<boolean | null>(null);
+  const expanded = open ?? milestone.state === "current";
+  return (
+    <div data-cv-ms="" data-state={milestone.state}>
+      <button
+        type="button"
+        data-cv-mh=""
+        aria-expanded={expanded}
+        onClick={() => setOpen(!expanded)}
+      >
+        <i data-cv-mi="" aria-hidden />
+        <b>{milestone.name}</b>
+        <span data-cv-ct="">
+          {milestone.done}/{milestone.total}
+        </span>
+      </button>
+      <div data-cv-mbody="" data-open={expanded ? "" : undefined}>
+        <ul>
+          {milestone.tickets.map((ticket) => (
+            <li key={ticket.id} data-state={ticket.state}>
+              <span data-cv-ic="" aria-hidden>
+                {GLYPH[ticket.state]}
+              </span>
+              <span data-cv-tn="">{ticket.name}</span>
+              {ticket.note ? <span data-cv-nt="">{ticket.note}</span> : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function PlanBody(props: { readonly block: PlanBlock }) {
+  const { block } = props;
+  if (block.kind === "loading") {
+    return (
+      <div data-cv-plan-skel="" aria-busy aria-label="Loading plan">
+        <i />
+        <i />
+        <i />
+      </div>
+    );
+  }
+  if (block.kind === "missing") return <p data-cv-plan-note="">no plan yet</p>;
+  if (block.kind === "error") {
+    return <p data-cv-plan-note="">Could not read the plan: {block.message}</p>;
+  }
+  return (
+    <>
+      {block.goal ? <p data-cv-goal="">Goal: {block.goal}</p> : null}
+      {block.rows.map((milestone) => (
+        <MilestoneRow key={milestone.key} milestone={milestone} />
+      ))}
+    </>
+  );
+}
+
 /** The selected workspace: its name and menu, then one pill per live session, "N done" and "+". */
 export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
   const { workspace } = props;
@@ -55,6 +126,9 @@ export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
   const [showDone, setShowDone] = useState(false);
   const [fresh, setFresh] = useState(false);
   const { pills, done, doneCount } = workspace.sessions;
+  const root = workspace.newSessionTarget;
+  const planFile = usePlanFile(root?.environmentId, root?.workspaceRoot, workspace.turnSignal);
+  const plan: PlanBlock = planFile.pending ? { kind: "loading" } : planBlock(planFile);
 
   const open = (pill: SessionPill) => {
     void router.navigate({
@@ -129,6 +203,9 @@ export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
           +
         </button>
       </div>
+      <section data-cv-plan="" aria-label="Plan">
+        <PlanBody block={plan} />
+      </section>
     </div>
   );
 }

@@ -421,3 +421,163 @@ main[data-cv-root] {
 [data-cv-in]::placeholder {
   color: var(--cv-ink-2);
 }
+
+/* Plan block (A-044): milestones of docs/plan.md, scrolling inside its card. Settle tier, no bounce. */
+[data-cv-ws] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+[data-cv-plan] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+[data-cv-goal] {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--cv-ink-2);
+}
+[data-cv-plan-note] {
+  margin: 4px 0;
+  font:
+    500 12px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--cv-ink-2);
+}
+[data-cv-plan-skel] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+[data-cv-plan-skel] i {
+  height: 14px;
+  border-radius: 6px;
+  background: rgb(237 237 239 / 0.06);
+}
+[data-cv-ms] {
+  border-radius: 10px;
+}
+[data-cv-ms][data-state="current"] {
+  background: rgb(139 123 255 / 0.06);
+}
+[data-cv-mh] {
+  width: 100%;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--cv-ink);
+  cursor: pointer;
+}
+[data-cv-mh]:hover {
+  background: rgb(237 237 239 / 0.05);
+}
+[data-cv-mh] b {
+  font-size: 13.5px;
+  font-weight: 650;
+  min-width: 0;
+}
+[data-cv-ms][data-state="done"] [data-cv-mh] b {
+  color: var(--cv-ink-2);
+  font-weight: 600;
+}
+[data-cv-ct] {
+  margin-left: auto;
+  font:
+    500 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--cv-ink-2);
+}
+[data-cv-mi] {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: inset 0 0 0 1.5px var(--cv-line);
+}
+[data-cv-ms][data-state="done"] [data-cv-mi] {
+  background: #3fb97a;
+  box-shadow: none;
+}
+[data-cv-ms][data-state="current"] [data-cv-mi] {
+  background: var(--cv-autopilot);
+  box-shadow: 0 0 0 3px rgb(139 123 255 / 0.28);
+}
+/* Expand in place: the row grows and the rows below make way. */
+[data-cv-mbody] {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.22s ease;
+}
+[data-cv-mbody][data-open] {
+  grid-template-rows: 1fr;
+}
+[data-cv-mbody] ul {
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 0 28px;
+}
+[data-cv-mbody][data-open] ul {
+  padding-bottom: 8px;
+}
+[data-cv-mbody] li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 3px 0;
+}
+[data-cv-ic] {
+  width: 14px;
+  flex: none;
+  text-align: center;
+  font:
+    700 12px "Geist Mono",
+    ui-monospace,
+    monospace;
+}
+li[data-state="done"] [data-cv-ic] {
+  color: #3fb97a;
+}
+li[data-state="done"] [data-cv-tn] {
+  color: var(--cv-ink-2);
+}
+li[data-state="running"] [data-cv-ic] {
+  color: var(--cv-autopilot);
+}
+li[data-state="stopped"] [data-cv-ic] {
+  color: var(--cv-warn);
+}
+li[data-state="failed"] [data-cv-ic] {
+  color: #ef5350;
+}
+li[data-state="todo"] [data-cv-ic] {
+  color: var(--cv-ink-2);
+  font-weight: 400;
+}
+[data-cv-nt] {
+  margin-left: auto;
+  font:
+    500 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--cv-ink-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-cv-mbody] {
+    transition: none;
+  }
+}
