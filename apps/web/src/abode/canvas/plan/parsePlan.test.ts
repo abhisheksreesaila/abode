@@ -23,7 +23,7 @@ Status: todo | doing | blocked | review | done
 
 - **Status:** review (reviewer PASS, merged. Needs Abhishek to look)
 
-## Phase B: the abode chat
+## Phase B: the abode chat (brief: docs/briefs/chat-revamp.md)
 
 ### A-009: Cards in the chat
 
@@ -72,23 +72,26 @@ describe("parsePlan", () => {
     expect(parsePlan(REPO_STYLE)).toEqual({
       milestones: [
         {
+          key: "0-the engine is upstream",
           name: "the engine is upstream",
-          state: "current",
-          done: 1,
+          state: "done",
+          done: 2,
           total: 2,
           tickets: [
             { id: "A-001", name: "Sync strategy and tooling", state: "done" },
             {
               id: "A-002",
               name: "abode theme and fonts",
-              state: "running",
+              state: "done",
               note: "reviewer PASS, merged. Needs Abhishek to look",
             },
           ],
         },
         {
+          key: "1-the abode chat",
           name: "the abode chat",
-          state: "todo",
+          detail: "brief: docs/briefs/chat-revamp.md",
+          state: "current",
           done: 0,
           total: 3,
           tickets: [
@@ -121,7 +124,7 @@ describe("parsePlan", () => {
   });
 
   it("maps every status word and falls back to todo", () => {
-    const md = ["todo", "doing", "blocked", "review", "done", "wat"]
+    const md = ["todo", "DOING", "blocked", "review", "done", "wat"]
       .map((s, i) => `### T-00${i}: t${i}\n\n- **Status:** ${s}\n`)
       .join("\n");
     const plan = parsePlan(`## Milestone: M\n\n${md}`);
@@ -129,7 +132,7 @@ describe("parsePlan", () => {
       "todo",
       "running",
       "stopped",
-      "running",
+      "done",
       "done",
       "todo",
     ]);
@@ -142,5 +145,79 @@ describe("parsePlan", () => {
 
   it("returns no milestones for an empty string", () => {
     expect(parsePlan("")).toEqual({ milestones: [] });
+  });
+
+  it("picks the last started unfinished milestone as current; stale ones stay todo", () => {
+    const md = `## Phase A: old
+### A-1: a
+- **Status:** done
+### A-2: b
+- **Status:** todo
+
+## Phase B: stale
+### B-1: a
+- **Status:** review (awaiting look)
+### B-2: b
+- **Status:** todo
+
+## Phase B: later
+### C-1: a
+- **Status:** done
+### C-2: b
+- **Status:** todo
+### C-3: c
+- **Status:** todo
+`;
+    const { milestones } = parsePlan(md);
+    expect(milestones.map((m) => [m.key, m.state])).toEqual([
+      ["0-old", "todo"],
+      ["1-stale", "todo"],
+      ["2-later", "current"],
+    ]);
+  });
+
+  it("falls back to the first unfinished milestone when none has started", () => {
+    const md =
+      "## Milestone: A\n### A-1: a\n- **Status:** todo\n## Milestone: B\n### B-1: b\n- **Status:** todo\n";
+    expect(parsePlan(md).milestones.map((m) => m.state)).toEqual(["current", "todo"]);
+  });
+
+  it("keeps a note without parentheses", () => {
+    const md = "## Milestone: M\n### T-1: a\n- **Status:** blocked needs a key\n";
+    expect(parsePlan(md).milestones[0]!.tickets[0]).toEqual({
+      id: "T-1",
+      name: "a",
+      state: "stopped",
+      note: "needs a key",
+    });
+  });
+
+  it("drops milestones without tickets and uses the first Goal", () => {
+    const md =
+      "Goal: one\nGoal: two\n## Milestone: Empty\n## Milestone: Full\n### T-1: a\n- **Status:** todo\n";
+    const plan = parsePlan(md);
+    expect(plan.goal).toBe("one");
+    expect(plan.milestones.map((m) => m.name)).toEqual(["Full"]);
+  });
+
+  it("leaves a ticket todo when its status line is missing or not directly beneath", () => {
+    const md = "## Milestone: M\n### T-1: a\n\n- **What:** x\n- **Status:** done\n### T-2: b\n";
+    expect(parsePlan(md).milestones[0]!.tickets.map((t) => t.state)).toEqual(["todo", "todo"]);
+  });
+
+  it("ignores tickets inside HTML comments and fenced code", () => {
+    const md = [
+      "## Milestone: M",
+      "<!--",
+      "### X-1: hidden",
+      "- **Status:** done",
+      "-->",
+      "```",
+      "### X-2: sample",
+      "```",
+      "### X-3: real",
+      "- **Status:** todo",
+    ].join("\n");
+    expect(parsePlan(md).milestones[0]!.tickets.map((t) => t.id)).toEqual(["X-3"]);
   });
 });
