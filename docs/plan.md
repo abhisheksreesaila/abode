@@ -424,7 +424,7 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-044: Milestones from plan.md (P1)
 
-- **Status:** todo
+- **Status:** doing (parser merged after reviewer PASS: review counts as done, current = last started unfinished milestone; plan block UI next)
 - **Depends on:** A-042
 - **What:** read the project's `docs/plan.md` through the existing filesystem read RPC; parse a `Goal:` line and `## Milestone: <name>` headings with their `### X-NNN` tickets and statuses into done / current / todo milestones. The plan block shows one row per milestone; the current one expands to its tickets (✓ ● ‖ ✕ ○). Projects without milestones show their phases as milestones; projects without a plan.md show "no plan yet".
 - **Acceptance:**
