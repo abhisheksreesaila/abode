@@ -236,6 +236,7 @@ describe("parsePlan, [status] format", () => {
 ## F-056 Big data never fails [doing] (owner: next after F-188)
 ## F-191 SQL honours GPU [todo, started and paused 2026-10-28] (found by F-162)
 ## F-190 Decimal read [done 2026-10-28]
+## F-060c Integer MIN / MAX return int64 [done]
 
 # Later (brief docs/x.md, approved)
 
@@ -246,7 +247,7 @@ describe("parsePlan, [status] format", () => {
     const plan = parsePlan(FORMAT_C);
     expect(plan.milestones.map((m) => [m.name, m.state, m.done, m.total])).toEqual([
       ["Plan", "todo", 1, 2],
-      ["Engine v1", "current", 2, 4],
+      ["Engine v1", "current", 3, 5],
       ["Later", "todo", 0, 1],
     ]);
   });
@@ -258,6 +259,7 @@ describe("parsePlan, [status] format", () => {
       ["F-056", "running", "owner: next after F-188"],
       ["F-191", "todo", "found by F-162"],
       ["F-190", "done", undefined],
+      ["F-060c", "done", undefined],
     ]);
   });
 

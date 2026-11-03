@@ -41,7 +41,7 @@ const GOAL = /^Goal:\s*(.+?)\s*$/;
 const H2 = /^##\s+(.*?)\s*$/;
 const MILESTONE = /^Milestone:\s*(.+)$/;
 const PHASE = /^Phase\s+\S+?:\s*(.+)$/;
-const TICKET = /^###\s+([A-Za-z]+-\d+):\s*(.*?)\s*$/;
+const TICKET = /^###\s+([A-Za-z]+-\d+[a-z]?):\s*(.*?)\s*$/;
 const STATUS = /^-\s+\*\*Status:\*\*\s*(\w+)\s*(?:\((.*)\)|(.*))?$/;
 
 const NAME_DETAIL = /^(.*?)\s*\((.*)\)\s*$/;
@@ -73,8 +73,8 @@ function plainLines(markdown: string): string[] {
 }
 
 const H1 = /^#\s+(.*?)\s*$/;
-const TICKET_C = /^##\s+([A-Za-z]+-\d+)\s+(.*?)\s*\[(\w+)[^\]]*\]\s*(?:\((.*)\)|(.*))?$/;
-const TICKET_AB = /^###\s+[A-Za-z]+-\d+:/m;
+const TICKET_C = /^##\s+([A-Za-z]+-\d+[a-z]?)\s+(.*?)\s*\[(\w+)[^\]]*\]\s*(?:\((.*)\)|(.*))?$/;
+const TICKET_AB = /^###\s+[A-Za-z]+-\d+[a-z]?:/m;
 
 type Group = { name: string; detail?: string; tickets: Ticket[] };
 
