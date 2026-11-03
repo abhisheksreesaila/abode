@@ -424,12 +424,12 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-044: Milestones from plan.md (P1)
 
-- **Status:** doing (parser merged after reviewer PASS: review counts as done, current = last started unfinished milestone; plan block UI next)
+- **Status:** done (reviewer PASS; reads all three plan formats; checked in the browser on travelos and mxframe)
 - **Depends on:** A-042
 - **What:** read the project's `docs/plan.md` through the existing filesystem read RPC; parse a `Goal:` line and `## Milestone: <name>` headings with their `### X-NNN` tickets and statuses into done / current / todo milestones. The plan block shows one row per milestone; the current one expands to its tickets (✓ ● ‖ ✕ ○). Projects without milestones show their phases as milestones; projects without a plan.md show "no plan yet".
 - **Acceptance:**
-  - [ ] Parser tested on this repo's plan.md, a milestone-style plan, and a missing file.
-  - [ ] Format documented in one paragraph at the top of the parser so agents can follow it.
+  - [x] Parser tested on this repo's plan.md, a milestone-style plan, and a missing file.
+  - [x] Format documented in one paragraph at the top of the parser so agents can follow it.
 
 ### A-045: Per-session mode and its blocks (P1)
 
