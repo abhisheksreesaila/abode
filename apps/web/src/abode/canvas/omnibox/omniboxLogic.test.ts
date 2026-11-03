@@ -4,7 +4,9 @@ import {
   buildRouteContext,
   decideSend,
   findSession,
+  afterPreviewSend,
   omniboxKeyAction,
+  textAfter,
   type CtxWorkspace,
 } from "./omniboxLogic";
 
@@ -169,6 +171,7 @@ describe("omniboxKeyAction", () => {
     mod: false,
     typing: false,
     inOmnibox: false,
+    previewOpen: false,
     drawerOpen: false,
     layerOpen: false,
   };
@@ -177,14 +180,43 @@ describe("omniboxKeyAction", () => {
     expect(omniboxKeyAction({ ...base, key: "/", typing: true })).toBeNull();
     expect(omniboxKeyAction({ ...base, key: "/", mod: true })).toBeNull();
   });
-  it("Esc closes the drawer first, then blurs the omnibox, and leaves open popups alone", () => {
-    expect(omniboxKeyAction({ ...base, key: "Escape", drawerOpen: true, inOmnibox: true })).toBe(
-      "close-drawer",
-    );
-    expect(omniboxKeyAction({ ...base, key: "Escape", inOmnibox: true })).toBe("blur");
+  it("`/` is ignored while typing in any field", () => {
+    expect(omniboxKeyAction({ ...base, key: "/", typing: true, inOmnibox: true })).toBeNull();
+  });
+  it("Esc goes layer, then preview, then drawer, then blur", () => {
+    const all = { ...base, key: "Escape", inOmnibox: true, previewOpen: true, drawerOpen: true };
+    expect(omniboxKeyAction({ ...all, layerOpen: true })).toBeNull();
+    expect(omniboxKeyAction(all)).toBe("close-preview");
+    expect(omniboxKeyAction({ ...all, previewOpen: false })).toBe("close-drawer");
+    expect(omniboxKeyAction({ ...all, previewOpen: false, drawerOpen: false })).toBe("blur");
     expect(omniboxKeyAction({ ...base, key: "Escape" })).toBeNull();
-    expect(
-      omniboxKeyAction({ ...base, key: "Escape", drawerOpen: true, layerOpen: true }),
-    ).toBeNull();
+  });
+});
+
+describe("textAfter", () => {
+  it("clears on success and keeps the text on failure", () => {
+    expect(textAfter("ship it", true)).toBe("");
+    expect(textAfter("ship it", false)).toBe("ship it");
+  });
+});
+
+describe("afterPreviewSend", () => {
+  const item = (key: string) => ({
+    workspaceKey: key,
+    workspaceName: key,
+    sessionId: `${key}-1`,
+    sessionTitle: "t",
+  });
+  const items = [item("a"), item("b"), item("c")];
+  it("keeps only the failed workspaces and the text", () => {
+    const out = afterPreviewSend(items, [true, false, false]);
+    expect(out.remaining.map((i) => i.workspaceKey)).toEqual(["b", "c"]);
+    expect(out.clearInput).toBe(false);
+  });
+  it("clears everything when all succeed", () => {
+    expect(afterPreviewSend(items, [true, true, true])).toEqual({
+      remaining: [],
+      clearInput: true,
+    });
   });
 });

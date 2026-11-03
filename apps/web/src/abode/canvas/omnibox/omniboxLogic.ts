@@ -125,19 +125,37 @@ export function decideSend(input: string, ctx: RouteContext): SendDecision {
   return { kind: "send", workspaceKey: target.workspaceKey, sessionId: target.sessionId, text };
 }
 
-export type OmniboxKeyAction = "focus" | "close-drawer" | "blur" | null;
+export type OmniboxKeyAction = "focus" | "close-preview" | "close-drawer" | "blur" | null;
 
-/** `/` focuses the omnibox when not typing elsewhere; Esc closes the drawer, then blurs. */
+/**
+ * `/` focuses the omnibox unless typing in any field. Esc closes the top-most layer only:
+ * an open popup (left to itself), then the preview, then the drawer, then blurs the omnibox.
+ */
 export function omniboxKeyAction(event: {
   readonly key: string;
   readonly mod: boolean;
   readonly typing: boolean;
   readonly inOmnibox: boolean;
+  readonly previewOpen: boolean;
   readonly drawerOpen: boolean;
   readonly layerOpen: boolean;
 }): OmniboxKeyAction {
   if (event.key === "/") return event.mod || event.typing ? null : "focus";
   if (event.key !== "Escape" || event.layerOpen) return null;
+  if (event.previewOpen) return "close-preview";
   if (event.drawerOpen) return "close-drawer";
   return event.inOmnibox ? "blur" : null;
+}
+
+/** The input is cleared only when the command or send actually went through. */
+export const textAfter = (current: string, succeeded: boolean): string =>
+  succeeded ? "" : current;
+
+/** After sending a preview: only the workspaces that failed stay (never resend the rest). */
+export function afterPreviewSend(
+  items: ReadonlyArray<PreviewItem>,
+  results: ReadonlyArray<boolean>,
+): { readonly remaining: ReadonlyArray<PreviewItem>; readonly clearInput: boolean } {
+  const remaining = items.filter((_, index) => results[index] !== true);
+  return { remaining, clearInput: remaining.length === 0 };
 }

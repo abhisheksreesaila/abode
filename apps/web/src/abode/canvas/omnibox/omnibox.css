@@ -256,3 +256,27 @@
   opacity: 0.4;
   cursor: default;
 }
+
+/* Touch: 48px hit areas; the ::after grows the target without changing the look. */
+@media (pointer: coarse) {
+  [data-cvo-chip],
+  [data-cvo-send],
+  [data-cvo-x],
+  [data-cvo-btn] {
+    position: relative;
+  }
+  [data-cvo-chip]::after,
+  [data-cvo-send]::after,
+  [data-cvo-x]::after,
+  [data-cvo-btn]::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    min-width: 100%;
+    min-height: 48px;
+    width: max(100%, 48px);
+    height: 48px;
+    transform: translate(-50%, -50%);
+  }
+}

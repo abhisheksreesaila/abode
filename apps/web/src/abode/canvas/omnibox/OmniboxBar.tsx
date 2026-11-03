@@ -23,7 +23,9 @@ import {
   buildRouteContext,
   decideSend,
   findSession,
+  afterPreviewSend,
   omniboxKeyAction,
+  textAfter,
   type PreviewItem,
 } from "./omniboxLogic";
 import { ModeIcon } from "../ModeVisuals";
@@ -72,9 +74,18 @@ export function OmniboxBar(props: {
     modeOf,
   });
   const drawer = drawerKey ? findSession(workspaces, drawerKey) : null;
+  const previewOpen = preview !== null;
   const pinValid = pinned !== undefined && findSession(workspaces, pinned) !== null;
 
-  // Capture phase, so Esc closes this layer before the overview's own Esc handler sees it.
+  // The preview only exists in the overview, for sessions that are still there.
+  if (preview) {
+    const live = preview.items.filter((item) => findSession(workspaces, item.sessionId));
+    if (!overview || live.length === 0) setPreview(null);
+    else if (live.length !== preview.items.length) setPreview({ ...preview, items: live });
+  }
+
+  // Capture phase and preventDefault: the overview's Esc handler skips defaultPrevented keys,
+  // so one Esc closes only this layer.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window key listener for "/" and Esc
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -83,18 +94,20 @@ export function OmniboxBar(props: {
         mod: event.metaKey || event.ctrlKey || event.altKey,
         typing: isTyping(event.target),
         inOmnibox: event.target === inputRef.current,
+        previewOpen: previewOpen,
         drawerOpen: drawerKey !== null,
         layerOpen: event.key === "Escape" && isLayerOpen(),
       });
       if (action === null) return;
       event.preventDefault();
       if (action === "focus") inputRef.current?.focus();
+      else if (action === "close-preview") setPreview(null);
       else if (action === "close-drawer") setDrawerKey(null);
       else inputRef.current?.blur();
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [drawerKey]);
+  }, [drawerKey, previewOpen]);
 
   const sendTo = async (workspaceKey: string, sessionId: string | null, message: string) => {
     const hit = sessionId ? findSession(workspaces, sessionId) : null;
@@ -112,62 +125,71 @@ export function OmniboxBar(props: {
     return error === null;
   };
 
-  const runDecision = async () => {
+  /** Resolves whether the command or send went through; only then is the input cleared. */
+  const runDecision = async (): Promise<boolean> => {
     const decision = decideSend(text, ctx);
     if (decision.kind === "preview") {
       if (decision.items.length === 0) toast("info", "No workspace has a session to send to");
       else setPreview({ text: decision.text, items: decision.items });
-      return;
+      return false;
     }
     if (decision.kind === "send") {
-      if (await sendTo(decision.workspaceKey, decision.sessionId, decision.text)) {
-        setText("");
-        setDrawerKey(decision.sessionId);
-      }
-      return;
+      const ok = await sendTo(decision.workspaceKey, decision.sessionId, decision.text);
+      if (ok) setDrawerKey(decision.sessionId);
+      return ok;
     }
     const { command } = decision;
     if (command.kind === "setMode") {
       const hit = findSession(workspaces, command.sessionId);
-      if (hit) {
-        const error = await changeMode({
-          from: modeOf(command.sessionId),
-          to: command.mode,
-          store: (value) => useSessionModeStore.getState().setMode(command.sessionId, value),
-          send: async (message) => {
-            const failure = await sendToSession(hit.pill.environmentId, hit.pill.threadId, message);
-            return failure === null ? null : new Error(failure);
-          },
-        });
-        if (error !== null) {
-          toast(
-            "error",
-            `Could not change ${hit.pill.title} to ${MODES[command.mode].label}`,
-            error.message,
-          );
-        }
+      if (!hit) {
+        toast("error", "That session is gone", "No live session matches; nothing was changed.");
+        return false;
       }
-    } else if (command.kind === "newWorkspace") {
+      const error = await changeMode({
+        from: modeOf(command.sessionId),
+        to: command.mode,
+        store: (value) => useSessionModeStore.getState().setMode(command.sessionId, value),
+        send: async (message) => {
+          const failure = await sendToSession(hit.pill.environmentId, hit.pill.threadId, message);
+          return failure === null ? null : new Error(failure);
+        },
+      });
+      if (error === null) return true;
+      toast(
+        "error",
+        `Could not change ${hit.pill.title} to ${MODES[command.mode].label}`,
+        error.message,
+      );
+      return false;
+    }
+    if (command.kind === "newWorkspace") {
       openCommandPalette({ open: "add-project" });
       toast(
         "info",
         `Create the folder for ${command.name}, then add it`,
         "Opened Add project; the canvas cannot create folders yet.",
       );
-    } else if (command.kind === "briefMe") {
-      const { target } = routeMessage("", ctx);
-      if ("all" in target || target.sessionId === null) toast("info", "Nothing to brief on yet");
-      else setDrawerKey(target.sessionId);
-    } else {
-      toast("info", "The tour comes later");
+      return true;
     }
-    setText("");
+    if (command.kind === "briefMe") {
+      const { target } = routeMessage("", ctx);
+      if ("all" in target || target.sessionId === null) {
+        toast("info", "Nothing to brief on yet");
+        return false;
+      }
+      setDrawerKey(target.sessionId);
+      return true;
+    }
+    toast("info", "The tour comes later");
+    return true;
   };
 
   const submit = () => {
     if (busy || text.trim() === "") return;
     setBusy(true);
-    void runDecision().finally(() => setBusy(false));
+    void runDecision()
+      .then((ok) => setText((current) => textAfter(current, ok)))
+      .finally(() => setBusy(false));
   };
 
   const confirmPreview = () => {
@@ -176,9 +198,13 @@ export function OmniboxBar(props: {
     setBusy(true);
     void Promise.all(items.map((item) => sendTo(item.workspaceKey, item.sessionId, message)))
       .then((results) => {
-        const failed = results.filter((ok) => !ok).length;
-        if (failed === 0) setText("");
-        setPreview(null);
+        const { remaining, clearInput } = afterPreviewSend(items, results);
+        setText((current) => textAfter(current, clearInput));
+        if (remaining.length === 0) setPreview(null);
+        else {
+          setPreview({ text: message, items: remaining });
+          toast("error", `Could not send to ${remaining.length} of ${items.length} workspaces`);
+        }
       })
       .finally(() => setBusy(false));
   };
@@ -244,7 +270,11 @@ export function OmniboxBar(props: {
           value={text}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+            if (
+              event.key === "Enter" &&
+              !event.nativeEvent.isComposing &&
+              event.nativeEvent.keyCode !== 229
+            ) {
               event.preventDefault();
               submit();
             }
