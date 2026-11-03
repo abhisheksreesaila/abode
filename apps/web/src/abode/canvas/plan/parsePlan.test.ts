@@ -221,3 +221,48 @@ describe("parsePlan", () => {
     expect(parsePlan(md).milestones[0]!.tickets.map((t) => t.id)).toEqual(["X-3"]);
   });
 });
+
+describe("parsePlan, [status] format", () => {
+  const FORMAT_C = `# Plan
+
+## F-001 Tenant signup [done]
+## F-002 Stripe billing [blocked]
+
+# Engine v1
+
+## Core gate (agreed 2026-10-15): nothing new until it holds
+
+## F-055 GPU sweep [done]
+## F-056 Big data never fails [doing] (owner: next after F-188)
+## F-191 SQL honours GPU [todo, started and paused 2026-10-28] (found by F-162)
+## F-190 Decimal read [done 2026-10-28]
+
+# Later
+
+## F-200 Rings [todo]
+`;
+
+  it("reads # sections as milestones and ## tickets with bracket status", () => {
+    const plan = parsePlan(FORMAT_C);
+    expect(plan.milestones.map((m) => [m.name, m.state, m.done, m.total])).toEqual([
+      ["Plan", "todo", 1, 2],
+      ["Engine v1", "current", 2, 4],
+      ["Later", "todo", 0, 1],
+    ]);
+  });
+
+  it("maps statuses and notes, ignoring ## headings without an id and status", () => {
+    const [, engine] = parsePlan(FORMAT_C).milestones;
+    expect(engine!.tickets.map((t) => [t.id, t.state, t.note])).toEqual([
+      ["F-055", "done", undefined],
+      ["F-056", "running", "owner: next after F-188"],
+      ["F-191", "todo", "found by F-162"],
+      ["F-190", "done", undefined],
+    ]);
+  });
+
+  it("keeps duplicate section names with unique keys", () => {
+    const plan = parsePlan("# A\n## F-1 x [done]\n# A\n## F-1 x [todo]\n");
+    expect(new Set(plan.milestones.map((m) => m.key)).size).toBe(2);
+  });
+});

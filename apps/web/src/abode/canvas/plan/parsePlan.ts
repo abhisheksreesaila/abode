@@ -1,8 +1,7 @@
 /**
- * Plan format. Put tickets under a `## Milestone: <name>` heading (or `## Phase X: <name>`); a
- * trailing "(detail)" on the heading becomes the milestone's detail. Write each ticket as
- * `### X-NNN: title` with `- **Status:** <word> (note)` directly beneath: todo, doing (running),
- * blocked (stopped), review (built, reviewed, awaiting the owner: counts as done), done.
+ * Plan formats. A/B: `## Milestone: <name>` (or `## Phase X: <name>`) with `### X-NNN: title` and
+ * `- **Status:** <word> (note)` beneath. C (no `###` tickets): `# <section>` milestones, tickets as
+ * `## X-NNN title [status] (note)`. Status: todo, doing, blocked, review (counts as done), done.
  */
 
 export type TicketState = "done" | "running" | "stopped" | "failed" | "todo";
@@ -47,16 +46,11 @@ const STATUS = /^-\s+\*\*Status:\*\*\s*(\w+)\s*(?:\((.*)\)|(.*))?$/;
 
 const NAME_DETAIL = /^(.*?)\s*\((.*)\)\s*$/;
 
-// The current milestone is the last started, unfinished one; stale unfinished ones before it are todo.
-export function parsePlan(markdown: string): Plan {
-  let goal: string | undefined;
-  const groups: { name: string; detail?: string; tickets: Ticket[] }[] = [];
-  let group: (typeof groups)[number] | undefined;
-  let ticket: Ticket | undefined;
-  let awaitingStatus = false;
+// Lines outside HTML comments and code fences, trailing space trimmed.
+function plainLines(markdown: string): string[] {
+  const out: string[] = [];
   let inComment = false;
   let inFence = false;
-
   for (const raw of markdown.split("\n")) {
     const line = raw.trimEnd();
     if (inComment) {
@@ -73,7 +67,50 @@ export function parsePlan(markdown: string): Plan {
       continue;
     }
     if (line.includes("<!--")) continue;
+    out.push(line);
+  }
+  return out;
+}
 
+const H1 = /^#\s+(.*?)\s*$/;
+const TICKET_C = /^##\s+([A-Za-z]+-\d+)\s+(.*?)\s*\[(\w+)[^\]]*\]\s*(?:\((.*)\)|(.*))?$/;
+const TICKET_AB = /^###\s+[A-Za-z]+-\d+:/m;
+
+type Group = { name: string; detail?: string; tickets: Ticket[] };
+
+function parseStatusPlan(markdown: string): Group[] {
+  const groups: Group[] = [];
+  let group: Group | undefined;
+  for (const line of plainLines(markdown)) {
+    const h1 = H1.exec(line);
+    if (h1 && !line.startsWith("##")) {
+      group = { name: h1[1]!, tickets: [] };
+      groups.push(group);
+      continue;
+    }
+    const t = TICKET_C.exec(line);
+    if (!t) continue;
+    const ticket: Ticket = {
+      id: t[1]!,
+      name: t[2]!,
+      state: STATUS_STATE[t[3]!.toLowerCase()] ?? "todo",
+    };
+    const note = (t[4] ?? t[5] ?? "").trim();
+    if (note) ticket.note = note;
+    group?.tickets.push(ticket);
+  }
+  return groups;
+}
+
+// The current milestone is the last started, unfinished one; stale unfinished ones before it are todo.
+export function parsePlan(markdown: string): Plan {
+  let goal: string | undefined;
+  const groups: Group[] = [];
+  let group: Group | undefined;
+  let ticket: Ticket | undefined;
+  let awaitingStatus = false;
+
+  for (const line of plainLines(markdown)) {
     const h2 = H2.exec(line);
     if (h2 && !line.startsWith("###")) {
       const title = h2[1]!;
@@ -108,7 +145,9 @@ export function parsePlan(markdown: string): Plan {
     if (goal === undefined) goal = GOAL.exec(line)?.[1];
   }
 
-  const kept = groups.filter((g) => g.tickets.length > 0);
+  const kept = (TICKET_AB.test(markdown) ? groups : parseStatusPlan(markdown)).filter(
+    (g) => g.tickets.length > 0,
+  );
   const complete = (g: (typeof kept)[number]) => g.tickets.every((t) => t.state === "done");
   const started = (g: (typeof kept)[number]) => g.tickets.some((t) => t.state !== "todo");
   const open = kept.filter((g) => !complete(g));
