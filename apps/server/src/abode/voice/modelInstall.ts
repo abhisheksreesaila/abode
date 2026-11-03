@@ -64,7 +64,7 @@ const MAX_REDIRECTS = 5;
 const SIZE_MARGIN = 1.02;
 
 /** HTTPS only, on every redirect hop; the body is cut off if it outgrows `maxBytes`. */
-export const downloadOverHttps: Downloader = async ({ url, destination, maxBytes, onBytes }) => {
+const downloadOverHttps: Downloader = async ({ url, destination, maxBytes, onBytes }) => {
   let target = new URL(url);
   let response: Response | undefined;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {

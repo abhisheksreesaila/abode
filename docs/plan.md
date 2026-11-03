@@ -388,10 +388,10 @@ Upstream `v0.1.6-nightly.20261031.3956` (966 commits, protocol still 2): new des
 
 ### A-040: knip passes on abode
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; hook report treats abode-only folders docs/canvas, docs/adr, apps/web/public/abode as owned)
 - **What:** the pre-commit `knip:check` fails (it already did before the v0.1.6 sync): abode's voice scripts and `voiceWorker.ts` are entry points knip can't trace, `sherpa-onnx-node` is loaded by the worker, and upstream's sidebar files are unused on purpose (we never delete upstream files). The fix is entries in `knip.jsonc`, which is an upstream file, and the hook budget is 399/400, so first free lines from another hook.
 - **Acceptance:**
-  - [ ] `vp run knip:check` passes with no new suppression of real unused code; hook report at or under 400.
+  - [x] `vp run knip:check` passes with no new suppression of real unused code; hook report at or under 400.
 
 ### A-041: Tidy abode voice effects
 

@@ -22,7 +22,7 @@ export type SubagentNestingThread = Pick<
 /** Rows shown under a session before the rest collapse into "+N more". */
 export const SIDEBAR_SUBAGENT_VISIBLE_LIMIT = 5;
 
-export function subagentParentKey(environmentId: string, threadId: string): string {
+function subagentParentKey(environmentId: string, threadId: string): string {
   return `${environmentId}:${threadId}`;
 }
 

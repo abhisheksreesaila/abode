@@ -21,7 +21,7 @@ export interface ProvisionalDictationState {
   text: string;
 }
 
-export const provisionalDictationKey = new PluginKey<ProvisionalDictationState>(
+const provisionalDictationKey = new PluginKey<ProvisionalDictationState>(
   "voice-provisional-dictation",
 );
 
@@ -32,7 +32,7 @@ type ProvisionalMeta =
 
 const IDLE: ProvisionalDictationState = { active: false, anchor: null, text: "" };
 
-export function applyProvisionalMeta(
+function applyProvisionalMeta(
   state: ProvisionalDictationState,
   tr: Pick<Transaction, "docChanged" | "mapping" | "getMeta">,
 ): ProvisionalDictationState {

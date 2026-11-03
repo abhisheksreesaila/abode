@@ -10,7 +10,7 @@ import { voiceShortcutLabel } from "./shortcut";
 import { useVoiceDictation } from "./useVoiceDictation";
 import { useVoiceSettings } from "./voiceSettings";
 
-export function formatElapsed(seconds: number): string {
+function formatElapsed(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 

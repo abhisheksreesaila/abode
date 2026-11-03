@@ -42,7 +42,7 @@ export interface VoiceLimits {
 
 const PCM_BYTES_PER_SECOND = 16_000 * 2;
 
-export const DEFAULT_VOICE_LIMITS: VoiceLimits = {
+const DEFAULT_VOICE_LIMITS: VoiceLimits = {
   maxSessions: 2,
   maxSessionMs: 20 * 60_000,
   maxBytes: 21 * 60 * PCM_BYTES_PER_SECOND,
@@ -53,7 +53,7 @@ export const DEFAULT_VOICE_LIMITS: VoiceLimits = {
   unloadIdleMs: 5 * 60_000,
 };
 
-export const voiceError = (failure: VoiceFailure, message: string, cause?: unknown) =>
+const voiceError = (failure: VoiceFailure, message: string, cause?: unknown) =>
   new VoiceError({ failure, message, ...(cause === undefined ? {} : { cause }) });
 
 const int16ToFloat = (pcm: Uint8Array): Float32Array => {

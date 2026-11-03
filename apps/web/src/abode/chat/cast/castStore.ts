@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { resolveStorage } from "../../../lib/storage";
 import { DEFAULT_CAST, sanitizeCast, type BossLook, type CastSettings } from "./bossConfig";
 
-export const CAST_STORAGE_KEY = "abode:cast:v1";
+const CAST_STORAGE_KEY = "abode:cast:v1";
 
 export type CastPatch = Partial<Omit<CastSettings, "look">> & { readonly look?: Partial<BossLook> };
 

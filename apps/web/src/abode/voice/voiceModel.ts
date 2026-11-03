@@ -2,7 +2,7 @@
 export const VOICE_MODEL_ID = "onnx-community/moonshine-base-ONNX";
 export const VOICE_MODEL_DTYPE = "q8";
 /** transformers.js stores model files in this Cache API bucket (its default `env.cacheKey`). */
-export const VOICE_CACHE_NAME = "transformers-cache";
+const VOICE_CACHE_NAME = "transformers-cache";
 
 export interface DownloadProgressEvent {
   status: string;

@@ -7,7 +7,7 @@ export const ABODE_THEME_ID = "abode";
  * Not in shared `BUILT_IN_THEMES`: the mobile app mirrors that list's ids, so the
  * web theme runtime adds abode's themes itself (the `abode:` hook in themePalette.ts).
  */
-export const ABODE_DARK_THEME_COLORS: ThemeColors = {
+const ABODE_DARK_THEME_COLORS: ThemeColors = {
   canvas: "#1c1917",
   chrome: "#171412",
   toolbar: "#171412",
@@ -72,7 +72,7 @@ export const ABODE_DARK_THEME_COLORS: ThemeColors = {
 };
 
 /** Warm light: cream surfaces with a deeper amber that holds up on white. */
-export const ABODE_LIGHT_THEME_COLORS: ThemeColors = {
+const ABODE_LIGHT_THEME_COLORS: ThemeColors = {
   canvas: "#fdfbf7",
   chrome: "#f5f0e8",
   toolbar: "#f5f0e8",
@@ -147,7 +147,7 @@ export const ABODE_THEME: ThemeDefinition = {
 export const ABODE_AZURE_THEME_ID = "abode-azure";
 
 /** Flat Azure (Fluent): Azure blue on neutral greys. Its square corners and Segoe-style type are in abode.css. */
-export const ABODE_AZURE_LIGHT_THEME_COLORS: ThemeColors = {
+const ABODE_AZURE_LIGHT_THEME_COLORS: ThemeColors = {
   canvas: "#ffffff",
   chrome: "#f3f2f1",
   toolbar: "#f3f2f1",
@@ -211,7 +211,7 @@ export const ABODE_AZURE_LIGHT_THEME_COLORS: ThemeColors = {
   terminalScrollbarHover: "#a19f9d",
 };
 
-export const ABODE_AZURE_DARK_THEME_COLORS: ThemeColors = {
+const ABODE_AZURE_DARK_THEME_COLORS: ThemeColors = {
   canvas: "#1b1a19",
   chrome: "#11100f",
   toolbar: "#11100f",

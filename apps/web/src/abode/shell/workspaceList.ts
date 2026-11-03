@@ -68,7 +68,7 @@ export function resolveWorkspacePill(
   };
 }
 
-export const LATEST_THREAD_COUNT = 2;
+const LATEST_THREAD_COUNT = 2;
 
 export interface ThreadListWindow<T> {
   readonly shown: readonly T[];

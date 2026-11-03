@@ -2,7 +2,7 @@
 const SPEECH_SAMPLE_RATE = 16_000;
 
 /** Moonshine and Whisper are trained on clips of up to 30 s. */
-export const MAX_SEGMENT_SECONDS = 30;
+const MAX_SEGMENT_SECONDS = 30;
 /** Cut at a pause that falls inside this window of the segment when there is one. */
 const PREFERRED_WINDOW_SECONDS = [20, 25] as const;
 /** With no pause at all, cut at the quietest moment in the last 3 s before the limit. */

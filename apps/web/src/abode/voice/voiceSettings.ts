@@ -14,12 +14,12 @@ export const VoiceSettingsSchema = Schema.Struct({
 });
 export type VoiceSettings = typeof VoiceSettingsSchema.Type;
 
-export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
+const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
   enabled: true,
   shortcut: DEFAULT_VOICE_SHORTCUT,
 };
 
-export const VOICE_SETTINGS_STORAGE_KEY = "abode:voice-settings:v1";
+const VOICE_SETTINGS_STORAGE_KEY = "abode:voice-settings:v1";
 
 export function useVoiceSettings() {
   const [settings, setSettings] = useLocalStorage(

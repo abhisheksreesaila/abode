@@ -3,11 +3,11 @@
  * sidebar's height, so it survives window and sidebar resizes. `null` means "not set": the
  * section sizes itself to its content, up to its default cap.
  */
-export const CUSTOMIZATIONS_HEIGHT_STORAGE_KEY = "abode:customizations-height:v1";
+const CUSTOMIZATIONS_HEIGHT_STORAGE_KEY = "abode:customizations-height:v1";
 /** 0 is collapsed to just the header; the section never takes more than this share. */
 export const CUSTOMIZATIONS_MIN_FRACTION = 0;
 export const CUSTOMIZATIONS_MAX_FRACTION = 0.85;
-export const CUSTOMIZATIONS_KEYBOARD_STEP = 0.04;
+const CUSTOMIZATIONS_KEYBOARD_STEP = 0.04;
 
 export function clampCustomizationsFraction(fraction: number): number {
   return Math.min(CUSTOMIZATIONS_MAX_FRACTION, Math.max(CUSTOMIZATIONS_MIN_FRACTION, fraction));

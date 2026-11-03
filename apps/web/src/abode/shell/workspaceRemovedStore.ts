@@ -5,7 +5,7 @@ import { resolveStorage } from "../../lib/storage";
 import { sanitizePersistedRemovedKeys, setWorkspaceRemoved } from "./workspaceRemoved";
 
 /** Unchanged from when this list was "hidden", so existing entries carry over. */
-export const REMOVED_WORKSPACES_STORAGE_KEY = "abode:hidden-workspaces:v1";
+const REMOVED_WORKSPACES_STORAGE_KEY = "abode:hidden-workspaces:v1";
 
 interface RemovedWorkspacesState {
   readonly removedKeys: ReadonlyArray<string>;

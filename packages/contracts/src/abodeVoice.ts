@@ -9,7 +9,6 @@ import { TrimmedNonEmptyString } from "./baseSchemas.ts";
  * gets the text when the user stops. One RPC with an `op` discriminator keeps the hook into
  * `rpc.ts` a single add-only method. Chunks carry a sequence number: unary calls can reorder.
  */
-export const VOICE_SAMPLE_RATE = 16_000;
 
 /** `unsupported`: this server cannot run the model (platform, packaging). */
 export const VoiceModelState = Schema.Literals([

@@ -55,7 +55,7 @@ function PrStatusTooltipContent({
   );
 }
 
-export function StatusSquare({ tone }: { tone: ThreadSquareTone }) {
+function StatusSquare({ tone }: { tone: ThreadSquareTone }) {
   return <span aria-hidden data-tone={tone} data-abode="square" />;
 }
 

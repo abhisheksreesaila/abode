@@ -46,7 +46,7 @@ function reportError(title: string, error: unknown) {
   );
 }
 
-export function checkOperatePermission(environmentId: EnvironmentId): boolean {
+function checkOperatePermission(environmentId: EnvironmentId): boolean {
   if (readEnvironmentScope(environmentId, AuthOrchestrationOperateScope)) return true;
   toastManager.add(
     stackedThreadToast({
