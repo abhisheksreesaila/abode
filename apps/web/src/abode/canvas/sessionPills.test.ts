@@ -99,19 +99,46 @@ describe("sessionPills", () => {
     expect(pills[0]?.dots).toEqual(["other"]);
   });
 
-  it("folds idle and finished sessions into the done count, keeping them listed", () => {
-    const { pills, doneCount, done } = sessionPills(
+  it("keeps a never-run session live and a finished unvisited one live as 'landed'", () => {
+    const { pills, doneCount } = sessionPills(
       [
-        thread("a1", { runtime: { status: "running" } }),
-        thread("b1"),
-        thread("c1", {
+        thread("a1"),
+        thread("b1", {
+          latestRun: { runId: "r", completedAt: "2026-10-10T10:00:00.000Z", status: "completed" },
+          lastVisitedAt: "2026-10-10T09:00:00.000Z",
+        }),
+      ],
+      options(),
+    );
+    expect(doneCount).toBe(0);
+    expect(pills.map((pill) => [pill.threadId, pill.status])).toEqual([
+      ["a1", null],
+      ["b1", "landed"],
+    ]);
+  });
+
+  it("folds visited idle sessions into the done count, keeping them listed", () => {
+    const run = { runId: "r", completedAt: "2026-10-10T10:00:00.000Z", status: "completed" };
+    const { pills, doneCount, done } = sessionPills(
+      [thread("a1", { runtime: { status: "running" } }), thread("b1", { latestRun: run })],
+      { ...options(), visitedAt: (t) => (t.id === "b1" ? "2026-10-10T11:00:00.000Z" : undefined) },
+    );
+    expect(pills.map((pill) => pill.threadId)).toEqual(["a1"]);
+    expect(doneCount).toBe(1);
+    expect(done.map((pill) => pill.threadId)).toEqual(["b1"]);
+  });
+
+  it("maps a plan waiting for approval to 'waiting on you'", () => {
+    const { pills } = sessionPills(
+      [
+        thread("a1", {
+          interactionMode: "plan",
+          hasActionableProposedPlan: true,
           latestRun: { runId: "r", completedAt: "2026-10-10T10:00:00.000Z", status: "completed" },
         }),
       ],
       options(),
     );
-    expect(pills.map((pill) => pill.threadId)).toEqual(["a1"]);
-    expect(doneCount).toBe(2);
-    expect(done.map((pill) => pill.threadId)).toEqual(["b1", "c1"]);
+    expect(pills[0]?.status).toBe("waiting on you");
   });
 });

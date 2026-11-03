@@ -38,7 +38,11 @@ function Pill(props: { readonly pill: SessionPill; readonly onOpen: () => void }
           </span>
         ))}
       </span>
-      {pill.status !== null ? <span data-cv-sw="">{pill.status}</span> : null}
+      {pill.status !== null ? (
+        <span data-cv-sw="" data-status={pill.status === "landed" ? "landed" : undefined}>
+          {pill.status}
+        </span>
+      ) : null}
     </button>
   );
 }

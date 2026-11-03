@@ -1,7 +1,9 @@
 import { useState } from "react";
 
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { SidebarInset } from "~/components/ui/sidebar";
 
+import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
 import { useCanvasWorkspaces } from "./useCanvasWorkspaces";
 import { workspaceInitials, type RailGroup } from "./railGroups";
 import { WorkspaceView } from "./WorkspaceView";
@@ -16,7 +18,7 @@ const GROUP_LABEL: Record<RailGroup, string> = {
 
 /** One Window (flag on): top bar, workspace rail, workspace view and omnibox. */
 export function CanvasShell() {
-  const workspaces = useCanvasWorkspaces();
+  const { workspaces, hidden } = useCanvasWorkspaces();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = workspaces.find((workspace) => workspace.key === selectedKey) ?? workspaces[0];
 
@@ -70,6 +72,25 @@ export function CanvasShell() {
               </button>
             </div>
           ))}
+          {hidden.length > 0 ? (
+            <Menu>
+              <MenuTrigger data-cv-hidden="" aria-label={`Hidden workspaces, ${hidden.length}`}>
+                Hidden · {hidden.length}
+              </MenuTrigger>
+              <MenuPopup side="right" align="end">
+                {hidden.map((workspace) => (
+                  <MenuItem
+                    key={workspace.key}
+                    onClick={() =>
+                      useRemovedWorkspacesStore.getState().setRemoved(workspace.key, false)
+                    }
+                  >
+                    Restore {workspace.name}
+                  </MenuItem>
+                ))}
+              </MenuPopup>
+            </Menu>
+          ) : null}
           <button
             type="button"
             data-cv-rl=""

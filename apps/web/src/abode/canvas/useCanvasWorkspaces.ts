@@ -22,8 +22,16 @@ export interface CanvasWorkspace {
   readonly newSessionTarget: SidebarProjectGroupMember | undefined;
 }
 
+export interface HiddenWorkspace {
+  readonly key: string;
+  readonly name: string;
+}
+
 /** The real projects for the rail, grouped from live thread state the way the sidebar reads it. */
-export function useCanvasWorkspaces(): CanvasWorkspace[] {
+export function useCanvasWorkspaces(): {
+  readonly workspaces: CanvasWorkspace[];
+  readonly hidden: HiddenWorkspace[];
+} {
   const groups = useWorkspaceGroups();
   const visits = useUiStateStore((state) => state.threadLastVisitedAtById);
   const removedKeys = useRemovedWorkspacesStore((state) => state.removedKeys);
@@ -31,24 +39,28 @@ export function useCanvasWorkspaces(): CanvasWorkspace[] {
   const driverByInstance = new Map(
     deriveProviderInstanceEntries(providers).map((entry) => [entry.instanceId, entry.driverKind]),
   );
-  return groupRailItems(
-    shownWorkspaces(
-      groups.filter((group) => !group.isScratch),
-      { removedKeys, keyOf: (group) => group.project.projectKey },
-    ).map((group) => ({
-      key: group.project.projectKey,
-      name: group.name,
-      group: workspaceGroup(
-        group.threads.map((thread) =>
-          deriveWorkspaceThreadState(thread, visits[threadShellKey(thread)]),
+  const real = groups.filter((group) => !group.isScratch);
+  const hidden = real
+    .filter((group) => removedKeys.includes(group.project.projectKey))
+    .map((group) => ({ key: group.project.projectKey, name: group.name }));
+  const workspaces = groupRailItems(
+    shownWorkspaces(real, { removedKeys, keyOf: (group) => group.project.projectKey }).map(
+      (group) => ({
+        key: group.project.projectKey,
+        name: group.name,
+        group: workspaceGroup(
+          group.threads.map((thread) =>
+            deriveWorkspaceThreadState(thread, visits[threadShellKey(thread)]),
+          ),
         ),
-      ),
-      sessions: sessionPills(group.threads, {
-        subagentsByParentKey: group.runningSubagentsByParentKey,
-        visitedAt: (thread) => visits[threadShellKey(thread)],
-        driverOf: (thread) => driverByInstance.get(thread.modelSelection.instanceId),
+        sessions: sessionPills(group.threads, {
+          subagentsByParentKey: group.runningSubagentsByParentKey,
+          visitedAt: (thread) => visits[threadShellKey(thread)],
+          driverOf: (thread) => driverByInstance.get(thread.modelSelection.instanceId),
+        }),
+        newSessionTarget: group.project.memberProjects[0],
       }),
-      newSessionTarget: group.project.memberProjects[0],
-    })),
+    ),
   );
+  return { workspaces, hidden };
 }

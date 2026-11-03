@@ -295,6 +295,49 @@ main[data-cv-root] {
     monospace;
   color: var(--cv-warn);
 }
+[data-cv-sw][data-status="landed"] {
+  color: var(--cv-ink-2);
+}
+[data-cv-hidden] {
+  position: relative;
+  border: 0;
+  background: none;
+  color: var(--cv-ink-2);
+  font:
+    500 10px "Geist Mono",
+    ui-monospace,
+    monospace;
+  text-align: center;
+  line-height: 1.2;
+  width: 52px;
+  padding: 4px 0;
+  margin-top: 6px;
+  cursor: pointer;
+}
+[data-cv-hidden]:hover {
+  color: var(--cv-ink);
+}
+/* 48px touch targets without changing the look. */
+@media (pointer: coarse) {
+  [data-cv-sc],
+  [data-cv-head] [data-cv-xbtn],
+  [data-cv-hidden] {
+    position: relative;
+  }
+  [data-cv-sc]::before,
+  [data-cv-head] [data-cv-xbtn]::before,
+  [data-cv-hidden]::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    min-width: 100%;
+    min-height: 48px;
+    width: max(100%, 48px);
+    height: 48px;
+    transform: translate(-50%, -50%);
+  }
+}
 [data-cv-sc][data-cv-more] {
   background: none;
   padding: 5px 8px;
