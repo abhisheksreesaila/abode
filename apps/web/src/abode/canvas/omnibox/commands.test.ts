@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { parseCommand, touches } from "./commands";
+import { parseCommand } from "./commands";
 import type { RouteContext } from "./routeMessage";
 
 const ctx: RouteContext = {
@@ -55,6 +55,18 @@ describe("parseCommand", () => {
       text: "retry to the logic",
     });
     expect(parseCommand("add dark mode to nowhere", ctx)).toBeNull();
+    expect(parseCommand("add a retry to the git-away sync", ctx)).toBeNull();
+    expect(parseCommand("add a ticket to the git-away plan", ctx)).toEqual({
+      kind: "addToPlan",
+      workspaceKey: "gitaway",
+      text: "a ticket",
+    });
+    expect(parseCommand("add a ticket to omxcore's plan.", ctx)).toMatchObject({
+      workspaceKey: "omxcore",
+    });
+    expect(parseCommand("add a ticket to omxcore's docs/plan.md", ctx)).toMatchObject({
+      workspaceKey: "omxcore",
+    });
   });
 
   it("creates a workspace, with an optional goal", () => {
@@ -67,6 +79,8 @@ describe("parseCommand", () => {
       kind: "newWorkspace",
       name: "billing",
     });
+    expect(parseCommand("New workspace permissions are wrong", ctx)).toBeNull();
+    expect(parseCommand("new workspace one two three four", ctx)).toBeNull();
   });
 
   it("recognises brief me and tour", () => {
@@ -80,15 +94,5 @@ describe("parseCommand", () => {
     expect(parseCommand("skip docs this release", ctx)).toBeNull();
     expect(parseCommand("brief me on the docs plan please", ctx)).toBeNull();
     expect(parseCommand("", ctx)).toBeNull();
-  });
-});
-
-describe("touches", () => {
-  it("counts the workspaces a command changes", () => {
-    expect(touches({ kind: "setMode", sessionId: "s", mode: "jam" })).toBe(1);
-    expect(touches({ kind: "addToPlan", workspaceKey: "w", text: "x" })).toBe(1);
-    expect(touches({ kind: "newWorkspace", name: "x" })).toBe(1);
-    expect(touches({ kind: "briefMe" })).toBe(0);
-    expect(touches({ kind: "tour" })).toBe(0);
   });
 });

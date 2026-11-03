@@ -1,4 +1,9 @@
-import { matchSession, matchWorkspace, type RouteContext, type SessionMode } from "./routeMessage";
+import {
+  findWorkspaceByName,
+  matchSession,
+  type RouteContext,
+  type SessionMode,
+} from "./routeMessage";
 
 export type OmniboxCommand =
   | { readonly kind: "setMode"; readonly sessionId: string; readonly mode: SessionMode }
@@ -16,6 +21,8 @@ const MODES: Record<string, SessionMode> = {
   jam: "jam",
 };
 
+const SENTENCE_VERB =
+  /\b(is|are|was|were|has|have|should|must|needs?|isn't|aren't|doesn't|don't|won't)\b/i;
 const trimEnd = (s: string) => s.trim().replace(/[.?!\s]+$/, "");
 const unquote = (s: string) => s.trim().replace(/^["“'](.*)["”']$/, "$1");
 
@@ -28,7 +35,9 @@ export function parseCommand(input: string, ctx: RouteContext): OmniboxCommand |
   if (nw) {
     const name = unquote(trimEnd(nw[1]!));
     const goal = nw[2] ? trimEnd(nw[2]) : "";
-    return goal ? { kind: "newWorkspace", name, goal } : { kind: "newWorkspace", name };
+    if (goal) return { kind: "newWorkspace", name, goal };
+    const shortName = name.split(/\s+/).length <= 3 && !SENTENCE_VERB.test(name);
+    return shortName ? { kind: "newWorkspace", name } : null;
   }
 
   const mode =
@@ -49,15 +58,10 @@ export function parseCommand(input: string, ctx: RouteContext): OmniboxCommand |
       : null;
   }
 
-  const add = /^add\s+(.+)\s+to\s+(?:the\s+)?(.+?)(?:'s)?(?:\s+plan)?\W*$/i.exec(text);
+  const add = /^add\s+(.+)\s+to\s+(.+?)$/i.exec(text);
   if (add) {
-    const w = matchWorkspace(add[2]!, ctx.workspaces);
+    const w = findWorkspaceByName(add[2]!, ctx.workspaces);
     if (w) return { kind: "addToPlan", workspaceKey: w.key, text: add[1]!.trim() };
   }
   return null;
-}
-
-/** How many workspaces a command changes; the UI previews anything above one. */
-export function touches(cmd: OmniboxCommand): number {
-  return cmd.kind === "briefMe" || cmd.kind === "tour" ? 0 : 1;
 }

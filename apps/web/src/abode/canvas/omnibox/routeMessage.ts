@@ -37,12 +37,17 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const hasPhrase = (text: string, phrase: string) =>
   new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(phrase)}(?![\\p{L}\\p{N}])`, "iu").test(text);
 
+const GENERIC = new Set(
+  "fix update refresh add change make check test build bug issue thing stuff page work".split(" "),
+);
+
 function keywordsOf(s: RouteSession): ReadonlyArray<string> {
-  if (s.keywords.length > 0) return s.keywords;
+  const explicit = s.keywords.map((k) => k.trim()).filter((k) => k.length > 0);
+  if (explicit.length > 0) return explicit;
   return s.title
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)
-    .filter((w) => w.length > 0 && !STOPWORDS.has(w));
+    .filter((w) => w.length >= 4 && !STOPWORDS.has(w) && !GENERIC.has(w));
 }
 
 /** The session whose keywords match the text best (most hits, earliest on a tie). */
@@ -58,15 +63,38 @@ export function matchSession(
   return best;
 }
 
-/** The workspace the text names (longest name wins); "git-away" also matches "git away". */
-export function matchWorkspace(
+const nameVariants = (name: string) => [name, name.replace(/[-_]/g, " ")];
+
+/** A name must be a whole tail like "git away" or "the git-away plan", nothing more. */
+export function findWorkspaceByName(
+  tail: string,
+  workspaces: ReadonlyArray<RouteWorkspace>,
+): RouteWorkspace | null {
+  const t = tail
+    .trim()
+    .toLowerCase()
+    .replace(/^the\s+/, "")
+    .replace(/(?:'s)?\s+(?:docs\/plan\.md|plan)\W*$/, "")
+    .replace(/\W+$/, "");
+  return workspaces.find((w) => nameVariants(w.name.toLowerCase()).includes(t)) ?? null;
+}
+
+/**
+ * The workspace the text names (longest name wins); "git-away" also matches "git away".
+ * Names under 4 letters only count as "<name>:", "in <name>" or "on <name>".
+ */
+function matchWorkspace(
   text: string,
   workspaces: ReadonlyArray<RouteWorkspace>,
 ): RouteWorkspace | null {
   let best: RouteWorkspace | null = null;
   for (const w of workspaces) {
-    const names = [w.name, w.name.replace(/[-_]/g, " ")];
-    if (!names.some((n) => hasPhrase(text, n))) continue;
+    const named = nameVariants(w.name).some((n) =>
+      n.length >= 4
+        ? hasPhrase(text, n)
+        : hasPhrase(text, `${n}:`) || hasPhrase(text, `in ${n}`) || hasPhrase(text, `on ${n}`),
+    );
+    if (!named) continue;
     if (!best || w.name.length > best.name.length) best = w;
   }
   return best;
