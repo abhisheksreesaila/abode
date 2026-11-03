@@ -443,7 +443,7 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-046: Omnibox and chat drawer bound to threads (P2)
 
-- **Status:** todo
+- **Status:** doing (pure routing merged after reviewer PASS; omnibox + drawer UI next)
 - **Depends on:** A-045
 - **What:** the omnibox routes by keywords, then open Grill me, jam, blocked or waiting, live, first; the target chip shows and pins the target; send posts to the real thread. The drawer opens above it with the header from spec 5.6 and the thread's recent messages; "open full chat" goes to the stock chat view. `/` focuses, Esc closes.
 - **Acceptance:**
@@ -452,7 +452,7 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-047: Omnibox commands (P2)
 
-- **Status:** todo
+- **Status:** doing (command parsing merged with A-046's pure logic; wiring next)
 - **Depends on:** A-046
 - **What:** "put X on grill me", "add … to <workspace>" (sent to that workspace's main thread as an instruction to update plan.md), "new workspace X, goal: …", "brief me", "tour" (`?`). Anything that touches more than one workspace shows a preview first.
 - **Acceptance:**
