@@ -4,6 +4,7 @@ import { SidebarInset } from "~/components/ui/sidebar";
 
 import { useCanvasWorkspaces } from "./useCanvasWorkspaces";
 import { workspaceInitials, type RailGroup } from "./railGroups";
+import { WorkspaceView } from "./WorkspaceView";
 import "./canvas.css";
 
 const GROUP_LABEL: Record<RailGroup, string> = {
@@ -81,7 +82,7 @@ export function CanvasShell() {
           </button>
         </nav>
         <main data-cv-main="">
-          <h2>{selected?.name ?? "No workspace"}</h2>
+          {selected ? <WorkspaceView workspace={selected} /> : <h2>No workspace</h2>}
         </main>
       </div>
       <div data-cv-dock="">
