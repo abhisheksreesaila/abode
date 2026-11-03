@@ -1,14 +1,115 @@
 /* Overview (A-048): takes the body row while open (the body is display: none). */
 [data-cv-ov] {
   min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  padding: 4px 22px 10px;
+  background: var(--cv-s0);
+  animation: cv-ov-zoom 350ms var(--cv-spring);
+}
+[data-cv-ov-main] {
+  min-width: 0;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 4px 22px 10px;
-  background: var(--cv-s0);
-  animation: cv-ov-zoom 350ms var(--cv-spring);
+}
+/* A-049 feed: its own column; the list scrolls inside it. */
+[data-cv-ov-feed] {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--cv-s1);
+  border-radius: 16px;
+  box-shadow: var(--cv-shadow-1);
+  padding: 14px 8px 8px;
+}
+[data-cv-ov-feed] > h3 {
+  margin: 0 0 8px 6px;
+  font:
+    600 10.5px ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cv-ink-2);
+}
+[data-cv-ov-feed] ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+[data-cv-ov-feed] li button {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cv-ink);
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+[data-cv-ov-feed] li button:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+[data-cv-ov-feed] li b {
+  font-weight: 650;
+}
+[data-cv-ov-feed] li small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--cv-ink-2);
+}
+[data-cv-ov-fi] {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font:
+    700 11px ui-monospace,
+    monospace;
+  color: var(--cv-ink-2);
+  background: rgb(255 255 255 / 0.08);
+}
+[data-cv-ov-fi="ms"],
+[data-cv-ov-fi="pr"] {
+  color: var(--cv-ok);
+  background: color-mix(in srgb, var(--cv-ok) 15%, transparent);
+}
+[data-cv-ov-fi="red"] {
+  color: var(--cv-bad);
+  background: color-mix(in srgb, var(--cv-bad) 15%, transparent);
+}
+[data-cv-ov-fi="dec"] {
+  color: var(--cv-warn);
+  background: color-mix(in srgb, var(--cv-warn) 15%, transparent);
+}
+[data-cv-ov-feed] > p {
+  margin: 6px;
+  font-size: 12.5px;
+  color: var(--cv-ink-2);
+}
+@media (max-width: 900px) {
+  [data-cv-ov] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 200px);
+  }
 }
 [data-cv-root][data-overview] [data-cv-body] {
   display: none;

@@ -11,26 +11,127 @@ import { deriveWorkspaceThreadState } from "../shell/threadState";
 import { useWorkspaceGroups } from "../shell/useWorkspaceGroups";
 import { threadShellKey } from "../shell/workspaceModel";
 import { isLayerOpen, overviewKeyAction } from "./overviewKeys";
+import { resolveSidebarThreadStatus } from "../../components/Sidebar.logic";
+import type { SidebarThreadSummary } from "../../types";
+import {
+  deriveFeed,
+  type DoneMilestone,
+  type FeedInput,
+  type FeedItem,
+  type FeedSession,
+} from "./feedModel";
 import { usageMeters, type OverviewWorkspace, type UsageMeter } from "./overviewModel";
 import type { CanvasWorkspace } from "./useCanvasWorkspaces";
+
+/** Done milestones each open Row read from plan.md; only filled while the overview is open. */
+const useLiveDoneStore = create<{
+  readonly byWorkspace: Readonly<Record<string, ReadonlyArray<DoneMilestone>>>;
+  publish: (workspaceKey: string, done: ReadonlyArray<DoneMilestone>) => void;
+}>()((set) => ({
+  byWorkspace: {},
+  // Same milestones again is a no-op: rows publish from an effect on a fresh array each render.
+  publish: (workspaceKey, done) =>
+    set((state) => {
+      const before = state.byWorkspace[workspaceKey];
+      const same =
+        before !== undefined &&
+        before.length === done.length &&
+        before.every((m, i) => m.key === done[i]!.key && m.name === done[i]!.name);
+      return same ? state : { byWorkspace: { ...state.byWorkspace, [workspaceKey]: done } };
+    }),
+}));
+
+/** A Row reports its workspace's done milestones once its plan.md was read (`null` before). */
+export function usePublishDoneMilestones(
+  workspaceKey: string,
+  done: ReadonlyArray<DoneMilestone> | null,
+) {
+  const publish = useLiveDoneStore((state) => state.publish);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- hands the row's plan read to the feed store
+  useEffect(() => {
+    if (done !== null) publish(workspaceKey, done);
+  }, [workspaceKey, done, publish]);
+}
 
 interface LastSeenStore {
   /** When this device last closed the overview (epoch ms); null before the first close. */
   readonly lastSeenAt: number | null;
+  /** Done milestone keys per workspace as of that close; the feed's "reached" diffs against it. */
+  readonly doneSnapshot: Readonly<Record<string, ReadonlyArray<string>>>;
   markSeen: () => void;
 }
 
-/** Per-device, client-only: "since last look" counts from here (A-049 reads it for the feed). */
+/** Per-device, client-only: "since last look" counts from here (the feed reads it). */
 export const useLastSeenStore = create<LastSeenStore>()(
-  persist((set) => ({ lastSeenAt: null, markSeen: () => set({ lastSeenAt: Date.now() }) }), {
-    name: "abode:overview:v1",
-    version: 1,
-    storage: createJSONStorage(() =>
-      resolveStorage(typeof window !== "undefined" ? window.localStorage : undefined),
-    ),
-    partialize: ({ lastSeenAt }) => ({ lastSeenAt }),
-  }),
+  persist(
+    (set) => ({
+      lastSeenAt: null,
+      doneSnapshot: {},
+      markSeen: () =>
+        set((state) => {
+          const doneSnapshot = { ...state.doneSnapshot };
+          for (const [key, done] of Object.entries(useLiveDoneStore.getState().byWorkspace)) {
+            doneSnapshot[key] = done.map((milestone) => milestone.key);
+          }
+          return { lastSeenAt: Date.now(), doneSnapshot };
+        }),
+    }),
+    {
+      name: "abode:overview:v1",
+      version: 1,
+      storage: createJSONStorage(() =>
+        resolveStorage(typeof window !== "undefined" ? window.localStorage : undefined),
+      ),
+      partialize: ({ lastSeenAt, doneSnapshot }) => ({ lastSeenAt, doneSnapshot }),
+    },
+  ),
 );
+
+function sessionOutcome(thread: SidebarThreadSummary): FeedSession["outcome"] {
+  const status = resolveSidebarThreadStatus(thread);
+  if (status === "approval" || status === "input") return "waiting";
+  if (status === "failed") return "failed";
+  if (status === "limited") return "limited";
+  return thread.latestRun?.status === "completed" ? "completed" : "other";
+}
+
+/**
+ * The feed from live thread state and the done milestones the open rows reported. No PR items:
+ * the client only holds pull request state per open thread panel, not per workspace.
+ */
+export function useOverviewFeed(workspaces: ReadonlyArray<CanvasWorkspace>): {
+  readonly items: FeedItem[];
+  readonly now: number;
+} {
+  const groups = useWorkspaceGroups();
+  const done = useLiveDoneStore((state) => state.byWorkspace);
+  const lastSeenAt = useLastSeenStore((state) => state.lastSeenAt);
+  const doneSnapshot = useLastSeenStore((state) => state.doneSnapshot);
+  // Fixed at mount like the meters: the overview is short-lived.
+  const [now] = useState(Date.now);
+  const names = new Map(workspaces.map((workspace) => [workspace.key, workspace.name]));
+  const input: FeedInput = {
+    sessions: groups.flatMap((group) => {
+      const workspaceName = names.get(group.project.projectKey);
+      return workspaceName === undefined
+        ? []
+        : group.threads.map((thread) => ({
+            workspaceKey: group.project.projectKey,
+            workspaceName,
+            title: thread.title,
+            outcome: sessionOutcome(thread),
+            at: Date.parse(thread.latestRun?.completedAt ?? thread.updatedAt) || 0,
+          }));
+    }),
+    milestones: Object.entries(done).flatMap(([workspaceKey, list]) => {
+      const workspaceName = names.get(workspaceKey);
+      return workspaceName === undefined ? [] : [{ workspaceKey, workspaceName, done: list }];
+    }),
+    snapshot: doneSnapshot,
+    now,
+  };
+  return { items: deriveFeed(input, lastSeenAt), now };
+}
 
 /** One input per workspace for the overview model: the rail data plus how many sessions run. */
 export function useOverviewWorkspaces(
