@@ -433,13 +433,13 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-045: Per-session mode and its blocks (P1)
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; checked in the browser: answering a real pending question resolves it, Grill me switch sends one steering message and shows Ember; mode stored per device)
 - **Depends on:** A-043
 - **What:** the mode popover on each pill (Autopilot, Tell me, Grill me, Jam), stored per device. Changing it sends the thread a one-line steering message. The workspace body composes from the prototype's `compose()` rules: status sentence, interrupt card (any pending approval or user-input request, whatever the mode), Grill me card with Ember from the pending question, Tell me brief with Pip from the latest assistant summary, a Jam intro (live board waits for P6), "N calls made on its own" for Autopilot. Serious mode hides the quips.
 - **Acceptance:**
-  - [ ] Changing a mode updates the pill, the omnibox tag and the drawer edge in one frame.
-  - [ ] `compose()` ported as a tested pure function; blocks appear and disappear by mode.
-  - [ ] Answering an interrupt or Grill me card resolves the real pending request.
+  - [x] Changing a mode updates the pill, the omnibox tag and the drawer edge in one frame.
+  - [x] `compose()` ported as a tested pure function; blocks appear and disappear by mode.
+  - [x] Answering an interrupt or Grill me card resolves the real pending request.
 
 ### A-046: Omnibox and chat drawer bound to threads (P2)
 
