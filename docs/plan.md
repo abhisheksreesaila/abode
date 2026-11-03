@@ -406,12 +406,12 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-042: Canvas shell behind the flag (P0)
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; checked in the browser on seeded data: flag off = Control room unchanged, flag on = shell with 13 real workspaces)
 - **What:** an abode store flag "One Window" (Settings → abode, searchable). When on, the Control room route and the sidebar mount render the canvas: top bar (title, "N workspaces", ⊞ overview, ⚙ kit stub), collapsed rail of the real projects (initials, groups need → jam → move → quiet from live thread state, amber dot for needs-you), an empty workspace view, and the omnibox bar. Night Graphite tokens from the prototype.
 - **Acceptance:**
-  - [ ] Flag off: abode looks and behaves exactly as before (checked in the browser).
-  - [ ] Flag on: the rail lists the real workspaces, grouped by the tested pure `workspaceGroup()`.
-  - [ ] `hook-report.sh` line count unchanged; no files changed under `packages/contracts` or `apps/server`.
+  - [x] Flag off: abode looks and behaves exactly as before (checked in the browser).
+  - [x] Flag on: the rail lists the real workspaces, grouped by the tested pure `workspaceGroup()`.
+  - [x] `hook-report.sh` line count unchanged; no files changed under `packages/contracts` or `apps/server`.
 
 ### A-043: Workspace header and session pills (P1)
 
