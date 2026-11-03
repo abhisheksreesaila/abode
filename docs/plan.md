@@ -415,12 +415,12 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-043: Workspace header and session pills (P1)
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; checked in the browser: landed/live pills, `+` opens a draft in that workspace; hidden workspaces restore from the rail)
 - **Depends on:** A-042
 - **What:** selecting a rail tile shows the workspace: name, `…` menu (archive = abode's existing hide), one pill per live session with mode icon, name, model dots in the model colour (a `delegate_task` pair shows parent → child from lineage), a status word only when waiting or blocked, an "N done" fold and `+` (new thread, with the focus moment).
 - **Acceptance:**
-  - [ ] Pill model (dots, pair, status word) is a tested pure function over real thread shapes.
-  - [ ] `+` creates a real thread in that project.
+  - [x] Pill model (dots, pair, status word) is a tested pure function over real thread shapes.
+  - [x] `+` creates a real thread in that project.
 
 ### A-044: Milestones from plan.md (P1)
 
