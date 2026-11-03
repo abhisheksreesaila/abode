@@ -66,6 +66,7 @@ describe("sessionPills", () => {
         title: "title a1",
         dots: ["claude"],
         pair: false,
+        running: true,
         status: null,
         pending: null,
       },

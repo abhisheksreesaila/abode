@@ -4,7 +4,6 @@ import {
   briefLines,
   composeBlocks,
   composeSessions,
-  routedSession,
   statusSentence,
   type ComposeSession,
 } from "./composeBlocks";
@@ -131,19 +130,5 @@ describe("statusSentence", () => {
         session("c"),
       ]),
     ).toBe("3 live sessions, 1 waiting on you, 1 blocked.");
-  });
-});
-
-describe("routedSession", () => {
-  it("prefers Grill me, then Jam, then a session that needs you, then the first", () => {
-    const a = session("a");
-    const waiting = session("w", { status: "waiting on you" });
-    const jam = session("j", { mode: "jam" });
-    const grill = session("g", { mode: "grill" });
-    expect(routedSession([a, waiting, jam, grill])?.key).toBe("g");
-    expect(routedSession([a, waiting, jam])?.key).toBe("j");
-    expect(routedSession([a, waiting])?.key).toBe("w");
-    expect(routedSession([a])?.key).toBe("a");
-    expect(routedSession([])).toBeUndefined();
   });
 });

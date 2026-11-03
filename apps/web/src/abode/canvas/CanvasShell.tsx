@@ -4,12 +4,12 @@ import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { SidebarInset } from "~/components/ui/sidebar";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
-import { composeSessions, routedSession } from "./composeBlocks";
-import { ModeIcon } from "./ModeVisuals";
-import { MODES } from "./sessionMode";
-import { useSessionModeStore } from "./sessionModeStore";
 import { useCanvasWorkspaces } from "./useCanvasWorkspaces";
 import { workspaceInitials, type RailGroup } from "./railGroups";
+import { OmniboxBar } from "./omnibox/OmniboxBar";
+import { buildRouteContext, findSession } from "./omnibox/omniboxLogic";
+import { routeMessage } from "./omnibox/routeMessage";
+import { modeOf, useSessionModeStore } from "./sessionModeStore";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
@@ -34,11 +34,21 @@ export function CanvasShell() {
     setOverview(false);
   };
   useOverviewKeys(overview, () => (overview ? closeOverview() : setOverview(true)), closeOverview);
+  const [pinned, setPinned] = useState<string | undefined>(undefined);
   const modes = useSessionModeStore((state) => state.modes);
-  // The mode of the session a message would reach (spec 5.5 routing); A-046 binds the real target.
-  const routed = selected
-    ? routedSession(composeSessions(selected.sessions.pills, modes))
-    : undefined;
+  // The session a message would reach with nothing typed: pinned, else routed (spec 5.5).
+  const target = routeMessage(
+    "",
+    buildRouteContext({
+      workspaces,
+      view: overview ? "overview" : "workspace",
+      selectedKey: selected?.key ?? "",
+      pinned: pinned !== undefined && findSession(workspaces, pinned) ? pinned : undefined,
+      modeOf: (key) => modeOf(modes, key),
+    }),
+  ).target;
+  const targetMode =
+    "all" in target || target.sessionId === null ? null : modeOf(modes, target.sessionId);
 
   return (
     <SidebarInset
@@ -124,7 +134,7 @@ export function CanvasShell() {
             +
           </button>
         </nav>
-        <main data-cv-main="" data-mode={routed?.mode}>
+        <main data-cv-main="" data-mode={targetMode ?? undefined}>
           {selected ? <WorkspaceView workspace={selected} /> : <h2>No workspace</h2>}
         </main>
       </div>
@@ -138,22 +148,14 @@ export function CanvasShell() {
         />
       ) : null}
       <div data-cv-dock="">
-        <div data-cv-bar="">
-          {routed ? (
-            <span data-cv-mtag="" data-mode={routed.mode}>
-              <ModeIcon mode={routed.mode} />
-              {MODES[routed.mode].label}
-            </span>
-          ) : null}
-          <input
-            data-cv-in=""
-            placeholder="Tell any session…"
-            aria-label="Omnibox"
-            aria-disabled="true"
-            tabIndex={-1}
-            readOnly
-          />
-        </div>
+        <OmniboxBar
+          workspaces={workspaces}
+          selectedKey={selected?.key ?? ""}
+          overview={overview}
+          pinned={pinned}
+          onPin={setPinned}
+          targetMode={targetMode}
+        />
       </div>
     </SidebarInset>
   );

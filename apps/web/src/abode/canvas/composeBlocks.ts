@@ -93,15 +93,3 @@ export function statusSentence(sessions: ReadonlyArray<ComposeSession>): string 
   if (count("blocked") > 0) parts.push(`${count("blocked")} blocked`);
   return `${parts.join(", ")}.`;
 }
-
-/** Spec 5.5 routing, step 2: the open Grill me, then a jam, then needs-you, then the first. */
-export function routedSession<T extends ComposeSession>(sessions: ReadonlyArray<T>): T | undefined {
-  return (
-    sessions.find((session) => session.mode === "grill") ??
-    sessions.find((session) => session.mode === "jam") ??
-    sessions.find(
-      (session) => session.status === "blocked" || session.status === "waiting on you",
-    ) ??
-    sessions[0]
-  );
-}

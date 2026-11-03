@@ -19,6 +19,8 @@ export interface SessionPill {
   /** The session's model, then the model of each live subagent it delegated to. */
   readonly dots: ReadonlyArray<ProviderKey>;
   readonly pair: boolean;
+  /** A run is in progress (the omnibox routes to a live session before the first one). */
+  readonly running: boolean;
   /** Only when the session needs the user, is stuck or landed unseen; running sessions say nothing. */
   readonly status: "waiting on you" | "blocked" | "landed" | null;
   /** A pending request the user must answer; an approval wins over a question. */
@@ -62,6 +64,7 @@ export function sessionPills(
         : thread.hasPendingUserInput
           ? "input"
           : null,
+      running: state.attention === "running",
       status:
         state.attention === "needs-you"
           ? "waiting on you"
