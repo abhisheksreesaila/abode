@@ -10,6 +10,7 @@ import { useUiStateStore } from "../../uiStateStore";
 import { deriveWorkspaceThreadState } from "../shell/threadState";
 import { useWorkspaceGroups } from "../shell/useWorkspaceGroups";
 import { threadShellKey } from "../shell/workspaceModel";
+import { isLayerOpen, overviewKeyAction } from "./overviewKeys";
 import { usageMeters, type OverviewWorkspace, type UsageMeter } from "./overviewModel";
 import type { CanvasWorkspace } from "./useCanvasWorkspaces";
 
@@ -71,21 +72,24 @@ function isTyping(target: EventTarget | null): boolean {
   return target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName);
 }
 
-/** `o` toggles the overview (not while typing), Esc closes it. */
+/** Window key listener; the decision lives in `overviewKeyAction`. */
 export function useOverviewKeys(open: boolean, toggle: () => void, close: () => void) {
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window key listener for the overview shortcut
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (event.key === "Escape" && open) {
-        close();
-      } else if (
-        event.key === "o" &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        !isTyping(event.target)
-      ) {
+      const action = overviewKeyAction(
+        {
+          key: event.key,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey,
+          defaultPrevented: event.defaultPrevented,
+          typing: isTyping(event.target),
+        },
+        { open, layerOpen: event.key === "Escape" && isLayerOpen() },
+      );
+      if (action === "close") close();
+      else if (action === "toggle") {
         event.preventDefault();
         toggle();
       }
