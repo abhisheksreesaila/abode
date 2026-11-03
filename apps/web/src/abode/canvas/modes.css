@@ -40,8 +40,8 @@
   gap: 2px;
   padding: 5px;
   border-radius: 14px;
-  background: #1d1d21;
-  color: #a9a9b1;
+  background: var(--cv-s2);
+  color: var(--cv-ink-2);
 }
 [data-cv-mopt] {
   display: flex;
@@ -66,11 +66,11 @@
 }
 [data-cv-mopt]:hover {
   background: rgb(237 237 239 / 0.07);
-  color: #ededef;
+  color: var(--cv-ink);
 }
 [data-cv-mopt][aria-pressed="true"] {
   background: rgb(237 237 239 / 0.12);
-  color: #ededef;
+  color: var(--cv-ink);
 }
 [data-cv-row] {
   display: grid;
@@ -242,7 +242,7 @@
   --cv-pip-body: #8ec5ff;
   display: block;
   transform-origin: 50% 90%;
-  animation: cv-bob 3.2s ease-in-out infinite;
+  animation: cv-bob 3.2s ease-in-out 2;
 }
 [data-cv-masc="ember"] {
   width: 66px;
@@ -253,8 +253,19 @@
   height: 43px;
   animation-duration: 4s;
 }
-[data-cv-hm]:hover [data-cv-masc] {
-  animation-duration: 0.7s;
+/* A second name restarts the bob on hover or focus; two swings, never a loop. */
+[data-cv-hm]:hover [data-cv-masc],
+[data-cv-hm]:focus-within [data-cv-masc] {
+  animation: cv-bob-again 0.7s ease-in-out 2;
+}
+@keyframes cv-bob-again {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg) translateY(-2px);
+  }
 }
 @keyframes cv-bob {
   0%,
@@ -267,7 +278,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   [data-cv-masc],
-  [data-cv-hm]:hover [data-cv-masc] {
+  [data-cv-hm]:hover [data-cv-masc],
+  [data-cv-hm]:focus-within [data-cv-masc] {
     animation: none;
   }
   [data-cv-mbtn],
@@ -280,5 +292,34 @@
   [data-cv-row="plan"] {
     grid-template-columns: minmax(0, 1fr);
     min-height: auto;
+  }
+}
+
+/* Touch: the look stays; the hit area grows to about 44px. */
+@media (pointer: coarse) {
+  [data-cv-mbtn],
+  [data-cv-chip] {
+    position: relative;
+  }
+  [data-cv-mbtn]::after {
+    content: "";
+    position: absolute;
+    inset: -9px;
+  }
+  [data-cv-chip]::after {
+    content: "";
+    position: absolute;
+    inset: -8px -3px;
+  }
+  [data-cv-chips] {
+    gap: 12px 8px;
+  }
+  [data-cv-mopt] {
+    min-height: 48px;
+    min-width: 66px;
+  }
+  [data-cv-link] {
+    padding: 12px 6px;
+    margin: -12px -6px;
   }
 }

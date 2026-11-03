@@ -8,12 +8,13 @@ import {
   type ThreadPendingApproval,
   type ThreadPendingUserInput,
 } from "@t3tools/client-runtime/state/thread-requests";
-import type { ProviderApprovalOption } from "@t3tools/contracts";
+import { AuthOrchestrationOperateScope, type ProviderApprovalOption } from "@t3tools/contracts";
 import { useState } from "react";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { derivePendingApprovals, derivePendingUserInputs } from "~/session-logic";
-import { useThreadProjection } from "~/state/entities";
+import { useQuietThreadProjection } from "~/state/entities";
+import { readEnvironmentScope } from "~/state/session";
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
@@ -56,9 +57,12 @@ function reportFailure(title: string, error: unknown) {
   );
 }
 
-/** The thread's detail, read the way the chat view reads it: the pending requests and messages. */
+/**
+ * The thread's structure (pending requests, resolved answers, messages), which holds through
+ * streamed assistant text, so these cards do not re-render on every token.
+ */
 function useThreadDetail(pill: SessionPill) {
-  const detail = useThreadProjection(scopeThreadRef(pill.environmentId, pill.threadId));
+  const detail = useQuietThreadProjection(scopeThreadRef(pill.environmentId, pill.threadId));
   const projection = detail?.projection ?? null;
   if (projection === null) {
     return { approval: null, userInput: null, projection };
@@ -82,13 +86,16 @@ function QuestionChips(props: {
   });
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<Record<string, unknown>>({});
+  const [toggled, setToggled] = useState<ReadonlyArray<string>>([]);
   const [busy, setBusy] = useState(false);
   const question = input.questions[step];
   if (question === undefined) return null;
-  const answerable = input.responseCapability !== "not_resumable";
+  const canOperate = readEnvironmentScope(pill.environmentId, AuthOrchestrationOperateScope);
+  const answerable = input.responseCapability !== "not_resumable" && canOperate;
 
-  const choose = async (value: string) => {
-    const answers = { ...picked, [question.id]: question.multiSelect ? [value] : value };
+  const submit = async (value: string | ReadonlyArray<string>) => {
+    const answers = { ...picked, [question.id]: value };
+    setToggled([]);
     if (step + 1 < input.questions.length) {
       setPicked(answers);
       setStep(step + 1);
@@ -110,21 +117,48 @@ function QuestionChips(props: {
       <h4 data-cv-q="">{question.question}</h4>
       {question.options.length > 0 && answerable ? (
         <div data-cv-chips="">
-          {question.options.map((option) => (
+          {question.options.map((option) => {
+            const value = option.value ?? option.label;
+            return (
+              <button
+                key={option.label}
+                type="button"
+                data-cv-chip=""
+                aria-pressed={question.multiSelect ? toggled.includes(value) : undefined}
+                disabled={busy}
+                onClick={() =>
+                  question.multiSelect
+                    ? setToggled(
+                        toggled.includes(value)
+                          ? toggled.filter((entry) => entry !== value)
+                          : [...toggled, value],
+                      )
+                    : void submit(value)
+                }
+              >
+                {option.label}
+              </button>
+            );
+          })}
+          {question.multiSelect ? (
             <button
-              key={option.label}
               type="button"
               data-cv-chip=""
-              disabled={busy}
-              onClick={() => void choose(option.value ?? option.label)}
+              data-primary=""
+              disabled={busy || toggled.length === 0}
+              onClick={() => void submit(toggled)}
             >
-              {option.label}
+              Send
             </button>
-          ))}
+          ) : null}
         </div>
       ) : null}
       <p data-cv-hint="">
-        {answerable ? "or answer in the chat" : "This one can only be answered in the chat."}{" "}
+        {!canOperate
+          ? "This connection cannot answer. Open the chat."
+          : answerable
+            ? "or answer in the chat"
+            : "This one can only be answered in the chat."}{" "}
         <button type="button" data-cv-link="" onClick={onOpen}>
           open chat
         </button>
@@ -144,6 +178,9 @@ function ApprovalButtons(props: {
   const [busy, setBusy] = useState(false);
   if (approval.responseCapability !== "live") {
     return <p data-cv-hint="">The agent can no longer take an answer to this one.</p>;
+  }
+  if (!readEnvironmentScope(pill.environmentId, AuthOrchestrationOperateScope)) {
+    return <p data-cv-hint="">This connection cannot answer. Open the chat.</p>;
   }
   const choose = async (decision: ProviderApprovalOption["decision"]) => {
     setBusy(true);
@@ -252,7 +289,8 @@ function BriefCard(props: { readonly pill: SessionPill; readonly onOpen: () => v
   const serious = useSessionModeStore((state) => state.serious);
   const { projection } = useThreadDetail(pill);
   const latest = projection?.messages.findLast(
-    (message) => message.role === "assistant" && message.text.trim().length > 0,
+    (message) =>
+      message.role === "assistant" && !message.streaming && message.text.trim().length > 0,
   );
   const lines = latest ? briefLines(latest.text) : [];
   return (

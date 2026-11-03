@@ -1,6 +1,44 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { sanitizeModes, steeringMessage } from "./sessionMode";
+import { changeMode, sanitizeModes, steeringMessage, type SessionMode } from "./sessionMode";
+
+describe("changeMode", () => {
+  const run = async (from: SessionMode, to: SessionMode, error: Error | null = null) => {
+    const sent: string[] = [];
+    const stored: SessionMode[] = [];
+    const result = await changeMode({
+      from,
+      to,
+      store: (mode) => stored.push(mode),
+      send: async (text) => {
+        sent.push(text);
+        return error;
+      },
+    });
+    return { sent, stored, result };
+  };
+
+  it("sends nothing and stores nothing when the mode is the same", async () => {
+    expect(await run("jam", "jam")).toEqual({ sent: [], stored: [], result: null });
+  });
+
+  it("stores the new mode and sends exactly one steering message", async () => {
+    expect(await run("auto", "tell")).toEqual({
+      sent: ["Mode: Tell me. Keep a one or two line brief of where you are current for me."],
+      stored: ["tell"],
+      result: null,
+    });
+  });
+
+  it("puts the old mode back when the send fails", async () => {
+    const failure = new Error("offline");
+    expect(await run("auto", "grill", failure)).toEqual({
+      sent: ["Mode: Grill me. Ask me before planning, one question at a time."],
+      stored: ["grill", "auto"],
+      result: failure,
+    });
+  });
+});
 import { modeOf, useSessionModeStore } from "./sessionModeStore";
 
 describe("steeringMessage", () => {

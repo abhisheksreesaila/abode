@@ -35,6 +35,24 @@ export function steeringMessage(from: SessionMode, to: SessionMode): string | nu
   return from === to ? null : MODES[to].steer;
 }
 
+/**
+ * Stores the new mode, then sends the thread its one steering message. A failed send puts the
+ * old mode back and returns the error; an unchanged mode does nothing.
+ */
+export async function changeMode(input: {
+  readonly from: SessionMode;
+  readonly to: SessionMode;
+  readonly store: (mode: SessionMode) => void;
+  readonly send: (text: string) => Promise<Error | null>;
+}): Promise<Error | null> {
+  const text = steeringMessage(input.from, input.to);
+  if (text === null) return null;
+  input.store(input.to);
+  const error = await input.send(text);
+  if (error !== null) input.store(input.from);
+  return error;
+}
+
 /** Keeps only known, non-default modes from stored data. */
 export function sanitizeModes(value: unknown): Record<string, SessionMode> {
   if (typeof value !== "object" || value === null) return {};

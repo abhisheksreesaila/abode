@@ -1,4 +1,5 @@
 /* One Window (A-042). Night Graphite tokens: docs/canvas/spec.md section 7. */
+:root,
 main[data-cv-root] {
   --cv-s0: #0b0b0d;
   --cv-s1: #151518;

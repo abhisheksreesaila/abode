@@ -13,7 +13,7 @@ import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
 import { ModeIcon } from "./ModeVisuals";
-import { MODE_ORDER, MODES, steeringMessage, type SessionMode } from "./sessionMode";
+import { changeMode, MODE_ORDER, MODES, type SessionMode } from "./sessionMode";
 import { useSessionModeStore } from "./sessionModeStore";
 import type { SessionPill } from "./sessionPills";
 
@@ -26,27 +26,34 @@ export function ModeButton(props: { readonly pill: SessionPill; readonly mode: S
 
   const choose = async (next: SessionMode) => {
     setOpen(false);
-    const text = steeringMessage(mode, next);
-    if (text === null) return;
-    useSessionModeStore.getState().setMode(pill.key, next);
-    if (shell === null) return;
-    const result = await startTurn({
-      environmentId: pill.environmentId,
-      input: {
-        threadId: pill.threadId,
-        message: { messageId: newMessageId(), role: "user", text, attachments: [] },
-        runtimeMode: shell.runtimeMode,
-        interactionMode: shell.interactionMode,
-        dispatchMode: "queue",
+    const error = await changeMode({
+      from: mode,
+      to: next,
+      store: (value) => useSessionModeStore.getState().setMode(pill.key, value),
+      send: async (text) => {
+        if (shell === null) return new Error("The session is not loaded yet.");
+        const result = await startTurn({
+          environmentId: pill.environmentId,
+          input: {
+            threadId: pill.threadId,
+            message: { messageId: newMessageId(), role: "user", text, attachments: [] },
+            runtimeMode: shell.runtimeMode,
+            interactionMode: shell.interactionMode,
+            dispatchMode: "queue",
+          },
+        });
+        if (result._tag === "Success") return null;
+        if (isAtomCommandInterrupted(result)) return null;
+        const failure = squashAtomCommandFailure(result);
+        return failure instanceof Error ? failure : new Error("An error occurred.");
       },
     });
-    if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-      const error = squashAtomCommandFailure(result);
+    if (error !== null) {
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: `Mode changed here, but ${pill.title} did not get the message`,
-          description: error instanceof Error ? error.message : "An error occurred.",
+          title: `Could not change ${pill.title} to ${MODES[next].label}`,
+          description: error.message,
         }),
       );
     }
