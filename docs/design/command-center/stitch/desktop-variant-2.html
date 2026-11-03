@@ -1,0 +1,976 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Command/12 - Executive Morning Digest</title>
+    <!-- Typography: Geist and Geist Mono -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;family=Geist:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#000000",
+              "on-tertiary-fixed-variant": "#4a4642",
+              "surface-container-low": "#f7f3f2",
+              "primary-fixed-dim": "#c8c6c8",
+              "on-tertiary-container": "#88837e",
+              "secondary-fixed-dim": "#c7c5cf",
+              "on-tertiary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-fixed": "#e5e1e4",
+              "surface-container": "#f1edec",
+              background: "#fdf8f8",
+              "inverse-surface": "#313030",
+              outline: "#78767b",
+              "on-primary-container": "#858386",
+              "inverse-on-surface": "#f4f0ef",
+              "secondary-fixed": "#e3e1eb",
+              "line-2": "#efeff2",
+              "surface-tint": "#5f5e60",
+              "secondary-container": "#e3e1eb",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "on-error": "#ffffff",
+              tertiary: "#000000",
+              "surface-container-lowest": "#ffffff",
+              "ink-2": "#5b5b63",
+              info: "#0960b5",
+              line: "#e3e3e8",
+              "surface-2": "#ffffff",
+              "on-secondary-fixed-variant": "#46464e",
+              "tertiary-fixed-dim": "#ccc5c0",
+              "on-secondary-fixed": "#1a1b22",
+              "surface-container-high": "#ebe7e7",
+              error: "#ba1a1a",
+              "tertiary-fixed": "#e8e1db",
+              "on-tertiary-fixed": "#1e1b18",
+              "on-secondary": "#ffffff",
+              surface: "#fdf8f8",
+              ink: "#0b0b0d",
+              "surface-1": "#ffffff",
+              "on-surface-variant": "#47464a",
+              "outline-variant": "#c8c5ca",
+              "surface-0": "#eeeef1",
+              "on-secondary-container": "#64646c",
+              "primary-container": "#1c1b1d",
+              "on-surface": "#1c1b1b",
+              "on-primary-fixed-variant": "#474649",
+              "tertiary-container": "#1e1b18",
+              "inverse-primary": "#c8c6c8",
+              "surface-container-highest": "#e5e2e1",
+              "surface-bright": "#fdf8f8",
+              "on-primary-fixed": "#1c1b1d",
+              ok: "#137036",
+              warn: "#8f5400",
+              "surface-variant": "#e5e2e1",
+              "on-background": "#1c1b1b",
+              secondary: "#5e5e66",
+              "surface-dim": "#ddd9d9",
+              bad: "#c01f25",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              "space-lg": "16px",
+              margin: "1.5rem",
+              "space-xl": "24px",
+              "space-sm": "8px",
+              "space-3xl": "48px",
+              "space-md": "12px",
+              gutter: "1rem",
+              "space-xs": "4px",
+              "space-2xl": "32px",
+            },
+            fontFamily: {
+              label: ["Geist", "sans-serif"],
+              "mono-source": ["Geist Mono", "monospace"],
+              "page-title": ["Geist", "sans-serif"],
+              "section-title": ["Geist", "sans-serif"],
+              body: ["Geist", "sans-serif"],
+            },
+            fontSize: {
+              label: ["12px", { lineHeight: "16px", fontWeight: "400" }],
+              "mono-source": ["11.5px", { lineHeight: "16px", fontWeight: "400" }],
+              "page-title": [
+                "23px",
+                { lineHeight: "28px", letterSpacing: "-0.02em", fontWeight: "600" },
+              ],
+              "section-title": ["15.5px", { lineHeight: "22px", fontWeight: "600" }],
+              body: ["13.5px", { lineHeight: "20px", fontWeight: "400" }],
+            },
+            boxShadow: {
+              "shadow-1": "0 1px 2px rgba(20,16,10,.06), 0 0 0 1px rgba(20,16,10,.045)",
+              "shadow-2": "0 6px 18px rgba(20,16,10,.10)",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-surface-0 text-ink font-body antialiased min-h-screen flex flex-col selection:bg-ink selection:text-white"
+  >
+    <!-- TOP APP BAR (Shared Component: TopNavBar with exact active mapping to 'Overview') -->
+    <header class="docked full-width top-0 sticky z-50 bg-surface-0 border-b border-line">
+      <div
+        class="flex items-center justify-between h-[34px] px-margin max-w-[1400px] mx-auto w-full"
+      >
+        <div class="flex items-center gap-6">
+          <a
+            class="text-section-title font-section-title font-semibold text-ink tracking-tight flex items-center gap-1.5"
+            href="#"
+          >
+            <span>abode</span>
+            <span class="text-ink-2 font-mono-source text-label font-normal">/</span>
+            <span class="text-label font-mono-source text-ink-2 font-normal">Command/12</span>
+          </a>
+          <nav class="hidden md:flex items-center gap-4 text-label font-label">
+            <a class="text-ink font-semibold" href="#">Overview</a>
+            <a class="text-ink-2 hover:text-ink transition-colors duration-150 font-normal" href="#"
+              >Agents</a
+            >
+            <a class="text-ink-2 hover:text-ink transition-colors duration-150 font-normal" href="#"
+              >Workspaces</a
+            >
+            <a class="text-ink-2 hover:text-ink transition-colors duration-150 font-normal" href="#"
+              >Audit</a
+            >
+          </nav>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Live Trust Indicator -->
+          <div
+            class="flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border border-line bg-surface-1 font-mono-source text-mono-source"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-ok animate-pulse"></span>
+            <span class="text-ink-2">sync:</span>
+            <span class="text-ink font-medium">07:00:12</span>
+          </div>
+          <div class="flex items-center gap-1 text-ink-2">
+            <button
+              class="w-6 h-6 flex items-center justify-center hover:text-ink transition-colors"
+              title="Notifications"
+            >
+              <span class="material-symbols-outlined text-[16px]" data-icon="notifications"
+                >notifications</span
+              >
+            </button>
+            <button
+              class="w-6 h-6 flex items-center justify-center hover:text-ink transition-colors"
+              title="Terminal"
+            >
+              <span class="material-symbols-outlined text-[16px]" data-icon="terminal"
+                >terminal</span
+              >
+            </button>
+          </div>
+          <button
+            class="rounded-full bg-primary text-on-primary px-3 py-1 text-label font-label font-medium shadow-shadow-1 hover:bg-ink-2 transition-colors duration-150 flex items-center gap-1"
+          >
+            <span>Deploy Agent</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <!-- MAIN CANVAS (Balanced Dual-Pane Bento Command Overview, Max 1400px) -->
+    <main
+      class="max-w-[1400px] w-full mx-auto px-margin py-space-lg flex-1 flex flex-col gap-space-lg"
+    >
+      <!-- 1. INTEGRATED EXECUTIVE HEADER & TELEMETRY BAND -->
+      <section class="flex flex-col gap-2">
+        <!-- Header title strip -->
+        <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+          <div class="flex items-baseline gap-2.5">
+            <h1 class="text-page-title font-page-title text-ink">Digest · Mon 2 Nov, 7:00</h1>
+            <span class="text-ink-2 font-body text-body text-[13px]">since Sun 19:00</span>
+          </div>
+          <div class="font-mono-source text-mono-source text-ink-2 flex items-center gap-2">
+            <span>scope: 12 active workspaces</span>
+            <span class="text-line">|</span>
+            <span class="text-ok font-medium">all daemons active</span>
+          </div>
+        </div>
+        <!-- Integrated Command Banner: Big Metrics (Left) + Machine Quotas Mini-Bars (Right) -->
+        <div
+          class="bg-surface-1 rounded-[12px] shadow-shadow-1 border border-line p-3 flex flex-col lg:flex-row lg:items-center divide-y lg:divide-y-0 lg:divide-x divide-line gap-3 lg:gap-0"
+        >
+          <!-- Left: 4 Unified Core Metrics -->
+          <div
+            class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-line lg:pr-5 lg:w-[48%] flex-shrink-0"
+          >
+            <div class="px-3 py-1 flex flex-col">
+              <span
+                class="font-mono-source text-[26px] leading-[30px] font-semibold text-ink tracking-tight"
+                >14</span
+              >
+              <span class="text-ink-2 font-label text-label mt-0.5">tickets done</span>
+            </div>
+            <div class="px-3 py-1 flex flex-col pl-4">
+              <span
+                class="font-mono-source text-[26px] leading-[30px] font-semibold text-ok tracking-tight"
+                >5</span
+              >
+              <span class="text-ink-2 font-label text-label mt-0.5">running</span>
+            </div>
+            <div class="px-3 py-1 flex flex-col pl-4">
+              <span
+                class="font-mono-source text-[26px] leading-[30px] font-semibold text-warn tracking-tight"
+                >3</span
+              >
+              <span class="text-ink-2 font-label text-label mt-0.5">need you</span>
+            </div>
+            <div class="px-3 py-1 flex flex-col pl-4">
+              <span
+                class="font-mono-source text-[26px] leading-[30px] font-semibold text-ink tracking-tight"
+                >2</span
+              >
+              <span class="text-ink-2 font-label text-label mt-0.5">machines online</span>
+            </div>
+          </div>
+          <!-- Right: Machines & Quotas Cluster Mini-Bars (Telemetry) -->
+          <div class="pt-3 lg:pt-0 lg:pl-5 flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <!-- Telemetry: ablearn -->
+            <div
+              class="bg-surface-0/60 rounded-[8px] p-2.5 border border-line flex flex-col justify-between gap-1.5"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono-source font-semibold text-ink text-[12px]">ablearn</span>
+                  <span
+                    class="rounded-[4px] px-1 py-0.2 text-[10px] font-mono-source border border-line bg-surface-1 text-ink-2"
+                    >this computer</span
+                  >
+                </div>
+                <span class="inline-flex items-center gap-1 text-ok font-mono-source text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-ok"></span> online
+                </span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div
+                  class="flex items-center justify-between text-mono-source font-mono-source text-[11px]"
+                >
+                  <span class="text-ink-2">3 agents</span>
+                  <span class="text-ink font-medium">CPU 62%</span>
+                </div>
+                <div class="w-full h-1 bg-line rounded-full overflow-hidden">
+                  <div class="bg-ink h-full rounded-full" style="width: 62%"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Telemetry: m4-pro -->
+            <div
+              class="bg-surface-0/60 rounded-[8px] p-2.5 border border-line flex flex-col justify-between gap-1.5"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono-source font-semibold text-ink text-[12px]">m4-pro</span>
+                  <span
+                    class="rounded-[4px] px-1 py-0.2 text-[10px] font-mono-source border border-line bg-surface-0 text-ink-2"
+                    >remote mac</span
+                  >
+                </div>
+                <span class="inline-flex items-center gap-1 text-ok font-mono-source text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-ok"></span> online
+                </span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div
+                  class="flex items-center justify-between text-mono-source font-mono-source text-[11px]"
+                >
+                  <span class="text-ink-2">1 agent</span>
+                  <span class="text-ink font-medium">GPU tests</span>
+                </div>
+                <div class="w-full h-1 bg-line rounded-full overflow-hidden">
+                  <div class="bg-ok h-full rounded-full" style="width: 28%"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Telemetry: Claude usage -->
+            <div
+              class="bg-surface-0/60 rounded-[8px] p-2.5 border border-line flex flex-col justify-between gap-1.5"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono-source font-semibold text-ink text-[12px]"
+                    >Claude usage</span
+                  >
+                  <span
+                    class="rounded-[4px] px-1 py-0.2 text-[10px] font-mono-source border border-line bg-surface-1 text-ink-2"
+                    >tier 4</span
+                  >
+                </div>
+                <span class="font-mono-source text-[10.5px] text-ink-2">resets 11:00</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div
+                  class="flex items-center justify-between text-mono-source font-mono-source text-[11px]"
+                >
+                  <span class="text-ink-2">Tokens consumption</span>
+                  <span class="text-ink font-medium">74%</span>
+                </div>
+                <div class="w-full h-1 bg-line rounded-full overflow-hidden">
+                  <div class="bg-warn h-full rounded-full" style="width: 74%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- 2. DUAL-PANE WORKSPACE: LEFT (DECISION DESK) + RIGHT (WORKSPACES MONITOR) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+        <!-- LEFT PANE: 'Needs you' Decision Inbox (5 cols on lg) -->
+        <section class="lg:col-span-5 flex flex-col gap-space-sm">
+          <div class="flex items-center justify-between pb-0.5">
+            <div class="flex items-center gap-2">
+              <h2 class="text-section-title font-section-title text-ink">Needs you</h2>
+              <span
+                class="font-mono-source text-mono-source px-1.5 py-0.5 rounded-[4px] border border-line bg-surface-1 text-ink font-medium"
+                >(3)</span
+              >
+            </div>
+            <span class="text-label font-label text-ink-2 text-[11.5px] truncate"
+              >Resumes agent execution</span
+            >
+          </div>
+          <div class="flex flex-col gap-space-md">
+            <!-- Decision Module A: abode -->
+            <div
+              class="bg-surface-1 rounded-[12px] shadow-shadow-1 border border-line p-space-md flex flex-col justify-between hover:border-outline-variant transition-colors duration-150"
+            >
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-bad"></span>
+                    <span class="font-mono-source text-mono-source text-ink font-medium"
+                      >abode</span
+                    >
+                  </div>
+                  <span
+                    class="rounded-[4px] px-1.5 py-0.5 text-[11px] font-mono-source border border-bad/30 bg-bad/5 text-bad font-medium"
+                    >Irreversible</span
+                  >
+                </div>
+                <h3 class="text-body font-semibold text-ink leading-snug mb-1">
+                  Update the host to upstream v0.1.7?
+                </h3>
+                <p class="text-body text-ink-2 text-[12.5px] leading-[18px]">
+                  Weekly sync merged 4 nightlies. 412 tests pass, hook budget 396/400. Restarts the
+                  server.
+                </p>
+              </div>
+              <div class="mt-3.5 pt-3 border-t border-line-2 flex flex-col gap-2.5">
+                <div class="flex flex-wrap gap-1.5 items-center">
+                  <button
+                    class="rounded-full bg-ink text-surface-1 px-3 py-1 text-label font-label font-medium shadow-shadow-1 hover:bg-ink-2 transition-colors"
+                  >
+                    Update tonight 03:00
+                  </button>
+                  <button
+                    class="rounded-full bg-surface-0 border border-line text-ink px-2.5 py-1 text-label font-label hover:bg-surface-container-high transition-colors"
+                  >
+                    Hold a week
+                  </button>
+                  <button
+                    class="rounded-full bg-surface-0 border border-line text-ink px-2.5 py-1 text-label font-label hover:bg-surface-container-high transition-colors"
+                  >
+                    Show diff
+                  </button>
+                  <button
+                    class="text-ink-2 hover:text-ink px-2 py-1 text-label font-label transition-colors"
+                  >
+                    Comment
+                  </button>
+                </div>
+                <div class="font-mono-source text-mono-source text-[11px] text-ink-2 truncate">
+                  abode-next · weekly-sync · 4 nightlies
+                </div>
+              </div>
+            </div>
+            <!-- Decision Module B: finxplorer -->
+            <div
+              class="bg-surface-1 rounded-[12px] shadow-shadow-1 border border-line p-space-md flex flex-col justify-between hover:border-outline-variant transition-colors duration-150"
+            >
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-warn"></span>
+                    <span class="font-mono-source text-mono-source text-ink font-medium"
+                      >finxplorer</span
+                    >
+                  </div>
+                  <span
+                    class="rounded-[4px] px-1.5 py-0.5 text-[11px] font-mono-source border border-warn/30 bg-warn/5 text-warn font-medium"
+                    >Direction</span
+                  >
+                </div>
+                <h3 class="text-body font-semibold text-ink leading-snug mb-1">
+                  Bank sync in v1, or keep CSV import?
+                </h3>
+                <p class="text-body text-ink-2 text-[12.5px] leading-[18px]">
+                  Brief says CSV. The agent found 3 tickets blocked on it.
+                </p>
+              </div>
+              <div class="mt-3.5 pt-3 border-t border-line-2 flex flex-col gap-2.5">
+                <div class="flex flex-wrap gap-1.5 items-center">
+                  <button
+                    class="rounded-full bg-surface-0 border border-line text-ink px-3 py-1 text-label font-label font-medium hover:bg-surface-container-high transition-colors"
+                  >
+                    Keep CSV
+                  </button>
+                  <button
+                    class="rounded-full bg-surface-0 border border-line text-ink px-3 py-1 text-label font-label hover:bg-surface-container-high transition-colors"
+                  >
+                    Add bank sync brief
+                  </button>
+                  <button
+                    class="text-ink-2 hover:text-ink px-2 py-1 text-label font-label transition-colors"
+                  >
+                    Comment
+                  </button>
+                </div>
+                <div class="font-mono-source text-mono-source text-[11px] text-ink-2 truncate">
+                  finx-engine · arch-decision · 3 blocked
+                </div>
+              </div>
+            </div>
+            <!-- Decision Module C: omxcore -->
+            <div
+              class="bg-surface-1 rounded-[12px] shadow-shadow-1 border border-line p-space-md flex flex-col justify-between hover:border-outline-variant transition-colors duration-150"
+            >
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-ink"></span>
+                    <span class="font-mono-source text-mono-source text-ink font-medium"
+                      >omxcore</span
+                    >
+                  </div>
+                  <span
+                    class="rounded-[4px] px-1.5 py-0.5 text-[11px] font-mono-source border border-ink/20 bg-surface-container text-ink font-medium"
+                    >Blocked</span
+                  >
+                </div>
+                <h3 class="text-body font-semibold text-ink leading-snug mb-1">
+                  Needs a PyPI token to publish 0.3.0
+                </h3>
+                <p class="text-body text-ink-2 text-[12.5px] leading-[18px]">
+                  Release 0.3.0 is built and tested; publishing needs a token only you can create.
+                </p>
+              </div>
+              <div class="mt-3.5 pt-3 border-t border-line-2 flex flex-col gap-2.5">
+                <div class="flex flex-wrap gap-1.5 items-center">
+                  <button
+                    class="rounded-full bg-ink text-surface-1 px-3 py-1 text-label font-label font-medium shadow-shadow-1 hover:bg-ink-2 transition-colors"
+                  >
+                    Run setup script
+                  </button>
+                  <button
+                    class="rounded-full bg-surface-0 border border-line text-ink px-3 py-1 text-label font-label hover:bg-surface-container-high transition-colors"
+                  >
+                    Skip release
+                  </button>
+                  <button
+                    class="text-ink-2 hover:text-ink px-2 py-1 text-label font-label transition-colors"
+                  >
+                    Comment
+                  </button>
+                </div>
+                <div class="font-mono-source text-mono-source text-[11px] text-ink-2 truncate">
+                  omxcore-ci · release-0.3.0 · auth-wait
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- RIGHT PANE: 'Workspaces' Live Table & Details (7 cols on lg) -->
+        <section class="lg:col-span-7 flex flex-col gap-space-sm">
+          <div class="flex items-center justify-between pb-0.5">
+            <div class="flex items-center gap-2">
+              <h2 class="text-section-title font-section-title text-ink">Workspaces</h2>
+              <span class="font-mono-source text-mono-source text-ink-2 text-[12px]"
+                >10 monitored</span
+              >
+            </div>
+            <div
+              class="flex items-center gap-3 font-mono-source text-mono-source text-ink-2 text-[11.5px]"
+            >
+              <span class="flex items-center gap-1"
+                ><span class="w-1.5 h-1.5 rounded-full bg-ok"></span> 5 running</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="w-1.5 h-1.5 rounded-full bg-warn"></span> 2 need you</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="w-1.5 h-1.5 rounded-full bg-bad"></span> 1 failed</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 2 idle</span
+              >
+            </div>
+          </div>
+          <!-- Dedicated Workspaces Table Container -->
+          <div
+            class="bg-surface-1 rounded-[12px] shadow-shadow-1 border border-line overflow-hidden"
+          >
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr
+                    class="border-b border-line bg-surface-0/60 text-ink-2 font-label text-[11px] uppercase tracking-wider h-[32px]"
+                  >
+                    <th class="py-1 px-3.5 font-medium w-[105px]">Status</th>
+                    <th class="py-1 px-3.5 font-medium w-[125px]">Workspace</th>
+                    <th class="py-1 px-3.5 font-medium w-[140px]">Progress</th>
+                    <th class="py-1 px-3.5 font-medium">Moved since last digest</th>
+                    <th class="py-1 px-3 font-medium w-[85px]">Machine</th>
+                    <th class="py-1 px-3.5 font-medium text-right w-[80px]">Active</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-line text-body text-[13px]">
+                  <!-- ROW 1 (EXPANDED IN PLACE) -->
+                  <tr class="bg-surface-0/30 font-medium">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-ok font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-ok animate-pulse"></span> running
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">abode</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 58%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >7/12</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink truncate text-[12.5px]">
+                      <span class="text-ok font-mono-source">+3 done:</span> A-040 knip, A-041
+                      voice, A-039 host
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >ablearn</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      12m
+                    </td>
+                  </tr>
+                  <!-- Nested Decision Log Panel Under Row 1 -->
+                  <tr>
+                    <td class="p-0 bg-surface-0/20" colspan="6">
+                      <div
+                        class="mx-3.5 my-2 pl-3 border-l-2 border-line flex flex-col gap-1 font-mono-source text-mono-source text-ink-2 text-[11.5px]"
+                      >
+                        <div class="flex items-center justify-between pr-3 py-0.5">
+                          <div class="flex items-center gap-2">
+                            <span class="text-ink">02:14</span>
+                            <span>·</span>
+                            <span>Chose knip ignore over deleting the export</span>
+                          </div>
+                          <span
+                            class="rounded-[4px] px-1 py-0.2 border border-line text-[10px] text-ink-2 bg-surface-1"
+                            >reversible</span
+                          >
+                        </div>
+                        <div class="flex items-center justify-between pr-3 py-0.5">
+                          <div class="flex items-center gap-2">
+                            <span class="text-ink">04:40</span>
+                            <span>·</span>
+                            <span>Split A-041 into two commits</span>
+                          </div>
+                          <span
+                            class="rounded-[4px] px-1 py-0.2 border border-line text-[10px] text-ink-2 bg-surface-1"
+                            >reversible</span
+                          >
+                        </div>
+                        <div class="flex items-center justify-between pr-3 py-0.5">
+                          <div class="flex items-center gap-2">
+                            <span class="text-warn font-medium">06:05</span>
+                            <span>·</span>
+                            <span class="text-ink font-medium">Held host update for you</span>
+                          </div>
+                          <span
+                            class="rounded-[4px] px-1 py-0.2 border border-bad/30 bg-bad/5 text-bad text-[10px] font-medium"
+                            >irreversible</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <!-- ROW 2 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-warn font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-warn"></span> needs you
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">finxplorer</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 44%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >4/9</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink-2 text-[12.5px] truncate">
+                      3 tickets waiting on bank sync
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >ablearn</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      1h
+                    </td>
+                  </tr>
+                  <!-- ROW 3 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-ok font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-ok animate-pulse"></span> running
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">gitaway</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 71%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >10/14</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink text-[12.5px] truncate">
+                      <span class="text-ok font-mono-source">+2 done:</span> G-011 clone, G-012
+                      retry
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >ablearn</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      4m
+                    </td>
+                  </tr>
+                  <!-- ROW 4 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-secondary font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> idle
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">
+                      personal-note
+                    </td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 100%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >8/8</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink-2 text-[12.5px] truncate">
+                      idle: DuckDB tests passed
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >ablearn</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      6h
+                    </td>
+                  </tr>
+                  <!-- ROW 5 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-ok font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-ok animate-pulse"></span> running
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">omxplorer</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 45%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >5/11</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink text-[12.5px] truncate">
+                      <span class="text-ok font-mono-source">+1 done:</span> X-007 sentence slots
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >m4-pro</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      20m
+                    </td>
+                  </tr>
+                  <!-- ROW 6 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-bad font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-bad"></span> failed
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">mxconsole</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-bad rounded-full overflow-hidden">
+                          <div class="bg-bad h-full rounded-full" style="width: 30%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >3/10</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-bad font-mono-source text-[12px] truncate">
+                      M-004 serve form: reviewer NEEDS WORK twice
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >m4-pro</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      2h
+                    </td>
+                  </tr>
+                  <!-- ROW 7 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-warn font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-warn"></span> needs you
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">omxcore</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 100%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >6/6</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink-2 text-[12.5px] truncate">
+                      release 0.3.0 waiting on PyPI token
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >ablearn</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      3h
+                    </td>
+                  </tr>
+                  <!-- ROW 8 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-ok font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-ok animate-pulse"></span> running
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">questly</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 28%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >2/7</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink text-[12.5px] truncate">
+                      <span class="text-ok font-mono-source">+2 done:</span> Q-002 quest tiles,
+                      Q-003 reward chips
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >ablearn</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      31m
+                    </td>
+                  </tr>
+                  <!-- ROW 9 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-secondary font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> idle
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">omxlabs</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-line h-full rounded-full" style="width: 0%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >0/0</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink-2 text-[12.5px] truncate">no plan yet</td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >ablearn</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      2d
+                    </td>
+                  </tr>
+                  <!-- ROW 10 -->
+                  <tr class="hover:bg-surface-0/40 transition-colors">
+                    <td class="py-2 px-3.5 whitespace-nowrap">
+                      <span
+                        class="inline-flex items-center gap-1 text-ok font-mono-source text-mono-source"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-ok animate-pulse"></span> running
+                      </span>
+                    </td>
+                    <td class="py-2 px-3.5 font-mono-source font-semibold text-ink">mojo-ui</td>
+                    <td class="py-2 px-3.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-14 h-1.5 bg-line rounded-full overflow-hidden">
+                          <div class="bg-ink h-full rounded-full" style="width: 20%"></div>
+                        </div>
+                        <span class="font-mono-source text-mono-source text-[11px] text-ink-2"
+                          >1/5</span
+                        >
+                      </div>
+                    </td>
+                    <td class="py-2 px-3.5 text-ink text-[12.5px] truncate">
+                      <span class="text-ok font-mono-source">+1 done:</span> U-001 window shell
+                    </td>
+                    <td class="py-2 px-3">
+                      <span
+                        class="rounded-[4px] px-1.5 py-0.5 text-mono-source font-mono-source border border-line bg-surface-1 text-ink text-[11px]"
+                        >m4-pro</span
+                      >
+                    </td>
+                    <td
+                      class="py-2 px-3.5 text-right font-mono-source text-mono-source text-ink-2 text-[11px]"
+                    >
+                      8m
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+      <!-- Contextual Digest Prompt Footer Notice -->
+      <div class="font-mono-source text-[12px] text-ink-2 text-center py-2">
+        published 07:00 · next digest 19:00 · comments route to each workspace's thread
+      </div>
+    </main>
+    <!-- FOOTER (Shared Component: Footer with exact schema labels) -->
+    <footer class="docked full-width bottom mt-space-3xl bg-surface-0 border-t border-line">
+      <div
+        class="flex flex-col sm:flex-row items-center justify-between py-space-md px-margin max-w-[1400px] mx-auto w-full text-mono-source font-mono-source"
+      >
+        <div class="text-ink text-mono-source font-mono-source">
+          Command/12 v2.4.1 · 12/12 Agents Operational
+        </div>
+        <div class="flex items-center gap-4 mt-2 sm:mt-0">
+          <a class="text-ink-2 hover:text-ink transition-colors duration-150" href="#">CI Status</a>
+          <a class="text-ink-2 hover:text-ink transition-colors duration-150" href="#"
+            >Runtime Logs</a
+          >
+          <a class="text-ink-2 hover:text-ink transition-colors duration-150" href="#"
+            >Documentation</a
+          >
+          <a class="text-ink-2 hover:text-ink transition-colors duration-150" href="#">API</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

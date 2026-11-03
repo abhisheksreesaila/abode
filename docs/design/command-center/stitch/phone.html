@@ -1,0 +1,840 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      name="viewport"
+    />
+    <title>Command/12 · Morning Digest</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary": "#ffffff",
+              "secondary-container": "#e3e1eb",
+              "on-tertiary-fixed": "#1e1b18",
+              "on-primary-fixed-variant": "#474649",
+              line: "#e3e3e8",
+              "inverse-surface": "#313030",
+              warn: "#8f5400",
+              "surface-0": "#eeeef1",
+              "surface-1": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed": "#1c1b1d",
+              "on-primary-container": "#858386",
+              secondary: "#5e5e66",
+              outline: "#78767b",
+              "on-tertiary-fixed-variant": "#4a4642",
+              "on-secondary": "#ffffff",
+              info: "#0960b5",
+              "secondary-fixed-dim": "#c7c5cf",
+              background: "#fdf8f8",
+              tertiary: "#000000",
+              "surface-variant": "#e5e2e1",
+              surface: "#fdf8f8",
+              "secondary-fixed": "#e3e1eb",
+              "on-secondary-fixed": "#1a1b22",
+              error: "#ba1a1a",
+              "surface-container-highest": "#e5e2e1",
+              "surface-dim": "#ddd9d9",
+              "surface-container-high": "#ebe7e7",
+              "outline-variant": "#c8c5ca",
+              "on-tertiary-container": "#88837e",
+              "line-2": "#efeff2",
+              "on-error-container": "#93000a",
+              "surface-container": "#f1edec",
+              primary: "#000000",
+              "on-error": "#ffffff",
+              "surface-tint": "#5f5e60",
+              "inverse-on-surface": "#f4f0ef",
+              "on-surface": "#1c1b1b",
+              "surface-container-low": "#f7f3f2",
+              ink: "#0b0b0d",
+              "tertiary-fixed-dim": "#ccc5c0",
+              bad: "#c01f25",
+              "surface-2": "#ffffff",
+              "inverse-primary": "#c8c6c8",
+              "surface-container-lowest": "#ffffff",
+              "on-surface-variant": "#47464a",
+              "tertiary-fixed": "#e8e1db",
+              "primary-fixed": "#e5e1e4",
+              "on-secondary-fixed-variant": "#46464e",
+              "on-secondary-container": "#64646c",
+              "surface-bright": "#fdf8f8",
+              "on-background": "#1c1b1b",
+              "tertiary-container": "#1e1b18",
+              "error-container": "#ffdad6",
+              ok: "#137036",
+              "primary-fixed-dim": "#c8c6c8",
+              "ink-2": "#5b5b63",
+              "primary-container": "#1c1b1d",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              "space-xl": "24px",
+              "space-3xl": "48px",
+              margin: "1.5rem",
+              "space-xs": "4px",
+              "space-lg": "16px",
+              "space-2xl": "32px",
+              "space-sm": "8px",
+              "space-md": "12px",
+              gutter: "1rem",
+            },
+            fontFamily: {
+              "page-title": ["Geist", "sans-serif"],
+              "mono-source": ["Geist Mono", "monospace"],
+              body: ["Geist", "sans-serif"],
+              "section-title": ["Geist", "sans-serif"],
+              label: ["Geist", "sans-serif"],
+            },
+            fontSize: {
+              "page-title": [
+                "23px",
+                { lineHeight: "28px", letterSpacing: "-0.02em", fontWeight: "600" },
+              ],
+              "mono-source": ["11.5px", { lineHeight: "16px", fontWeight: "400" }],
+              body: ["13.5px", { lineHeight: "20px", fontWeight: "400" }],
+              "section-title": ["15.5px", { lineHeight: "22px", fontWeight: "600" }],
+              label: ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            },
+            boxShadow: {
+              card: "0 1px 2px rgba(20,16,10,.06), 0 0 0 1px rgba(20,16,10,.045)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 20;
+        font-size: 16px;
+        line-height: 1;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      /* Hide scrollbars while preserving flick gesture */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-surface-0 text-ink antialiased selection:bg-ink selection:text-surface-1 flex justify-center min-h-screen"
+  >
+    <!-- 390px Mobile Viewport Container -->
+    <main
+      class="w-full max-w-[390px] min-h-screen bg-surface-0 flex flex-col px-space-md pt-space-md pb-space-3xl"
+    >
+      <!-- 1. Header (Brand mark + sync indicator + title) -->
+      <header class="flex flex-col gap-space-sm mb-space-lg">
+        <div class="flex items-center justify-between">
+          <span class="font-page-title text-[17px] font-bold tracking-tight text-ink">abode</span>
+          <div
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-1 shadow-card border border-line"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-ok animate-pulse"></span>
+            <span class="font-mono-source text-mono-source text-ink-2">sync: 07:00:12</span>
+          </div>
+        </div>
+        <div class="mt-1">
+          <h1 class="font-page-title text-page-title text-ink">Digest · Mon 2 Nov, 7:00</h1>
+          <p class="font-label text-label text-ink-2 mt-0.5">
+            since Sun 19:00 · 12 active workspaces
+          </p>
+        </div>
+      </header>
+      <!-- 2. Stats Strip: 2x2 grid of small surface-1 cards -->
+      <section
+        aria-label="Key Performance Indicators"
+        class="grid grid-cols-2 gap-space-sm mb-space-xl"
+      >
+        <div
+          class="bg-surface-1 rounded-lg p-space-md shadow-card border border-line flex flex-col justify-between"
+        >
+          <span
+            class="font-mono-source text-[26px] leading-[30px] font-semibold text-ink tracking-tight"
+            >14</span
+          >
+          <span class="font-label text-label text-ink-2 mt-1">tickets done</span>
+        </div>
+        <div
+          class="bg-surface-1 rounded-lg p-space-md shadow-card border border-line flex flex-col justify-between"
+        >
+          <span
+            class="font-mono-source text-[26px] leading-[30px] font-semibold text-ink tracking-tight"
+            >5</span
+          >
+          <span class="font-label text-label text-ink-2 mt-1">running</span>
+        </div>
+        <div
+          class="bg-surface-1 rounded-lg p-space-md shadow-card border border-line flex flex-col justify-between"
+        >
+          <span
+            class="font-mono-source text-[26px] leading-[30px] font-semibold text-bad tracking-tight"
+            >3</span
+          >
+          <span class="font-label text-label text-ink-2 mt-1">need you</span>
+        </div>
+        <div
+          class="bg-surface-1 rounded-lg p-space-md shadow-card border border-line flex flex-col justify-between"
+        >
+          <span
+            class="font-mono-source text-[26px] leading-[30px] font-semibold text-ink tracking-tight"
+            >2</span
+          >
+          <span class="font-label text-label text-ink-2 mt-1">machines online</span>
+        </div>
+      </section>
+      <!-- 3. Section: Needs you (3) Carousel Preview -->
+      <section aria-labelledby="needs-you-title" class="mb-space-xl">
+        <div class="flex items-baseline justify-between mb-space-sm">
+          <div class="flex items-center gap-2">
+            <h2 class="font-section-title text-section-title text-ink" id="needs-you-title">
+              Needs you (3)
+            </h2>
+            <span class="w-2 h-2 rounded-full bg-bad"></span>
+          </div>
+          <span class="font-label text-label text-ink-2">Unblocking resumes agents</span>
+        </div>
+        <!-- Horizontal peek slider -->
+        <div
+          class="overflow-x-auto no-scrollbar -mx-space-md px-space-md flex gap-space-sm snap-x snap-mandatory pt-0.5 pb-1"
+        >
+          <!-- Card 1 (Active) -->
+          <article
+            class="min-w-[316px] max-w-[316px] shrink-0 snap-start bg-surface-1 rounded-xl p-space-lg shadow-card border border-line flex flex-col justify-between"
+          >
+            <div>
+              <div class="flex items-center justify-between mb-space-sm">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-bad"></span>
+                  <span class="font-mono-source text-body font-semibold text-ink">abode</span>
+                </div>
+                <span
+                  class="px-2 py-0.5 rounded border border-bad/30 bg-bad/5 text-bad font-mono-source text-[11px] leading-4 uppercase tracking-wider font-medium"
+                  >Irreversible</span
+                >
+              </div>
+              <h3 class="font-section-title text-section-title text-ink mb-1.5 leading-snug">
+                Update the host to upstream v0.1.7?
+              </h3>
+              <p class="font-body text-body text-ink-2 leading-relaxed">
+                Weekly sync merged 4 nightlies. 412 tests pass, hook budget 396/400. Restarts the
+                server.
+              </p>
+            </div>
+            <!-- Stacked touch controls (>= 48px height) -->
+            <div class="flex flex-col gap-2 mt-space-lg">
+              <button
+                class="w-full h-12 px-4 rounded-full bg-ink text-surface-1 font-body text-body font-medium flex items-center justify-center hover:opacity-90 active:scale-[0.99] transition-transform shadow-card"
+                type="button"
+              >
+                Update tonight 03:00
+              </button>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  class="w-full h-12 px-3 rounded-full bg-surface-0 border border-line text-ink font-body text-body font-medium flex items-center justify-center hover:bg-line transition-colors"
+                  type="button"
+                >
+                  Hold a week
+                </button>
+                <button
+                  class="w-full h-12 px-3 rounded-full bg-surface-0 border border-line text-ink font-body text-body font-medium flex items-center justify-center hover:bg-line transition-colors"
+                  type="button"
+                >
+                  Show diff
+                </button>
+              </div>
+              <button
+                class="w-full h-12 rounded-full text-ink-2 hover:text-ink font-body text-body font-medium flex items-center justify-center transition-colors"
+                type="button"
+              >
+                Comment
+              </button>
+            </div>
+            <div
+              class="mt-space-md pt-space-sm border-t border-line-2 flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2"
+            >
+              <span class="material-symbols-outlined text-[13px] text-ink-2" data-icon="terminal"
+                >terminal</span
+              >
+              <span class="truncate">abode-next · weekly-sync · 4 nightlies</span>
+            </div>
+          </article>
+          <!-- Card 2 (Peeked) -->
+          <article
+            class="min-w-[316px] max-w-[316px] shrink-0 snap-start bg-surface-1 rounded-xl p-space-lg shadow-card border border-line flex flex-col justify-between opacity-95"
+          >
+            <div>
+              <div class="flex items-center justify-between mb-space-sm">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-warn"></span>
+                  <span class="font-mono-source text-body font-semibold text-ink">finxplorer</span>
+                </div>
+                <span
+                  class="px-2 py-0.5 rounded border border-warn/30 bg-warn/5 text-warn font-mono-source text-[11px] leading-4 uppercase tracking-wider font-medium"
+                  >Direction</span
+                >
+              </div>
+              <h3 class="font-section-title text-section-title text-ink mb-1.5 leading-snug">
+                Bank sync in v1, or keep CSV import?
+              </h3>
+              <p class="font-body text-body text-ink-2 leading-relaxed">
+                Plaid OAuth adds 3 dependencies and webhook maintenance. Manual CSV is completely
+                self-contained.
+              </p>
+            </div>
+            <div class="flex flex-col gap-2 mt-space-lg">
+              <button
+                class="w-full h-12 px-4 rounded-full bg-ink text-surface-1 font-body text-body font-medium flex items-center justify-center shadow-card"
+                type="button"
+              >
+                Keep CSV for v1
+              </button>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  class="w-full h-12 px-3 rounded-full bg-surface-0 border border-line text-ink font-body text-body font-medium flex items-center justify-center"
+                  type="button"
+                >
+                  Add Plaid
+                </button>
+                <button
+                  class="w-full h-12 px-3 rounded-full bg-surface-0 border border-line text-ink font-body text-body font-medium flex items-center justify-center"
+                  type="button"
+                >
+                  Read RFC
+                </button>
+              </div>
+              <button
+                class="w-full h-12 rounded-full text-ink-2 font-body text-body font-medium flex items-center justify-center"
+                type="button"
+              >
+                Comment
+              </button>
+            </div>
+            <div
+              class="mt-space-md pt-space-sm border-t border-line-2 flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2"
+            >
+              <span
+                class="material-symbols-outlined text-[13px] text-ink-2"
+                data-icon="account_balance"
+                >account_balance</span
+              >
+              <span class="truncate">finx-core · architecture-spec</span>
+            </div>
+          </article>
+        </div>
+        <!-- Pagination Indicator -->
+        <div
+          class="flex items-center justify-center gap-2 mt-space-sm text-ink-2 font-mono-source text-mono-source"
+        >
+          <span class="text-ink">●</span>
+          <span>○</span>
+          <span>○</span>
+          <span class="ml-1 text-ink-2">1 of 3</span>
+        </div>
+      </section>
+      <!-- 4. Section: Workspaces -->
+      <section aria-labelledby="workspaces-title" class="mb-space-xl">
+        <div class="flex flex-col gap-1 mb-space-sm">
+          <div class="flex items-center justify-between">
+            <h2 class="font-section-title text-section-title text-ink" id="workspaces-title">
+              Workspaces
+            </h2>
+            <span class="font-mono-source text-mono-source text-ink-2">10 monitored</span>
+          </div>
+          <p
+            class="font-mono-source text-[11px] text-ink-2 flex flex-wrap items-center gap-x-2 gap-y-0.5"
+          >
+            <span class="inline-flex items-center gap-1"
+              ><span class="w-1.5 h-1.5 rounded-full bg-ok"></span>5 running</span
+            >
+            <span class="text-line">·</span>
+            <span class="inline-flex items-center gap-1"
+              ><span class="w-1.5 h-1.5 rounded-full bg-bad"></span>2 need you</span
+            >
+            <span class="text-line">·</span>
+            <span class="inline-flex items-center gap-1"
+              ><span class="w-1.5 h-1.5 rounded-full bg-error"></span>1 failed</span
+            >
+            <span class="text-line">·</span>
+            <span class="inline-flex items-center gap-1"
+              ><span class="w-1.5 h-1.5 rounded-full bg-outline"></span>2 idle</span
+            >
+          </p>
+        </div>
+        <!-- Card container with hairline-divided rows -->
+        <div
+          class="bg-surface-1 rounded-xl shadow-card border border-line divide-y divide-line overflow-hidden"
+        >
+          <!-- Row 1: abode (EXPANDED IN PLACE) -->
+          <div class="flex flex-col bg-surface-1">
+            <div class="p-3.5 flex flex-col gap-2 cursor-pointer">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-bad"></span>
+                  <span class="font-mono-source font-semibold text-body text-ink">abode</span>
+                  <span
+                    class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                    >ablearn</span
+                  >
+                </div>
+                <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                  <span>12 min</span>
+                  <span
+                    class="material-symbols-outlined text-ink text-sm transform rotate-90"
+                    data-icon="chevron_right"
+                    >chevron_right</span
+                  >
+                </div>
+              </div>
+              <!-- Progress bar -->
+              <div class="flex items-center gap-2">
+                <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                  <div class="h-full bg-ink rounded-full" style="width: 58%"></div>
+                </div>
+                <span class="font-mono-source text-mono-source text-ink-2 shrink-0">7 of 12</span>
+              </div>
+              <div class="font-body text-body text-ink truncate">
+                Update host to upstream v0.1.7 pending response
+              </div>
+            </div>
+            <!-- Nested Decision Log -->
+            <div
+              class="px-3.5 pb-3.5 pt-2 bg-surface-0/60 border-t border-line-2 flex flex-col gap-2"
+            >
+              <span class="font-label text-[11px] font-semibold text-ink-2 uppercase tracking-wider"
+                >Decision Log</span
+              >
+              <div
+                class="flex flex-col gap-1.5 font-mono-source text-[11px] text-ink-2 leading-tight"
+              >
+                <div class="flex items-start gap-1.5">
+                  <span class="text-ink">02:14</span>
+                  <span>·</span>
+                  <span class="flex-1 text-ink"
+                    >Chose knip ignore over deleting export
+                    <span class="text-ok font-medium">reversible</span></span
+                  >
+                </div>
+                <div class="flex items-start gap-1.5">
+                  <span class="text-ink">04:40</span>
+                  <span>·</span>
+                  <span class="flex-1 text-ink"
+                    >Split A-041 into two commits
+                    <span class="text-ok font-medium">reversible</span></span
+                  >
+                </div>
+                <div class="flex items-start gap-1.5">
+                  <span class="text-ink">06:05</span>
+                  <span>·</span>
+                  <span class="flex-1 text-ink"
+                    >Held host update for you
+                    <span class="text-bad font-medium">irreversible</span></span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Row 2: finxplorer -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-bad"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">finxplorer</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >ablearn</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>1 h</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 44%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">4 of 9</span>
+            </div>
+            <p class="font-body text-body text-ink-2 truncate">3 tickets waiting on bank sync</p>
+          </div>
+          <!-- Row 3: gitaway -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-ok"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">gitaway</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >ablearn</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>4 min</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 71%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">10 of 14</span>
+            </div>
+            <p class="font-body text-body text-ink truncate">+2 done: G-011 clone, G-012 retry</p>
+          </div>
+          <!-- Row 4: personal-note -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-outline"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">personal-note</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >ablearn</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>6 h</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 100%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">8 of 8</span>
+            </div>
+            <p class="font-body text-body text-ink-2 truncate">idle: DuckDB tests passed</p>
+          </div>
+          <!-- Row 5: omxplorer -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-ok"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">omxplorer</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >m4-pro</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>20 min</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 45%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">5 of 11</span>
+            </div>
+            <p class="font-body text-body text-ink truncate">+1 done: X-007 sentence slots</p>
+          </div>
+          <!-- Row 6: mxconsole -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-bad"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">mxconsole</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >m4-pro</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>2 h</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-error rounded-full" style="width: 30%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">3 of 10</span>
+            </div>
+            <p class="font-body text-body text-bad truncate">
+              M-004 serve form: reviewer NEEDS WORK twice
+            </p>
+          </div>
+          <!-- Row 7: omxcore -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-bad"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">omxcore</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >ablearn</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>3 h</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 100%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">6 of 6</span>
+            </div>
+            <p class="font-body text-body text-ink-2 truncate">
+              release 0.3.0 waiting on PyPI token
+            </p>
+          </div>
+          <!-- Row 8: questly -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-ok"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">questly</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >ablearn</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>31 min</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 28%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">2 of 7</span>
+            </div>
+            <p class="font-body text-body text-ink truncate">
+              +2 done: Q-002 quest tiles, Q-003 reward chips
+            </p>
+          </div>
+          <!-- Row 9: omxlabs -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-outline"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">omxlabs</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >ablearn</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>2 d</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink-2 rounded-full" style="width: 0%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">0 of 0</span>
+            </div>
+            <p class="font-body text-body text-ink-2 truncate">no plan yet</p>
+          </div>
+          <!-- Row 10: mojo-ui -->
+          <div class="p-3.5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-ok"></span>
+                <span class="font-mono-source font-semibold text-body text-ink">mojo-ui</span>
+                <span
+                  class="px-1.5 py-0.2 rounded bg-surface-0 text-ink-2 border border-line font-mono-source text-[10px]"
+                  >m4-pro</span
+                >
+              </div>
+              <div class="flex items-center gap-1.5 font-mono-source text-mono-source text-ink-2">
+                <span>8 min</span>
+                <span
+                  class="material-symbols-outlined text-outline-variant text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="h-1 flex-1 bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 20%"></div>
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2 shrink-0">1 of 5</span>
+            </div>
+            <p class="font-body text-body text-ink truncate">+1 done: U-001 window shell</p>
+          </div>
+        </div>
+      </section>
+      <!-- 5. Section: Machines -->
+      <section aria-labelledby="machines-title" class="mb-space-xl">
+        <div class="flex items-center justify-between mb-space-sm">
+          <h2 class="font-section-title text-section-title text-ink" id="machines-title">
+            Machines
+          </h2>
+          <span class="font-label text-label text-ink-2">Compute &amp; quotas</span>
+        </div>
+        <div class="flex flex-col gap-space-sm">
+          <!-- Machine 1: ablearn -->
+          <div
+            class="bg-surface-1 rounded-lg p-space-md shadow-card border border-line flex flex-col gap-2"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-mono-source text-body font-semibold text-ink">ablearn</span>
+                <span
+                  class="px-2 py-0.5 rounded border border-line font-mono-source text-[11px] text-ink-2"
+                  >this computer</span
+                >
+              </div>
+              <div
+                class="flex items-center gap-1.5 font-mono-source text-mono-source text-ok font-medium"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-ok"></span>
+                <span>online</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="font-label text-label text-ink-2">3 agents active</span>
+              <div class="flex items-center gap-2 font-mono-source text-mono-source text-ink">
+                <span>CPU 62%</span>
+                <div class="w-16 h-1.5 bg-surface-0 rounded-full overflow-hidden">
+                  <div class="h-full bg-ink rounded-full" style="width: 62%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Machine 2: m4-pro -->
+          <div
+            class="bg-surface-1 rounded-lg p-space-md shadow-card border border-line flex flex-col gap-2"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-mono-source text-body font-semibold text-ink">m4-pro</span>
+                <span
+                  class="px-2 py-0.5 rounded border border-line font-mono-source text-[11px] text-ink-2"
+                  >remote mac</span
+                >
+              </div>
+              <div
+                class="flex items-center gap-1.5 font-mono-source text-mono-source text-ok font-medium"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-ok"></span>
+                <span>online</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="font-label text-label text-ink-2">1 agent · GPU tests</span>
+              <div class="flex items-center gap-2 font-mono-source text-mono-source text-ink">
+                <span>GPU 28%</span>
+                <div class="w-16 h-1.5 bg-surface-0 rounded-full overflow-hidden">
+                  <div class="h-full bg-ink rounded-full" style="width: 28%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Meter: Claude Usage -->
+          <div
+            class="bg-surface-1 rounded-lg p-space-md shadow-card border border-line flex flex-col gap-2"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-mono-source text-body font-semibold text-ink">Claude usage</span>
+                <span
+                  class="px-2 py-0.5 rounded border border-line font-mono-source text-[11px] text-ink-2"
+                  >tier 4</span
+                >
+              </div>
+              <span class="font-mono-source text-mono-source text-ink-2">resets 11:00</span>
+            </div>
+            <div class="flex flex-col gap-1.5 pt-1">
+              <div
+                class="flex items-center justify-between font-mono-source text-mono-source text-ink"
+              >
+                <span>74% of window</span>
+                <span class="text-ink-2">26% left</span>
+              </div>
+              <div class="h-1.5 w-full bg-surface-0 rounded-full overflow-hidden">
+                <div class="h-full bg-ink rounded-full" style="width: 74%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- 6. Footer Source Line in Mono -->
+      <footer class="mt-auto pt-space-lg border-t border-line text-center">
+        <p class="font-mono-source text-mono-source text-ink-2 leading-relaxed">
+          published 07:00 · next digest 19:00 · comments route to each workspace's thread
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>

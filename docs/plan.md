@@ -399,3 +399,87 @@ Upstream `v0.1.6-nightly.20261031.3956` (966 commits, protocol still 2): new des
 - **What:** reviewer notes from A-039. `ComposerVoiceControl.tsx` resets state on `resetKey` in an effect (use `key` or reset during render; keep `cancel()` as the only effect). The latest-ref effects in `ComposerVoiceControl.tsx` and `useVoiceDictation.ts` can become `useStableCallback`. `VoiceSettingsSection.tsx` runs `useEffect(refresh, [refresh])` with an unstable function. `useHostVoice.ts:46`'s reason should say it guards setState after unmount.
 - **Acceptance:**
   - [ ] Fewer `no-unreasoned-state-sync` disables in `abode/voice`, voice tests pass, and dictation still works with a real mic.
+
+## Phase G: One Window (brief: docs/briefs/one-window.md, spec: docs/canvas/spec.md, look: docs/canvas/prototype.html C3)
+
+Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `hook-report.sh` must not grow. No contract or engine edits. Code in `apps/web/src/abode/canvas/`, classes `cv-`.
+
+### A-042: Canvas shell behind the flag (P0)
+
+- **Status:** todo
+- **What:** an abode store flag "One Window" (Settings → abode, searchable). When on, the Control room route and the sidebar mount render the canvas: top bar (title, "N workspaces", ⊞ overview, ⚙ kit stub), collapsed rail of the real projects (initials, groups need → jam → move → quiet from live thread state, amber dot for needs-you), an empty workspace view, and the omnibox bar. Night Graphite tokens from the prototype.
+- **Acceptance:**
+  - [ ] Flag off: abode looks and behaves exactly as before (checked in the browser).
+  - [ ] Flag on: the rail lists the real workspaces, grouped by the tested pure `workspaceGroup()`.
+  - [ ] `hook-report.sh` line count unchanged; no files changed under `packages/contracts` or `apps/server`.
+
+### A-043: Workspace header and session pills (P1)
+
+- **Status:** todo
+- **Depends on:** A-042
+- **What:** selecting a rail tile shows the workspace: name, `…` menu (archive = abode's existing hide), one pill per live session with mode icon, name, model dots in the model colour (a `delegate_task` pair shows parent → child from lineage), a status word only when waiting or blocked, an "N done" fold and `+` (new thread, with the focus moment).
+- **Acceptance:**
+  - [ ] Pill model (dots, pair, status word) is a tested pure function over real thread shapes.
+  - [ ] `+` creates a real thread in that project.
+
+### A-044: Milestones from plan.md (P1)
+
+- **Status:** todo
+- **Depends on:** A-042
+- **What:** read the project's `docs/plan.md` through the existing filesystem read RPC; parse a `Goal:` line and `## Milestone: <name>` headings with their `### X-NNN` tickets and statuses into done / current / todo milestones. The plan block shows one row per milestone; the current one expands to its tickets (✓ ● ‖ ✕ ○). Projects without milestones show their phases as milestones; projects without a plan.md show "no plan yet".
+- **Acceptance:**
+  - [ ] Parser tested on this repo's plan.md, a milestone-style plan, and a missing file.
+  - [ ] Format documented in one paragraph at the top of the parser so agents can follow it.
+
+### A-045: Per-session mode and its blocks (P1)
+
+- **Status:** todo
+- **Depends on:** A-043
+- **What:** the mode popover on each pill (Autopilot, Tell me, Grill me, Jam), stored per device. Changing it sends the thread a one-line steering message. The workspace body composes from the prototype's `compose()` rules: status sentence, interrupt card (any pending approval or user-input request, whatever the mode), Grill me card with Ember from the pending question, Tell me brief with Pip from the latest assistant summary, a Jam intro (live board waits for P6), "N calls made on its own" for Autopilot. Serious mode hides the quips.
+- **Acceptance:**
+  - [ ] Changing a mode updates the pill, the omnibox tag and the drawer edge in one frame.
+  - [ ] `compose()` ported as a tested pure function; blocks appear and disappear by mode.
+  - [ ] Answering an interrupt or Grill me card resolves the real pending request.
+
+### A-046: Omnibox and chat drawer bound to threads (P2)
+
+- **Status:** todo
+- **Depends on:** A-045
+- **What:** the omnibox routes by keywords, then open Grill me, jam, blocked or waiting, live, first; the target chip shows and pins the target; send posts to the real thread. The drawer opens above it with the header from spec 5.6 and the thread's recent messages; "open full chat" goes to the stock chat view. `/` focuses, Esc closes.
+- **Acceptance:**
+  - [ ] Routing is a tested pure function: "skip docs this release" on omxcore → Docs refresh; "the token's in 1Password, run the setup script" → Publish.
+  - [ ] A sent message lands in the real thread (checked in the browser with the Replay provider).
+
+### A-047: Omnibox commands (P2)
+
+- **Status:** todo
+- **Depends on:** A-046
+- **What:** "put X on grill me", "add … to <workspace>" (sent to that workspace's main thread as an instruction to update plan.md), "new workspace X, goal: …", "brief me", "tour" (`?`). Anything that touches more than one workspace shows a preview first.
+- **Acceptance:**
+  - [ ] Command parsing tested; unknown text falls through to routing.
+
+### A-048: Overview (P5)
+
+- **Status:** todo
+- **Depends on:** A-043, A-044
+- **What:** ⊞ or `o` zooms out: hero line (need you · red · milestones since last look · sessions running), usage meters from the usage service (labelled estimates), one section per environment with its mascot (load face from `getHostResources`), rows sorted need → jam → move → quiet with mode icon, milestone bar and status word. Clicking a row zooms in. The omnibox target becomes "all workspaces".
+- **Acceptance:**
+  - [ ] Every workspace on both machines fits 1440 × 900 without scrolling.
+  - [ ] Resource polling runs only while the overview is open.
+
+### A-049: Since you last looked (P5)
+
+- **Status:** todo
+- **Depends on:** A-048
+- **What:** the overview's right column: milestone reached, decision waiting, red, PR green, session done, newest first, derived from thread and PR state since a per-device last-seen time. Clicking opens the workspace.
+- **Acceptance:**
+  - [ ] Feed derivation tested with a last-seen time in the middle of a run.
+
+### A-050: Autopilot backend
+
+- **Status:** todo
+- **What:** carried over from the command-center brief: one upstream scheduled task per workspace with an approved brief and plan ("continue docs/plan.md under autopilot rules"; `Autopilot: off` opts out), a Claude Code deny list for irreversible commands, and a Friday 9:00 scheduled upstream sync that stops at "update host?" for Abhishek.
+- **Acceptance:**
+  - [ ] One-night dry run on abode plus one other repo; the result is read together before turning it on everywhere.
+
+Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.

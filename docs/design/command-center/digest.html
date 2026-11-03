@@ -1,0 +1,4678 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Command Center Digest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* omxqua tokens: Material texture, Liquid motion.
+   Root: <html class="oq-root oq-night|oq-light oq-family-<dev|travel|kids|money> [oq-skin-<name>] [oq-top|oq-dock]">
+   (or oq-app-<accent> [oq-compact] for an app without a family).
+   Springs are Liquid's real spring curves (k/c in comments). Values follow docs/showcase.html;
+   keep these variable names so projects don't break. Load before components.css. */
+
+      .oq-root {
+        /* ---- type: one sans + one mono, shipped with the app ---- */
+        --oq-font: "Geist", system-ui, sans-serif;
+        --oq-font-mono: "Geist Mono", ui-monospace, monospace;
+        --oq-font-display: var(
+          --oq-font
+        ); /* a skin may swap in a display face (Azulejo: Fraunces) */
+        --oq-text: 14px; /* body size; families set their own */
+        --oq-title: 28px; /* page title */
+
+        /* ---- shape ---- */
+        --oq-radius-xs: 4px; /* status badges and tags only */
+        --oq-radius-in: 10px; /* inputs */
+        --oq-radius-card: 14px; /* families set 12 / 16 / 22; 12px under .oq-compact */
+        --oq-radius-menu: 14px; /* menu items 8px */
+        --oq-radius-full: 999px; /* pills = tappable */
+
+        /* ---- spacing (4px grid) ---- */
+        --oq-space-1: 4px;
+        --oq-space-2: 8px;
+        --oq-space-3: 12px;
+        --oq-space-4: 16px;
+        --oq-space-5: 24px;
+        --oq-space-6: 32px;
+        --oq-space-7: 48px;
+        --oq-target: 36px; /* families set 34 / 40 / 48; 34px under .oq-compact */
+
+        /* ---- motion: three springs + the quick tier (see LANGUAGE.md, Motion budget) ---- */
+        --oq-spring-fast: linear(
+          0,
+          0.02,
+          0.071,
+          0.142,
+          0.226,
+          0.316,
+          0.407,
+          0.494,
+          0.577,
+          0.653,
+          0.72,
+          0.78,
+          0.831,
+          0.875,
+          0.911,
+          0.94,
+          0.964,
+          0.983,
+          0.997,
+          1.007,
+          1.014,
+          1.019,
+          1.021,
+          1.023,
+          1.023,
+          1.022,
+          1.02,
+          1.018,
+          1.017,
+          1.014,
+          1.012,
+          1.01,
+          1.009,
+          1.007,
+          1.006,
+          1.004,
+          1.003,
+          1.002,
+          1.002,
+          1.001,
+          1
+        ); /* k380 c30 */
+        --oq-spring: linear(
+          0,
+          0.023,
+          0.079,
+          0.154,
+          0.237,
+          0.322,
+          0.405,
+          0.482,
+          0.553,
+          0.617,
+          0.674,
+          0.723,
+          0.766,
+          0.803,
+          0.835,
+          0.862,
+          0.885,
+          0.905,
+          0.921,
+          0.935,
+          0.946,
+          0.955,
+          0.963,
+          0.97,
+          0.975,
+          0.98,
+          0.983,
+          0.986,
+          0.989,
+          0.991,
+          0.993,
+          0.994,
+          0.995,
+          0.996,
+          0.997,
+          0.997,
+          0.998,
+          0.998,
+          0.999,
+          0.999,
+          1
+        ); /* k170 c26 */
+        --oq-spring-slow: linear(
+          0,
+          0.045,
+          0.161,
+          0.317,
+          0.49,
+          0.66,
+          0.814,
+          0.941,
+          1.04,
+          1.108,
+          1.148,
+          1.165,
+          1.163,
+          1.147,
+          1.123,
+          1.095,
+          1.066,
+          1.04,
+          1.017,
+          0.999,
+          0.986,
+          0.977,
+          0.973,
+          0.973,
+          0.974,
+          0.978,
+          0.982,
+          0.987,
+          0.992,
+          0.996,
+          0.999,
+          1.002,
+          1.003,
+          1.004,
+          1.005,
+          1.004,
+          1.004,
+          1.003,
+          1.002,
+          1.002,
+          1
+        ); /* k260 c16 */
+        --oq-spring-fast-dur: 300ms;
+        --oq-spring-dur: 710ms;
+        --oq-spring-slow-dur: 790ms; /* phone */
+        --oq-gentle-in: 220ms; /* menus, popovers, tooltips, toasts: fade + 4px drop + 3% scale, no overshoot */
+        --oq-gentle-out: 150ms; /* they fade out, never vanish */
+        --oq-ease-in: cubic-bezier(0.2, 0, 0, 1); /* decelerate: arriving */
+        --oq-ease-out: cubic-bezier(0.3, 0, 1, 1); /* accelerate: leaving */
+        --oq-press-scale: 0.96;
+        --oq-glass-mix: 58%; /* nav islands: how much of surface-2 stays opaque (frosted glass, 2026-10-21) */
+        --oq-glass-blur: blur(20px) saturate(170%);
+        --oq-island-spring: linear(
+          0,
+          0.023,
+          0.079,
+          0.154,
+          0.237,
+          0.322,
+          0.405,
+          0.482,
+          0.553,
+          0.617,
+          0.674,
+          0.723,
+          0.766,
+          0.803,
+          0.835,
+          0.862,
+          0.885,
+          0.905,
+          0.921,
+          0.935,
+          0.946,
+          0.955,
+          0.963,
+          0.97,
+          0.975,
+          0.98,
+          0.983,
+          0.986,
+          0.989,
+          0.991,
+          0.993,
+          0.994,
+          0.995,
+          0.996,
+          0.997,
+          0.997,
+          0.998,
+          0.998,
+          0.999,
+          0.999,
+          1
+        ); /* = --oq-spring (k170 c26): islands, Beacon, top nav */
+
+        font-family: var(--oq-font);
+        color: var(--oq-ink);
+        background: var(--oq-surface-0);
+        font-size: var(--oq-text);
+        -webkit-font-smoothing: antialiased;
+      }
+      @media (pointer: fine) {
+        /* laptop: same curves, a notch calmer */
+        .oq-root {
+          --oq-spring-fast-dur: 300ms;
+          --oq-spring-dur: 450ms;
+          --oq-spring-slow-dur: 520ms;
+        }
+      }
+      .oq-root.oq-compact {
+        --oq-radius-card: 12px;
+        --oq-target: 34px;
+      }
+
+      /* ---- themes: depth = tone + one shadow scale; no gradients. Glass only on the nav islands (components.css) ---- */
+      .oq-root.oq-night {
+        --oq-surface-0: #0b0b0d;
+        --oq-surface-1: #151518;
+        --oq-surface-2: #1d1d21;
+        --oq-surface-3: #25252a;
+        --oq-ink: #ededef;
+        --oq-ink-2: #a9a9b1;
+        --oq-ink-faint: #3a3a40; /* faint is never text */
+        --oq-line: #2a2a30;
+        --oq-line-2: #202025;
+        --oq-state: 237 237 239; /* state layers: rgb(var(--oq-state) / .08 hover, .12 press, .16 selected) */
+        --oq-shadow-1: 0 1px 0 rgba(255, 255, 255, 0.035) inset, 0 1px 2px rgba(0, 0, 0, 0.5);
+        --oq-shadow-2: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 6px 18px rgba(0, 0, 0, 0.45);
+        --oq-shadow-3: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 18px 48px rgba(0, 0, 0, 0.6);
+        --oq-shadow-4: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 32px 80px rgba(0, 0, 0, 0.7);
+        --oq-ok: #3ccf6e;
+        --oq-warn: #f5a524;
+        --oq-bad: #f2555a;
+        --oq-info: #52a9ff;
+        --oq-data-1: #8b7bff;
+        --oq-data-2: #3aa0ff;
+        --oq-data-3: #2bc3ad;
+        --oq-data-4: #ff8a3d;
+        --oq-data-5: #f2555a;
+        --oq-data-6: #e0b400;
+        --oq-icon-mix: 100%;
+      }
+      .oq-root.oq-light {
+        --oq-surface-0: #eeeef1;
+        --oq-surface-1: #ffffff;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #0b0b0d;
+        --oq-ink-2: #5b5b63;
+        --oq-ink-faint: #c9c9cf;
+        --oq-line: #e3e3e8;
+        --oq-line-2: #efeff2;
+        --oq-state: 11 11 13;
+        --oq-shadow-1: 0 1px 2px rgba(20, 16, 10, 0.06), 0 0 0 1px rgba(20, 16, 10, 0.045);
+        --oq-shadow-2: 0 6px 18px rgba(20, 16, 10, 0.1), 0 0 0 1px rgba(20, 16, 10, 0.05);
+        --oq-shadow-3: 0 18px 48px rgba(20, 16, 10, 0.18), 0 0 0 1px rgba(20, 16, 10, 0.06);
+        --oq-shadow-4: 0 32px 80px rgba(16, 16, 20, 0.24), 0 0 0 1px rgba(16, 16, 20, 0.06);
+        --oq-ok: #137036;
+        --oq-warn: #8f5400;
+        --oq-bad: #c01f25;
+        --oq-info: #0960b5; /* 4.5:1 on surface-0 and -1 */
+        --oq-data-1: #6d5cf0;
+        --oq-data-2: #0a7fe0;
+        --oq-data-3: #0f9483;
+        --oq-data-4: #e0661a;
+        --oq-data-5: #d42a2f;
+        --oq-data-6: #a88400;
+        --oq-icon-mix: 88%; /* coloured icons: this much data colour, the rest ink, so every glyph clears 3:1 (tests/contrast.test.cjs) */
+      }
+
+      /* =====================================================================
+   FAMILIES: an app class picks one. Each sets surfaces, accent, data palette and character.
+   ===================================================================== */
+      /* Developer · "Graphite": libraries, PyPI packages, consoles. Neutral, mono-forward, compact. */
+      .oq-family-dev.oq-night {
+        --oq-surface-0: #0b0b0d;
+        --oq-surface-1: #151518;
+        --oq-surface-2: #1d1d21;
+        --oq-surface-3: #25252a;
+        --oq-ink: #ededef;
+        --oq-ink-2: #a9a9b1;
+        --oq-line: #2a2a30;
+        --oq-line-2: #202025;
+        --oq-state: 237 237 239;
+        --oq-accent: #ededef;
+        --oq-on-accent: #0b0b0d;
+        --oq-ok: #3ccf6e;
+        --oq-warn: #f5a524;
+        --oq-bad: #f2555a;
+        --oq-info: #52a9ff;
+        --oq-data-1: #8b7bff;
+        --oq-data-2: #3aa0ff;
+        --oq-data-3: #2bc3ad;
+        --oq-data-4: #ff8a3d;
+        --oq-data-5: #f2555a;
+        --oq-data-6: #e0b400;
+      }
+      .oq-family-dev.oq-light {
+        --oq-surface-0: #eeeef1;
+        --oq-surface-1: #ffffff;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #0b0b0d;
+        --oq-ink-2: #5b5b63;
+        --oq-line: #e3e3e8;
+        --oq-line-2: #efeff2;
+        --oq-state: 11 11 13;
+        --oq-accent: #0b0b0d;
+        --oq-on-accent: #ffffff;
+        --oq-ok: #137036;
+        --oq-warn: #8f5400;
+        --oq-bad: #c01f25;
+        --oq-info: #0960b5;
+        --oq-data-1: #6d5cf0;
+        --oq-data-2: #0a7fe0;
+        --oq-data-3: #0f9483;
+        --oq-data-4: #e0661a;
+        --oq-data-5: #d42a2f;
+        --oq-data-6: #a88400;
+      }
+      .oq-family-dev {
+        --oq-radius-card: 12px;
+        --oq-target: 34px;
+        --oq-text: 13.5px;
+        --oq-beacon-accent: #3ccf6e;
+      }
+
+      /* Travel · "Coast": trips, places, days. Warm sand by day, deep sea by night, sea-teal accent. Kinds carry colour, days never do. */
+      .oq-family-travel.oq-light {
+        --oq-surface-0: #f4f0e9;
+        --oq-surface-1: #fffdf9;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #1d1a16;
+        --oq-ink-2: #5f584e;
+        --oq-line: #e7e0d4;
+        --oq-line-2: #f0eadf;
+        --oq-state: 29 26 22;
+        --oq-accent: #0b6e69;
+        --oq-on-accent: #ffffff;
+        --oq-ok: #137036;
+        --oq-warn: #8f5400;
+        --oq-bad: #c01f25;
+        --oq-info: #0960b5;
+        --oq-data-1: #3f7a46;
+        --oq-data-2: #c2462b;
+        --oq-data-3: #2f6fbf;
+        --oq-data-4: #9a6700;
+        --oq-data-5: #8a4fa8;
+        --oq-data-6: #7a6a58;
+      }
+      .oq-family-travel.oq-night {
+        --oq-surface-0: #0b1214;
+        --oq-surface-1: #121b1e;
+        --oq-surface-2: #182326;
+        --oq-surface-3: #1f2c30;
+        --oq-ink: #e9efee;
+        --oq-ink-2: #9fb0b0;
+        --oq-line: #24312f;
+        --oq-line-2: #1a2527;
+        --oq-state: 233 239 238;
+        --oq-accent: #5fd4c8;
+        --oq-on-accent: #06201e;
+        --oq-ok: #3ccf6e;
+        --oq-warn: #f5a524;
+        --oq-bad: #f56065;
+        --oq-info: #6cb6ff;
+        --oq-data-1: #9fd8a0;
+        --oq-data-2: #ff8a6b;
+        --oq-data-3: #6cb6ff;
+        --oq-data-4: #f2c14e;
+        --oq-data-5: #c79bf2;
+        --oq-data-6: #c9b9a5;
+      }
+      .oq-family-travel {
+        --oq-radius-card: 16px;
+        --oq-target: 40px;
+        --oq-text: 14px;
+        --oq-beacon-accent: #5fd4c8;
+      }
+
+      /* Kids · "Playground": big, friendly, cheerful. Cream by day, plum by night, tangerine accent, bigger shapes and type. */
+      .oq-family-kids.oq-light {
+        --oq-surface-0: #fff6ea;
+        --oq-surface-1: #ffffff;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #2a1d12;
+        --oq-ink-2: #6b5646;
+        --oq-line: #f1e2cf;
+        --oq-line-2: #f8eddf;
+        --oq-state: 42 29 18;
+        --oq-accent: #c2410c;
+        --oq-on-accent: #ffffff;
+        --oq-ok: #137036;
+        --oq-warn: #8f5400;
+        --oq-bad: #c01f25;
+        --oq-info: #0960b5;
+        --oq-data-1: #2f80ed;
+        --oq-data-2: #1e8a4c;
+        --oq-data-3: #f2a900;
+        --oq-data-4: #e0457b;
+        --oq-data-5: #8e5be8;
+        --oq-data-6: #f2662f;
+        --oq-icon-mix: 60%; /* the Playground yellows need more ink */
+      }
+      .oq-family-kids.oq-night {
+        --oq-surface-0: #171221;
+        --oq-surface-1: #211a2d;
+        --oq-surface-2: #2a2238;
+        --oq-surface-3: #332a43;
+        --oq-ink: #f6eefc;
+        --oq-ink-2: #bfb1cc;
+        --oq-line: #3a3049;
+        --oq-line-2: #2c2439;
+        --oq-state: 246 238 252;
+        --oq-accent: #ffad66;
+        --oq-on-accent: #2a1405;
+        --oq-ok: #3ccf6e;
+        --oq-warn: #f5a524;
+        --oq-bad: #ff6b70;
+        --oq-info: #7cc0ff;
+        --oq-data-1: #7cc0ff;
+        --oq-data-2: #5fdc8f;
+        --oq-data-3: #ffd25e;
+        --oq-data-4: #ff7fae;
+        --oq-data-5: #b998ff;
+        --oq-data-6: #ff9a6b;
+      }
+      .oq-family-kids {
+        --oq-radius-card: 22px;
+        --oq-radius-in: 14px;
+        --oq-target: 48px;
+        --oq-text: 15.5px;
+        --oq-title: 32px;
+        --oq-beacon-accent: #ffad66;
+      }
+
+      /* Money · "Ledger": accounts, spending, budgets (finxplorer). Near-neutral ink by night, cool paper by day, one violet accent.
+   Every amount is mono and tabular. Data colours are the categories (they match finxplorer's validated cycle; no violet, so the accent never doubles as a category). In / out are states (ok / bad) with the word, never colour alone. */
+      .oq-family-money.oq-night {
+        --oq-surface-0: #0d0c12;
+        --oq-surface-1: #16151d;
+        --oq-surface-2: #1e1c27;
+        --oq-surface-3: #262431;
+        --oq-ink: #eeedf4;
+        --oq-ink-2: #aba8ba;
+        --oq-ink-faint: #3b3946;
+        --oq-line: #2b2936;
+        --oq-line-2: #211f2a;
+        --oq-state: 238 237 244;
+        --oq-accent: #b8aaff;
+        --oq-on-accent: #120d2b;
+        --oq-ok: #4ade9b;
+        --oq-warn: #f5c04a;
+        --oq-bad: #ff8a78;
+        --oq-info: #6cb6ff;
+        --oq-data-1: #229e7e;
+        --oq-data-2: #dc6632;
+        --oq-data-3: #4f8fe6;
+        --oq-data-4: #d2559e;
+        --oq-data-5: #ad8812;
+        --oq-data-6: #2397b2;
+      }
+      .oq-family-money.oq-light {
+        --oq-surface-0: #f1f0f5;
+        --oq-surface-1: #ffffff;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #14121f;
+        --oq-ink-2: #5d5a6c;
+        --oq-ink-faint: #cbc9d4;
+        --oq-line: #e4e2ec;
+        --oq-line-2: #efeef4;
+        --oq-state: 20 18 31;
+        --oq-accent: #5b4bd6;
+        --oq-on-accent: #ffffff;
+        --oq-ok: #0e7a52;
+        --oq-warn: #8f5400;
+        --oq-bad: #c2412d;
+        --oq-info: #0960b5;
+        --oq-data-1: #14967a;
+        --oq-data-2: #e0662e;
+        --oq-data-3: #3a86e8;
+        --oq-data-4: #c2418f;
+        --oq-data-5: #b58a00;
+        --oq-data-6: #0e8fa8;
+      }
+      .oq-family-money {
+        --oq-radius-card: 16px;
+        --oq-target: 40px;
+        --oq-text: 14px;
+        --oq-beacon-accent: #4ade9b;
+      }
+
+      /* =====================================================================
+   SKINS: a family may offer alternative skins. Same components, different surfaces, colour, type and texture.
+   Root adds oq-skin-<name>; the component restyles per skin live in components.css.
+   ===================================================================== */
+      /* Travel · Azulejo: editorial. Paper and tile-blue by day, ink-blue by night, serif display. */
+      .oq-family-travel.oq-skin-azulejo.oq-light {
+        --oq-surface-0: #f6f1e7;
+        --oq-surface-1: #fffbf3;
+        --oq-surface-2: #fffdf8;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #1f2433;
+        --oq-ink-2: #5c5a55;
+        --oq-line: #e6dccb;
+        --oq-line-2: #efe7d8;
+        --oq-state: 31 36 51;
+        --oq-accent: #1f4f8f;
+        --oq-on-accent: #ffffff;
+        --oq-data-1: #56662a;
+        --oq-data-2: #a9471f;
+        --oq-data-3: #21606a;
+        --oq-data-4: #9a6700;
+        --oq-data-5: #6d3f6b;
+        --oq-data-6: #7a6a58;
+      }
+      .oq-family-travel.oq-skin-azulejo.oq-night {
+        --oq-surface-0: #0f1420;
+        --oq-surface-1: #161c2a;
+        --oq-surface-2: #1c2333;
+        --oq-surface-3: #232b3d;
+        --oq-ink: #f1ece2;
+        --oq-ink-2: #a7adbb;
+        --oq-line: #283044;
+        --oq-line-2: #1d2433;
+        --oq-state: 241 236 226;
+        --oq-accent: #8fb4ea;
+        --oq-on-accent: #0f1420;
+        --oq-data-1: #bfd08f;
+        --oq-data-2: #f2a27f;
+        --oq-data-3: #8fd0d8;
+        --oq-data-4: #f2c14e;
+        --oq-data-5: #d9a9d5;
+        --oq-data-6: #c9b9a5;
+      }
+      .oq-skin-azulejo {
+        --oq-font-display: "Fraunces", Georgia, serif;
+        --oq-radius-card: 10px;
+        --oq-title: 36px;
+        --oq-beacon-accent: #8fb4ea;
+      }
+      /* Travel · Golden hour: warm dusk. Peach paper by day, espresso by night, amber accent, softer and rounder. */
+      .oq-family-travel.oq-skin-golden.oq-light {
+        --oq-surface-0: #fbf1e6;
+        --oq-surface-1: #fffaf4;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #2b1d14;
+        --oq-ink-2: #6e5a4b;
+        --oq-line: #efdfcd;
+        --oq-line-2: #f6eadc;
+        --oq-state: 43 29 20;
+        --oq-accent: #a34a0a;
+        --oq-on-accent: #ffffff;
+        --oq-data-1: #5a6a1f;
+        --oq-data-2: #b6432c;
+        --oq-data-3: #1f6f78;
+        --oq-data-4: #9a6700;
+        --oq-data-5: #6a4fc2;
+        --oq-data-6: #7a6a58;
+      }
+      .oq-family-travel.oq-skin-golden.oq-night {
+        --oq-surface-0: #1a1310;
+        --oq-surface-1: #241a15;
+        --oq-surface-2: #2d211b;
+        --oq-surface-3: #372820;
+        --oq-ink: #f7ebe0;
+        --oq-ink-2: #c4ad9c;
+        --oq-line: #3d2d24;
+        --oq-line-2: #2e221c;
+        --oq-state: 247 235 224;
+        --oq-accent: #ffb45c;
+        --oq-on-accent: #2a1405;
+        --oq-data-1: #c8d784;
+        --oq-data-2: #ff9475;
+        --oq-data-3: #82d3dc;
+        --oq-data-4: #f2c14e;
+        --oq-data-5: #bba5ff;
+        --oq-data-6: #d9c2a5;
+      }
+      .oq-skin-golden {
+        --oq-radius-card: 22px;
+        --oq-title: 34px;
+        --oq-beacon-accent: #ffb45c;
+      }
+      /* Kids · Sticker: chunky and tactile. Buttons and tiles sit on a ledge and press down into it. Rounded type. */
+      .oq-family-kids.oq-skin-sticker.oq-light {
+        --oq-surface-0: #f7f7f5;
+        --oq-surface-1: #ffffff;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #1f2a30;
+        --oq-ink-2: #5f6b73;
+        --oq-line: #e3e6e8;
+        --oq-line-2: #eef0f1;
+        --oq-state: 31 42 48;
+        --oq-accent: #1971c2;
+        --oq-on-accent: #ffffff;
+        --oq-data-1: #f08c00;
+        --oq-data-2: #2b8a3e;
+        --oq-data-3: #fab005;
+        --oq-data-4: #c2255c;
+        --oq-data-5: #7048e8;
+        --oq-data-6: #0c8599;
+      }
+      .oq-family-kids.oq-skin-sticker.oq-night {
+        --oq-bad: #ff8080; /* 4.67:1 on its surface-3 (the family red is 4.09 here) */
+        --oq-surface-0: #131f24;
+        --oq-surface-1: #1b2b32;
+        --oq-surface-2: #22343c;
+        --oq-surface-3: #2a3d46;
+        --oq-ink: #f1f7fa;
+        --oq-ink-2: #9fb2bc;
+        --oq-line: #37464f;
+        --oq-line-2: #24353d;
+        --oq-state: 241 247 250;
+        --oq-accent: #4fb3ff;
+        --oq-on-accent: #062033;
+        --oq-data-1: #ffa94d;
+        --oq-data-2: #69db7c;
+        --oq-data-3: #ffd43b;
+        --oq-data-4: #f783ac;
+        --oq-data-5: #b197fc;
+        --oq-data-6: #66d9e8;
+      }
+      .oq-skin-sticker {
+        --oq-beacon-accent: #4fb3ff;
+      }
+      .oq-skin-sticker,
+      .oq-skin-crayon {
+        --oq-font: "Nunito", system-ui, sans-serif;
+      }
+      /* Kids · Crayon: soft pastels. Each tile is tinted with its own colour; the hero is a pastel band, not a loud block. */
+      .oq-family-kids.oq-skin-crayon.oq-light {
+        --oq-surface-0: #fffbf2;
+        --oq-surface-1: #ffffff;
+        --oq-surface-2: #ffffff;
+        --oq-surface-3: #ffffff;
+        --oq-ink: #2b2320;
+        --oq-ink-2: #6b5d55;
+        --oq-line: #f0e6d6;
+        --oq-line-2: #f7f0e4;
+        --oq-state: 43 35 32;
+        --oq-accent: #c2185b;
+        --oq-on-accent: #ffffff;
+        --oq-data-1: #3b82f6;
+        --oq-data-2: #16a34a;
+        --oq-data-3: #eab308;
+        --oq-data-4: #f97316;
+        --oq-data-5: #8b5cf6;
+        --oq-data-6: #06b6d4;
+      }
+      .oq-family-kids.oq-skin-crayon.oq-night {
+        --oq-surface-0: #1c1a24;
+        --oq-surface-1: #25222f;
+        --oq-surface-2: #2d2a39;
+        --oq-surface-3: #353144;
+        --oq-ink: #f7f2fb;
+        --oq-ink-2: #bdb3c9;
+        --oq-line: #3a3547;
+        --oq-line-2: #2c2837;
+        --oq-state: 247 242 251;
+        --oq-accent: #ff8fb8;
+        --oq-on-accent: #2a0a18;
+        --oq-data-1: #8ab8ff;
+        --oq-data-2: #7ee2a1;
+        --oq-data-3: #ffe066;
+        --oq-data-4: #ffb086;
+        --oq-data-5: #c4aaff;
+        --oq-data-6: #7fdff0;
+      }
+      .oq-skin-crayon {
+        --oq-radius-card: 28px;
+        --oq-beacon-accent: #ff8fb8;
+      }
+
+      /* ---- one accent per app: fills the one loud button per card and the focus ring, nothing else ---- */
+      .oq-night.oq-app-ink {
+        --oq-accent: #ededef;
+        --oq-on-accent: #0b0b0d;
+      }
+      .oq-light.oq-app-ink {
+        --oq-accent: #0b0b0d;
+        --oq-on-accent: #ffffff;
+      }
+      .oq-light.oq-app-teal {
+        --oq-accent: #0b6e69;
+        --oq-on-accent: #ffffff;
+      }
+      .oq-night.oq-app-teal {
+        --oq-accent: #4fd1c5;
+        --oq-on-accent: #0b0b0d;
+      }
+      .oq-light.oq-app-amber {
+        --oq-accent: #9a5b00;
+        --oq-on-accent: #ffffff;
+      }
+      .oq-night.oq-app-amber {
+        --oq-accent: #f5b041;
+        --oq-on-accent: #0b0b0d;
+      }
+      .oq-light.oq-app-violet {
+        --oq-accent: #5b4bd6;
+        --oq-on-accent: #ffffff;
+      }
+      .oq-night.oq-app-violet {
+        --oq-accent: #b39dff;
+        --oq-on-accent: #0b0b0d;
+      }
+      .oq-light.oq-app-sage {
+        --oq-accent: #3f6b4a;
+        --oq-on-accent: #ffffff;
+      }
+      .oq-night.oq-app-sage {
+        --oq-accent: #9cc7a4;
+        --oq-on-accent: #0b0b0d;
+      }
+      .oq-light.oq-app-rose {
+        --oq-accent: #c8243f;
+        --oq-on-accent: #ffffff;
+      }
+      .oq-night.oq-app-rose {
+        --oq-accent: #ff8fa3;
+        --oq-on-accent: #0b0b0d;
+      }
+      /* every pair above passes 4.5:1 for text on the accent and for the accent as text on surface-1 */
+
+      /* ---- base patterns ---- */
+      .oq-pressable {
+        transition: transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .oq-pressable:active {
+        transform: scale(var(--oq-press-scale));
+      }
+      .oq-badge {
+        font: 500 11px/1 var(--oq-font-mono);
+        padding: 4px 6px;
+        border-radius: var(--oq-radius-xs);
+        border: 1px solid var(--oq-line);
+        color: var(--oq-ink-2);
+      }
+      .oq-source {
+        font: 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        border-top: 1px solid var(--oq-line-2);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .oq-root * {
+          transition-duration: 150ms !important;
+          animation-duration: 150ms !important;
+        }
+        .oq-pressable:active {
+          transform: none;
+        }
+      }
+
+      /* reduced motion: every transition and animation becomes a short, calm fade, pseudo-elements included */
+      @media (prefers-reduced-motion: reduce) {
+        .oq-root *,
+        .oq-root *::before,
+        .oq-root *::after {
+          transition-duration: 150ms !important;
+          transition-timing-function: ease-out !important;
+          animation-duration: 150ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+
+      /* omxqua components: every reusable part, scoped under .oq-root.
+   Load after fonts.css and tokens.css, then omxqua.js (press, logo, helpers).
+   Selectors use :where(.oq-root) so scoping adds no specificity: a single class of yours still overrides a part.
+   Rules that start with a root class (.oq-root, .oq-night, .oq-family-*, .oq-skin-*, .oq-islands, .oq-top, .oq-dock) are left as is.
+   Phone rules are container queries: give the element that carries oq-root `container-type: inline-size`
+   (the showcase's .screen does this).
+   Never add press-squash rules (:active { transform: scale() }) here; omxqua.js presses everything. */
+
+      /* =====================================================================
+   SKIN RESTYLES: the parts that change with a skin (variables live in tokens.css)
+   ===================================================================== */
+      /* the display face (--oq-font-display) goes on titles and the brand */
+      :where(.oq-root) .ph h1,
+      :where(.oq-root) .card-h h3,
+      :where(.oq-root) .brand,
+      :where(.oq-root) .dialog h3 {
+        font-family: var(--oq-font-display);
+      }
+      .oq-skin-azulejo .ph h1 {
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .oq-skin-azulejo .card-h h3 {
+        font-weight: 600;
+        font-size: 1.12em;
+        letter-spacing: -0.005em;
+      }
+      .oq-skin-azulejo.oq-light .card {
+        box-shadow: 0 0 0 1px var(--oq-line);
+      }
+      .oq-skin-golden .ph h1 {
+        font-weight: 750;
+        letter-spacing: -0.045em;
+      }
+      .oq-skin-sticker .ph h1,
+      .oq-skin-sticker .card-h h3 {
+        font-weight: 850;
+      }
+      .oq-skin-sticker .btn,
+      .oq-skin-crayon .btn {
+        font-weight: 800;
+      }
+      .oq-skin-sticker .btn.fill,
+      .oq-skin-sticker .btn.tonal {
+        --oq-press: ledge;
+      }
+      .oq-skin-sticker .btn.fill {
+        box-shadow: 0 4px 0 color-mix(in srgb, var(--oq-accent) 62%, #000);
+      }
+      .oq-skin-sticker .btn.fill:hover {
+        transform: none;
+        box-shadow: 0 4px 0 color-mix(in srgb, var(--oq-accent) 62%, #000);
+        filter: brightness(1.05);
+      }
+      .oq-skin-sticker .btn.fill:active {
+        box-shadow: 0 0 0 transparent;
+      }
+      .oq-skin-sticker .btn.tonal {
+        box-shadow:
+          inset 0 0 0 2px var(--oq-line),
+          0 4px 0 var(--oq-line);
+      }
+      .oq-skin-sticker .btn.tonal:active {
+        box-shadow: inset 0 0 0 2px var(--oq-line);
+      }
+      .oq-skin-sticker .card {
+        box-shadow:
+          inset 0 0 0 2px var(--oq-line),
+          0 4px 0 var(--oq-line);
+      }
+      .oq-skin-sticker .side {
+        box-shadow: inset -2px 0 0 var(--oq-line);
+      }
+      .oq-skin-sticker .nav.on {
+        background: color-mix(in srgb, var(--oq-accent) 14%, transparent);
+        color: var(--oq-accent);
+        box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--oq-accent) 45%, transparent);
+      }
+      .oq-skin-sticker .prog {
+        height: 16px !important;
+        border-radius: 8px !important;
+      }
+      .oq-skin-crayon .ph h1 {
+        font-weight: 850;
+      }
+      .oq-skin-crayon .card {
+        box-shadow: none;
+        background: var(--oq-surface-1);
+        outline: 2px solid var(--oq-line-2);
+      }
+      /* =====================================================================
+   ISLANDS (our own): the Nav island replaces the sidebar; the Beacon is a live-activity pill at the top.
+   ===================================================================== */
+      /* Nav island: a floating vertical pill of icons; it widens to show labels on hover or when pinned */
+      .oq-islands .shell {
+        grid-template-columns: 1fr;
+      }
+      .oq-islands .side {
+        position: absolute;
+        left: 14px;
+        top: 76px;
+        bottom: 14px;
+        width: 60px;
+        padding: 10px 8px;
+        border-radius: 26px;
+        background: var(--oq-surface-2);
+        box-shadow: var(--oq-shadow-3);
+        overflow: hidden;
+        z-index: 25;
+        gap: 4px;
+        transition: width 420ms var(--oq-island-spring);
+      }
+      .oq-islands .side:hover,
+      .oq-islands .side.pinned {
+        width: 224px;
+      }
+      .oq-islands .side .nav {
+        white-space: nowrap;
+        padding: 0 13px;
+        gap: 14px;
+        border-radius: 14px;
+        flex: none;
+      }
+      .oq-islands .side:not(:hover):not(.pinned) .nav {
+        width: 44px;
+        color: transparent;
+      }
+      .oq-islands .side:not(:hover):not(.pinned) .nav .ico {
+        color: var(--oq-ink-2);
+      }
+      .oq-islands .side:not(:hover):not(.pinned) .nav.on .ico {
+        color: var(--oq-on-accent);
+      }
+      .oq-islands .side .nav .ico {
+        color: inherit;
+      }
+      :where(.oq-root) .mark {
+        flex: none;
+      }
+      .oq-islands .side .nav .n,
+      .oq-islands .side .grp,
+      .oq-islands .side .foot span:not(.avatar),
+      .oq-islands .side .brand-name {
+        opacity: 0;
+        transition: opacity 0.18s;
+      }
+      .oq-islands .side:hover .nav .n,
+      .oq-islands .side:hover .grp,
+      .oq-islands .side:hover .foot span:not(.avatar),
+      .oq-islands .side:hover .brand-name,
+      .oq-islands .side.pinned .nav .n,
+      .oq-islands .side.pinned .grp,
+      .oq-islands .side.pinned .foot span:not(.avatar),
+      .oq-islands .side.pinned .brand-name {
+        opacity: 1;
+        transition-delay: 0.08s;
+      }
+      .oq-islands .side .brand {
+        padding: 4px 8px 10px;
+        white-space: nowrap;
+      }
+      .oq-islands .side .grp {
+        padding: 10px 13px 4px;
+        white-space: nowrap;
+      }
+      .oq-islands .side .foot {
+        padding: 6px 8px;
+        white-space: nowrap;
+      }
+      .oq-islands .side .nav.on {
+        background: var(--oq-accent);
+        color: var(--oq-on-accent);
+      }
+      .oq-islands .main {
+        padding-left: 100px;
+        padding-top: 74px;
+      }
+      :where(.oq-root) .pin-btn {
+        margin-left: auto;
+        opacity: 0;
+        transition: opacity 0.18s;
+        border: 0;
+        background: none;
+        color: var(--oq-ink-2);
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+      }
+      .oq-islands .side:hover .pin-btn,
+      .oq-islands .side.pinned .pin-btn {
+        opacity: 1;
+      }
+      :where(.oq-root) .pin-btn:hover {
+        background: rgb(var(--oq-state) / 0.08);
+      }
+      :where(.oq-root) .side:not(.pinned) .pin-btn .on {
+        display: none;
+      }
+      :where(.oq-root) .side.pinned .pin-btn .off {
+        display: none;
+      }
+      .oq-root:not(.oq-islands) .pin-btn {
+        display: none;
+      }
+      /* Beacon: always a near-black pill (both themes), centred at the top; it morphs between compact and open */
+      :where(.oq-root) .beacon {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 35;
+        background: #0b0b0d;
+        color: #f4f4f5;
+        border-radius: 22px;
+        box-shadow:
+          0 10px 30px rgba(0, 0, 0, 0.35),
+          0 0 0 1px rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+        cursor: pointer;
+        font-family: var(--oq-font);
+        transition:
+          width 460ms var(--oq-island-spring),
+          height 460ms var(--oq-island-spring),
+          border-radius 460ms var(--oq-island-spring);
+      }
+      .oq-root:not(.oq-islands) .beacon {
+        display: none;
+      }
+      :where(.oq-root) .beacon.open {
+        border-radius: 30px;
+        cursor: default;
+      }
+      :where(.oq-root) .beacon .bc-compact,
+      :where(.oq-root) .beacon .bc-open {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transition: opacity 200ms;
+      }
+      :where(.oq-root) .beacon .bc-compact {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 40px;
+        padding: 0 16px 0 12px;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      :where(.oq-root) .beacon .bc-compact .mono {
+        font-size: 12px;
+        color: #a1a1aa;
+        font-weight: 500;
+      }
+      :where(.oq-root) .beacon .bc-open {
+        width: 400px;
+        padding: 16px 18px 18px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      :where(.oq-root) .beacon.open .bc-compact {
+        opacity: 0;
+        pointer-events: none;
+      }
+      :where(.oq-root) .beacon.open .bc-open {
+        opacity: 1;
+        pointer-events: auto;
+        transition-delay: 120ms;
+      }
+      :where(.oq-root) .beacon .ring {
+        width: 20px;
+        height: 20px;
+        flex: none;
+      }
+      :where(.oq-root) .beacon .live {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--oq-beacon-accent);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--oq-beacon-accent) 25%, transparent);
+      }
+      :where(.oq-root) .beacon .ico {
+        color: var(--oq-beacon-accent);
+      }
+      :where(.oq-root) .beacon h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      :where(.oq-root) .beacon .sub2 {
+        font: 12px var(--oq-font-mono);
+        color: #a1a1aa;
+        margin-top: 4px;
+      }
+      :where(.oq-root) .beacon .big {
+        font: 600 40px/1 var(--oq-font);
+        letter-spacing: -0.04em;
+        font-variant-numeric: tabular-nums;
+        margin: 14px 0 10px;
+      }
+      :where(.oq-root) .beacon .bar2 {
+        height: 6px;
+        border-radius: 3px;
+        background: #27272a;
+        overflow: hidden;
+        margin: 12px 0 14px;
+      }
+      :where(.oq-root) .beacon .bar2 i {
+        display: block;
+        height: 100%;
+        background: var(--oq-beacon-accent);
+        border-radius: 3px;
+        transition: width 0.6s linear;
+      }
+      :where(.oq-root) .beacon .steps {
+        list-style: none;
+        margin: 12px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+      }
+      :where(.oq-root) .beacon .steps li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #d4d4d8;
+      }
+      :where(.oq-root) .beacon .steps li span {
+        margin-left: auto;
+        font: 11.5px var(--oq-font-mono);
+        color: #a1a1aa;
+      }
+      :where(.oq-root) .beacon .steps .d {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #52525b;
+      }
+      :where(.oq-root) .beacon .steps .d.ok {
+        background: var(--oq-beacon-accent);
+      }
+      :where(.oq-root) .beacon .steps .d.run {
+        background: #f5a524;
+      }
+      :where(.oq-root) .beacon .bacts {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      :where(.oq-root) .beacon .bbtn {
+        border: 0;
+        border-radius: 999px;
+        height: 34px;
+        padding: 0 14px;
+        font: 600 13px var(--oq-font);
+        background: #27272a;
+        color: #f4f4f5;
+        transition: transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .beacon .bbtn.pri {
+        background: var(--oq-beacon-accent);
+        color: #0b0b0d;
+      }
+      :where(.oq-root) .beacon .x {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        border: 0;
+        background: #27272a;
+        color: #a1a1aa;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      @container (max-width: 640px) {
+        .oq-islands .main {
+          padding: 64px 14px 110px;
+        }
+        :where(.oq-root) .beacon {
+          top: 8px;
+        }
+        :where(.oq-root) .beacon .bc-open {
+          width: 350px;
+        }
+      }
+      /* =====================================================================
+   SYMMETRIC SHELLS: content in a centred column; navigation is one centred island.
+   Top islands: brand left · nav pill centre · Beacon right.  Dock: nav pill bottom centre (same as phone) · Beacon top centre.
+   ===================================================================== */
+      :where(.oq-root) .tabbar .tb-thumb {
+        position: absolute;
+        top: 5px;
+        bottom: 5px;
+        border-radius: 999px;
+        background: var(--oq-accent);
+        box-shadow: var(--oq-shadow-1);
+        transition:
+          left var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          width var(--oq-spring-fast-dur) var(--oq-spring-fast);
+        z-index: 0;
+      }
+      :where(.oq-root) .tabbar button {
+        position: relative;
+        z-index: 1;
+      }
+      :where(.oq-root) .tabbar button.on {
+        background: transparent !important;
+        color: var(--oq-on-accent) !important;
+      }
+      :where(.oq-root) .brand-isl {
+        display: none;
+        position: fixed;
+        top: 14px;
+        left: 8px;
+        z-index: 30;
+        height: 44px;
+        padding: 0 16px 0 12px;
+        border-radius: 999px;
+        background: transparent;
+        box-shadow: none;
+        transition:
+          background-color 0.25s,
+          box-shadow 0.25s; /* no pill at rest: the logo sits on the page; it frosts once content scrolls under it (2026-10-21) */
+        align-items: center;
+        gap: 10px;
+        font: 650 15px var(--oq-font-display);
+        letter-spacing: -0.02em;
+      }
+      :where(.oq-root) .brand-isl .mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        font-size: 13px;
+      }
+      @container (min-width: 641px) {
+        .oq-top .shell,
+        .oq-dock .shell {
+          grid-template-columns: 1fr;
+        }
+        .oq-top .side,
+        .oq-dock .side {
+          display: none;
+        }
+        .oq-top .brand-isl,
+        .oq-dock .brand-isl {
+          display: flex;
+        }
+        .oq-top .main,
+        .oq-dock .main {
+          width: 100%;
+          max-width: 1120px;
+          margin: 0 auto;
+          box-sizing: border-box;
+          padding: 84px 28px 30px;
+        }
+        .oq-dock .main {
+          padding: 76px 28px 110px;
+        }
+        .oq-top .tabbar,
+        .oq-dock .tabbar {
+          display: flex;
+          position: fixed;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 30;
+          gap: 2px;
+          padding: 5px;
+          border-radius: 999px;
+          background: var(--oq-surface-2);
+          box-shadow: var(--oq-shadow-2);
+        }
+        .oq-top .tabbar {
+          top: 14px;
+        }
+        .oq-dock .tabbar {
+          bottom: 20px;
+          box-shadow: var(--oq-shadow-3);
+        }
+        .oq-top .tabbar button,
+        .oq-dock .tabbar button {
+          border: 0;
+          background: none;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          height: 34px;
+          padding: 0 16px;
+          border-radius: 999px;
+          font-size: 13.5px;
+          font-weight: 600;
+          color: var(--oq-ink-2);
+          transition:
+            color 0.2s,
+            transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+        }
+        .oq-top .tabbar button:hover,
+        .oq-dock .tabbar button:hover {
+          color: var(--oq-ink);
+        }
+        .oq-top .beacon {
+          left: auto;
+          right: 16px;
+          transform: none;
+        }
+        .oq-top .ph,
+        .oq-dock .ph {
+          padding-top: 6px;
+        }
+      }
+      .oq-root:not(.oq-islands) .beacon {
+        display: block;
+      }
+      .oq-root.oq-sidebar-only .beacon {
+        display: none;
+      }
+      /* ---- Side island, collapsed: icons only, centred, no label space ---- */
+      .oq-islands .side {
+        width: 64px;
+        padding: 10px;
+      }
+      .oq-islands .side:not(:hover):not(.pinned) {
+        align-items: center;
+      }
+      .oq-islands .side:not(:hover):not(.pinned) .nav {
+        width: 44px;
+        justify-content: center;
+        padding: 0;
+        gap: 0;
+      }
+      .oq-islands
+        .side:not(:hover):not(.pinned)
+        :is(
+          .lbl,
+          .nav .n,
+          .grp,
+          .brand-name,
+          .pin-btn,
+          .foot span:not(.avatar),
+          .foot .avatar + .avatar
+        ) {
+        display: none;
+      }
+      .oq-islands .side:not(:hover):not(.pinned) .brand {
+        padding: 4px 0 10px;
+        justify-content: center;
+      }
+      .oq-islands .side:not(:hover):not(.pinned) .foot {
+        padding: 6px 0;
+        justify-content: center;
+      }
+      .oq-islands .side:not(:hover):not(.pinned) .grp {
+        display: block !important;
+        height: 1px;
+        padding: 0;
+        margin: 8px 10px;
+        background: var(--oq-line);
+        font-size: 0;
+        opacity: 1;
+      }
+      .oq-islands .side .lbl {
+        animation: lblIn 0.22s var(--oq-ease-in) both;
+      }
+      @keyframes lblIn {
+        from {
+          opacity: 0;
+          transform: translateX(-4px);
+        }
+      }
+      /* ---- Top nav pill: 4 items at rest; +N widens it to all; folds back a few seconds after you leave ---- */
+      :where(.oq-root) .topnav {
+        display: none;
+      }
+      @container (min-width: 641px) {
+        .oq-top .tabbar,
+        .oq-dock .tabbar {
+          display: none !important;
+        }
+        .oq-top .topnav,
+        .oq-dock .topnav {
+          display: flex;
+          position: fixed;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 30;
+          padding: 5px;
+          border-radius: 999px;
+          background: var(--oq-surface-2);
+          box-shadow: var(--oq-shadow-2);
+          overflow: hidden;
+          white-space: nowrap;
+          transition: width 520ms var(--oq-island-spring);
+        }
+        .oq-top .topnav {
+          top: 14px;
+        }
+        .oq-dock .topnav {
+          bottom: 20px;
+          box-shadow: var(--oq-shadow-3);
+        }
+      }
+      /* ---- Nav islands are frosted glass (2026-10-21): the page shows through as it scrolls under. Only the nav pill and tab bar;
+   cards, menus, sheets and the Beacon stay opaque. Solid again when the browser can't blur or the person asks for less transparency. ---- */
+      :where(.oq-root) :is(.topnav, .tabbar) {
+        background: color-mix(
+          in srgb,
+          var(--oq-surface-2) var(--oq-glass-mix),
+          transparent
+        ) !important;
+        -webkit-backdrop-filter: var(--oq-glass-blur);
+        backdrop-filter: var(--oq-glass-blur);
+        box-shadow:
+          inset 0 0 0 1px rgb(var(--oq-state) / 0.09),
+          0 8px 28px rgba(0, 0, 0, 0.14) !important;
+      }
+      .oq-root.oq-scrolled .brand-isl {
+        background: color-mix(in srgb, var(--oq-surface-2) var(--oq-glass-mix), transparent);
+        -webkit-backdrop-filter: var(--oq-glass-blur);
+        backdrop-filter: var(--oq-glass-blur);
+        box-shadow:
+          inset 0 0 0 1px rgb(var(--oq-state) / 0.09),
+          0 8px 28px rgba(0, 0, 0, 0.14);
+      }
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        :where(.oq-root) :is(.topnav, .tabbar),
+        .oq-root.oq-scrolled .brand-isl {
+          background: var(--oq-surface-2) !important;
+        }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        :where(.oq-root) :is(.topnav, .tabbar),
+        .oq-root.oq-scrolled .brand-isl {
+          background: var(--oq-surface-2) !important;
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+      }
+      :where(.oq-root) .topnav .tb-thumb {
+        position: absolute;
+        top: 5px;
+        bottom: 5px;
+        border-radius: 999px;
+        background: var(--oq-accent);
+        box-shadow: var(--oq-shadow-1);
+        transition:
+          left var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          width var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .topnav button {
+        position: relative;
+        z-index: 1;
+        flex: none;
+        border: 0;
+        background: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 15px;
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--oq-ink-2);
+        transition:
+          color 0.2s,
+          transform var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          opacity 0.25s;
+      }
+      :where(.oq-root) .topnav button:hover {
+        color: var(--oq-ink);
+      }
+      :where(.oq-root) .topnav button.on {
+        color: var(--oq-on-accent);
+      }
+      :where(.oq-root) .topnav .more {
+        color: var(--oq-ink-2);
+        font: 600 12.5px var(--oq-font-mono);
+        padding: 0 13px;
+      }
+      :where(.oq-root) .topnav .more span {
+        font-family: var(--oq-font-mono);
+      }
+      :where(.oq-root) .topnav:not(.open) .extra:not(.keep) {
+        opacity: 0;
+      }
+      :where(.oq-root) .topnav.open .more {
+        opacity: 0;
+        pointer-events: none;
+      }
+      /* =====================================================================
+   FIELD (.mo): ours, with Material's floating label in the border
+   ===================================================================== */
+      :where(.oq-root) .mo .fl {
+        position: absolute;
+        left: 14px;
+        top: 18px;
+        color: var(--oq-ink-2);
+        transform-origin: 0 0;
+        transition:
+          transform 0.2s var(--oq-ease-in),
+          color 0.2s;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      /* outlined text field: label floats into a gap in the border */
+      :where(.oq-root) .mo {
+        position: relative;
+        display: block;
+        width: 100%;
+        max-width: 260px;
+        height: 52px;
+        border-radius: 10px;
+        box-shadow: inset 0 0 0 1px var(--oq-line);
+        background: var(--oq-surface-1);
+        cursor: text;
+        transition: box-shadow 0.2s;
+      }
+      :where(.oq-root) .mo:hover {
+        box-shadow: inset 0 0 0 1px var(--oq-ink-2);
+      }
+      :where(.oq-root) .mo:focus-within {
+        box-shadow: inset 0 0 0 2px var(--oq-accent);
+      }
+      :where(.oq-root) .mo input {
+        all: unset;
+        position: absolute;
+        inset: 0;
+        padding: 0 14px;
+        font: inherit;
+        color: var(--oq-ink);
+        box-sizing: border-box;
+        width: 100%;
+      }
+      :where(.oq-root) .mo .fl {
+        top: 16px;
+        padding: 0 4px;
+        margin-left: -4px;
+        background: var(--oq-surface-1);
+      }
+      :where(.oq-root) .mo input:focus + .fl,
+      :where(.oq-root) .mo input:not(:placeholder-shown) + .fl {
+        transform: translateY(-24px) scale(0.75);
+      }
+      :where(.oq-root) .mo input:focus + .fl {
+        color: var(--oq-accent);
+      }
+      :where(.oq-root) .mf-help {
+        font-size: 0.78em;
+        color: var(--oq-ink-2);
+        margin: 4px 0 0 14px;
+      }
+      :where(.oq-root) .mf-help.err {
+        color: var(--oq-bad);
+      }
+      /* ---- Close: one standard button. 32 px circle, icon dead centre, inset equal to the container's padding ---- */
+      :where(.oq-root) .xbtn {
+        width: 32px;
+        height: 32px;
+        flex: none;
+        border: 0;
+        padding: 0;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgb(var(--oq-state) / 0.06);
+        color: var(--oq-ink-2);
+        transition:
+          background 0.15s,
+          color 0.15s,
+          transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .xbtn:hover {
+        background: rgb(var(--oq-state) / 0.12);
+        color: var(--oq-ink);
+      }
+      :where(.oq-root) .xbtn .ico {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2;
+      }
+      :where(.oq-root) .beacon .x {
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        transition:
+          background 0.15s,
+          transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .beacon .x:hover {
+        background: #3f3f46;
+        color: #f4f4f5;
+      }
+      :where(.oq-root) .beacon .bc-open h4 {
+        padding-right: 40px;
+      }
+      /* ---- Field: ours, with the label floating into the border (borrowed from Material's outlined field) ---- */
+      :where(.oq-root) .mo {
+        max-width: none;
+      }
+      :where(.oq-root) .mo.err {
+        box-shadow: inset 0 0 0 1px var(--oq-bad);
+      }
+      :where(.oq-root) .mo.err .fl {
+        color: var(--oq-bad) !important;
+      }
+      :where(.oq-root) .mo.err:focus-within {
+        box-shadow: inset 0 0 0 2px var(--oq-bad);
+      }
+      :where(.oq-root) .mo .lead {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .mo.has-lead input {
+        padding-left: 40px;
+      }
+      :where(.oq-root) .mo.has-lead .fl {
+        left: 40px;
+      }
+      :where(.oq-root) .mo.has-lead input:focus + .fl,
+      :where(.oq-root) .mo.has-lead input:not(:placeholder-shown) + .fl {
+        transform: translate(-26px, -24px) scale(0.75);
+      }
+      :where(.oq-root) .mo kbd {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font: 11px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        border: 1px solid var(--oq-line);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      :where(.oq-root) .mo.sel {
+        cursor: pointer;
+      }
+      :where(.oq-root) .mo.sel .val {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      :where(.oq-root) .mo.sel .fl {
+        transform: translateY(-24px) scale(0.75);
+      }
+      :where(.oq-root) .mo.sel .chev {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--oq-ink-2);
+      }
+      .oq-family-kids .mo {
+        height: 56px;
+      }
+      .oq-family-dev .mo {
+        height: 46px;
+      }
+      .oq-family-dev .mo .fl {
+        top: 13px;
+      }
+      .oq-family-dev .mo input:focus + .fl,
+      .oq-family-dev .mo input:not(:placeholder-shown) + .fl,
+      .oq-family-dev .mo.sel .fl {
+        transform: translateY(-21px) scale(0.75);
+      }
+      .oq-family-dev .mo.has-lead input:focus + .fl,
+      .oq-family-dev .mo.has-lead input:not(:placeholder-shown) + .fl {
+        transform: translate(-26px, -21px) scale(0.75);
+      }
+      /* =====================================================================
+   COMPONENTS
+   ===================================================================== */
+      .oq-root button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      .oq-root {
+        -webkit-tap-highlight-color: transparent;
+      } /* iOS grey tap flash off: our squash and state tint are the feedback */
+      .oq-root :is(button, a, [data-press]) {
+        touch-action: manipulation;
+      } /* no double-tap zoom delay */
+      :where(.oq-root) .mono {
+        font-family: var(--oq-font-mono);
+      }
+      :where(.oq-root) .ink2 {
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .ico {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex: none;
+      }
+      .oq-family-kids .ico {
+        width: 18px;
+        height: 18px;
+        stroke-width: 2;
+      }
+      /* buttons */
+      :where(.oq-root) .btn {
+        --h: var(--oq-target);
+        height: var(--h);
+        border: 0;
+        border-radius: var(--oq-radius-full);
+        padding: 0 16px;
+        font-weight: 550;
+        font-size: 0.95em;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        isolation: isolate;
+        white-space: nowrap;
+        transition:
+          transform var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          box-shadow var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .btn::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: rgb(var(--oq-state) / 0);
+        transition: background 0.15s;
+        z-index: -1;
+      }
+      :where(.oq-root) .btn:hover::after {
+        background: rgb(var(--oq-state) / 0.08);
+      }
+      :where(.oq-root) .btn.fill {
+        background: var(--oq-accent);
+        color: var(--oq-on-accent);
+        box-shadow: var(--oq-shadow-1);
+      }
+      :where(.oq-root) .btn.fill:hover {
+        box-shadow: var(--oq-shadow-2);
+        transform: translateY(-1px);
+      }
+      :where(.oq-root) .btn.fill:hover::after {
+        background: transparent;
+      }
+      :where(.oq-root) .btn.tonal {
+        background: var(--oq-surface-2);
+        box-shadow: var(--oq-shadow-1);
+      }
+      :where(.oq-root) .btn.text {
+        background: none;
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .btn.danger {
+        background: none;
+        color: var(--oq-bad);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--oq-bad) 40%, transparent);
+      }
+      :where(.oq-root) .btn.icon {
+        width: var(--h);
+        padding: 0;
+      }
+      :where(.oq-root) .btn.sm {
+        --h: calc(var(--oq-target) - 8px);
+        padding: 0 12px;
+        font-size: 0.88em;
+      }
+      :where(.oq-root) .btn.lg {
+        --h: calc(var(--oq-target) + 10px);
+        padding: 0 22px;
+        font-size: 1.02em;
+      }
+      :where(.oq-root) .btn[disabled] {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      /* badges, chips, tags */
+      :where(.oq-root) .badge {
+        font: 500 11px/1 var(--oq-font-mono);
+        padding: 4px 6px;
+        border-radius: var(--oq-radius-xs);
+        border: 1px solid var(--oq-line);
+        background: var(--oq-surface-1);
+        color: var(--oq-ink-2);
+        white-space: nowrap;
+        display: inline-flex;
+        gap: 5px;
+        align-items: center;
+      }
+      :where(.oq-root) .badge i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      :where(.oq-root) .badge.ok {
+        color: var(--oq-ok);
+      }
+      :where(.oq-root) .badge.warn {
+        color: var(--oq-warn);
+      }
+      :where(.oq-root) .badge.bad {
+        color: var(--oq-bad);
+      }
+      :where(.oq-root) .badge.info {
+        color: var(--oq-info);
+      }
+      :where(.oq-root) .chip {
+        height: calc(var(--oq-target) - 6px);
+        padding: 0 12px;
+        border-radius: var(--oq-radius-full);
+        border: 0;
+        background: rgb(var(--oq-state) / 0.06);
+        color: var(--oq-ink-2);
+        font-size: 0.9em;
+        font-weight: 500;
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        transition:
+          transform var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          background 0.15s;
+      }
+      :where(.oq-root) .chip:hover {
+        background: rgb(var(--oq-state) / 0.09);
+      }
+      :where(.oq-root) .chip.on {
+        background: color-mix(in srgb, var(--oq-accent) 16%, transparent);
+        color: var(--oq-ink);
+        font-weight: 600;
+      } /* tinted, no outline (owner, 2026-10-24) */
+      /* Coloured icons (owner, 2026-10-24): set --c to a data colour. .ic-tile = the icon on a 15% tint of its colour; .ico-c = a bare coloured icon.
+   The glyph is darkened toward ink by --oq-icon-mix so it clears 3:1 in every theme (tests/contrast.test.cjs). */
+      :where(.oq-root) .ic-tile {
+        --s: 28px;
+        width: var(--s);
+        height: var(--s);
+        border-radius: calc(var(--s) * 0.32);
+        display: inline-grid;
+        place-items: center;
+        flex: none;
+        background: color-mix(in srgb, var(--c) 15%, transparent);
+      }
+      :where(.oq-root) .ic-tile .ico,
+      :where(.oq-root) .ico-c {
+        color: color-mix(in srgb, var(--c) var(--oq-icon-mix), var(--oq-ink));
+      }
+      :where(.oq-root) .ic-tile .ico {
+        width: calc(var(--s) * 0.54);
+        height: calc(var(--s) * 0.54);
+      }
+      :where(.oq-root) .ic-tile.lg {
+        --s: 36px;
+      }
+      :where(.oq-root) .card-h h3:has(.ic-tile) {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      /* nav items with --c show their icon in colour until picked */
+      :where(.oq-root) :is(.topnav, .tabbar) button:not(.on) .ico {
+        color: color-mix(in srgb, var(--c) var(--oq-icon-mix), var(--oq-ink));
+      }
+      :where(.oq-root) .chip .x {
+        opacity: 0.6;
+      }
+      /* fields */
+      :where(.oq-root) .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+      :where(.oq-root) .field label {
+        font-size: 0.86em;
+        font-weight: 500;
+      }
+      :where(.oq-root) .field .help {
+        font-size: 0.8em;
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .field .err {
+        font-size: 0.8em;
+        color: var(--oq-bad);
+      }
+      :where(.oq-root) .input {
+        height: var(--oq-target);
+        border-radius: var(--oq-radius-in);
+        border: 1px solid var(--oq-line);
+        background: var(--oq-surface-1);
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--oq-ink);
+        font: inherit;
+        transition:
+          box-shadow 0.15s,
+          border-color 0.15s;
+      }
+      :where(.oq-root) .input input {
+        all: unset;
+        flex: 1;
+        min-width: 0;
+        font: inherit;
+        color: inherit;
+      }
+      :where(.oq-root) .input input::placeholder {
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .input:focus-within {
+        border-color: var(--oq-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--oq-accent) 22%, transparent);
+      }
+      :where(.oq-root) .input.is-err {
+        border-color: var(--oq-bad);
+      }
+      :where(.oq-root) .input kbd {
+        font: 11px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        border: 1px solid var(--oq-line);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      :where(.oq-root) .select {
+        justify-content: space-between;
+        cursor: pointer;
+      }
+      /* toggles */
+      :where(.oq-root) .switch {
+        width: 40px;
+        height: 24px;
+        border-radius: 999px;
+        background: var(--oq-line);
+        position: relative;
+        border: 0;
+        padding: 0;
+        transition: background 0.2s;
+        flex: none;
+      }
+      :where(.oq-root) .switch::after {
+        content: "";
+        position: absolute;
+        left: 3px;
+        top: 3px;
+        width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        transition:
+          transform var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          width var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      /* press: the knob stretches toward where it will go (Apple-style), then settles */
+      :where(.oq-root) .switch:active::after {
+        width: 24px;
+      }
+      :where(.oq-root) .switch.on:active::after {
+        transform: translateX(10px);
+      }
+      :where(.oq-root) .switch.on {
+        background: var(--oq-accent);
+      }
+      :where(.oq-root) .switch.on::after {
+        transform: translateX(16px);
+        background: var(--oq-on-accent);
+      }
+      :where(.oq-root) .check {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        box-shadow: inset 0 0 0 1.5px var(--oq-ink-2);
+        display: inline-grid;
+        place-items: center;
+        border: 0;
+        background: none;
+        padding: 0;
+        flex: none;
+        transition: transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .check.on {
+        background: var(--oq-accent);
+        box-shadow: none;
+      }
+      :where(.oq-root) .check.on::after {
+        content: "";
+        width: 9px;
+        height: 5px;
+        border-left: 2px solid var(--oq-on-accent);
+        border-bottom: 2px solid var(--oq-on-accent);
+        transform: rotate(-45deg) translate(1px, -1px);
+      }
+      :where(.oq-root) .radio {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 1.5px var(--oq-ink-2);
+        display: inline-grid;
+        place-items: center;
+        border: 0;
+        background: none;
+        padding: 0;
+        flex: none;
+        transition: transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .radio::after {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--oq-accent);
+        transform: scale(0);
+        transition: transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .radio.on {
+        box-shadow: inset 0 0 0 1.5px var(--oq-accent);
+      }
+      :where(.oq-root) .radio.on::after {
+        transform: scale(1);
+      }
+      :where(.oq-root) .row-ctl {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.92em;
+      }
+      :where(.oq-root) .seg2 {
+        display: inline-flex;
+        padding: 3px;
+        border-radius: 999px;
+        background: var(--oq-surface-0);
+        box-shadow: inset 0 0 0 1px var(--oq-line);
+        position: relative;
+      }
+      :where(.oq-root) .seg2 button {
+        border: 0;
+        background: none;
+        height: calc(var(--oq-target) - 8px);
+        padding: 0 14px;
+        border-radius: 999px;
+        font-size: 0.9em;
+        font-weight: 500;
+        color: var(--oq-ink-2);
+        position: relative;
+        z-index: 1;
+        transition: color 0.2s;
+      }
+      :where(.oq-root) .seg2 button.on {
+        color: var(--oq-ink);
+      }
+      :where(.oq-root) .seg2 > i {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        border-radius: 999px;
+        background: var(--oq-surface-2);
+        box-shadow: var(--oq-shadow-1);
+        transition:
+          left var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          width var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background:
+          linear-gradient(var(--oq-accent), var(--oq-accent)) 0 / var(--v, 40%) 100% no-repeat,
+          var(--oq-line);
+      }
+      :where(.oq-root) .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--oq-surface-2);
+        box-shadow:
+          var(--oq-shadow-2),
+          0 0 0 1px var(--oq-line);
+        transition: transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .slider:active::-webkit-slider-thumb {
+        transform: scale(1.15);
+      }
+      :where(.oq-root) .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--oq-surface-2);
+        border: 0;
+        box-shadow: var(--oq-shadow-2);
+      }
+      /* tabs */
+      :where(.oq-root) .tabs {
+        display: flex;
+        gap: 2px;
+        border-bottom: 1px solid var(--oq-line);
+        position: relative;
+      }
+      :where(.oq-root) .tabs button {
+        border: 0;
+        background: none;
+        padding: 10px 12px;
+        font-size: 0.92em;
+        font-weight: 500;
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .tabs button.on {
+        color: var(--oq-ink);
+      }
+      :where(.oq-root) .tabs > i {
+        position: absolute;
+        bottom: -1px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--oq-accent);
+        transition:
+          left var(--oq-spring-fast-dur) var(--oq-spring-fast),
+          width var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      /* surfaces */
+      :where(.oq-root) .card {
+        background: var(--oq-surface-1);
+        border-radius: var(--oq-radius-card);
+        box-shadow: var(--oq-shadow-1);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      :where(.oq-root) .card-h {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 10px;
+      }
+      :where(.oq-root) .card-h h3 {
+        margin: 0;
+        font-size: 1.02em;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      :where(.oq-root) .card-h .sp {
+        flex: 1;
+      }
+      :where(.oq-root) .card-b {
+        padding: 0 16px 14px;
+      }
+      :where(.oq-root) .src {
+        font: 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        border-top: 1px solid var(--oq-line-2);
+        padding: 9px 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: auto;
+      }
+      :where(.oq-root) .src::before {
+        content: "$";
+        opacity: 0.6;
+      }
+      :where(.oq-root) .src.note::before {
+        content: "↳";
+      }
+      :where(.oq-root) .src .cp {
+        margin-left: auto;
+        border: 0;
+        background: rgb(var(--oq-state) / 0.05);
+        color: var(--oq-ink-2);
+        font: 500 11px var(--oq-font-mono);
+        height: 24px;
+        padding: 0 10px;
+        border-radius: 999px;
+      }
+      :where(.oq-root) .src .cp:hover {
+        background: rgb(var(--oq-state) / 0.08);
+      }
+      /* tables and lists */
+      :where(.oq-root) .tbl {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92em;
+      }
+      :where(.oq-root) .tbl th {
+        text-align: left;
+        font: 500 11px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--oq-line);
+      }
+      :where(.oq-root) .tbl td {
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--oq-line-2);
+      }
+      :where(.oq-root) .tbl tr:last-child td {
+        border-bottom: 0;
+      }
+      :where(.oq-root) .tbl tbody tr {
+        transition: background 0.12s;
+      }
+      :where(.oq-root) .tbl tbody tr:hover {
+        background: rgb(var(--oq-state) / 0.04);
+      }
+      :where(.oq-root) .tbl .num {
+        text-align: right;
+        font-family: var(--oq-font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+      /* stats */
+      :where(.oq-root) .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+      }
+      :where(.oq-root) .stats > div {
+        padding: 14px 16px;
+      }
+      :where(.oq-root) .stats > div + div {
+        border-left: 1px solid var(--oq-line-2);
+      }
+      :where(.oq-root) .stats b {
+        display: block;
+        font-size: 1.85em;
+        font-weight: 600;
+        letter-spacing: -0.035em;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.15;
+      }
+      :where(.oq-root) .stats span {
+        font: 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .delta {
+        font: 500 11px var(--oq-font-mono);
+        margin-left: 6px;
+      }
+      :where(.oq-root) .delta.up {
+        color: var(--oq-ok);
+      }
+      :where(.oq-root) .delta.down {
+        color: var(--oq-bad);
+      }
+      /* progress, skeleton */
+      :where(.oq-root) .prog {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--oq-line);
+        overflow: hidden;
+      }
+      :where(.oq-root) .prog > i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: var(--oq-accent);
+        transition: width 0.5s var(--oq-ease-in);
+      }
+      :where(.oq-root) .prog.indet > i {
+        width: 30%;
+        animation: indet 1.4s var(--oq-ease-in) infinite;
+      }
+      @keyframes indet {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(340%);
+        }
+      }
+      :where(.oq-root) .skel {
+        height: 12px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, var(--oq-line-2), var(--oq-line), var(--oq-line-2));
+        background-size: 200% 100%;
+        animation: skel 1.6s linear infinite;
+      }
+      @keyframes skel {
+        from {
+          background-position: 100% 0;
+        }
+        to {
+          background-position: -100% 0;
+        }
+      }
+      /* overlays */
+      :where(.oq-root) .menu {
+        position: absolute;
+        z-index: 40;
+        background: var(--oq-surface-2);
+        border-radius: var(--oq-radius-menu);
+        box-shadow: var(--oq-shadow-3);
+        padding: 6px;
+        min-width: 220px;
+      }
+      :where(.oq-root) .menu[hidden] {
+        display: none;
+      }
+      :where(.oq-root) .menu .mi {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        border: 0;
+        background: none;
+        text-align: left;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 0.93em;
+      }
+      :where(.oq-root) .menu .mi:hover {
+        background: rgb(var(--oq-state) / 0.08);
+      }
+      :where(.oq-root) .menu .mi kbd {
+        margin-left: auto;
+        font: 11px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .menu .mi.danger {
+        color: var(--oq-bad);
+      }
+      :where(.oq-root) .menu hr {
+        border: 0;
+        border-top: 1px solid var(--oq-line-2);
+        margin: 6px 4px;
+      }
+      :where(.oq-root) .menu .lab {
+        font: 500 10.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 6px 10px 4px;
+      }
+      :where(.oq-root) .tip {
+        position: absolute;
+        z-index: 45;
+        background: var(--oq-ink);
+        color: var(--oq-surface-1);
+        font-size: 12px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      :where(.oq-root) .tip kbd {
+        font: 11px var(--oq-font-mono);
+        opacity: 0.7;
+        margin-left: 6px;
+      }
+      :where(.oq-root) .toast {
+        position: absolute;
+        z-index: 50;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        background: var(--oq-surface-3);
+        box-shadow: var(--oq-shadow-3);
+        border-radius: 12px;
+        padding: 10px 10px 10px 14px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-size: 0.92em;
+        white-space: nowrap;
+      }
+      :where(.oq-root) .toast[hidden] {
+        display: none;
+      }
+      :where(.oq-root) .scrim {
+        position: absolute;
+        inset: 0;
+        z-index: 60;
+        background: rgba(0, 0, 0, 0.42);
+        display: grid;
+        place-items: center;
+      }
+      :where(.oq-root) .scrim[hidden] {
+        display: none;
+      }
+      :where(.oq-root) .dialog {
+        box-sizing: border-box;
+        width: min(420px, calc(100% - 32px));
+        background: var(--oq-surface-3);
+        border-radius: calc(var(--oq-radius-card) + 4px);
+        box-shadow: var(--oq-shadow-3);
+        padding: 20px;
+      }
+      :where(.oq-root) .dialog h3 {
+        margin: 0 0 6px;
+        font-size: 1.15em;
+      }
+      :where(.oq-root) .dialog p {
+        margin: 0 0 18px;
+        color: var(--oq-ink-2);
+        line-height: 1.5;
+      }
+      :where(.oq-root) .dialog .acts {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      :where(.oq-root) .sheet {
+        position: absolute;
+        z-index: 61;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--oq-surface-1);
+        border-radius: 26px 26px 0 0;
+        box-shadow: var(--oq-shadow-3);
+        padding: 10px 20px 24px;
+      }
+      :where(.oq-root) .sheet[hidden] {
+        display: none;
+      }
+      :where(.oq-root) .grab {
+        width: 38px;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--oq-line);
+        margin: 0 auto 14px;
+      }
+      :where(.oq-root) .empty {
+        text-align: center;
+        padding: 26px 16px;
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .empty b {
+        display: block;
+        color: var(--oq-ink);
+        margin: 10px 0 4px;
+        font-size: 1.02em;
+      }
+      :where(.oq-root) .empty .ring {
+        width: 44px;
+        height: 44px;
+        margin: 0 auto;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgb(var(--oq-state) / 0.07);
+      }
+      :where(.oq-root) .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-grid;
+        place-items: center;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #fff;
+        flex: none;
+      }
+      /* =====================================================================
+   SHELL: sidebar desktop; tab bar on narrow
+   ===================================================================== */
+      :where(.oq-root) .shell {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 228px 1fr;
+        min-height: 0;
+      }
+      :where(.oq-root) .side {
+        background: var(--oq-surface-1);
+        box-shadow: var(--oq-shadow-1);
+        display: flex;
+        flex-direction: column;
+        padding: 12px 10px;
+        gap: 2px;
+        z-index: 2;
+      }
+      :where(.oq-root) .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 8px 14px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+        font-size: 1.05em;
+      }
+      :where(.oq-root) .mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--oq-accent);
+        color: var(--oq-on-accent);
+        display: grid;
+        place-items: center;
+        font: 700 13px var(--oq-font-mono);
+      }
+      .oq-family-kids .mark {
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+      }
+      :where(.oq-root) .nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 0;
+        background: none;
+        height: var(--oq-target);
+        padding: 0 10px;
+        border-radius: 10px;
+        font-size: 0.93em;
+        font-weight: 500;
+        color: var(--oq-ink-2);
+        text-align: left;
+        transition:
+          background 0.15s,
+          transform var(--oq-spring-fast-dur) var(--oq-spring-fast);
+      }
+      :where(.oq-root) .nav:hover {
+        background: rgb(var(--oq-state) / 0.06);
+        color: var(--oq-ink);
+      }
+      :where(.oq-root) .nav.on {
+        background: rgb(var(--oq-state) / 0.1);
+        color: var(--oq-ink);
+        font-weight: 600;
+      }
+      :where(.oq-root) .nav .n {
+        margin-left: auto;
+        font: 11px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      :where(.oq-root) .side .grp {
+        font: 500 10.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 14px 10px 6px;
+      }
+      :where(.oq-root) .side .foot {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        font-size: 0.88em;
+      }
+      :where(.oq-root) .main {
+        min-width: 0;
+        overflow: auto;
+        padding: 22px 26px 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      :where(.oq-root) .main > * {
+        flex-shrink: 0;
+      }
+      :where(.oq-root) .ph {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      :where(.oq-root) .ph h1 {
+        margin: 0;
+        font-size: var(--oq-title);
+        letter-spacing: -0.035em;
+        font-weight: 650;
+        line-height: 1.1;
+      }
+      :where(.oq-root) .ph .sub {
+        font: 12.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        margin-top: 6px;
+      }
+      :where(.oq-root) .ph .sp {
+        flex: 1;
+      }
+      :where(.oq-root) .ph .acts {
+        display: flex;
+        gap: 8px;
+      }
+      :where(.oq-root) .grid {
+        display: grid;
+        gap: 16px;
+      }
+      :where(.oq-root) .g-2 {
+        grid-template-columns: 1.6fr 1fr;
+      }
+      :where(.oq-root) .g-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      :where(.oq-root) .g-2e {
+        grid-template-columns: 1fr 1fr;
+      }
+      :where(.oq-root) .tabbar {
+        display: none;
+      }
+      @container (max-width: 640px) {
+        :where(.oq-root) .shell {
+          grid-template-columns: 1fr;
+        }
+        :where(.oq-root) .side {
+          display: none;
+        }
+        :where(.oq-root) .main {
+          padding: 14px 14px 110px;
+        }
+        :where(.oq-root) .g-2,
+        :where(.oq-root) .g-3,
+        :where(.oq-root) .g-2e {
+          grid-template-columns: 1fr;
+        }
+        :where(.oq-root) .stats {
+          grid-template-columns: 1fr 1fr;
+        }
+        :where(.oq-root) .stats > div:nth-child(3) {
+          border-left: 0;
+        }
+        :where(.oq-root) .stats > div:nth-child(n + 3) {
+          border-top: 1px solid var(--oq-line-2);
+        }
+        :where(.oq-root) .ph .acts .hide-n {
+          display: none;
+        }
+        :where(.oq-root) .tabbar {
+          display: flex;
+          position: fixed;
+          left: 50%;
+          bottom: 22px;
+          transform: translateX(-50%);
+          z-index: 30;
+          gap: 2px;
+          padding: 5px;
+          border-radius: 999px;
+          background: var(--oq-surface-2);
+          box-shadow: var(--oq-shadow-2);
+        }
+        :where(.oq-root) .tabbar button {
+          border: 0;
+          background: none;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 3px;
+          padding: 8px 16px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--oq-ink-2);
+          transition:
+            transform var(--oq-spring-fast-dur) var(--oq-spring-fast),
+            background 0.2s,
+            color 0.2s;
+        }
+        :where(.oq-root) .tabbar button.on {
+          background: var(--oq-accent);
+          color: var(--oq-on-accent);
+        }
+        /* Phone tab bar (2026-10-21): icon + label at rest; scrolling down minimizes it to icons only (omxqua.js sets
+     .oq-tabs-min on the root), scrolling up or reaching the top brings the labels back. Labels stay the accessible name. */
+        :where(.oq-root) .tabbar {
+          touch-action: none;
+          -webkit-user-select: none;
+          user-select: none;
+        }
+        :where(.oq-root) .tabbar {
+          left: 0;
+          right: 0;
+          margin: 0 auto;
+          width: fit-content;
+          transform: none;
+          max-width: calc(100% - 24px);
+          box-sizing: border-box;
+        } /* centred across the full width, so 5 tabs can shrink to fit */
+        :where(.oq-root) .tabbar button {
+          gap: 2px;
+          padding: 0;
+          flex: 0 1 auto;
+          min-width: 0;
+          width: 68px;
+          height: max(52px, var(--oq-target));
+          justify-content: center;
+          font-size: 10.5px;
+          line-height: 1.15;
+          -webkit-tap-highlight-color: transparent;
+          transition:
+            transform var(--oq-spring-fast-dur) var(--oq-spring-fast),
+            color 0.2s,
+            width 0.28s var(--oq-ease-in),
+            height 0.28s var(--oq-ease-in),
+            font-size 0.22s var(--oq-ease-in),
+            gap 0.22s;
+        }
+        :where(.oq-root) .tabbar button .ico {
+          width: 22px;
+          height: 22px;
+        }
+        .oq-root.oq-tabs-min .tabbar button {
+          font-size: 0;
+          gap: 0;
+          width: 54px;
+          height: max(44px, var(--oq-target));
+        }
+        :where(.oq-root) .hide-n {
+          display: none !important;
+        }
+        /* ---- Phone counterparts (2026-10-21): every desktop part has a touch version; same markup, the container picks ---- */
+        /* menu and select list → action sheet along the bottom edge, rows at least 44 px, no shortcut hints */
+        :where(.oq-root) .menu {
+          position: fixed;
+          left: 8px !important;
+          right: 8px;
+          top: auto !important;
+          bottom: 8px;
+          min-width: 0;
+          z-index: 62;
+          padding: 8px;
+          border-radius: 22px;
+        }
+        :where(.oq-root) .menu .mi {
+          min-height: max(44px, var(--oq-target));
+          padding: 0 14px;
+          font-size: 1em;
+          border-radius: 12px;
+        }
+        :where(.oq-root) .menu .mi kbd {
+          display: none;
+        }
+        /* tooltip → none: touch has no hover; icon buttons carry aria-label */
+        :where(.oq-root) .tip {
+          display: none !important;
+        }
+        /* dialog → full-width stacked actions, the verb on top within thumb reach */
+        :where(.oq-root) .dialog .acts {
+          flex-direction: column-reverse;
+        }
+        :where(.oq-root) .dialog .acts .btn {
+          width: 100%;
+          justify-content: center;
+        }
+        /* toast → above the tab bar */
+        :where(.oq-root) .toast {
+          bottom: 96px;
+        }
+        /* fields → 16 px text, below that iOS Safari zooms the page on focus */
+        :where(.oq-root) .mo input {
+          font-size: 16px;
+        }
+        /* buttons → at least 44 px tall (small ones excepted) */
+        :where(.oq-root) .btn:not(.sm):not(.lg) {
+          --h: max(var(--oq-target), 44px);
+        }
+        :where(.oq-root) .toast .btn.sm {
+          --h: 44px;
+        } /* Undo sits under the thumb */
+        :where(.oq-root) .xbtn {
+          position: relative;
+        }
+        :where(.oq-root) .xbtn::before {
+          content: "";
+          position: absolute;
+          inset: -6px;
+        } /* 32 px circle, 44 px hit area */
+      }
+      /* Touch screens have no hover: no lift or tint left stuck on a button after a tap. */
+      @media (hover: none) {
+        :where(.oq-root) .btn.fill:hover {
+          transform: none;
+          box-shadow: var(--oq-shadow-1);
+        }
+        :where(.oq-root) .btn:hover::after {
+          background: rgb(var(--oq-state) / 0);
+        }
+        :where(.oq-root) .menu .mi:hover {
+          background: none;
+        }
+        :where(.oq-root) .xbtn:hover {
+          background: rgb(var(--oq-state) / 0.06);
+        }
+      }
+      :where(.oq-root) .wrap-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      /* Logo: omxqua.js turns .mark letters into <svg class="oq-logo"><text>, so the stroke can be drawn.
+   These rules used to be injected by the script; they live here so omxqua works under a strict CSP (default-src 'self').
+   Deliberately unscoped (not :where(.oq-root)), as the injected rules were: a .mark may sit outside the app root. */
+      .oq-logo {
+        width: 100%;
+        height: 100%;
+        display: block;
+        overflow: visible;
+      }
+      .oq-logo text {
+        fill: currentColor;
+        stroke: currentColor;
+        stroke-width: 0.8;
+        stroke-dasharray: 120;
+        stroke-dashoffset: 0;
+        paint-order: stroke;
+      }
+      .mark svg path,
+      .mark svg circle {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 0;
+      }
+      .mark {
+        cursor: pointer;
+      }
+
+      /* Flat panel buttons: inside a panel, blade, sheet or command bar (.oq-flat), buttons sit on the surface.
+   No shadow, no hover lift; tonal gets a state tint instead. Elevation is for things that float (islands, Beacon, menus). */
+      :where(.oq-root) .oq-flat .btn.fill,
+      :where(.oq-root) .oq-flat .btn.tonal {
+        box-shadow: none;
+      }
+      :where(.oq-root) .oq-flat .btn.fill:hover {
+        box-shadow: none;
+        transform: none;
+      }
+      :where(.oq-root) .oq-flat .btn.tonal {
+        background: rgb(var(--oq-state) / 0.06);
+      }
+
+      /* ---------- compare page chrome ---------- */
+      :root {
+        --bg: #e6e6ea;
+        --fg: #0b0b0d;
+        --fg2: #5b5b63;
+        --panel: #ffffff;
+        --line: #d9d9df;
+        --pick: #137036;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #060607;
+          --fg: #ededef;
+          --fg2: #a9a9b1;
+          --panel: #151518;
+          --line: #2a2a30;
+          --pick: #3ccf6e;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #060607;
+        --fg: #ededef;
+        --fg2: #a9a9b1;
+        --panel: #151518;
+        --line: #2a2a30;
+        --pick: #3ccf6e;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "Geist", system-ui, sans-serif;
+      }
+      .cmp {
+        max-width: 1840px;
+        margin: 0 auto;
+        padding: 28px 16px 80px;
+      }
+      .cmp-h {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px 32px;
+        align-items: end;
+        margin-bottom: 24px;
+      }
+      .cmp-h h1 {
+        font-size: clamp(28px, 4vw, 44px);
+        letter-spacing: -0.035em;
+        margin: 0;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .cmp-h h1 span {
+        color: var(--fg2);
+      }
+      .cmp-h p {
+        margin: 8px 0 0;
+        color: var(--fg2);
+        max-width: 720px;
+        line-height: 1.5;
+        font-size: 15px;
+      }
+      .picks {
+        margin-left: auto;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 16px;
+        font-size: 13px;
+        min-width: 260px;
+      }
+      .picks b {
+        display: block;
+        font:
+          600 11px "Geist Mono",
+          monospace;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--fg2);
+        margin-bottom: 6px;
+      }
+      .picks .none {
+        color: var(--fg2);
+      }
+      .picks span.p {
+        display: inline-block;
+        padding: 3px 9px;
+        margin: 2px 4px 2px 0;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--pick) 16%, transparent);
+        font-weight: 600;
+      }
+      .jump {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 0 0 28px;
+      }
+      .jump a {
+        text-decoration: none;
+        color: var(--fg);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 7px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .opt {
+        margin: 0 0 64px;
+        scroll-margin-top: 16px;
+      }
+      .opt-h {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        align-items: baseline;
+        margin-bottom: 14px;
+      }
+      .opt-h h2 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: -0.02em;
+      }
+      .opt-h .k {
+        font:
+          500 12px "Geist Mono",
+          monospace;
+        color: var(--fg2);
+        border: 1px solid var(--line);
+        padding: 3px 7px;
+        border-radius: 4px;
+      }
+      .opt-h p {
+        flex-basis: 100%;
+        margin: 0;
+        color: var(--fg2);
+        font-size: 14.5px;
+        line-height: 1.5;
+        max-width: 980px;
+      }
+      .boards {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 390px;
+        gap: 24px;
+        align-items: start;
+      }
+      @media (max-width: 1100px) {
+        .boards {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .boards .ph-wrap {
+          justify-self: center;
+        }
+      }
+      .board-lab {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font:
+          500 12px "Geist Mono",
+          monospace;
+        color: var(--fg2);
+        margin-bottom: 8px;
+      }
+      .board-lab label {
+        margin-left: auto;
+        display: inline-flex;
+        gap: 7px;
+        align-items: center;
+        cursor: pointer;
+        color: var(--fg);
+        font-family: "Geist", sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .board-lab input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--pick);
+      }
+      .d-wrap {
+        width: 100%;
+        position: relative;
+      }
+      .d-scale {
+        width: 1440px;
+        height: 900px;
+        transform-origin: 0 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .ph-wrap {
+        width: min(390px, 100%);
+      }
+      .ph-scale {
+        width: 390px;
+        height: 844px;
+        transform-origin: 0 0;
+      }
+      .frame {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 14px;
+        box-shadow:
+          0 0 0 1px var(--line),
+          0 18px 48px rgba(0, 0, 0, 0.18);
+      }
+      .ph-scale .frame {
+        border-radius: 44px;
+        box-shadow:
+          0 0 0 10px #111114,
+          0 0 0 11px #2a2a30,
+          0 24px 60px rgba(0, 0, 0, 0.3);
+      }
+      .stitch-slot {
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+        padding: 18px;
+        color: var(--fg2);
+        font-size: 14px;
+      }
+      .notes {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+      }
+      .notes div {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+      .notes b {
+        display: block;
+        font:
+          600 11px "Geist Mono",
+          monospace;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--fg2);
+        margin-bottom: 4px;
+      }
+
+      /* ---------- digest screens (shared by every option) ---------- */
+      .screen {
+        display: flex;
+        flex-direction: column;
+        container-type: inline-size;
+        position: relative;
+        overflow: hidden;
+        contain: layout;
+        height: 100%;
+      }
+      .dg {
+        height: 100%;
+        overflow: auto;
+        padding: 22px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .dg-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .dg-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: var(--oq-ink);
+        color: var(--oq-surface-0);
+        display: grid;
+        place-items: center;
+        font: 700 13px var(--oq-font-mono);
+        letter-spacing: -0.04em;
+      }
+      .dg-title {
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: -0.015em;
+      }
+      .dg-title small {
+        display: block;
+        font: 400 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        letter-spacing: 0;
+      }
+      .dg-sp {
+        flex: 1;
+      }
+      .dg-meter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: 500 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      .dg-meter .prog {
+        width: 90px;
+        height: 6px;
+      }
+      .dg-stat {
+        display: flex;
+        gap: 22px;
+      }
+      .dg-stat div {
+        display: flex;
+        flex-direction: column;
+      }
+      .dg-stat b {
+        font: 600 20px var(--oq-font-mono);
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+      }
+      .dg-stat span {
+        font-size: 11.5px;
+        color: var(--oq-ink-2);
+      }
+      .kind {
+        font: 600 10.5px var(--oq-font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+      .kind.irr {
+        color: var(--oq-bad);
+      }
+      .kind.dir {
+        color: var(--oq-info);
+      }
+      .kind.blk {
+        color: var(--oq-warn);
+      }
+      .dec {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .dec .ws {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: 500 12px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      .dec h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: -0.015em;
+        line-height: 1.3;
+      }
+      .dec p {
+        margin: 0;
+        color: var(--oq-ink-2);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .dec .acts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+        align-items: center;
+      }
+      .dec .acts .cm {
+        margin-left: auto;
+      }
+      .dec.focal {
+        background: #0b0b0d;
+        color: #ededef;
+        box-shadow: var(--oq-shadow-2);
+      }
+      .dec.focal .ws,
+      .dec.focal p {
+        color: #a9a9b1;
+      }
+      .dec.focal .kind.irr {
+        color: #ff8a8e;
+      }
+      .dec.focal .btn.fill {
+        background: #ededef;
+        color: #0b0b0d;
+      }
+      .dec.focal .btn.tonal {
+        background: #25252a;
+        color: #ededef;
+        box-shadow: none;
+      }
+      .dec.focal .btn.text {
+        color: #ededef;
+      }
+      .dec .picked {
+        display: none;
+        font: 500 12px var(--oq-font-mono);
+        color: var(--oq-ok);
+      }
+      .dec.done .picked {
+        display: block;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        flex: none;
+      }
+      .s-run {
+        color: var(--oq-ok);
+      }
+      .s-need {
+        color: var(--oq-warn);
+      }
+      .s-idle {
+        color: var(--oq-ink-2);
+      }
+      .s-fail {
+        color: var(--oq-bad);
+      }
+      .st {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font: 500 12px var(--oq-font-mono);
+        white-space: nowrap;
+      }
+      .st .dot {
+        background: currentColor;
+      }
+      .wtbl td {
+        vertical-align: middle;
+      }
+      .wtbl tr.row {
+        cursor: pointer;
+      }
+      .wtbl .nm {
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .wtbl .pg {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 150px;
+      }
+      .wtbl .pg .prog {
+        flex: 1;
+        height: 6px;
+      }
+      .wtbl .pg span {
+        font: 500 12px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        white-space: nowrap;
+      }
+      .wtbl .mv {
+        color: var(--oq-ink-2);
+        font-size: 12.5px;
+        max-width: 520px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .wtbl .mv b {
+        color: var(--oq-ink);
+        font-weight: 600;
+      }
+      .wtbl .mc {
+        font: 500 12px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        white-space: nowrap;
+      }
+      .wtbl tr.log td {
+        padding: 0 16px 12px 40px;
+        border-bottom: 1px solid var(--oq-line-2);
+      }
+      .wtbl tr.log[hidden] {
+        display: none;
+      }
+      .logl {
+        display: grid;
+        grid-template-columns: 52px 1fr auto;
+        gap: 4px 14px;
+        font-size: 12.5px;
+        padding-top: 2px;
+      }
+      .logl .t {
+        font: 500 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      .logl .r {
+        font: 500 11px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      .chev {
+        transition: transform 0.25s var(--oq-ease-in);
+        color: var(--oq-ink-2);
+      }
+      tr.open .chev {
+        transform: rotate(90deg);
+      }
+      .machines {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .mach {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        background: var(--oq-surface-1);
+        border-radius: 10px;
+        box-shadow: var(--oq-shadow-1);
+        font-size: 12.5px;
+      }
+      .mach b {
+        font-weight: 600;
+      }
+      .mach span {
+        font: 500 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+
+      /* option A */
+      .a-decs {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr 1fr;
+        gap: 14px;
+      }
+      /* option B */
+      .b-grid {
+        display: grid;
+        grid-template-columns: 430px minmax(0, 1fr);
+        gap: 18px;
+        flex: 1;
+        min-height: 0;
+      }
+      .b-q {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .b-q h3,
+      .b-r h3 {
+        margin: 0;
+        font: 600 11px var(--oq-font-mono);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--oq-ink-2);
+      }
+      .b-r .wtbl .mv {
+        max-width: 300px;
+      }
+      .b-r .wtbl th:nth-child(6),
+      .b-r .wtbl td:nth-child(6) {
+        display: none;
+      }
+      .b-r {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-width: 0;
+      }
+      .big {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+      }
+      .big b {
+        font: 800 64px/0.9 var(--oq-font);
+        letter-spacing: -0.05em;
+      }
+      .big span {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--oq-ink-2);
+        line-height: 1.15;
+      }
+      .big span em {
+        font-style: normal;
+        color: var(--oq-ink);
+      }
+      /* option C: lanes */
+      .lanes {
+        display: flex;
+        flex-direction: column;
+      }
+      .lane {
+        display: grid;
+        grid-template-columns: 150px 220px minmax(0, 1fr) 90px 60px;
+        gap: 16px;
+        align-items: center;
+        padding: 11px 16px;
+        border-bottom: 1px solid var(--oq-line-2);
+      }
+      .lane:last-child {
+        border-bottom: 0;
+      }
+      .lane .nm {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .lane .nm .dot {
+        background: currentColor;
+      }
+      .strip {
+        display: flex;
+        gap: 3px;
+        flex-wrap: wrap;
+      }
+      .strip i {
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+        background: transparent;
+        box-shadow: inset 0 0 0 1.5px var(--oq-line);
+      }
+      .strip i.d {
+        background: var(--oq-ink-2);
+        box-shadow: none;
+      }
+      .strip i.r {
+        background: var(--oq-ok);
+        box-shadow: none;
+      }
+      .strip i.n {
+        background: var(--oq-warn);
+        box-shadow: none;
+      }
+      .strip i.f {
+        background: var(--oq-bad);
+        box-shadow: none;
+      }
+      .lane .mv {
+        color: var(--oq-ink-2);
+        font-size: 12.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .lane .mc,
+      .lane .tm {
+        font: 500 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        text-align: right;
+      }
+      .lane-dec {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        align-items: center;
+        margin: 4px 0 2px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--oq-warn) 9%, var(--oq-surface-2));
+      }
+      .lane-dec h4 {
+        margin: 0 0 3px;
+        font-size: 14px;
+        font-weight: 650;
+      }
+      .lane-dec p {
+        margin: 0;
+        color: var(--oq-ink-2);
+        font-size: 12.5px;
+      }
+      .lane-dec .acts {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        font: 500 11px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        align-items: center;
+      }
+      .legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+
+      /* phone */
+      .pdg {
+        height: 100%;
+        overflow: auto;
+        padding: 54px 16px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .pdg::-webkit-scrollbar {
+        display: none;
+      }
+      .pdg > *,
+      .dg > * {
+        flex-shrink: 0;
+      }
+      .dg > section.card:last-of-type,
+      .b-grid {
+        flex-shrink: 1;
+      }
+      .p-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .p-sec {
+        font: 600 11px var(--oq-font-mono);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--oq-ink-2);
+        display: flex;
+        justify-content: space-between;
+      }
+      .p-rail {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        margin: 0 -16px;
+        padding: 2px 16px 8px;
+        scrollbar-width: none;
+      }
+      .p-rail::-webkit-scrollbar {
+        display: none;
+      }
+      .p-rail .dec {
+        flex: 0 0 86%;
+        scroll-snap-align: center;
+      }
+      .p-rail .dec .btn {
+        min-height: 44px;
+      }
+      .p-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: var(--oq-surface-1);
+        border-radius: 12px;
+        box-shadow: var(--oq-shadow-1);
+        padding: 12px 6px;
+        text-align: center;
+      }
+      .p-stats b {
+        display: block;
+        font: 600 19px var(--oq-font-mono);
+      }
+      .p-stats span {
+        font-size: 10.5px;
+        color: var(--oq-ink-2);
+      }
+      .p-rows {
+        background: var(--oq-surface-1);
+        border-radius: 12px;
+        box-shadow: var(--oq-shadow-1);
+      }
+      .p-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--oq-line-2);
+        min-height: 48px;
+      }
+      .p-row:last-child {
+        border-bottom: 0;
+      }
+      .p-row .nm {
+        font-weight: 600;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .p-row .prog {
+        grid-column: 1 / -1;
+        height: 5px;
+      }
+      .p-row .mv {
+        grid-column: 1 / -1;
+        color: var(--oq-ink-2);
+        font-size: 12.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .p-row .r {
+        font: 500 12px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      .p-stack {
+        position: relative;
+        height: 300px;
+        isolation: isolate;
+        margin-bottom: 8px;
+      }
+      .p-stack .dec {
+        position: absolute;
+        inset: 0;
+        transition:
+          transform 0.45s var(--oq-spring),
+          opacity 0.3s;
+      }
+      .p-stack .dec:nth-child(2) {
+        transform: translateY(14px) scale(0.95);
+        z-index: -1;
+        opacity: 0.8;
+      }
+      .p-stack .dec:nth-child(3) {
+        transform: translateY(28px) scale(0.9);
+        z-index: -2;
+        opacity: 0.5;
+      }
+      .p-stack .dec .btn {
+        min-height: 44px;
+      }
+      .p-count {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font: 500 12px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+        margin-top: 18px;
+      }
+      .p-lane {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--oq-line-2);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .p-lane:last-child {
+        border-bottom: 0;
+      }
+      .p-lane .hd {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .p-lane .hd .nm {
+        font-weight: 600;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .p-lane .hd .r {
+        margin-left: auto;
+        font: 500 11.5px var(--oq-font-mono);
+        color: var(--oq-ink-2);
+      }
+      .p-lane .mv {
+        color: var(--oq-ink-2);
+        font-size: 12.5px;
+      }
+      .p-lane .lane-dec {
+        grid-template-columns: 1fr;
+      }
+      .p-lane .lane-dec .acts {
+        justify-content: flex-start;
+      }
+      .p-lane .lane-dec .btn {
+        min-height: 44px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cmp">
+      <header class="cmp-h">
+        <div>
+          <h1>Command center digest. <span>Three ways to read it.</span></h1>
+          <p>
+            The page republished every morning and evening. Decisions waiting for you come first,
+            then every workspace. omxqua · Developer · Graphite. Rows open in place to show the
+            decision log, and the option pills can be tapped. Tick the screens you want; the picks
+            stay on this device.
+          </p>
+        </div>
+        <div class="picks" id="picks">
+          <b>Your picks</b><span class="none">Nothing ticked yet</span>
+        </div>
+      </header>
+      <nav class="jump">
+        <a href="#opt-a">A · Inbox, then the table</a>
+        <a href="#opt-b">B · Split: queue and paper</a>
+        <a href="#opt-c">C · Lanes, decisions on the work</a>
+        <a href="#opt-s">Stitch drafts</a>
+      </nav>
+
+      <!-- ================= A ================= -->
+      <section class="opt" id="opt-a">
+        <div class="opt-h">
+          <h2>A · Inbox, then the table</h2>
+          <span class="k">light · closest to the control room</span>
+          <p>
+            Three decision cards across the top, with the most urgent one as the dark focal card.
+            Below them is the control-room table: one row per workspace and what moved since last
+            time. Click a row and its decision log opens in place. On the phone, the decisions swipe
+            sideways with the next one peeking, and the workspaces become rows you can tap.
+          </p>
+        </div>
+        <div class="boards">
+          <div>
+            <div class="board-lab">
+              Desktop · 1440 × 900<label
+                ><input type="checkbox" data-pick="Claude A · desktop" />Pick</label
+              >
+            </div>
+            <div class="d-wrap">
+              <div class="d-scale">
+                <div class="frame">
+                  <div class="oq-root oq-light oq-family-dev screen" data-screen="a-d"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ph-wrap">
+            <div class="board-lab">
+              Phone · 390 × 844<label
+                ><input type="checkbox" data-pick="Claude A · phone" />Pick</label
+              >
+            </div>
+            <div class="ph-scale">
+              <div class="frame">
+                <div class="oq-root oq-light oq-family-dev screen" data-screen="a-p"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= B ================= -->
+      <section class="opt" id="opt-b">
+        <div class="opt-h">
+          <h2>B · Split: queue and paper</h2>
+          <span class="k">light · editorial</span>
+          <p>
+            A fixed queue on the left holds every decision as a stack you work down. On the right,
+            one big number says what happened overnight, with the table under it. On the phone,
+            decisions arrive one at a time as a card stack (answer it or skip to the next), and the
+            workspaces sit below.
+          </p>
+        </div>
+        <div class="boards">
+          <div>
+            <div class="board-lab">
+              Desktop · 1440 × 900<label
+                ><input type="checkbox" data-pick="Claude B · desktop" />Pick</label
+              >
+            </div>
+            <div class="d-wrap">
+              <div class="d-scale">
+                <div class="frame">
+                  <div class="oq-root oq-light oq-family-dev screen" data-screen="b-d"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ph-wrap">
+            <div class="board-lab">
+              Phone · 390 × 844<label
+                ><input type="checkbox" data-pick="Claude B · phone" />Pick</label
+              >
+            </div>
+            <div class="ph-scale">
+              <div class="frame">
+                <div class="oq-root oq-light oq-family-dev screen" data-screen="b-p"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= C ================= -->
+      <section class="opt" id="opt-c">
+        <div class="opt-h">
+          <h2>C · Lanes, decisions on the work</h2>
+          <span class="k">night · console pattern</span>
+          <p>
+            No separate inbox. Each workspace is a lane with one square per ticket (done, running,
+            needs you, failed, to do), so the progress is the picture. A decision opens inside its
+            own lane, right where the work is stuck, and the lanes that need you sort to the top.
+          </p>
+        </div>
+        <div class="boards">
+          <div>
+            <div class="board-lab">
+              Desktop · 1440 × 900<label
+                ><input type="checkbox" data-pick="Claude C · desktop" />Pick</label
+              >
+            </div>
+            <div class="d-wrap">
+              <div class="d-scale">
+                <div class="frame">
+                  <div class="oq-root oq-night oq-family-dev screen" data-screen="c-d"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ph-wrap">
+            <div class="board-lab">
+              Phone · 390 × 844<label
+                ><input type="checkbox" data-pick="Claude C · phone" />Pick</label
+              >
+            </div>
+            <div class="ph-scale">
+              <div class="frame">
+                <div class="oq-root oq-night oq-family-dev screen" data-screen="c-p"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="opt" id="opt-s">
+        <div class="opt-h">
+          <h2>Stitch drafts</h2>
+          <span class="k">google stitch · same brief</span>
+          <p>
+            Google Stitch drafted the same brief with the same Graphite tokens. Its layout is
+            roomier and more spaced out than A. Stitch also invented some chrome we didn't ask for
+            (nav tabs, a "Deploy Agent" button, a "Command/12" footer, a "tier 4" badge); whichever
+            you pick, those come out. In both variants, the right-hand columns of the table are cut
+            off.
+          </p>
+        </div>
+        <div class="boards">
+          <div>
+            <div class="board-lab">
+              Stitch · one column · desktop<label
+                ><input type="checkbox" data-pick="Stitch · desktop" />Pick</label
+              >
+            </div>
+            <img
+              src="img/stitch-desktop.jpg"
+              alt="Stitch desktop digest: stats strip, three decision cards, workspace table, machine cards"
+              style="
+                width: 100%;
+                border-radius: 14px;
+                box-shadow:
+                  0 0 0 1px var(--line),
+                  0 18px 48px rgba(0, 0, 0, 0.18);
+              "
+            />
+          </div>
+          <div class="ph-wrap">
+            <div class="board-lab">
+              Stitch · phone<label><input type="checkbox" data-pick="Stitch · phone" />Pick</label>
+            </div>
+            <div
+              style="
+                height: 844px;
+                overflow: auto;
+                border-radius: 44px;
+                box-shadow:
+                  0 0 0 10px #111114,
+                  0 0 0 11px #2a2a30,
+                  0 24px 60px rgba(0, 0, 0, 0.3);
+                scrollbar-width: none;
+              "
+            >
+              <img
+                src="img/stitch-phone.jpg"
+                alt="Stitch phone digest: swipeable decision cards, workspace rows"
+                style="width: 100%; display: block"
+              />
+            </div>
+            <div class="board-lab" style="margin-top: 8px">scrolls inside the frame</div>
+          </div>
+        </div>
+        <div
+          class="boards"
+          style="
+            grid-template-columns: repeat(auto-fit, minmax(min(520px, 100%), 1fr));
+            margin-top: 24px;
+          "
+        >
+          <div>
+            <div class="board-lab">
+              Stitch variant 1 · decision queue left<label
+                ><input type="checkbox" data-pick="Stitch variant 1 · desktop" />Pick</label
+              >
+            </div>
+            <img
+              src="img/stitch-desktop-variant-1.jpg"
+              alt="Stitch variant 1: decisions in a left column, stats, machines and table on the right"
+              style="width: 100%; border-radius: 14px; box-shadow: 0 0 0 1px var(--line)"
+            />
+          </div>
+          <div>
+            <div class="board-lab">
+              Stitch variant 2 · stats and machines in one strip<label
+                ><input type="checkbox" data-pick="Stitch variant 2 · desktop" />Pick</label
+              >
+            </div>
+            <img
+              src="img/stitch-desktop-variant-2.jpg"
+              alt="Stitch variant 2: one strip with stats and machines, decisions beside the table"
+              style="width: 100%; border-radius: 14px; box-shadow: 0 0 0 1px var(--line)"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="opt">
+        <div class="opt-h"><h2>How answering works, in every option</h2></div>
+        <div class="notes">
+          <div>
+            <b>One tap</b>Each decision lists its options as pills. A tap saves the pick on the
+            page, and the next digest run reads it and acts. You never type unless you want to.
+          </div>
+          <div>
+            <b>Comment for the rest</b>"Comment" opens the artifact's own comment thread on that
+            card. The digest job passes the text to the workspace's thread.
+          </div>
+          <div>
+            <b>Reversible stays quiet</b>Agents only put calls in the decision log. You see the log
+            when you open a row; nothing in it asks for an answer.
+          </div>
+          <div>
+            <b>Fits a laptop</b>Desktop screens fit 1440 × 900 with nothing to scroll. The table
+            scrolls inside its card once there are more than about 12 workspaces.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      /* omxqua · omxqua.js (no dependencies, ~4 KB)
+   1. Press: every tappable thing squashes on pointer-down and springs back on release.
+      The amount follows the size, so it feels the same everywhere: small 0.90 · medium 0.96 · large 0.985.
+      An element (or its skin) can set --oq-press: ledge to sink 4 px instead (the Kids Sticker skin).
+   2. Logo: .mark writes itself on press (its letters or icon are drawn as a stroke, then filled).
+   3. Helpers on window.Omxqua for the moving parts: segmented thumbs, gentle menus, toasts,
+      the Beacon morph and the Top nav pill (see AGENTS.md).
+   Opt out with data-nopress. Respects prefers-reduced-motion. */
+      (() => {
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const PRESS =
+          "button, a.cta, a.more, [data-press], .tile, .blk, .day, .row, .row-demo, .chip, .nav, .mark, .brand-isl, .brand";
+        const spring = (el) =>
+          getComputedStyle(el).getPropertyValue("--oq-spring-fast").trim() ||
+          "cubic-bezier(.2,.9,.3,1.15)";
+        const amount = (el) => {
+          const w = el.getBoundingClientRect().width;
+          return w <= 48 ? 0.9 : w <= 260 ? 0.96 : 0.985;
+        };
+
+        addEventListener(
+          "pointerdown",
+          (e) => {
+            if (reduce || e.button > 0) return;
+            const el = e.target.closest(PRESS);
+            if (!el || el.disabled || el.closest("[data-nopress]")) return;
+            const ledge = getComputedStyle(el).getPropertyValue("--oq-press").trim() === "ledge";
+            const down = ledge ? { translate: "0 4px" } : { scale: String(amount(el)) },
+              rest = ledge ? { translate: "0 0" } : { scale: "1" };
+            el.getAnimations().forEach((a) => a.id === "oq-press" && a.cancel());
+            const a = el.animate([rest, down], {
+              duration: 110,
+              easing: "ease-out",
+              fill: "forwards",
+            });
+            a.id = "oq-press";
+            const up = () => {
+              removeEventListener("pointerup", up);
+              removeEventListener("pointercancel", up);
+              const b = el.animate([down, rest], { duration: 320, easing: spring(el) });
+              b.id = "oq-press";
+              a.cancel();
+            };
+            addEventListener("pointerup", up);
+            addEventListener("pointercancel", up);
+            if (el.matches(".mark, .brand, .brand-isl"))
+              writeLogo(el.matches(".mark") ? el : el.querySelector(".mark"));
+          },
+          true,
+        );
+
+        /* Logo: letters → <svg><text>, so the stroke can be drawn; icons keep their paths. */
+        function prepare(mark) {
+          if (!mark || mark.dataset.oqLogo) return;
+          mark.dataset.oqLogo = "1";
+          const txt = mark.textContent.trim();
+          if (!mark.querySelector("svg") && txt) {
+            const big = txt.length === 1;
+            mark.innerHTML = `<svg viewBox="0 0 40 40" class="oq-logo" aria-label="${txt}"><text x="20" y="${big ? 27.5 : 25.5}" text-anchor="middle" font-size="${big ? 22 : 17}" font-weight="700" font-family="inherit">${txt}</text></svg>`;
+          }
+          mark.querySelectorAll("svg path, svg circle, svg text").forEach((p) => {
+            if (p.tagName !== "text") p.setAttribute("pathLength", "1");
+          });
+        }
+        function writeLogo(mark) {
+          if (!mark || reduce) return;
+          prepare(mark);
+          mark.querySelectorAll("svg text").forEach((t) => {
+            t.getAnimations().forEach((a) => a.cancel());
+            t.animate(
+              [
+                { strokeDashoffset: 120, fillOpacity: 0 },
+                { strokeDashoffset: 0, fillOpacity: 0, offset: 0.75 },
+                { strokeDashoffset: 0, fillOpacity: 1 },
+              ],
+              { duration: 900, easing: "cubic-bezier(.4,0,.2,1)" },
+            );
+          });
+          mark.querySelectorAll("svg path, svg circle").forEach((p) => {
+            p.getAnimations().forEach((a) => a.cancel());
+            p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
+              duration: 700,
+              easing: "cubic-bezier(.4,0,.2,1)",
+            });
+          });
+        }
+        /* write each logo once when it first appears */
+        const seen = new WeakSet();
+        const scan = () =>
+          document.querySelectorAll(".mark").forEach((m) => {
+            if (!seen.has(m)) {
+              seen.add(m);
+              prepare(m);
+              if (m.getClientRects().length) setTimeout(() => writeLogo(m), 250);
+            }
+          });
+        new MutationObserver(scan).observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+        });
+        addEventListener("DOMContentLoaded", scan);
+        scan();
+
+        /* ---- helpers (used by docs/showcase.html; same timings as LANGUAGE.md's motion budget) ---- */
+        /* Segmented control, tabs, tab bar, top nav: the first child is the thumb; it slides under button.on. */
+        /* Thumbs are liquid: moving to another button stretches the thumb along the way and lets it settle with a wobble
+     (a re-layout of the same button just moves it). */
+        function placeThumb(sg) {
+          const on = sg.querySelector("button.on"),
+            t = sg.firstElementChild;
+          if (!on || !t) return;
+          const from = parseFloat(t.style.left),
+            to = on.offsetLeft,
+            moved = t._on && t._on !== on;
+          t._on = on;
+          t.style.left = to + "px";
+          t.style.width = on.offsetWidth + "px";
+          if (reduce || !moved || isNaN(from) || Math.abs(to - from) < 2 || !t.offsetParent) return;
+          const k = Math.min(0.35, (Math.abs(to - from) / sg.offsetWidth) * 0.6);
+          t.animate(
+            [
+              { scale: "1 1" },
+              { scale: `${1 + k} ${1 - k / 2}`, offset: 0.35 },
+              { scale: `${1 - k / 4} ${1 + k / 8}`, offset: 0.7 },
+              { scale: "1 1" },
+            ],
+            { duration: 420, easing: "ease-out" },
+          );
+        }
+
+        /* Tab bar drag: hold the bar and slide; the thumb lifts, follows the finger, and drops on the tab you let go over.
+     omxqua.js clicks that tab for you (your click handler runs as for a tap); a cancelled gesture puts everything back. */
+        addEventListener(
+          "pointerdown",
+          (e) => {
+            const bar = e.target.closest(".tabbar"),
+              t = bar && bar.querySelector(".tb-thumb");
+            if (!t || e.button > 0 || !t.offsetParent || bar._drag) return;
+            const id = e.pointerId,
+              x0 = e.clientX,
+              btns = [...bar.querySelectorAll("button")],
+              was = bar.querySelector("button.on");
+            let dragging = false,
+              lx = x0;
+            bar._drag = true;
+            if (bar._follow) {
+              bar._follow = null;
+              t.style.transition = "";
+            }
+            const near = (x) =>
+              btns.reduce(
+                (a, b) => {
+                  const r = b.getBoundingClientRect(),
+                    d = Math.abs(x - (r.left + r.right) / 2);
+                  return d < a[1] ? [b, d] : a;
+                },
+                [null, Infinity],
+              )[0];
+            const under = (x) => {
+              const r = bar.getBoundingClientRect();
+              return x >= r.left && x <= r.right ? near(x) : null;
+            }; /* gaps and padding count as the nearest tab */
+            const mark = (on) => btns.forEach((x) => x.classList.toggle("on", x === on));
+            const move = (ev) => {
+              if (ev.pointerId !== id || (!dragging && Math.abs(ev.clientX - x0) < 8)) return;
+              if (!dragging) {
+                dragging = true;
+                t.style.transition = "none";
+              }
+              const r = bar.getBoundingClientRect(),
+                w = t.offsetWidth;
+              t.style.left = Math.max(0, Math.min(r.width - w, ev.clientX - r.left - w / 2)) + "px";
+              if (!reduce) {
+                const k = Math.min(0.18, Math.abs(ev.clientX - lx) / 120);
+                t.style.scale = `${1.12 + k} ${1.12 - k / 2}`;
+              }
+              lx = ev.clientX;
+              const b = under(ev.clientX);
+              if (b) mark(b);
+            };
+            const up = (ev) => {
+              if (ev.pointerId !== id) return;
+              removeEventListener("pointermove", move);
+              removeEventListener("pointerup", up);
+              removeEventListener("pointercancel", up);
+              bar._drag = false;
+              if (!dragging) return;
+              t.style.transition = "";
+              t.style.scale = "";
+              if (!reduce)
+                t.animate([{ scale: "1.12 1.12" }, { scale: "1 1" }], {
+                  duration: 320,
+                  easing: spring(t),
+                });
+              const b = ev.type === "pointerup" && under(ev.clientX);
+              if (!b) {
+                if (was) mark(was);
+                placeThumb(bar);
+                return;
+              }
+              /* swallow the browser's own click that may follow the drag, then click the tab ourselves */
+              const eat = (c) => {
+                if (!c.isTrusted || !bar.contains(c.target)) return;
+                c.stopPropagation();
+                c.preventDefault();
+              };
+              addEventListener("click", eat, true);
+              setTimeout(() => removeEventListener("click", eat, true), 300);
+              mark(b);
+              b.click();
+              placeThumb(bar);
+            };
+            addEventListener("pointermove", move);
+            addEventListener("pointerup", up);
+            addEventListener("pointercancel", up);
+          },
+          true,
+        );
+        /* Scroll edge: once content scrolls under the islands, the root gets .oq-scrolled (the bare logo frosts over). */
+        addEventListener(
+          "scroll",
+          (e) => {
+            const el = e.target === document ? document.scrollingElement : e.target;
+            const root =
+              e.target === document
+                ? document.querySelector("html.oq-root, body.oq-root")
+                : el.matches(".oq-root .main") && el.closest(".oq-root");
+            if (!root) return;
+            const y = el.scrollTop,
+              max = el.scrollHeight - el.clientHeight;
+            root.classList.toggle("oq-scrolled", y > 4);
+            /* Tab bar minimizes after 12 px of scrolling down, comes back after 12 px up or at the top.
+       Distance counts from where the direction last flipped, so slow scrolls add up; the bottom rubber-band is ignored. */
+            const st = scrollState.get(el) || { last: y, anchor: y, dir: 0 };
+            scrollState.set(el, st);
+            const dir = Math.sign(y - st.last);
+            if (dir && dir !== st.dir) {
+              st.dir = dir;
+              st.anchor = st.last;
+            }
+            st.last = y;
+            let min = root.classList.contains("oq-tabs-min");
+            if (y <= 4) min = false;
+            else if (st.dir > 0 && y - st.anchor > 12 && y > 60) min = true;
+            else if (st.dir < 0 && st.anchor - y > 12 && st.anchor <= max) min = false;
+            if (min !== root.classList.contains("oq-tabs-min")) {
+              root.classList.toggle("oq-tabs-min", min);
+              root.querySelectorAll(".tabbar").forEach((b) => followThumb(b, 320));
+            }
+          },
+          { capture: true, passive: true },
+        );
+        const scrollState = new WeakMap();
+        /* While the tab bar resizes, keep its thumb on the active button frame by frame (one loop per bar; a drag owns the thumb). */
+        function followThumb(bar, ms) {
+          const t = bar.querySelector(".tb-thumb");
+          if (!t || !bar.offsetParent || bar._drag) return;
+          const token = (bar._follow = {}),
+            end = performance.now() + ms;
+          t.style.transition = "none";
+          const step = () => {
+            if (bar._follow !== token || bar._drag) return;
+            const on = bar.querySelector("button.on");
+            if (on) {
+              t.style.left = on.offsetLeft + "px";
+              t.style.width = on.offsetWidth + "px";
+            }
+            if (performance.now() < end) requestAnimationFrame(step);
+            else {
+              t.style.transition = "";
+              bar._follow = null;
+            }
+          };
+          step();
+        }
+        /* Settle tier: a panel or view arrives (fade + 12px rise, 280 ms, decelerating). */
+        function settle(el) {
+          if (!reduce)
+            el.animate(
+              [
+                { opacity: 0, transform: "translateY(12px)" },
+                { opacity: 1, transform: "none" },
+              ],
+              { duration: 280, easing: "cubic-bezier(.2,0,0,1)" },
+            );
+        }
+        /* Gentle tier: menus, popovers, tooltips ease in over 220 ms and fade out in 150 ms (then [hidden]). */
+        function gentleIn(el) {
+          el.hidden = false;
+          if (!reduce)
+            el.animate(
+              [
+                { opacity: 0, transform: "translateY(-4px) scale(.97)" },
+                { opacity: 1, transform: "none" },
+              ],
+              { duration: 220, easing: "cubic-bezier(.2,0,0,1)" },
+            );
+        }
+        function gentleOut(el) {
+          if (el.hidden) return;
+          if (reduce) {
+            el.hidden = true;
+            return;
+          }
+          el.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: 150,
+            easing: "cubic-bezier(.3,0,1,1)",
+          }).onfinish = () => (el.hidden = true);
+        }
+        /* Toast: shows msg in msgEl, rises in if it was hidden, fades out 2.6 s after the last call. */
+        const toastTimers = new WeakMap();
+        function toast(el, msg, msgEl = el.firstElementChild) {
+          msgEl.textContent = msg;
+          clearTimeout(toastTimers.get(el));
+          if (el.hidden) {
+            el.hidden = false;
+            if (!reduce)
+              el.animate(
+                [
+                  { opacity: 0, transform: "translate(-50%, 8px)" },
+                  { opacity: 1, transform: "translate(-50%, 0)" },
+                ],
+                { duration: 220, easing: "cubic-bezier(.2,0,0,1)" },
+              );
+          }
+          toastTimers.set(
+            el,
+            setTimeout(() => gentleOut(el), 2600),
+          );
+        }
+        /* Beacon: size the pill to its compact or open content; the CSS transition does the morph. */
+        function sizeBeacon(b, animate) {
+          const open = b.classList.contains("open"),
+            el = b.querySelector(open ? ".bc-open" : ".bc-compact");
+          const w = open ? el.offsetWidth : el.scrollWidth,
+            h = open ? el.offsetHeight : 40;
+          if (!animate || reduce) {
+            const t = b.style.transition;
+            b.style.transition = "none";
+            b.style.width = w + "px";
+            b.style.height = h + "px";
+            b.offsetWidth;
+            b.style.transition = t;
+          } else {
+            b.style.width = w + "px";
+            b.style.height = h + "px";
+          }
+        }
+        /* Top nav pill: 4 items at rest (the 4th is the active extra if one is picked) · +N · the rest.
+     openTopnav(nav, true) widens it to all; foldTopnavLater folds it back 3.5 s after you leave; holdTopnav cancels that. */
+        const navTimers = new WeakMap();
+        function layoutTopnav(nav, animate) {
+          if (!nav) return;
+          const btns = [...nav.querySelectorAll("button[data-i]")],
+            more = nav.querySelector("[data-more]"),
+            open = nav.classList.contains("open");
+          const active = btns.findIndex((b) => b.classList.contains("on"));
+          const shown = active >= 4 ? [0, 1, 2, active] : [0, 1, 2, 3];
+          btns.forEach((b, i) => {
+            b.classList.toggle("keep", shown.includes(i));
+            b.style.order = shown.includes(i) ? shown.indexOf(i) : 10 + i;
+          });
+          more.style.order = open ? 99 : 5;
+          btns.forEach((b) => b.classList.toggle("extra", !shown.includes(+b.dataset.i)));
+          more.querySelector("span").textContent = btns.length - 4;
+          const pad = 10,
+            w = open
+              ? btns.reduce((a, b) => a + b.offsetWidth, 0) + pad
+              : shown.reduce((a, i) => a + btns[i].offsetWidth, 0) + more.offsetWidth + pad;
+          if (!animate || reduce) {
+            const t = nav.style.transition;
+            nav.style.transition = "none";
+            nav.style.width = w + "px";
+            nav.offsetWidth;
+            nav.style.transition = t;
+          } else nav.style.width = w + "px";
+          requestAnimationFrame(() => placeThumb(nav));
+        }
+        function holdTopnav(nav) {
+          if (nav) clearTimeout(navTimers.get(nav));
+        }
+        function openTopnav(nav, on) {
+          if (!nav) return;
+          holdTopnav(nav);
+          if (nav.classList.contains("open") === on) return;
+          nav.classList.toggle("open", on);
+          layoutTopnav(nav, true);
+        }
+        function foldTopnavLater(nav, ms = 3500) {
+          if (!nav) return;
+          holdTopnav(nav);
+          navTimers.set(
+            nav,
+            setTimeout(() => openTopnav(nav, false), ms),
+          );
+        }
+
+        window.Omxqua = Object.assign(window.Omxqua || {}, {
+          writeLogo,
+          placeThumb,
+          settle,
+          gentleIn,
+          gentleOut,
+          toast,
+          sizeBeacon,
+          layoutTopnav,
+          openTopnav,
+          foldTopnavLater,
+          holdTopnav,
+        });
+      })();
+    </script>
+    <script>
+      (function () {
+        const WS = [
+          {
+            n: "abode",
+            st: "need",
+            d: 9,
+            t: 12,
+            mv: ["+3 done", "A-040 knip passes, A-041 voice tidy, weekly upstream sync merged"],
+            m: "ablearn",
+            a: "4 min",
+            log: [
+              ["02:14", "Kept upstream's merge-queue badge instead of abode's own", "reversible"],
+              ["23:40", "Trimmed 3 hooks to fit the budget (399 → 396)", "reversible"],
+              ["20:05", "Skipped A-030 (needs your mic), took A-040", "reversible"],
+            ],
+          },
+          {
+            n: "finxplorer",
+            st: "need",
+            d: 14,
+            t: 22,
+            mv: ["+2 done", "F-031 recurring bills, F-032 merchant merge"],
+            m: "ablearn",
+            a: "18 min",
+            log: [["01:02", "Merged duplicate merchants by name + amount", "reversible"]],
+          },
+          {
+            n: "omxcore",
+            st: "need",
+            d: 6,
+            t: 8,
+            mv: ["+1 done", "0.3.0 release notes; waiting on PyPI token"],
+            m: "m4-pro",
+            a: "2 h",
+            log: [["04:30", "Built wheels for macOS arm64 on m4-pro", "reversible"]],
+          },
+          {
+            n: "gitaway",
+            st: "run",
+            d: 11,
+            t: 18,
+            mv: ["+3 done", "G-012 day rail, G-013 add stop, G-014 drag reorder"],
+            m: "ablearn",
+            a: "now",
+            log: [["05:51", "Used a time rail, as in the taste file", "reversible"]],
+          },
+          {
+            n: "omxplorer",
+            st: "run",
+            d: 7,
+            t: 15,
+            mv: ["+2 done", "title-is-the-query chart, Metal GPU bench"],
+            m: "m4-pro",
+            a: "now",
+            log: [],
+          },
+          {
+            n: "personal-note",
+            st: "run",
+            d: 20,
+            t: 24,
+            mv: ["+1 done", "N-019 ghost branches"],
+            m: "ablearn",
+            a: "now",
+            log: [],
+          },
+          {
+            n: "questly",
+            st: "run",
+            d: 3,
+            t: 10,
+            mv: ["+2 done", "Q-002 quest tiles, Q-003 rewards"],
+            m: "ablearn",
+            a: "6 min",
+            log: [],
+          },
+          {
+            n: "mojo-ui",
+            st: "fail",
+            d: 4,
+            t: 9,
+            mv: ["M-005", "failed review twice; retrying with the reviewer's notes"],
+            m: "ablearn",
+            a: "40 min",
+            log: [],
+          },
+          {
+            n: "mxconsole",
+            st: "idle",
+            d: 12,
+            t: 12,
+            mv: ["Idle list", "DuckDB GPU tests passed 41 of 41"],
+            m: "m4-pro",
+            a: "3 h",
+            log: [],
+          },
+          {
+            n: "omxlabs",
+            st: "idle",
+            d: 5,
+            t: 5,
+            mv: ["", "No change"],
+            m: "ablearn",
+            a: "1 d",
+            log: [],
+          },
+        ];
+        const ST = { run: "running", need: "needs you", idle: "idle", fail: "failed" };
+        const DEC = [
+          {
+            ws: "abode",
+            k: "irr",
+            kl: "Irreversible",
+            q: "Update the host to upstream v0.1.7?",
+            p: "The weekly sync merged 4 nightlies. 412 tests pass, hooks 396 of 400. Updating restarts the server, so it waits until no agent is running.",
+            o: ["Update tonight 03:00", "Hold a week", "Show the diff"],
+          },
+          {
+            ws: "finxplorer",
+            k: "dir",
+            kl: "Direction",
+            q: "Bank sync in v1, or keep CSV import?",
+            p: "The brief says CSV. Three tickets would change if bank sync came in; the agent parked them and moved on.",
+            o: ["Keep CSV", "Brief bank sync"],
+          },
+          {
+            ws: "omxcore",
+            k: "blk",
+            kl: "Blocked",
+            q: "Needs a PyPI token to publish 0.3.0",
+            p: "Wheels are built on m4-pro. Publishing is the only step left.",
+            o: ["Run the setup script", "Skip this release"],
+          },
+        ];
+        const ico = {
+          chev: '<svg class="ico chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+          msg: '<svg class="ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg>',
+          cpu: '<svg class="ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
+        };
+        const pct = (w) => Math.round((w.d / w.t) * 100);
+        const st = (s) => `<span class="st s-${s}"><span class="dot"></span>${ST[s]}</span>`;
+        const top = (extra = "") =>
+          `<div class="dg-top"><div class="dg-mark">ab</div><div class="dg-title">abode digest<small>Mon 2 Nov · 07:00 · since Sun 19:00 · next 19:00</small></div><span class="dg-sp"></span>${extra}<div class="dg-meter">Claude <div class="prog"><i style="width:74%"></i></div>74% · resets 11:00</div></div>`;
+        const stats = () =>
+          `<div class="dg-stat"><div><b>14</b><span>done</span></div><div><b>5</b><span>running</span></div><div><b>3</b><span>need you</span></div><div><b>2/2</b><span>machines</span></div></div>`;
+        const dec = (d, cls = "") =>
+          `<section class="card dec ${cls}"><div class="ws"><span class="kind ${d.k}">${d.kl}</span>· ${d.ws}</div><h4>${d.q}</h4><p>${d.p}</p><div class="acts">${d.o.map((o, i) => `<button class="btn ${i === 0 ? "fill" : "tonal"} sm" data-opt>${o}</button>`).join("")}<button class="btn text sm cm">${ico.msg}Comment</button></div><div class="picked"></div></section>`;
+        const table = (rows = WS) =>
+          `<section class="card" style="min-height:0;flex:1"><div class="card-h"><h3>Workspaces</h3><span class="badge">${rows.length}</span><span class="sp"></span><span class="badge ok"><i></i>5 running</span><span class="badge warn"><i></i>3 need you</span></div><div style="overflow:auto;min-height:0;flex:1"><table class="tbl wtbl"><thead><tr><th></th><th>Status</th><th>Workspace</th><th>Progress</th><th>Moved since last digest</th><th>Machine</th><th class="num">Last</th></tr></thead><tbody>${rows.map((w, i) => `<tr class="row ${i === 0 ? "open" : ""}" data-row><td style="width:28px;padding-right:0">${w.log.length ? ico.chev : ""}</td><td>${st(w.st)}</td><td class="nm">${w.n}</td><td><div class="pg"><div class="prog"><i style="width:${pct(w)}%"></i></div><span>${w.d} of ${w.t}</span></div></td><td><div class="mv"><b>${w.mv[0]}</b> ${w.mv[1]}</div></td><td class="mc">${w.m}</td><td class="num">${w.a}</td></tr>${w.log.length ? `<tr class="log" ${i === 0 ? "" : "hidden"}><td colspan="7"><div class="logl">${w.log.map((l) => `<span class="t">${l[0]}</span><span>${l[1]}</span><span class="r">${l[2]}</span>`).join("")}</div></td></tr>` : ""}`).join("")}</tbody></table></div><div class="src" style="padding:8px 16px">digest built from 10 plan.md files and 6 decision logs · ticks: done, running, needs you</div></section>`;
+        const machines = () =>
+          `<div class="machines"><div class="mach">${ico.cpu}<b>ablearn</b><span>online · 4 agents · CPU 62%</span></div><div class="mach">${ico.cpu}<b>m4-pro</b><span>online · 2 agents · GPU tests</span></div></div>`;
+        const strip = (w) => {
+          let s = "";
+          for (let i = 0; i < w.t; i++) {
+            let c = i < w.d ? "d" : "";
+            if (i === w.d && w.st === "run") c = "r";
+            if (i === w.d && w.st === "need") c = "n";
+            if (i === w.d && w.st === "fail") c = "f";
+            s += `<i class="${c}"></i>`;
+          }
+          return `<div class="strip">${s}</div>`;
+        };
+        const prow = (w) =>
+          `<div class="p-row" data-press><div class="nm">${w.n}</div><div class="r">${w.d}/${w.t}</div><div style="grid-column:1/-1">${st(w.st)}</div><div class="prog"><i style="width:${pct(w)}%"></i></div><div class="mv">${w.mv[0] ? "<b style='color:var(--oq-ink)'>" + w.mv[0] + "</b> " : ""}${w.mv[1]}</div></div>`;
+        const ptop = () =>
+          `<div class="p-top"><div class="dg-mark">ab</div><div class="dg-title">Digest<small>Mon 07:00 · since Sun 19:00</small></div></div>`;
+        const pstats = () =>
+          `<div class="p-stats"><div><b>14</b><span>done</span></div><div><b>5</b><span>running</span></div><div><b>3</b><span>need you</span></div><div><b>74%</b><span>Claude</span></div></div>`;
+        const laneDec = (d) =>
+          `<div class="lane-dec"><div><div class="kind ${d.k}" style="margin-bottom:4px">${d.kl}</div><h4>${d.q}</h4><p>${d.p}</p></div><div class="acts">${d.o.map((o, i) => `<button class="btn ${i === 0 ? "fill" : "tonal"} sm" data-opt>${o}</button>`).join("")}<button class="btn text sm">${ico.msg}Comment</button></div></div>`;
+
+        const S = {
+          "a-d": `<div class="dg">${top(stats())}<div class="a-decs">${DEC.map((d, i) => dec(d, i === 0 ? "focal" : "")).join("")}</div>${table()}${machines()}</div>`,
+          "a-p": `<div class="pdg">${ptop()}${pstats()}<div class="p-sec"><span>Needs you · 3</span><span>swipe ›</span></div><div class="p-rail">${DEC.map((d, i) => dec(d, i === 0 ? "focal" : "")).join("")}</div><div class="p-sec"><span>Workspaces · 10</span><span>tap a row</span></div><div class="p-rows">${WS.map(prow).join("")}</div>${machines()}</div>`,
+          "b-d": `<div class="dg">${top()}<div class="b-grid"><div class="b-q"><h3>Needs you · 3 · work down the list</h3>${DEC.map((d, i) => dec(d, i === 0 ? "focal" : "")).join("")}</div><div class="b-r"><div class="big"><b>14</b><span><em>tickets done overnight.</em><br>5 running, 1 failed review, 2 idle.</span></div>${machines()}${table()}</div></div></div>`,
+          "b-p": `<div class="pdg">${ptop()}<div class="big" style="gap:10px"><b style="font-size:52px">14</b><span style="font-size:17px"><em>done overnight.</em><br>3 need you.</span></div><div class="p-stack">${DEC.map((d, i) => dec(d, i === 0 ? "focal" : "")).join("")}</div><div class="p-count"><span>1 of 3</span><button class="btn text sm">Skip for now ›</button></div><div class="p-sec"><span>Workspaces · 10</span></div><div class="p-rows">${WS.map(prow).join("")}</div></div>`,
+          "c-d": `<div class="dg">${top(stats())}<section class="card" style="flex:1;min-height:0"><div class="card-h"><h3>Workspaces</h3><span class="badge">10</span><span class="sp"></span><div class="legend"><span><i style="background:var(--oq-ink-2)"></i>done</span><span><i style="background:var(--oq-ok)"></i>running</span><span><i style="background:var(--oq-warn)"></i>needs you</span><span><i style="background:var(--oq-bad)"></i>failed</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--oq-line)"></i>to do</span></div></div><div class="lanes" style="overflow:auto">${WS.map(
+            (w) => {
+              const d = DEC.find((x) => x.ws === w.n);
+              return `<div class="lane"><div class="nm s-${w.st}"><span class="dot"></span><span style="color:var(--oq-ink)">${w.n}</span></div>${strip(w)}<div class="mv"><b style="color:var(--oq-ink)">${w.mv[0]}</b> ${w.mv[1]}</div><div class="mc">${w.m}</div><div class="tm">${w.a}</div>${d && w.n !== "omxcore" ? laneDec(d) : ""}</div>`;
+            },
+          ).join(
+            "",
+          )}</div><div class="src" style="padding:8px 16px">omxcore's decision is folded · 1 more needs you · lanes that need you sort first</div></section>${machines()}</div>`,
+          "c-p": `<div class="pdg">${ptop()}${pstats()}<div class="p-rows">${WS.slice(0, 6)
+            .map((w) => {
+              const d = DEC.find((x) => x.ws === w.n);
+              return `<div class="p-lane"><div class="hd"><span class="nm s-${w.st}"><span class="dot"></span><span style="color:var(--oq-ink)">${w.n}</span></span><span class="r">${w.d}/${w.t} · ${w.a}</span></div>${strip(w)}<div class="mv">${w.mv[1]}</div>${d && w.n === "abode" ? laneDec(d) : d ? `<button class="btn tonal sm" style="align-self:flex-start;min-height:44px">${d.kl}: ${d.q.slice(0, 26)}… ›</button>` : ""}</div>`;
+            })
+            .join("")}</div></div>`,
+        };
+        document.querySelectorAll("[data-screen]").forEach((el) => {
+          el.innerHTML = S[el.dataset.screen];
+        });
+
+        document.addEventListener("click", (e) => {
+          const row = e.target.closest("[data-row]");
+          if (row) {
+            const log = row.nextElementSibling;
+            if (log && log.classList.contains("log")) {
+              log.hidden = !log.hidden;
+              row.classList.toggle("open", !log.hidden);
+            }
+          }
+          const opt = e.target.closest("[data-opt]");
+          if (opt) {
+            const card = opt.closest(".dec, .lane-dec");
+            card.classList.add("done");
+            const p = card.querySelector(".picked");
+            if (p) p.textContent = "✓ " + opt.textContent + " · runs at the next digest";
+            card.querySelectorAll("[data-opt]").forEach((b) => {
+              b.classList.toggle("fill", b === opt);
+              b.classList.toggle("tonal", b !== opt);
+            });
+          }
+        });
+
+        function fit() {
+          document.querySelectorAll(".d-wrap").forEach((w) => {
+            const s = Math.min(1, w.clientWidth / 1440);
+            w.firstElementChild.style.transform = `scale(${s})`;
+            w.style.height = 900 * s + "px";
+          });
+          document.querySelectorAll(".ph-wrap").forEach((w) => {
+            const s = Math.min(1, w.clientWidth / 390);
+            const el = w.querySelector(".ph-scale");
+            el.style.transform = `scale(${s})`;
+            el.parentElement.style.height = "";
+            el.style.marginBottom = 844 * s - 844 + "px";
+          });
+        }
+        addEventListener("resize", fit);
+        fit();
+
+        const KEY = "cc-digest-picks";
+        let picks = [];
+        try {
+          picks = JSON.parse(localStorage.getItem(KEY) || "[]");
+        } catch (_) {}
+        const boxes = () => document.querySelectorAll("[data-pick]");
+        function render() {
+          const el = document.getElementById("picks");
+          el.innerHTML =
+            "<b>Your picks</b>" +
+            (picks.length
+              ? picks.map((p) => `<span class="p">${p}</span>`).join("")
+              : '<span class="none">Nothing ticked yet</span>');
+          boxes().forEach((b) => {
+            b.checked = picks.includes(b.dataset.pick);
+          });
+        }
+        document.addEventListener("change", (e) => {
+          const b = e.target.closest("[data-pick]");
+          if (!b) return;
+          picks = picks.filter((p) => p !== b.dataset.pick);
+          if (b.checked) picks.push(b.dataset.pick);
+          try {
+            localStorage.setItem(KEY, JSON.stringify(picks));
+          } catch (_) {}
+          render();
+        });
+        render();
+      })();
+    </script>
+  </body>
+</html>
