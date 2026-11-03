@@ -6,6 +6,8 @@ import { SidebarInset } from "~/components/ui/sidebar";
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
 import { useCanvasWorkspaces } from "./useCanvasWorkspaces";
 import { workspaceInitials, type RailGroup } from "./railGroups";
+import { OverviewView } from "./OverviewView";
+import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
 import "./canvas.css";
 
@@ -21,9 +23,19 @@ export function CanvasShell() {
   const { workspaces, hidden } = useCanvasWorkspaces();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = workspaces.find((workspace) => workspace.key === selectedKey) ?? workspaces[0];
+  const [overview, setOverview] = useState(false);
+  const closeOverview = () => {
+    if (overview) useLastSeenStore.getState().markSeen();
+    setOverview(false);
+  };
+  useOverviewKeys(overview, () => (overview ? closeOverview() : setOverview(true)), closeOverview);
 
   return (
-    <SidebarInset data-cv-root="" className="h-dvh min-h-0 overflow-hidden overscroll-y-none">
+    <SidebarInset
+      data-cv-root=""
+      data-overview={overview ? "" : undefined}
+      className="h-dvh min-h-0 overflow-hidden overscroll-y-none"
+    >
       <header data-cv-top="">
         <span data-cv-mark="" aria-hidden>
           ab
@@ -43,8 +55,8 @@ export function CanvasShell() {
           type="button"
           data-cv-xbtn=""
           aria-label="Overview"
-          aria-disabled="true"
-          tabIndex={-1}
+          aria-pressed={overview}
+          onClick={() => (overview ? closeOverview() : setOverview(true))}
         >
           ⊞
         </button>
@@ -106,6 +118,15 @@ export function CanvasShell() {
           {selected ? <WorkspaceView workspace={selected} /> : <h2>No workspace</h2>}
         </main>
       </div>
+      {overview ? (
+        <OverviewView
+          workspaces={workspaces}
+          onSelect={(key) => {
+            setSelectedKey(key);
+            closeOverview();
+          }}
+        />
+      ) : null}
       <div data-cv-dock="">
         <div data-cv-bar="">
           <input
