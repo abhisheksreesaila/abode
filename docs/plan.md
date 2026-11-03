@@ -443,20 +443,20 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-046: Omnibox and chat drawer bound to threads (P2)
 
-- **Status:** doing (pure routing merged after reviewer PASS; omnibox + drawer UI next)
+- **Status:** done (reviewer PASS; checked in the browser: a typed message routed by keyword to the Docs refresh Replay session, the chip showed the target first, the drawer opened on its live reply)
 - **Depends on:** A-045
 - **What:** the omnibox routes by keywords, then open Grill me, jam, blocked or waiting, live, first; the target chip shows and pins the target; send posts to the real thread. The drawer opens above it with the header from spec 5.6 and the thread's recent messages; "open full chat" goes to the stock chat view. `/` focuses, Esc closes.
 - **Acceptance:**
-  - [ ] Routing is a tested pure function: "skip docs this release" on omxcore → Docs refresh; "the token's in 1Password, run the setup script" → Publish.
-  - [ ] A sent message lands in the real thread (checked in the browser with the Replay provider).
+  - [x] Routing is a tested pure function: "skip docs this release" on omxcore → Docs refresh; "the token's in 1Password, run the setup script" → Publish.
+  - [x] A sent message lands in the real thread (checked in the browser with the Replay provider).
 
 ### A-047: Omnibox commands (P2)
 
-- **Status:** doing (command parsing merged with A-046's pure logic; wiring next)
+- **Status:** done (reviewer PASS; put X on <mode> reuses the pill's mode change; add … to <workspace> goes to its routed session; new workspace opens the add-project palette; tour is a toast for now)
 - **Depends on:** A-046
 - **What:** "put X on grill me", "add … to <workspace>" (sent to that workspace's main thread as an instruction to update plan.md), "new workspace X, goal: …", "brief me", "tour" (`?`). Anything that touches more than one workspace shows a preview first.
 - **Acceptance:**
-  - [ ] Command parsing tested; unknown text falls through to routing.
+  - [x] Command parsing tested; unknown text falls through to routing.
 
 ### A-048: Overview (P5)
 
