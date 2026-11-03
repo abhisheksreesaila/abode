@@ -6,6 +6,7 @@ const GROUP_ORDER: ReadonlyArray<RailGroup> = ["need", "jam", "move", "quiet"];
 
 /** Pulls on the user (a question, an approval, a blocked run), else running, else quiet. Jam needs session modes (later). */
 export function workspaceGroup(threads: ReadonlyArray<WorkspaceThreadState>): RailGroup {
+  // A failed or usage-limited run counts as blocked (spec 4: need = blocked, waiting, irreversible).
   if (threads.some((thread) => thread.attention === "needs-you" || thread.failed)) return "need";
   if (threads.some((thread) => thread.attention === "running")) return "move";
   return "quiet";

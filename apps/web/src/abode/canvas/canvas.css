@@ -136,6 +136,20 @@ main[data-cv-root] {
 [data-cv-rl]:hover {
   transform: scale(1.06);
 }
+/* 44px tile (spec 5.2) with a 48px touch target. */
+[data-cv-rl]::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-cv-rl] {
+    transition: none;
+  }
+  [data-cv-rl]:hover {
+    transform: none;
+  }
+}
 [data-cv-rl] span {
   font:
     650 13px "Geist",

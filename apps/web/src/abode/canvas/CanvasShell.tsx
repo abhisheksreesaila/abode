@@ -36,10 +36,16 @@ export function CanvasShell() {
           powered by T3 Code
         </span>
         <span data-cv-grow="" />
-        <button type="button" data-cv-xbtn="" aria-label="Overview">
+        <button
+          type="button"
+          data-cv-xbtn=""
+          aria-label="Overview"
+          aria-disabled="true"
+          tabIndex={-1}
+        >
           ⊞
         </button>
-        <button type="button" data-cv-xbtn="" aria-label="Kit">
+        <button type="button" data-cv-xbtn="" aria-label="Kit" aria-disabled="true" tabIndex={-1}>
           ⚙
         </button>
       </header>
@@ -63,7 +69,14 @@ export function CanvasShell() {
               </button>
             </div>
           ))}
-          <button type="button" data-cv-rl="" data-cv-add="" aria-label="New workspace">
+          <button
+            type="button"
+            data-cv-rl=""
+            data-cv-add=""
+            aria-label="New workspace"
+            aria-disabled="true"
+            tabIndex={-1}
+          >
             +
           </button>
         </nav>
@@ -73,7 +86,14 @@ export function CanvasShell() {
       </div>
       <div data-cv-dock="">
         <div data-cv-bar="">
-          <input data-cv-in="" placeholder="Tell any session…" aria-label="Omnibox" readOnly />
+          <input
+            data-cv-in=""
+            placeholder="Tell any session…"
+            aria-label="Omnibox"
+            aria-disabled="true"
+            tabIndex={-1}
+            readOnly
+          />
         </div>
       </div>
     </SidebarInset>

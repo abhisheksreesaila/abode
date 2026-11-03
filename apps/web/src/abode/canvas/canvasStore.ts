@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { resolveStorage } from "../../lib/storage";
 
-export const CANVAS_STORAGE_KEY = "abode:canvas:v1";
+const CANVAS_STORAGE_KEY = "abode:canvas:v1";
 
 interface CanvasStore {
   /** One Window: the canvas replaces the Control room on "/". Off is abode as it was. */
