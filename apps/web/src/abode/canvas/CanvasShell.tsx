@@ -4,12 +4,17 @@ import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { SidebarInset } from "~/components/ui/sidebar";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
+import { composeSessions, routedSession } from "./composeBlocks";
+import { ModeIcon } from "./ModeVisuals";
+import { MODES } from "./sessionMode";
+import { useSessionModeStore } from "./sessionModeStore";
 import { useCanvasWorkspaces } from "./useCanvasWorkspaces";
 import { workspaceInitials, type RailGroup } from "./railGroups";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
 import "./canvas.css";
+import "./modes.css";
 
 const GROUP_LABEL: Record<RailGroup, string> = {
   need: "needs you",
@@ -29,6 +34,11 @@ export function CanvasShell() {
     setOverview(false);
   };
   useOverviewKeys(overview, () => (overview ? closeOverview() : setOverview(true)), closeOverview);
+  const modes = useSessionModeStore((state) => state.modes);
+  // The mode of the session a message would reach (spec 5.5 routing); A-046 binds the real target.
+  const routed = selected
+    ? routedSession(composeSessions(selected.sessions.pills, modes))
+    : undefined;
 
   return (
     <SidebarInset
@@ -114,7 +124,7 @@ export function CanvasShell() {
             +
           </button>
         </nav>
-        <main data-cv-main="">
+        <main data-cv-main="" data-mode={routed?.mode}>
           {selected ? <WorkspaceView workspace={selected} /> : <h2>No workspace</h2>}
         </main>
       </div>
@@ -129,6 +139,12 @@ export function CanvasShell() {
       ) : null}
       <div data-cv-dock="">
         <div data-cv-bar="">
+          {routed ? (
+            <span data-cv-mtag="" data-mode={routed.mode}>
+              <ModeIcon mode={routed.mode} />
+              {MODES[routed.mode].label}
+            </span>
+          ) : null}
           <input
             data-cv-in=""
             placeholder="Tell any session…"

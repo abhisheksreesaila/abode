@@ -244,15 +244,55 @@ main[data-cv-root] {
   display: grid;
   place-items: center;
   background: rgb(237 237 239 / 0.07);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.2s var(--cv-spring);
+}
+[data-cv-mbtn]:hover {
+  background: rgb(237 237 239 / 0.16);
+  transform: scale(1.08);
+}
+[data-cv-open] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0 5px 0 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+/* Mode colours (spec 5.4/7). Global names: the picker renders in a portal outside the canvas root. */
+:root {
+  --cv-m-auto: #8b7bff;
+  --cv-m-tell: #52a9ff;
+  --cv-m-grill: #ff8a3d;
+  --cv-m-jam: #2bc3ad;
 }
 [data-cv-mode] {
   width: 14px;
   height: 14px;
   fill: none;
-  stroke: var(--cv-autopilot);
+  stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+[data-cv-mode="auto"] {
+  color: var(--cv-m-auto);
+}
+[data-cv-mode="tell"] {
+  color: var(--cv-m-tell);
+}
+[data-cv-mode="grill"] {
+  color: var(--cv-m-grill);
+}
+[data-cv-mode="jam"] {
+  color: var(--cv-m-jam);
 }
 [data-cv-mt] {
   display: inline-flex;

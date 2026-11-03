@@ -1,0 +1,284 @@
+/* Modes and composed blocks (A-045). */
+[data-cv-main][data-mode] {
+  box-shadow:
+    var(--cv-shadow-1),
+    inset 0 2px 0 var(--cv-edge);
+}
+[data-cv-main][data-mode="auto"],
+[data-cv-mtag][data-mode="auto"] {
+  --cv-edge: var(--cv-m-auto);
+}
+[data-cv-main][data-mode="tell"],
+[data-cv-mtag][data-mode="tell"] {
+  --cv-edge: var(--cv-m-tell);
+}
+[data-cv-main][data-mode="grill"],
+[data-cv-mtag][data-mode="grill"] {
+  --cv-edge: var(--cv-m-grill);
+}
+[data-cv-main][data-mode="jam"],
+[data-cv-mtag][data-mode="jam"] {
+  --cv-edge: var(--cv-m-jam);
+}
+[data-cv-mtag] {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: rgb(237 237 239 / 0.07);
+  color: var(--cv-ink);
+  font:
+    600 12px "Geist",
+    system-ui,
+    sans-serif;
+}
+[data-cv-mpop] {
+  display: flex;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 14px;
+  background: #1d1d21;
+  color: #a9a9b1;
+}
+[data-cv-mopt] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 62px;
+  padding: 8px 10px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font:
+    500 10.5px "Geist",
+    system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+[data-cv-mopt] [data-cv-mode] {
+  width: 18px;
+  height: 18px;
+}
+[data-cv-mopt]:hover {
+  background: rgb(237 237 239 / 0.07);
+  color: #ededef;
+}
+[data-cv-mopt][aria-pressed="true"] {
+  background: rgb(237 237 239 / 0.12);
+  color: #ededef;
+}
+[data-cv-row] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+[data-cv-row="plan"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+}
+[data-cv-row="plan"]:not(:has([data-cv-side])) {
+  grid-template-columns: minmax(0, 1fr);
+}
+[data-cv-side] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+}
+[data-cv-block] {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--cv-s2);
+  box-shadow: var(--cv-shadow-1);
+  font-size: 13px;
+  min-width: 0;
+}
+[data-cv-block="status"] {
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+[data-cv-block="made"] {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--cv-line);
+  color: var(--cv-ink-2);
+}
+[data-cv-block="made"] em {
+  font:
+    500 10.5px "Geist Mono",
+    ui-monospace,
+    monospace;
+  font-style: normal;
+  color: var(--cv-m-auto);
+}
+[data-cv-made-dot] {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--cv-m-auto);
+}
+[data-cv-block="interrupt"] {
+  box-shadow:
+    var(--cv-shadow-1),
+    inset 0 0 0 1px var(--cv-warn);
+}
+[data-cv-block="interrupt"] [data-cv-lab] {
+  color: var(--cv-warn);
+}
+[data-cv-block="grill"] {
+  box-shadow:
+    var(--cv-shadow-1),
+    inset 0 0 0 1px rgb(255 138 61 / 0.45);
+}
+[data-cv-block="sbrief"] {
+  box-shadow:
+    var(--cv-shadow-1),
+    inset 0 0 0 1px rgb(82 169 255 / 0.35);
+}
+[data-cv-lab] {
+  margin-bottom: 4px;
+  font:
+    500 10.5px "Geist Mono",
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cv-ink-2);
+}
+[data-cv-block] p {
+  margin: 4px 0;
+}
+[data-cv-block] ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+[data-cv-q] {
+  margin: 2px 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+[data-cv-hint] {
+  color: var(--cv-ink-2);
+  font-size: 12px;
+}
+[data-cv-hm] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+[data-cv-chips] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+[data-cv-chip] {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgb(237 237 239 / 0.08);
+  color: var(--cv-ink);
+  font:
+    500 12px "Geist",
+    system-ui,
+    sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+[data-cv-chip]:hover:not(:disabled) {
+  background: rgb(237 237 239 / 0.16);
+}
+[data-cv-chip][data-primary] {
+  background: var(--cv-m-auto);
+  color: #0b0b0d;
+}
+[data-cv-chip]:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+[data-cv-link] {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--cv-ink-2);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* Quips use Patrick Hand when the machine has it, else a system handwriting face; no font is loaded. */
+[data-cv-quip] {
+  margin: 0 0 4px;
+  font:
+    500 15px "Patrick Hand",
+    "Comic Neue",
+    "Chalkboard SE",
+    cursive;
+  color: var(--cv-ink-2);
+}
+[data-cv-block="grill"] [data-cv-quip] {
+  color: #ff9f5a;
+}
+[data-cv-masc] {
+  --cv-masc-ink: #1c1c20;
+  --cv-masc-eye: #ffffff;
+  --cv-masc-cheek: #ff5a7a;
+  --cv-ember-body: #ff8a3d;
+  --cv-ember-core: #ffd166;
+  --cv-pip-body: #8ec5ff;
+  display: block;
+  transform-origin: 50% 90%;
+  animation: cv-bob 3.2s ease-in-out infinite;
+}
+[data-cv-masc="ember"] {
+  width: 66px;
+  height: 75px;
+}
+[data-cv-masc="pip"] {
+  width: 46px;
+  height: 43px;
+  animation-duration: 4s;
+}
+[data-cv-hm]:hover [data-cv-masc] {
+  animation-duration: 0.7s;
+}
+@keyframes cv-bob {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg) translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-cv-masc],
+  [data-cv-hm]:hover [data-cv-masc] {
+    animation: none;
+  }
+  [data-cv-mbtn],
+  [data-cv-mbtn]:hover {
+    transform: none;
+    transition: none;
+  }
+}
+@media (max-width: 760px) {
+  [data-cv-row="plan"] {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+  }
+}

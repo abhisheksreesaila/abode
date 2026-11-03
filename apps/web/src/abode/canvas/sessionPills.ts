@@ -21,6 +21,8 @@ export interface SessionPill {
   readonly pair: boolean;
   /** Only when the session needs the user, is stuck or landed unseen; running sessions say nothing. */
   readonly status: "waiting on you" | "blocked" | "landed" | null;
+  /** A pending request the user must answer; an approval wins over a question. */
+  readonly pending: "approval" | "input" | null;
 }
 
 export interface SessionPills {
@@ -55,6 +57,11 @@ export function sessionPills(
       title: thread.title,
       dots: [thread, ...children].map((member) => providerKey(input.driverOf(member))),
       pair: children.length > 0,
+      pending: thread.hasPendingApprovals
+        ? "approval"
+        : thread.hasPendingUserInput
+          ? "input"
+          : null,
       status:
         state.attention === "needs-you"
           ? "waiting on you"

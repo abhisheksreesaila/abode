@@ -67,6 +67,7 @@ describe("sessionPills", () => {
         dots: ["claude"],
         pair: false,
         status: null,
+        pending: null,
       },
     ]);
   });
@@ -140,5 +141,17 @@ describe("sessionPills", () => {
       options(),
     );
     expect(pills[0]?.status).toBe("waiting on you");
+  });
+
+  it("reports the pending request a session needs answered", () => {
+    const { pills } = sessionPills(
+      [
+        thread("a1", { hasPendingUserInput: true }),
+        thread("a2", { hasPendingApprovals: true, hasPendingUserInput: true }),
+        thread("a3", { runtime: { status: "running" } }),
+      ],
+      options(),
+    );
+    expect(pills.map((pill) => pill.pending)).toEqual(["input", "approval", null]);
   });
 });

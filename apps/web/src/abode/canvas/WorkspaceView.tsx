@@ -9,44 +9,44 @@ import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
+import { composeBlocks, composeSessions, type Block } from "./composeBlocks";
+import { ModeBlock } from "./ModeBlocks";
+import { ModeButton } from "./ModeButton";
 import { planBlock, type PlanBlock } from "./planBlock";
 import type { Milestone, Ticket } from "./plan/parsePlan";
+import { modeOf, useSessionModeStore } from "./sessionModeStore";
+import type { SessionMode } from "./sessionMode";
 import type { SessionPill } from "./sessionPills";
 import { usePlanFile } from "./usePlanFile";
 import type { CanvasWorkspace } from "./useCanvasWorkspaces";
 
-/** Autopilot for every session until the mode picker lands (A-045): a paper plane. */
-function ModeIcon() {
+function Pill(props: {
+  readonly pill: SessionPill;
+  readonly mode: SessionMode;
+  readonly onOpen: () => void;
+}) {
+  const { pill, mode, onOpen } = props;
   return (
-    <svg viewBox="0 0 24 24" aria-hidden data-cv-mode="">
-      <path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5 21 3Z" />
-    </svg>
-  );
-}
-
-function Pill(props: { readonly pill: SessionPill; readonly onOpen: () => void }) {
-  const { pill, onOpen } = props;
-  return (
-    <button type="button" data-cv-sc="" onClick={onOpen}>
-      <span data-cv-mbtn="">
-        <ModeIcon />
-      </span>
-      <b>{pill.title}</b>
-      <span data-cv-mt="" aria-hidden>
-        {pill.dots.map((provider, index) => (
-          // oxlint-disable-next-line react/no-array-index-key -- dots have no identity beyond position
-          <span key={index} data-cv-mt-part="">
-            {index === 1 ? <em>→</em> : null}
-            <i data-provider={provider} />
-          </span>
-        ))}
-      </span>
-      {pill.status !== null ? (
-        <span data-cv-sw="" data-status={pill.status === "landed" ? "landed" : undefined}>
-          {pill.status}
+    <div data-cv-sc="" data-mode={mode} role="group" aria-label={pill.title}>
+      <ModeButton pill={pill} mode={mode} />
+      <button type="button" data-cv-open="" onClick={onOpen}>
+        <b>{pill.title}</b>
+        <span data-cv-mt="" aria-hidden>
+          {pill.dots.map((provider, index) => (
+            // oxlint-disable-next-line react/no-array-index-key -- dots have no identity beyond position
+            <span key={index} data-cv-mt-part="">
+              {index === 1 ? <em>→</em> : null}
+              <i data-provider={provider} />
+            </span>
+          ))}
         </span>
-      ) : null}
-    </button>
+        {pill.status !== null ? (
+          <span data-cv-sw="" data-status={pill.status === "landed" ? "landed" : undefined}>
+            {pill.status}
+          </span>
+        ) : null}
+      </button>
+    </div>
   );
 }
 
@@ -140,6 +140,28 @@ export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
   const root = workspace.newSessionTarget;
   const planFile = usePlanFile(root?.environmentId, root?.workspaceRoot, workspace.turnSignal);
   const plan: PlanBlock = planFile.pending ? { kind: "loading" } : planBlock(planFile);
+  const modes = useSessionModeStore((state) => state.modes);
+  const sessions = composeSessions(pills, modes);
+  const rows = composeBlocks(sessions);
+
+  const renderBlock = (block: Block) => {
+    if (block.block === "plan") {
+      return (
+        <section key="plan" data-cv-plan="" aria-label="Plan">
+          <PlanBody block={plan} />
+        </section>
+      );
+    }
+    if (block.block === "side") {
+      return (
+        <div key="side" data-cv-side="">
+          {block.items.map((item) => renderBlock(item))}
+        </div>
+      );
+    }
+    const key = "sessionKey" in block ? `${block.block}:${block.sessionKey}` : block.block;
+    return <ModeBlock key={key} block={block} pills={pills} sessions={sessions} onOpen={open} />;
+  };
 
   const open = (pill: SessionPill) => {
     void router.navigate({
@@ -188,10 +210,22 @@ export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
       </div>
       <div data-cv-sess="" aria-label="Sessions" role="group">
         {pills.map((pill) => (
-          <Pill key={pill.key} pill={pill} onOpen={() => open(pill)} />
+          <Pill
+            key={pill.key}
+            pill={pill}
+            mode={modeOf(modes, pill.key)}
+            onOpen={() => open(pill)}
+          />
         ))}
         {showDone
-          ? done.map((pill) => <Pill key={pill.key} pill={pill} onOpen={() => open(pill)} />)
+          ? done.map((pill) => (
+              <Pill
+                key={pill.key}
+                pill={pill}
+                mode={modeOf(modes, pill.key)}
+                onOpen={() => open(pill)}
+              />
+            ))
           : null}
         {doneCount > 0 ? (
           <button
@@ -214,9 +248,15 @@ export function WorkspaceView(props: { readonly workspace: CanvasWorkspace }) {
           +
         </button>
       </div>
-      <section data-cv-plan="" aria-label="Plan">
-        <PlanBody block={plan} />
-      </section>
+      {rows.map((row, index) => (
+        <div
+          // oxlint-disable-next-line react/no-array-index-key -- rows are recomposed from the modes; position is their identity
+          key={index}
+          data-cv-row={row.some((block) => block.block === "plan") ? "plan" : ""}
+        >
+          {row.map((block) => renderBlock(block))}
+        </div>
+      ))}
     </div>
   );
 }
