@@ -1,0 +1,210 @@
+/* One Window (A-042). Night Graphite tokens: docs/canvas/spec.md section 7. */
+main[data-cv-root] {
+  --cv-s0: #0b0b0d;
+  --cv-s1: #151518;
+  --cv-s2: #1d1d21;
+  --cv-line: #2a2a30;
+  --cv-ink: #ededef;
+  --cv-ink-2: #a9a9b1;
+  --cv-warn: #f5a524;
+  --cv-sbw: 58px;
+  --cv-shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --cv-shadow-2: 0 4px 14px rgb(0 0 0 / 0.45);
+  --cv-spring: linear(0, 0.4 12%, 0.85 28%, 1.03 44%, 1 60%, 1);
+  font-family: "Geist", system-ui, sans-serif;
+  background: var(--cv-s0);
+  color: var(--cv-ink);
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+[data-cv-top] {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 22px 12px;
+}
+[data-cv-mark] {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--cv-s2);
+  display: grid;
+  place-items: center;
+  font:
+    650 12px "Geist",
+    system-ui,
+    sans-serif;
+}
+[data-cv-title] {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+[data-cv-title] b {
+  font-size: 15px;
+  font-weight: 650;
+}
+[data-cv-title] span {
+  font-size: 11.5px;
+  color: var(--cv-ink-2);
+}
+[data-cv-power] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font:
+    500 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--cv-ink-2);
+  opacity: 0.7;
+}
+[data-cv-power] i {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #52a9ff, #8b7bff);
+}
+[data-cv-grow] {
+  flex: 1;
+}
+[data-cv-xbtn] {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cv-ink-2);
+  font-size: 16px;
+  cursor: pointer;
+}
+[data-cv-xbtn]:hover {
+  background: rgb(237 237 239 / 0.08);
+  color: var(--cv-ink);
+}
+[data-cv-body] {
+  display: grid;
+  grid-template-columns: var(--cv-sbw) minmax(0, 1fr);
+  gap: 16px;
+  padding: 0 22px;
+  min-height: 0;
+}
+[data-cv-rail] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  overflow: auto;
+  min-height: 0;
+  padding: 4px 0 12px;
+  scrollbar-width: none;
+}
+[data-cv-rail]::-webkit-scrollbar {
+  display: none;
+}
+[data-cv-rail-item] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+[data-cv-rsep] {
+  width: 22px;
+  height: 1px;
+  margin: 4px 0;
+  border: 0;
+  background: var(--cv-line);
+  flex: none;
+}
+[data-cv-rl] {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 0;
+  border-radius: 14px;
+  background: var(--cv-s1);
+  color: var(--cv-ink);
+  box-shadow: var(--cv-shadow-1);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.2s var(--cv-spring);
+}
+[data-cv-rl]:hover {
+  transform: scale(1.06);
+}
+[data-cv-rl] span {
+  font:
+    650 13px "Geist",
+    system-ui,
+    sans-serif;
+  letter-spacing: -0.02em;
+}
+[data-cv-rl][data-group="quiet"] {
+  opacity: 0.45;
+  box-shadow: none;
+}
+[data-cv-rl][aria-current="true"] {
+  outline: 2px solid var(--cv-ink);
+  outline-offset: 3px;
+}
+[data-cv-dot] {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cv-warn);
+}
+[data-cv-rl][data-cv-add] {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--cv-line);
+  color: var(--cv-ink-2);
+  font-size: 20px;
+  margin-top: 6px;
+}
+[data-cv-main] {
+  min-height: 0;
+  overflow: auto;
+  background: var(--cv-s1);
+  border-radius: 16px;
+  box-shadow: var(--cv-shadow-1);
+  padding: 20px 22px;
+}
+[data-cv-main] h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+}
+[data-cv-dock] {
+  padding: 12px 22px 14px calc(22px + var(--cv-sbw) + 16px);
+  display: flex;
+  justify-content: center;
+}
+[data-cv-bar] {
+  width: min(900px, 100%);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--cv-s2);
+  box-shadow:
+    var(--cv-shadow-2),
+    inset 0 0 0 1px var(--cv-line);
+}
+[data-cv-in] {
+  all: unset;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--cv-ink);
+}
+[data-cv-in]::placeholder {
+  color: var(--cv-ink-2);
+}

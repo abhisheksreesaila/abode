@@ -1,3 +1,4 @@
+import { CanvasSettingsSection } from "../canvas/CanvasSettingsSection";
 import { ChatSettingsSection } from "../chat/ChatSettingsSection";
 import { VoiceSettingsSection } from "../voice/VoiceSettingsSection";
 
@@ -7,6 +8,7 @@ export function AbodeSettingsSections() {
     <>
       <ChatSettingsSection />
       <VoiceSettingsSection />
+      <CanvasSettingsSection />
     </>
   );
 }

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 
 import { useAllEnvironmentShellsBootstrapped, useProjects } from "~/state/entities";
 
+import { CanvasShell } from "../canvas/CanvasShell";
+import { useCanvasStore } from "../canvas/canvasStore";
 import { ControlRoomView } from "./ControlRoomView";
 import { controlRoomVisible } from "./controlRoomVisible";
 
@@ -12,7 +14,9 @@ import { controlRoomVisible } from "./controlRoomVisible";
 export function ControlRoomRoute(props: { readonly fallback: ReactNode }) {
   const projectCount = useProjects().length;
   const bootstrapped = useAllEnvironmentShellsBootstrapped();
-  return controlRoomVisible({ bootstrapped, projectCount }) ? <ControlRoomView /> : props.fallback;
+  const canvas = useCanvasStore((state) => state.enabled);
+  if (!controlRoomVisible({ bootstrapped, projectCount })) return props.fallback;
+  return canvas ? <CanvasShell /> : <ControlRoomView />;
 }
 
 /**

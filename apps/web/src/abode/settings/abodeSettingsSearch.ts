@@ -22,4 +22,10 @@ export const ABODE_SETTINGS_SEARCH_ITEMS = [
       "cards helpers characters avatars boss face brows calm eyes scarf names photo classic chat",
     ],
   },
+  {
+    id: "one-window",
+    title: "One window",
+    to: "/settings/general",
+    searchTerms: ["canvas rail workspaces omnibox control room overview preview flag"],
+  },
 ] as const satisfies ReadonlyArray<SettingsSearchItem>;
