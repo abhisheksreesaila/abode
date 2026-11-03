@@ -58,12 +58,23 @@ const GLYPH: Record<Ticket["state"], string> = {
   todo: "○",
 };
 
+// Stable identity, so it runs when the row mounts and not on every refresh.
+function showAtTop(row: HTMLDivElement | null) {
+  const area = row?.parentElement;
+  if (row && area)
+    area.scrollTop += row.getBoundingClientRect().top - area.getBoundingClientRect().top;
+}
+
 function MilestoneRow(props: { readonly milestone: Milestone }) {
   const { milestone } = props;
   const [open, setOpen] = useState<boolean | null>(null);
   const expanded = open ?? milestone.state === "current";
   return (
-    <div data-cv-ms="" data-state={milestone.state}>
+    <div
+      data-cv-ms=""
+      data-state={milestone.state}
+      ref={milestone.state === "current" ? showAtTop : undefined}
+    >
       <button
         type="button"
         data-cv-mh=""

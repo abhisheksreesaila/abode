@@ -1,7 +1,7 @@
 /**
  * Plan formats. A/B: `## Milestone: <name>` (or `## Phase X: <name>`) with `### X-NNN: title` and
  * `- **Status:** <word> (note)` beneath. C (no `###` tickets): `# <section>` milestones, tickets as
- * `## X-NNN title [status] (note)`. Status: todo, doing, blocked, review (counts as done), done.
+ * `## X-NNN title [status] (note)`; with one `#` only, other `##` also split. Status: todo, doing, blocked, review (counts as done), done.
  */
 
 export type TicketState = "done" | "running" | "stopped" | "failed" | "todo";
@@ -81,15 +81,28 @@ type Group = { name: string; detail?: string; tickets: Ticket[] };
 function parseStatusPlan(markdown: string): Group[] {
   const groups: Group[] = [];
   let group: Group | undefined;
-  for (const line of plainLines(markdown)) {
+  const lines = plainLines(markdown);
+  const splitByH2 = lines.filter((l) => H1.test(l) && !l.startsWith("##")).length <= 1;
+  for (const line of lines) {
     const h1 = H1.exec(line);
     if (h1 && !line.startsWith("##")) {
-      group = { name: h1[1]!, tickets: [] };
+      const split = NAME_DETAIL.exec(h1[1]!);
+      group = { name: (split?.[1] ?? h1[1]!).trim(), tickets: [] };
+      if (split) group.detail = split[2]!.trim();
       groups.push(group);
       continue;
     }
     const t = TICKET_C.exec(line);
-    if (!t) continue;
+    if (!t) {
+      const h2 = splitByH2 && !line.startsWith("###") ? H2.exec(line) : null;
+      if (h2) {
+        const split = NAME_DETAIL.exec(h2[1]!);
+        group = { name: (split?.[1] ?? h2[1]!).trim(), tickets: [] };
+        if (split) group.detail = split[2]!.trim();
+        groups.push(group);
+      }
+      continue;
+    }
     const ticket: Ticket = {
       id: t[1]!,
       name: t[2]!,

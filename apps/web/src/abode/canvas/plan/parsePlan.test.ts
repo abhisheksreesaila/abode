@@ -237,7 +237,7 @@ describe("parsePlan, [status] format", () => {
 ## F-191 SQL honours GPU [todo, started and paused 2026-10-28] (found by F-162)
 ## F-190 Decimal read [done 2026-10-28]
 
-# Later
+# Later (brief docs/x.md, approved)
 
 ## F-200 Rings [todo]
 `;
@@ -264,5 +264,33 @@ describe("parsePlan, [status] format", () => {
   it("keeps duplicate section names with unique keys", () => {
     const plan = parsePlan("# A\n## F-1 x [done]\n# A\n## F-1 x [todo]\n");
     expect(new Set(plan.milestones.map((m) => m.key)).size).toBe(2);
+  });
+
+  it("splits a single-# plan by its non-ticket ## headings", () => {
+    const plan = parsePlan(`# Plan
+
+## F-001 Template [done]
+
+## Wave 1: foundations (parallel)
+
+## F-002 Kernels [done]
+
+## Wave 2: placement (phase 2)
+
+## F-003 Router [doing]
+## F-004 Joins [todo]
+
+## Rings (after the gate)
+`);
+    expect(plan.milestones.map((m) => [m.name, m.detail, m.state, m.done, m.total])).toEqual([
+      ["Plan", undefined, "done", 1, 1],
+      ["Wave 1: foundations", "parallel", "done", 1, 1],
+      ["Wave 2: placement", "phase 2", "current", 0, 2],
+    ]);
+  });
+
+  it("moves a trailing parenthetical of a # heading into detail", () => {
+    const [m] = parsePlan("# Mobile (brief docs/x.md)\n## F-1 a [todo]\n").milestones;
+    expect([m!.name, m!.detail]).toEqual(["Mobile", "brief docs/x.md"]);
   });
 });
