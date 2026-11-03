@@ -469,11 +469,11 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-049: Since you last looked (P5)
 
-- **Status:** todo
+- **Status:** done (reviewer PASS; checked in the browser: after one look, a new Replay run shows as "server · feed check finished"; PR-green items skipped, the client has no per-workspace PR state)
 - **Depends on:** A-048
 - **What:** the overview's right column: milestone reached, decision waiting, red, PR green, session done, newest first, derived from thread and PR state since a per-device last-seen time. Clicking opens the workspace.
 - **Acceptance:**
-  - [ ] Feed derivation tested with a last-seen time in the middle of a run.
+  - [x] Feed derivation tested with a last-seen time in the middle of a run.
 
 ### A-050: Autopilot backend
 
@@ -481,5 +481,12 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 - **What:** carried over from the command-center brief: one upstream scheduled task per workspace with an approved brief and plan ("continue docs/plan.md under autopilot rules"; `Autopilot: off` opts out), a Claude Code deny list for irreversible commands, and a Friday 9:00 scheduled upstream sync that stops at "update host?" for Abhishek.
 - **Acceptance:**
   - [ ] One-night dry run on abode plus one other repo; the result is read together before turning it on everywhere.
+
+### A-051: One Window at phone width
+
+- **Status:** todo
+- **What:** spec 6: at phone width the canvas is a workspace list, then the workspace with a back button, same omnibox; the Kit and design sessions show a one-line desktop-only note. Today the canvas overflows sideways at 390px and the sidebar sheet sits over it (checked 2026-11-03). The flag is per device, so phones without it are unaffected.
+- **Acceptance:**
+  - [ ] At 390 × 844: no sideways scroll, list → workspace → back works, omnibox usable, 48px targets.
 
 Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.
