@@ -512,7 +512,7 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-055: The rest of the prototype's screens
 
-- **Status:** todo
+- **Status:** done (kit, voice and shell each reviewer PASS after fixes; checked at 1440 on seeded data: workspace with journey map, drawer answering in place, new session in the window, Kit with real skills, overview; a stall from hiding upstream's sidebar toggle was found by screenshot and fixed; phone not yet checked)
 - **What:** Abhishek (2026-11-03): "build it exactly like the screens I designed", because v1 shipped only the summary. Built from docs/canvas/prototype.html (C3) and spec §5:
   - Kit ⚙ (§5.10): Skills with sources, curator and your kit; MCP; Plugins; Hooks; Weekly merge.
   - Voice in the omnibox (§5.5): Hex mic and voice-back.
