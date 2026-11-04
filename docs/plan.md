@@ -489,4 +489,11 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 - **Acceptance:**
   - [x] At 390 × 844: no sideways scroll, list → workspace → back works, omnibox usable, 48px targets.
 
+### A-052: One Window hides the sidebar
+
+- **Status:** doing
+- **What:** Abhishek (2026-11-03): "I don't need the side bar at all; the whole point is the new window." With the flag on, the left sidebar collapses (and reopens when the flag goes off); the canvas ⚙ opens Settings, the rail + adds a workspace, and chat routes get a "← One window" pill back to the canvas. No new upstream lines.
+- **Acceptance:**
+  - [ ] Flag on: no sidebar on the canvas or in a chat; Settings, add workspace and back-to-canvas all reachable. Flag off: the sidebar returns.
+
 Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.
