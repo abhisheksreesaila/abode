@@ -5,17 +5,18 @@ import { useAllEnvironmentShellsBootstrapped, useProjects } from "~/state/entiti
 import { CanvasShell } from "../canvas/CanvasShell";
 import { useCanvasStore } from "../canvas/canvasStore";
 import { ControlRoomView } from "./ControlRoomView";
-import { controlRoomVisible } from "./controlRoomVisible";
+import { controlRoomView } from "./controlRoomVisible";
 
 /**
- * What "/" shows: the Control room when `controlRoomVisible`. Otherwise `fallback`
- * (upstream's landing: the no-projects hero).
+ * What "/" shows; see `controlRoomView`. `fallback` is upstream's landing.
  */
 export function ControlRoomRoute(props: { readonly fallback: ReactNode }) {
   const projectCount = useProjects().length;
   const bootstrapped = useAllEnvironmentShellsBootstrapped();
   const canvas = useCanvasStore((state) => state.enabled);
-  if (!controlRoomVisible({ bootstrapped, projectCount })) return props.fallback;
+  const view = controlRoomView({ bootstrapped, projectCount });
+  if (view === "wait") return null;
+  if (view === "fallback") return props.fallback;
   return canvas ? <CanvasShell /> : <ControlRoomView />;
 }
 
