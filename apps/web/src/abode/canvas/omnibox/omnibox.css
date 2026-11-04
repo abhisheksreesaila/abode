@@ -297,7 +297,17 @@
   border-radius: 50%;
   border: 0;
   background: var(--cv-autopilot);
-  color: #fff;
+  color: var(--cv-ink);
+}
+[data-cvo-mic] button::after,
+[data-cvo-tb]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
 }
 [data-cvo-mic] button svg {
   width: 18px;
@@ -326,13 +336,14 @@
 }
 [data-cvo-hex] path {
   fill: none;
-  stroke: #1c1c20;
+  stroke: var(--cv-s0);
 }
 [data-cvo-hex] path:first-child {
-  fill: #ffcf4a;
+  fill: var(--cv-hex);
 }
 [data-cvo-tb] {
   all: unset;
+  position: relative;
   flex: none;
   box-sizing: border-box;
   width: 34px;
@@ -341,7 +352,7 @@
   place-items: center;
   border-radius: 50%;
   color: var(--cv-ink-2);
-  background: rgb(237 237 239 / 0.06);
+  background: color-mix(in srgb, var(--cv-ink) 6%, transparent);
   cursor: pointer;
 }
 [data-cvo-tb] svg {
@@ -360,12 +371,12 @@
   opacity: 0.5;
 }
 [data-cvo-tb="key"] {
-  color: #ffcf4a;
-  background: rgb(255 207 74 / 0.12);
+  color: var(--cv-hex);
+  background: color-mix(in srgb, var(--cv-hex) 12%, transparent);
 }
 [data-cvo-tb="two"] {
-  color: #1c1c20;
-  background: #ffcf4a;
+  color: var(--cv-s0);
+  background: var(--cv-hex);
 }
 [data-cvo-tb]:focus-visible,
 [data-cvo-mic] button:focus-visible {

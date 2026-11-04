@@ -17,20 +17,29 @@ export const sanitizeVoiceBackMode = (value: unknown): VoiceBackMode =>
   value === "off" || value === "two" ? value : "key";
 
 export interface SessionSnapshot {
+  readonly workspaceKey: string;
   readonly title: string;
   readonly status: "waiting on you" | "blocked" | "landed" | null;
   readonly pending: "approval" | "input" | null;
 }
 
-type PillLike = SessionSnapshot & { readonly key: string };
+type PillLike = Omit<SessionSnapshot, "workspaceKey"> & { readonly key: string };
 
 export function snapshotSessions(
-  workspaces: ReadonlyArray<{ readonly sessions: { readonly pills: ReadonlyArray<PillLike> } }>,
+  workspaces: ReadonlyArray<{
+    readonly key: string;
+    readonly sessions: { readonly pills: ReadonlyArray<PillLike> };
+  }>,
 ): ReadonlyMap<string, SessionSnapshot> {
   const map = new Map<string, SessionSnapshot>();
   for (const workspace of workspaces) {
     for (const pill of workspace.sessions.pills) {
-      map.set(pill.key, { title: pill.title, status: pill.status, pending: pill.pending });
+      map.set(pill.key, {
+        workspaceKey: workspace.key,
+        title: pill.title,
+        status: pill.status,
+        pending: pill.pending,
+      });
     }
   }
   return map;
@@ -38,17 +47,22 @@ export function snapshotSessions(
 
 /**
  * Lines to speak for sessions that newly need you, got blocked or landed. An empty `prev`
- * is the initial load (nothing is said); a session first seen later counts as new.
+ * is the initial load (nothing is said). A session with no previous entry is a late arrival:
+ * only a request for you is spoken, and only in a workspace that was already there.
  */
 export function detectMoments(
   prev: ReadonlyMap<string, SessionSnapshot>,
   next: ReadonlyMap<string, SessionSnapshot>,
 ): string[] {
   if (prev.size === 0) return [];
+  const knownWorkspaces = new Set([...prev.values()].map((session) => session.workspaceKey));
   const lines: string[] = [];
   for (const [key, now] of next) {
     if (now.status === null) continue;
     const before = prev.get(key);
+    if (!before && (now.status !== "waiting on you" || !knownWorkspaces.has(now.workspaceKey))) {
+      continue;
+    }
     const newRequest = now.status === "waiting on you" && before?.pending !== now.pending;
     if (before?.status === now.status && !newRequest) continue;
     if (now.status === "waiting on you") {

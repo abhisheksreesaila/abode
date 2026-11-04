@@ -11,6 +11,7 @@ import {
 } from "./voiceBack";
 
 const snap = (over: Partial<SessionSnapshot> = {}): SessionSnapshot => ({
+  workspaceKey: "w1",
   title: "Sync",
   status: null,
   pending: null,
@@ -41,6 +42,25 @@ describe("detectMoments", () => {
     });
     expect(detectMoments(prev, next)).toEqual(["Sync is blocked.", "Docs landed."]);
     expect(detectMoments(next, next)).toEqual([]);
+  });
+
+  it("stays quiet for late arrivals that already have a status", () => {
+    const prev = map({ a: snap() });
+    const next = map({
+      a: snap(),
+      b: snap({ title: "Docs", status: "landed" }),
+      c: snap({ title: "Api", status: "blocked" }),
+      d: snap({ title: "Late", workspaceKey: "w2", status: "waiting on you", pending: "input" }),
+    });
+    expect(detectMoments(prev, next)).toEqual([]);
+  });
+
+  it("announces a new session that needs you in a workspace already known", () => {
+    const next = map({
+      a: snap(),
+      b: snap({ title: "Docs", status: "waiting on you", pending: "approval" }),
+    });
+    expect(detectMoments(map({ a: snap() }), next)).toEqual(["Docs needs you for an approval."]);
   });
 
   it("announces a new request on a session that was already waiting", () => {

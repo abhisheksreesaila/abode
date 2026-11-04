@@ -18,9 +18,22 @@ import {
 } from "./voiceBack";
 import { useVoiceBackStore } from "./voiceBackStore";
 
-function speak(text: string) {
+const MAX_QUEUED = 2;
+let queued = 0;
+
+/** A reply interrupts what is queued; a key moment is dropped when two are already waiting. */
+function speak(text: string, interrupt: boolean) {
   if (typeof window === "undefined" || !("speechSynthesis" in window) || text === "") return;
-  window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  if (interrupt) window.speechSynthesis.cancel();
+  else if (queued > MAX_QUEUED) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  const done = () => {
+    queued = Math.max(0, queued - 1);
+  };
+  utterance.onend = done;
+  utterance.onerror = done;
+  queued += 1;
+  window.speechSynthesis.speak(utterance);
 }
 
 /** Speaks key moments (a session needs you, is blocked or landed) from the canvas's own pill data. */
@@ -32,7 +45,7 @@ export function useKeyMomentSpeech(workspaces: ReadonlyArray<CanvasWorkspace>) {
     const lines = detectMoments(previous.current, next);
     previous.current = next;
     if (useVoiceBackStore.getState().mode === "off") return;
-    for (const line of lines) speak(line);
+    for (const line of lines) speak(line, false);
   }, [workspaces]);
 }
 
@@ -53,7 +66,7 @@ export function DrawerReplySpeaker(props: { readonly pill: SessionPill }) {
     const reply = replyToSpeak(messages, seen.current);
     if (!reply) return;
     seen.current = reply.id;
-    if (useVoiceBackStore.getState().mode === "two") speak(speechText(reply.text));
+    if (useVoiceBackStore.getState().mode === "two") speak(speechText(reply.text), true);
   }, [projection]);
   return null;
 }
