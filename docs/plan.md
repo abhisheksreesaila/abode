@@ -505,4 +505,26 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
   - [ ] The script is idempotent, never prints secrets other than the one-time pairing link, and runs `--dry-run` cleanly on Linux.
   - [ ] Phone width: the card and guide fit at 390px.
 
+### A-054: One Window on by default
+
+- **Status:** done (reviewer PASS; live on the host as 2d118d655b)
+- **What:** Abhishek (2026-11-03): "it has to be default." Storage key v2, default on; an explicit off still sticks.
+
+### A-055: The rest of the prototype's screens
+
+- **Status:** todo
+- **What:** Abhishek (2026-11-03): "build it exactly like the screens I designed", because v1 shipped only the summary. Built from docs/canvas/prototype.html (C3) and spec §5:
+  - Kit ⚙ (§5.10): Skills with sources, curator and your kit; MCP; Plugins; Hooks; Weekly merge.
+  - Voice in the omnibox (§5.5): Hex mic and voice-back.
+  - Sessions open in the chat drawer, not the old chat route (§5.6).
+  - Top bar (§5.1) and rail details (§5.2).
+  - Journey map (§5.3).
+  - Creation focus moment (§5.11).
+  - Built in three parallel worktrees (kit, voice, inwin).
+  - Not in this ticket: the design session (§5.9, partly desktop-only in T3) and the Haiku monitor (§5.8).
+- **Acceptance:**
+  - [ ] Each screen matches the prototype side by side, in screenshots at 1440 and 390.
+  - [ ] Real data only. Empty states say so; nothing is faked.
+  - [ ] Mobile app untouched: protocol 2, contracts add-only.
+
 Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.
