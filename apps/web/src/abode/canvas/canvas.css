@@ -11,6 +11,7 @@ main[data-cv-root] {
   --cv-ok: #3fb97a;
   --cv-bad: #ef5350;
   --cv-autopilot: #8b7bff;
+  --cv-hex: #ffcf4a;
   --cv-sbw: 58px;
   --cv-shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
   --cv-shadow-2: 0 4px 14px rgb(0 0 0 / 0.45);

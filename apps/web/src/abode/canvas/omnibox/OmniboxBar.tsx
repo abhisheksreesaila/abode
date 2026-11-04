@@ -33,6 +33,10 @@ import { changeMode, MODES, type SessionMode } from "../sessionMode";
 import { modeOf as storedModeOf, useSessionModeStore } from "../sessionModeStore";
 import { routeMessage, targetLabel } from "./routeMessage";
 import { useSessionSend } from "./useSessionSend";
+import { ComposerVoiceControl } from "../../voice/ComposerVoiceControl";
+import { useVoiceSettings } from "../../voice/voiceSettings";
+import { insertAt } from "./voiceBack";
+import { DrawerReplySpeaker, useKeyMomentSpeech, VoiceBackButton } from "./VoiceBack";
 import "./omnibox.css";
 
 interface Preview {
@@ -65,6 +69,12 @@ export function OmniboxBar(props: {
   const [drawerKey, setDrawerKey] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
+  // Dictation in flight: the caret it will land at, and whether the mic is hearing.
+  const [listening, setListening] = useState(false);
+  const anchorRef = useRef<number | null>(null);
+  const [sends, setSends] = useState(0);
+  const voiceEnabled = useVoiceSettings().settings.enabled;
+  useKeyMomentSpeech(workspaces);
 
   const ctx = buildRouteContext({
     workspaces,
@@ -185,7 +195,8 @@ export function OmniboxBar(props: {
   };
 
   const submit = () => {
-    if (busy || text.trim() === "") return;
+    if (busy || listening || text.trim() === "") return;
+    setSends((count) => count + 1);
     setBusy(true);
     void runDecision()
       .then((ok) => setText((current) => textAfter(current, ok)))
@@ -195,6 +206,7 @@ export function OmniboxBar(props: {
   const confirmPreview = () => {
     if (!preview || busy) return;
     const { items, text: message } = preview;
+    setSends((count) => count + 1);
     setBusy(true);
     void Promise.all(items.map((item) => sendTo(item.workspaceKey, item.sessionId, message)))
       .then((results) => {
@@ -255,7 +267,40 @@ export function OmniboxBar(props: {
           </div>
         </section>
       ) : null}
+      {drawer ? <DrawerReplySpeaker key={drawer.pill.key} pill={drawer.pill} /> : null}
       <div data-cv-bar="">
+        <span data-cvo-mic="">
+          <ComposerVoiceControl
+            resetKey={`${targetLabel(ctx)}:${sends}`}
+            disabled={busy}
+            onProvisionalStart={() => {
+              anchorRef.current = inputRef.current?.selectionStart ?? text.length;
+              setListening(true);
+            }}
+            onProvisionalText={() => {}}
+            onProvisionalEnd={() => {
+              anchorRef.current = null;
+              setListening(false);
+            }}
+            onTranscript={(heard) => {
+              const anchor = anchorRef.current ?? inputRef.current?.selectionStart ?? text.length;
+              anchorRef.current = null;
+              setListening(false);
+              setText((current) => insertAt(current, anchor, heard));
+              return true;
+            }}
+          />
+          {voiceEnabled ? (
+            <svg data-cvo-hex="" viewBox="0 0 16 16" aria-hidden>
+              <path
+                d="M8 1.2 13.9 4.6v6.8L8 14.8 2.1 11.4V4.6Z"
+                strokeWidth="1.4"
+                strokeLinejoin="round"
+              />
+              <path d="M5.4 8v0M8 6.2v3.6M10.6 7v2" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          ) : null}
+        </span>
         {targetMode ? (
           <span data-cv-mtag="" data-mode={targetMode}>
             <ModeIcon mode={targetMode} />
@@ -265,9 +310,10 @@ export function OmniboxBar(props: {
         <input
           ref={inputRef}
           data-cv-in=""
-          placeholder="Tell any session…"
+          placeholder={listening ? "Hex is listening…" : "Tell any session…"}
           aria-label="Omnibox"
           value={text}
+          readOnly={listening}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
             if (
@@ -301,6 +347,7 @@ export function OmniboxBar(props: {
             ))}
           </MenuPopup>
         </Menu>
+        <VoiceBackButton />
         <button
           type="button"
           data-cvo-send=""
