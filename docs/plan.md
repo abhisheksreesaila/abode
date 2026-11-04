@@ -498,7 +498,7 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 
 ### A-053: Add a machine from the overview
 
-- **Status:** todo
+- **Status:** review (guide + AddEnvironmentDialog embedded standalone, add-machine.sh with --dry-run; unverified in browser)
 - **What:** Abhishek (2026-11-03): make adding another system (the M4 Pro Mac) obvious and front and center. The overview gets an "Add a machine" card after the machine sections, and the rail gets a matching entry. The card opens a short guide covering three steps: put the machine on the tailnet, start T3 on it with `scripts/abode/add-machine.sh`, and paste the pairing link. The guide embeds upstream's `AddEnvironmentDialog` (remote mode works in the browser), so nothing new crosses the wire. `scripts/abode/add-machine.sh` runs on the new machine (macOS or Linux). It checks Tailscale, checks for Node, starts `npx t3@<host version> serve --tailscale-serve` as a login service, then prints `t3 pair --tailscale`. No new upstream lines.
 - **Acceptance:**
   - [ ] The overview and the rail both show "Add a machine". The guide opens, and pasting a pairing URL into the embedded dialog adds the environment, which then shows as its own machine section.

@@ -14,6 +14,8 @@ import { OmniboxBar } from "./omnibox/OmniboxBar";
 import { buildRouteContext, findSession } from "./omnibox/omniboxLogic";
 import { routeMessage } from "./omnibox/routeMessage";
 import { modeOf, useSessionModeStore } from "./sessionModeStore";
+import { AddMachineGuide } from "./AddMachineGuide";
+import { useAddMachineStore } from "./addMachineStore";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
@@ -180,6 +182,18 @@ export function CanvasShell() {
           >
             +
           </button>
+          <button
+            type="button"
+            data-cv-rl=""
+            data-cv-add=""
+            aria-label="Add a machine"
+            onClick={() => useAddMachineStore.getState().setOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden width="18" height="18" data-cv-addm-icon="">
+              <rect x="3" y="4" width="14" height="10" rx="2" />
+              <path d="M7 18h6M20 15v6M17 18h6" />
+            </svg>
+          </button>
         </nav>
         {phone && !showWorkspace ? (
           <nav data-cv-plist="" aria-label="Workspaces">
@@ -217,6 +231,7 @@ export function CanvasShell() {
           }}
         />
       ) : null}
+      <AddMachineGuide />
       <div data-cv-dock="">
         <OmniboxBar
           workspaces={workspaces}

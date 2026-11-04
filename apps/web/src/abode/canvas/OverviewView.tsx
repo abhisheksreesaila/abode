@@ -1,5 +1,6 @@
 import { useMachineInputs } from "../controlRoom/useMachineInputs";
 import { doneMilestones, feedAge, type FeedType } from "./feedModel";
+import { useAddMachineStore } from "./addMachineStore";
 import { OverviewMascot } from "./OverviewMascot";
 import {
   heroCounts,
@@ -164,6 +165,17 @@ export function OverviewView(props: {
             })}
           </section>
         ))}
+        <button
+          type="button"
+          data-cv-ov-addm=""
+          onClick={() => useAddMachineStore.getState().setOpen(true)}
+        >
+          <span aria-hidden>+</span>
+          <span>
+            <b>Add a machine</b>
+            <small>Another Mac or Linux box on your tailnet</small>
+          </span>
+        </button>
       </div>
       <aside data-cv-ov-feed="" aria-label="Since you last looked">
         <h3>Since you last looked</h3>
