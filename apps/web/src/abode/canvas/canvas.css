@@ -27,7 +27,8 @@ main[data-cv-root] {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 22px 12px;
+  /* Clears upstream's floating sidebar toggle, which stays top-left while the sidebar is hidden. */
+  padding: 16px 22px 12px 56px;
 }
 [data-cv-mark] {
   width: 28px;
