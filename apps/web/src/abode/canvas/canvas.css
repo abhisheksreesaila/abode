@@ -28,11 +28,18 @@ main[data-cv-root] {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 22px 12px;
+  padding: 16px 22px 12px 60px;
 }
-/* The rail toggle in the top bar replaces upstream's floating sidebar toggle while the canvas shows. */
-body:has(main[data-cv-root]) [data-sidebar-control] {
-  display: none;
+/* The rail toggle sits on top of upstream's floating sidebar toggle, so only one shows. Hiding
+   upstream's (display or visibility) stalled rendering, so it is covered instead. */
+[data-cv-top] > [data-cv-xbtn]:first-child {
+  position: fixed;
+  z-index: 60;
+  top: 6px;
+  left: 6px;
+  width: 44px;
+  height: 44px;
+  background: var(--cv-s0);
 }
 [data-cv-mark] {
   width: 28px;
