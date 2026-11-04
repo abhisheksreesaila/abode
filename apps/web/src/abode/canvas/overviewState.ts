@@ -118,6 +118,7 @@ export function useOverviewFeed(workspaces: ReadonlyArray<CanvasWorkspace>): {
         : group.threads.map((thread) => ({
             workspaceKey: group.project.projectKey,
             workspaceName,
+            sessionKey: threadShellKey(thread),
             title: thread.title,
             outcome: sessionOutcome(thread),
             at: Date.parse(thread.latestRun?.completedAt ?? thread.updatedAt) || 0,

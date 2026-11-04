@@ -1,14 +1,13 @@
-import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
-import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
-import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
+import { useDrawerStore } from "./drawerStore";
 import { composeBlocks, composeSessions, type Block } from "./composeBlocks";
 import { ModeBlock } from "./ModeBlocks";
 import { ModeButton } from "./ModeButton";
@@ -136,7 +135,6 @@ export function WorkspaceView(props: {
   readonly onBack?: (() => void) | undefined;
 }) {
   const { workspace, onBack } = props;
-  const router = useRouter();
   const handleNewThread = useNewThreadHandler();
   const [showDone, setShowDone] = useState(false);
   const [fresh, setFresh] = useState(false);
@@ -167,12 +165,8 @@ export function WorkspaceView(props: {
     return <ModeBlock key={key} block={block} pills={pills} sessions={sessions} onOpen={open} />;
   };
 
-  const open = (pill: SessionPill) => {
-    void router.navigate({
-      to: "/$environmentId/$threadId",
-      params: buildThreadRouteParams(scopeThreadRef(pill.environmentId, pill.threadId)),
-    });
-  };
+  // A session opens in the chat drawer; the full thread route is reached from the drawer only.
+  const open = (pill: SessionPill) => useDrawerStore.getState().open(pill.key);
 
   const addSession = async () => {
     const target = workspace.newSessionTarget;

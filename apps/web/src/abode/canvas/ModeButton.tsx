@@ -17,15 +17,12 @@ import { changeMode, MODE_ORDER, MODES, type SessionMode } from "./sessionMode";
 import { useSessionModeStore } from "./sessionModeStore";
 import type { SessionPill } from "./sessionPills";
 
-/** The pill's mode icon. A tap opens the picker; a new mode is stored here and sent to the thread once. */
-export function ModeButton(props: { readonly pill: SessionPill; readonly mode: SessionMode }) {
-  const { pill, mode } = props;
-  const [open, setOpen] = useState(false);
+/** Changes a session's mode: stored here and sent to the thread once; a failed send is toasted. */
+function useChooseMode(pill: SessionPill, mode: SessionMode) {
   const shell = useThreadShell(scopeThreadRef(pill.environmentId, pill.threadId));
   const startTurn = useOrchestrationCommand(threadEnvironment.startTurn, { reportFailure: false });
 
-  const choose = async (next: SessionMode) => {
-    setOpen(false);
+  return async (next: SessionMode) => {
     const error = await changeMode({
       from: mode,
       to: next,
@@ -58,6 +55,13 @@ export function ModeButton(props: { readonly pill: SessionPill; readonly mode: S
       );
     }
   };
+}
+
+/** The pill's mode icon. A tap opens the picker. */
+export function ModeButton(props: { readonly pill: SessionPill; readonly mode: SessionMode }) {
+  const { pill, mode } = props;
+  const [open, setOpen] = useState(false);
+  const choose = useChooseMode(pill, mode);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,7 +81,10 @@ export function ModeButton(props: { readonly pill: SessionPill; readonly mode: S
               data-cv-mopt=""
               data-mode={option}
               aria-pressed={option === mode}
-              onClick={() => void choose(option)}
+              onClick={() => {
+                setOpen(false);
+                void choose(option);
+              }}
             >
               <ModeIcon mode={option} />
               {MODES[option].label}
@@ -86,5 +93,29 @@ export function ModeButton(props: { readonly pill: SessionPill; readonly mode: S
         </div>
       </PopoverPopup>
     </Popover>
+  );
+}
+
+/** The drawer's compact dial (spec 5.6): the four modes as icons, the active one labelled. */
+export function ModeDial(props: { readonly pill: SessionPill; readonly mode: SessionMode }) {
+  const { pill, mode } = props;
+  const choose = useChooseMode(pill, mode);
+  return (
+    <div data-cvo-dial="" role="group" aria-label="Session mode">
+      {MODE_ORDER.map((option) => (
+        <button
+          key={option}
+          type="button"
+          data-cvo-dopt=""
+          data-mode={option}
+          aria-pressed={option === mode}
+          aria-label={MODES[option].label}
+          onClick={() => void choose(option)}
+        >
+          <ModeIcon mode={option} />
+          {option === mode ? MODES[option].label : null}
+        </button>
+      ))}
+    </div>
   );
 }

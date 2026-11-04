@@ -5,7 +5,12 @@ import ChatMarkdown from "~/components/ChatMarkdown";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentThread } from "~/state/threads";
 
+import { drawerStatus, modelChipText } from "../drawerModel";
+import { InterruptCard } from "../ModeBlocks";
+import { ModeDial } from "../ModeButton";
+import { currentMilestoneName, planBlock } from "../planBlock";
 import type { SessionPill } from "../sessionPills";
+import { usePlanFile } from "../usePlanFile";
 import type { SessionMode } from "./routeMessage";
 
 const RECENT = 8;
@@ -21,8 +26,12 @@ export interface DrawerProps {
   readonly onClose: () => void;
 }
 
-/** Recent messages of the bound thread; streaming text updates in place. */
-function Messages(props: { readonly pill: SessionPill; readonly cwd: string | undefined }) {
+/** Recent messages of the bound thread, with a pending approval or question answerable in place. */
+function Messages(props: {
+  readonly pill: SessionPill;
+  readonly cwd: string | undefined;
+  readonly onOpenFull: () => void;
+}) {
   const { pill, cwd } = props;
   const state = useEnvironmentThread(pill.environmentId, pill.threadId);
   const projection = Option.getOrNull(state.data);
@@ -30,9 +39,16 @@ function Messages(props: { readonly pill: SessionPill; readonly cwd: string | un
     .filter((message) => message.role !== "system" && message.text.trim() !== "")
     .slice(-RECENT);
   const threadRef = scopeThreadRef(pill.environmentId, pill.threadId);
+  const pending =
+    pill.pending !== null ? (
+      <div data-cvo-ask="">
+        <InterruptCard pill={pill} onOpen={props.onOpenFull} />
+      </div>
+    ) : null;
   if (recent.length === 0) {
     return (
       <div data-cvo-body="">
+        {pending}
         <p data-cvo-empty="">{projection ? "No messages yet." : "Loading…"}</p>
       </div>
     );
@@ -40,6 +56,7 @@ function Messages(props: { readonly pill: SessionPill; readonly cwd: string | un
   // Newest first in the DOM; column-reverse keeps the bottom in view without scroll code.
   return (
     <div data-cvo-body="">
+      {pending}
       {recent.toReversed().map((message) =>
         message.role === "user" ? (
           <div key={message.id} data-cvo-msg="me">
@@ -65,7 +82,9 @@ function Messages(props: { readonly pill: SessionPill; readonly cwd: string | un
 export function ChatDrawer(props: DrawerProps) {
   const { pill, mode } = props;
   const shell = useQuietThreadShell(scopeThreadRef(pill.environmentId, pill.threadId));
-  const state = pill.running ? "running" : pill.status === null ? "idle" : pill.status;
+  const planFile = usePlanFile(pill.environmentId, props.cwd, `${pill.running}|${pill.status}`);
+  const milestone = planFile.pending ? undefined : currentMilestoneName(planBlock(planFile));
+  const status = drawerStatus(pill);
   return (
     <section
       data-cvo-drawer=""
@@ -74,16 +93,18 @@ export function ChatDrawer(props: DrawerProps) {
       aria-label={`Chat with ${props.workspaceName} · ${pill.title}`}
     >
       <header data-cvo-dh="">
-        <i data-cvo-sd="" data-state={state} aria-hidden />
+        <i data-cvo-sd="" data-state={status} aria-hidden />
         <span data-cvo-dlab="">chat with</span>
         <b>
           {props.workspaceName} · {pill.title}
         </b>
         <span data-cv-mt="" data-cvo-model="">
           <i data-provider={pill.dots[0] ?? "other"} aria-hidden />
-          {shell?.modelSelection.model ?? ""}
+          {modelChipText(pill, shell?.modelSelection.model ?? "")}
         </span>
+        <span data-cvo-ms="">{milestone ? `${milestone} · ${status}` : status}</span>
         <span data-cvo-grow="" />
+        <ModeDial pill={pill} mode={mode} />
         <button
           type="button"
           data-cvo-x=""
@@ -100,7 +121,7 @@ export function ChatDrawer(props: DrawerProps) {
           ×
         </button>
       </header>
-      <Messages pill={pill} cwd={props.cwd} />
+      <Messages pill={pill} cwd={props.cwd} onOpenFull={props.onOpenFull} />
     </section>
   );
 }

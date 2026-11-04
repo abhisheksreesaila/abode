@@ -16,6 +16,7 @@ import { routeMessage } from "./omnibox/routeMessage";
 import { modeOf, useSessionModeStore } from "./sessionModeStore";
 import { AddMachineGuide } from "./AddMachineGuide";
 import { useAddMachineStore } from "./addMachineStore";
+import { useDrawerStore } from "./drawerStore";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
@@ -147,7 +148,10 @@ export function CanvasShell() {
                 data-group={workspace.group}
                 aria-current={workspace.key === selected?.key ? "true" : undefined}
                 aria-label={`${workspace.name}, ${GROUP_LABEL[workspace.group]}`}
-                onClick={() => setSelectedKey(workspace.key)}
+                onClick={() => {
+                  setSelectedKey(workspace.key);
+                  useDrawerStore.getState().close();
+                }}
               >
                 <span>{workspaceInitials(workspace.name)}</span>
                 {workspace.group === "need" ? <i data-cv-dot="" aria-hidden /> : null}
@@ -225,9 +229,10 @@ export function CanvasShell() {
       {overview ? (
         <OverviewView
           workspaces={workspaces}
-          onSelect={(key) => {
+          onSelect={(key, sessionKey) => {
             setSelectedKey(key);
             closeOverview();
+            if (sessionKey !== undefined) useDrawerStore.getState().open(sessionKey);
           }}
         />
       ) : null}

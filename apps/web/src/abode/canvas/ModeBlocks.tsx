@@ -211,7 +211,7 @@ function ApprovalButtons(props: {
   );
 }
 
-function InterruptCard(props: { readonly pill: SessionPill; readonly onOpen: () => void }) {
+export function InterruptCard(props: { readonly pill: SessionPill; readonly onOpen: () => void }) {
   const { pill, onOpen } = props;
   const { approval, userInput } = useThreadDetail(pill);
   return (
