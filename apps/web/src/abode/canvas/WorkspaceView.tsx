@@ -1,10 +1,6 @@
-import { scopeProjectRef } from "@t3tools/client-runtime/environment";
-import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import { useState } from "react";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
-import { stackedThreadToast, toastManager } from "~/components/ui/toast";
-import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
 import { useDrawerStore } from "./drawerStore";
@@ -145,9 +141,7 @@ export function WorkspaceView(props: {
   readonly onBack?: (() => void) | undefined;
 }) {
   const { workspace, onBack } = props;
-  const handleNewThread = useNewThreadHandler();
   const [showDone, setShowDone] = useState(false);
-  const [creating, setCreating] = useState(false);
   const { pills, done, doneCount } = workspace.sessions;
   const root = workspace.newSessionTarget;
   const planFile = usePlanFile(root?.environmentId, root?.workspaceRoot, workspace.turnSignal);
@@ -159,7 +153,9 @@ export function WorkspaceView(props: {
     workspace.key,
     pills.map((pill) => pill.key),
   );
-  const fresh = creating || freshSession !== null;
+  // The draft drawer is open for this workspace, or a session was just created: the focus moment.
+  const drafting = useDrawerStore((state) => state.draftWorkspaceKey) === workspace.key;
+  const fresh = drafting || freshSession !== null;
 
   const renderBlock = (block: Block) => {
     if (block.block === "plan") {
@@ -183,26 +179,7 @@ export function WorkspaceView(props: {
   // A session opens in the chat drawer; the full thread route is reached from the drawer only.
   const open = (pill: SessionPill) => useDrawerStore.getState().open(pill.key);
 
-  const addSession = async () => {
-    const target = workspace.newSessionTarget;
-    if (target === undefined) return;
-    setCreating(true);
-    // No options: branch, worktree and env mode come from the user's defaults, like the sidebar's "+".
-    const result = await settlePromise(() =>
-      handleNewThread(scopeProjectRef(target.environmentId, target.id)),
-    );
-    setCreating(false);
-    if (result._tag === "Failure") {
-      const error = squashAtomCommandFailure(result);
-      toastManager.add(
-        stackedThreadToast({
-          type: "error",
-          title: "Could not create session",
-          description: error instanceof Error ? error.message : "An error occurred.",
-        }),
-      );
-    }
-  };
+  const addSession = () => useDrawerStore.getState().openDraft(workspace.key);
 
   return (
     <div data-cv-ws="" data-fresh={fresh ? "" : undefined}>
@@ -262,7 +239,7 @@ export function WorkspaceView(props: {
           data-cv-sc=""
           data-cv-add-session=""
           aria-label="New session"
-          onClick={() => void addSession()}
+          onClick={addSession}
         >
           +
         </button>

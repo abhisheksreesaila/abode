@@ -27,8 +27,11 @@ main[data-cv-root] {
   display: flex;
   align-items: center;
   gap: 14px;
-  /* Clears upstream's floating sidebar toggle, which stays top-left while the sidebar is hidden. */
-  padding: 16px 22px 12px 56px;
+  padding: 16px 22px 12px;
+}
+/* The rail toggle in the top bar replaces upstream's floating sidebar toggle while the canvas shows. */
+body:has(main[data-cv-root]) [data-sidebar-control] {
+  display: none;
 }
 [data-cv-mark] {
   width: 28px;
