@@ -496,4 +496,13 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
 - **Acceptance:**
   - [x] Flag on: no sidebar on the canvas or in a chat; Settings, add workspace and back-to-canvas all reachable. Flag off: the sidebar returns.
 
+### A-053: Add a machine from the overview
+
+- **Status:** todo
+- **What:** Abhishek (2026-11-03): make adding another system (the M4 Pro Mac) obvious and front and center. The overview gets an "Add a machine" card after the machine sections, and the rail gets a matching entry. The card opens a short guide covering three steps: put the machine on the tailnet, start T3 on it with `scripts/abode/add-machine.sh`, and paste the pairing link. The guide embeds upstream's `AddEnvironmentDialog` (remote mode works in the browser), so nothing new crosses the wire. `scripts/abode/add-machine.sh` runs on the new machine (macOS or Linux). It checks Tailscale, checks for Node, starts `npx t3@<host version> serve --tailscale-serve` as a login service, then prints `t3 pair --tailscale`. No new upstream lines.
+- **Acceptance:**
+  - [ ] The overview and the rail both show "Add a machine". The guide opens, and pasting a pairing URL into the embedded dialog adds the environment, which then shows as its own machine section.
+  - [ ] The script is idempotent, never prints secrets other than the one-time pairing link, and runs `--dry-run` cleanly on Linux.
+  - [ ] Phone width: the card and guide fit at 390px.
+
 Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.
