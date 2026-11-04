@@ -32,6 +32,7 @@ import {
 import { ModeIcon } from "../ModeVisuals";
 import { changeMode, MODES, type SessionMode } from "../sessionMode";
 import { modeOf as storedModeOf, useSessionModeStore } from "../sessionModeStore";
+import { useOmniboxDraftStore } from "./omniboxDraftStore";
 import { routeMessage, targetLabel } from "./routeMessage";
 import { useSessionSend } from "./useSessionSend";
 import { ComposerVoiceControl } from "../../voice/ComposerVoiceControl";
@@ -77,6 +78,22 @@ export function OmniboxBar(props: {
   const [sends, setSends] = useState(0);
   const voiceEnabled = useVoiceSettings().settings.enabled;
   useKeyMomentSpeech(workspaces);
+  const draft = useOmniboxDraftStore((state) => state.draft);
+  const [seenDraft, setSeenDraft] = useState<string | null>(null);
+
+  if (draft !== null && draft !== seenDraft) {
+    setSeenDraft(draft);
+    setText(draft);
+  } else if (draft === null && seenDraft !== null) {
+    setSeenDraft(null);
+  }
+
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- focuses the input and clears the store entry after another screen (the Kit) put text there
+  useEffect(() => {
+    if (draft === null) return;
+    inputRef.current?.focus();
+    useOmniboxDraftStore.getState().setDraft(null);
+  }, [draft]);
 
   const ctx = buildRouteContext({
     workspaces,

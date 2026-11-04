@@ -1,6 +1,11 @@
 import { create } from "zustand";
 
-export const useKitStore = create<{ open: boolean; setOpen: (open: boolean) => void }>()((set) => ({
+interface KitStore {
+  readonly open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+export const useKitStore = create<KitStore>()((set) => ({
   open: false,
   setOpen: (open) => set({ open }),
 }));
