@@ -1,6 +1,3 @@
-/* Patrick Hand for the cartoon map; the stack falls back to a system handwriting face offline. */
-@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
-
 /* Journey map (spec 5.3), copied from the prototype's C3 `.g3-map` / `.j-*` rules. Cartoon palette: spec 7. */
 [data-cv-map] {
   position: relative;
@@ -52,134 +49,134 @@
     inset: -10px;
   }
 }
-[data-j-path] {
+[data-cv-j-path] {
   fill: none;
   stroke: #c9bfa8;
   stroke-width: 3;
   stroke-dasharray: 2 9;
   stroke-linecap: round;
 }
-[data-j-path="done"] {
+[data-cv-j-path="done"] {
   stroke: #1c1c20;
   stroke-width: 3;
   opacity: 0.85;
 }
-[data-j-st] {
+[data-cv-j-st] {
   transform-box: fill-box;
   transform-origin: center;
 }
-[data-j-shadow] {
+[data-cv-j-shadow] {
   fill: #1c1c20;
 }
-[data-j-face] {
+[data-cv-j-face] {
   stroke: #1c1c20;
   stroke-width: 2.2;
   fill: #fff;
 }
-[data-j-st][data-state="done"] [data-j-face] {
+[data-cv-j-st][data-state="done"] [data-cv-j-face] {
   fill: #c8f0d4;
 }
-[data-j-st][data-state="current"] [data-j-face] {
+[data-cv-j-st][data-state="current"] [data-cv-j-face] {
   fill: #ffe066;
   stroke-width: 2.8;
 }
-[data-j-st][data-state="todo"] [data-j-face] {
+[data-cv-j-st][data-state="todo"] [data-cv-j-face] {
   fill: #fffdf6;
   stroke-dasharray: 6 5;
 }
-[data-j-st][data-state="todo"] [data-j-shadow] {
+[data-cv-j-st][data-state="todo"] [data-cv-j-shadow] {
   opacity: 0.25;
 }
-[data-j-label] {
+[data-cv-j-label] {
   font-size: 19px;
   fill: #1c1c20;
 }
-[data-j-st][data-state="todo"] [data-j-label] {
+[data-cv-j-st][data-state="todo"] [data-cv-j-label] {
   fill: #7d7563;
 }
-[data-j-check] {
+[data-cv-j-check] {
   fill: #1fb85c;
   stroke: #1c1c20;
   stroke-width: 2;
 }
-[data-j-tick] {
+[data-cv-j-tick] {
   fill: none;
   stroke: #fff;
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-[data-j-house] {
+[data-cv-j-house] {
   fill: #fff;
   stroke: #1c1c20;
   stroke-width: 2.2;
   stroke-linejoin: round;
 }
-[data-j-door] {
+[data-cv-j-door] {
   fill: #1c1c20;
 }
-[data-j-small] {
+[data-cv-j-small] {
   font-size: 16px;
   fill: #7d7563;
 }
-[data-j-hill] {
+[data-cv-j-hill] {
   fill: #b9e3a6;
   stroke: #1c1c20;
   stroke-width: 2;
 }
-[data-j-pole] {
+[data-cv-j-pole] {
   stroke: #1c1c20;
   stroke-width: 2.6;
   stroke-linecap: round;
 }
-[data-j-flag] {
+[data-cv-j-flag] {
   fill: #ff6b6b;
   stroke: #1c1c20;
   stroke-width: 2;
   stroke-linejoin: round;
 }
-[data-j-flag="won"] {
+[data-cv-j-flag="won"] {
   fill: #1fb85c;
 }
-[data-j-goaltext] {
+[data-cv-j-goaltext] {
   font-size: 16px;
   fill: #1c1c20;
 }
-[data-j-jam] path:first-child {
+[data-cv-j-jam] path:first-child {
   fill: #fff3e3;
   stroke: #ff9f43;
   stroke-width: 2;
 }
-[data-j-note] {
+[data-cv-j-note] {
   font-size: 15px;
   fill: #e07b12;
 }
-[data-j-body] {
+[data-cv-j-body] {
   fill: #7ad7c9;
   stroke: #1c1c20;
   stroke-width: 2.2;
 }
-[data-j-line] {
+[data-cv-j-line] {
   fill: none;
   stroke: #1c1c20;
   stroke-width: 2.2;
   stroke-linecap: round;
 }
-[data-j-eye] {
+[data-cv-j-eye] {
   fill: #1c1c20;
 }
-[data-j-ant] {
+[data-cv-j-ant] {
   fill: #ff6b6b;
   stroke: #1c1c20;
   stroke-width: 1.6;
 }
-[data-j-bubble] {
+[data-cv-j-bubble] {
   fill: #fff;
   stroke: #1c1c20;
   stroke-width: 1.8;
   stroke-linejoin: round;
 }
-[data-j-sym] {
+[data-cv-j-sym] {
   font-size: 17px;
   font-weight: 700;
   font-family: "Geist", system-ui, sans-serif;
