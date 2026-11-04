@@ -280,3 +280,95 @@
     transform: translate(-50%, -50%);
   }
 }
+
+/* Voice (A-055): Hex mic on the left, voice back speaker before send. Static; nothing animates. */
+[data-cvo-wrap] [data-cv-bar] {
+  padding: 0 8px;
+}
+[data-cvo-mic] {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+[data-cvo-mic] button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--cv-autopilot);
+  color: #fff;
+}
+[data-cvo-mic] button svg {
+  width: 18px;
+  height: 18px;
+}
+[data-cvo-mic] button[aria-pressed="true"] {
+  background: var(--cv-bad);
+}
+[data-cvo-mic] [role="status"] {
+  display: none;
+}
+[data-cvo-mic] [role="alert"] {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: 280px;
+}
+[data-cvo-hex] {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+}
+[data-cvo-hex] path {
+  fill: none;
+  stroke: #1c1c20;
+}
+[data-cvo-hex] path:first-child {
+  fill: #ffcf4a;
+}
+[data-cvo-tb] {
+  all: unset;
+  flex: none;
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--cv-ink-2);
+  background: rgb(237 237 239 / 0.06);
+  cursor: pointer;
+}
+[data-cvo-tb] svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+[data-cvo-tb="off"] {
+  opacity: 0.6;
+}
+[data-cvo-tb="off"] svg {
+  opacity: 0.5;
+}
+[data-cvo-tb="key"] {
+  color: #ffcf4a;
+  background: rgb(255 207 74 / 0.12);
+}
+[data-cvo-tb="two"] {
+  color: #1c1c20;
+  background: #ffcf4a;
+}
+[data-cvo-tb]:focus-visible,
+[data-cvo-mic] button:focus-visible {
+  outline: 2px solid var(--cv-ink);
+  outline-offset: 2px;
+}

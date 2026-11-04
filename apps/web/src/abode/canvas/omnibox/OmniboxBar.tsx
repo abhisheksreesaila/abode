@@ -33,6 +33,9 @@ import { changeMode, MODES, type SessionMode } from "../sessionMode";
 import { modeOf as storedModeOf, useSessionModeStore } from "../sessionModeStore";
 import { routeMessage, targetLabel } from "./routeMessage";
 import { useSessionSend } from "./useSessionSend";
+import { ComposerVoiceControl } from "../../voice/ComposerVoiceControl";
+import { insertAt } from "./voiceBack";
+import { DrawerReplySpeaker, useKeyMomentSpeech, VoiceBackButton } from "./VoiceBack";
 import "./omnibox.css";
 
 interface Preview {
@@ -65,6 +68,10 @@ export function OmniboxBar(props: {
   const [drawerKey, setDrawerKey] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
+  // Dictation in flight: where it will land and the provisional text shown there.
+  const [dictation, setDictation] = useState<{ anchor: number; text: string } | null>(null);
+  const anchorRef = useRef<number | null>(null);
+  useKeyMomentSpeech(workspaces);
 
   const ctx = buildRouteContext({
     workspaces,
@@ -255,7 +262,41 @@ export function OmniboxBar(props: {
           </div>
         </section>
       ) : null}
+      {drawer ? <DrawerReplySpeaker key={drawer.pill.key} pill={drawer.pill} /> : null}
       <div data-cv-bar="">
+        <span data-cvo-mic="">
+          <ComposerVoiceControl
+            resetKey=""
+            disabled={busy}
+            onProvisionalStart={() => {
+              const anchor = inputRef.current?.selectionStart ?? text.length;
+              anchorRef.current = anchor;
+              setDictation({ anchor, text: "" });
+            }}
+            onProvisionalText={(heard) =>
+              setDictation((current) => (current ? { ...current, text: heard } : current))
+            }
+            onProvisionalEnd={() => {
+              anchorRef.current = null;
+              setDictation(null);
+            }}
+            onTranscript={(heard) => {
+              const anchor = anchorRef.current ?? inputRef.current?.selectionStart ?? text.length;
+              anchorRef.current = null;
+              setDictation(null);
+              setText((current) => insertAt(current, anchor, heard));
+              return true;
+            }}
+          />
+          <svg data-cvo-hex="" viewBox="0 0 16 16" aria-hidden>
+            <path
+              d="M8 1.2 13.9 4.6v6.8L8 14.8 2.1 11.4V4.6Z"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            />
+            <path d="M5.4 8v0M8 6.2v3.6M10.6 7v2" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </span>
         {targetMode ? (
           <span data-cv-mtag="" data-mode={targetMode}>
             <ModeIcon mode={targetMode} />
@@ -265,9 +306,10 @@ export function OmniboxBar(props: {
         <input
           ref={inputRef}
           data-cv-in=""
-          placeholder="Tell any session…"
+          placeholder={dictation ? "Hex is listening…" : "Tell any session…"}
           aria-label="Omnibox"
-          value={text}
+          value={dictation ? insertAt(text, dictation.anchor, dictation.text) : text}
+          readOnly={dictation !== null}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
             if (
@@ -301,6 +343,7 @@ export function OmniboxBar(props: {
             ))}
           </MenuPopup>
         </Menu>
+        <VoiceBackButton />
         <button
           type="button"
           data-cvo-send=""
