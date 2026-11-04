@@ -20,6 +20,8 @@ import { isLayerOpen } from "../overviewKeys";
 import { isTyping } from "../overviewState";
 import type { CanvasWorkspace } from "../useCanvasWorkspaces";
 import { ChatDrawer } from "./ChatDrawer";
+import { NewSessionDrawer } from "./NewSessionDrawer";
+import { useStartSession } from "./useStartSession";
 import {
   buildRouteContext,
   decideSend,
@@ -70,6 +72,8 @@ export function OmniboxBar(props: {
   const { pinned, onPin: setPinned, targetMode } = props;
   const drawerKey = useDrawerStore((state) => state.sessionKey);
   const setDrawerKey = useDrawerStore((state) => state.open);
+  const draftKey = useDrawerStore((state) => state.draftWorkspaceKey);
+  const startSession = useStartSession();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
   // Dictation in flight: the caret it will land at, and whether the mic is hearing.
@@ -156,6 +160,13 @@ export function OmniboxBar(props: {
 
   /** Resolves whether the command or send went through; only then is the input cleared. */
   const runDecision = async (): Promise<boolean> => {
+    // An open "New session" draft takes the first message.
+    const draftWorkspace = workspaces.find((workspace) => workspace.key === draftKey);
+    if (draftWorkspace) {
+      const failure = await startSession(draftWorkspace, text.trim());
+      if (failure !== null) toast("error", "Could not start the session", failure);
+      return failure === null;
+    }
     const decision = decideSend(text, ctx);
     if (decision.kind === "preview") {
       if (decision.items.length === 0) toast("info", "No workspace has a session to send to");
@@ -253,6 +264,12 @@ export function OmniboxBar(props: {
   const chipWorkspaces = overview ? workspaces : workspaces.filter((w) => w.key === selectedKey);
   return (
     <div data-cvo-wrap="">
+      {draftKey !== null && workspaces.some((workspace) => workspace.key === draftKey) ? (
+        <NewSessionDrawer
+          workspace={workspaces.find((workspace) => workspace.key === draftKey)!}
+          onClose={() => useDrawerStore.getState().close()}
+        />
+      ) : null}
       {drawer ? (
         <ChatDrawer
           workspaceName={drawer.workspace.name}
