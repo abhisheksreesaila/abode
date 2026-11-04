@@ -7,7 +7,9 @@ import { SidebarInset, useSidebar } from "~/components/ui/sidebar";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
 import { useCanvasWorkspaces, type CanvasWorkspace } from "./useCanvasWorkspaces";
+import { composeSessions, statusSentence } from "./composeBlocks";
 import { currentMilestoneName, planBlock } from "./planBlock";
+import { MODES } from "./sessionMode";
 import { usePlanFile } from "./usePlanFile";
 import { workspaceInitials, type RailGroup } from "./railGroups";
 import { OmniboxBar } from "./omnibox/OmniboxBar";
@@ -17,6 +19,9 @@ import { modeOf, useSessionModeStore } from "./sessionModeStore";
 import { AddMachineGuide } from "./AddMachineGuide";
 import { useAddMachineStore } from "./addMachineStore";
 import { useDrawerStore } from "./drawerStore";
+import { KitView } from "./kit/KitView";
+import { useKitStore } from "./kit/kitStore";
+import { ModeIcon } from "./ModeVisuals";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
@@ -75,11 +80,23 @@ export function CanvasShell() {
     if (isMobile) setOpenMobile(false);
   }, [isMobile, setOpenMobile]);
   const [overview, setOverview] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  const kitOpen = useKitStore((state) => state.open);
   const closeOverview = () => {
     if (overview) useLastSeenStore.getState().markSeen();
     setOverview(false);
   };
-  useOverviewKeys(overview, () => (overview ? closeOverview() : setOverview(true)), closeOverview);
+  // The overview and the Kit each take the body row, so only one is open at a time.
+  const toggleOverview = () => {
+    if (overview) return closeOverview();
+    useKitStore.getState().setOpen(false);
+    setOverview(true);
+  };
+  const toggleKit = () => {
+    closeOverview();
+    useKitStore.getState().setOpen(!kitOpen);
+  };
+  useOverviewKeys(overview, toggleOverview, closeOverview);
   const [pinned, setPinned] = useState<string | undefined>(undefined);
   const modes = useSessionModeStore((state) => state.modes);
   // The session a message would reach with nothing typed: pinned, else routed (spec 5.5).
@@ -100,12 +117,35 @@ export function CanvasShell() {
     <SidebarInset
       data-cv-root=""
       data-overview={overview ? "" : undefined}
+      data-kit={kitOpen ? "" : undefined}
+      data-rail={railOpen && !phone ? "open" : undefined}
       className="h-dvh min-h-0 overflow-hidden overscroll-y-none"
     >
       <header data-cv-top="">
-        <span data-cv-mark="" aria-hidden>
-          ab
-        </span>
+        {phone ? null : (
+          <button
+            type="button"
+            data-cv-xbtn=""
+            aria-label="Workspaces"
+            aria-pressed={railOpen}
+            onClick={() => setRailOpen(!railOpen)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden width="18" height="18" data-cv-sideicon="">
+              <rect x="3" y="4" width="18" height="16" rx="3" />
+              <path d="M9 4v16" />
+            </svg>
+          </button>
+        )}
+        <Menu>
+          <MenuTrigger data-cv-mark="" aria-label="T3 Code settings menu">
+            ab
+          </MenuTrigger>
+          <MenuPopup align="start">
+            <MenuItem onClick={() => void router.navigate({ to: "/settings" })}>
+              T3 Code settings
+            </MenuItem>
+          </MenuPopup>
+        </Menu>
         <div data-cv-title="">
           <b>One window</b>
           <span>
@@ -113,7 +153,7 @@ export function CanvasShell() {
           </span>
         </div>
         <span data-cv-power="">
-          <i aria-hidden />
+          <b aria-hidden>T3</b>
           powered by T3 Code
         </span>
         <span data-cv-grow="" />
@@ -122,42 +162,61 @@ export function CanvasShell() {
           data-cv-xbtn=""
           aria-label="Overview"
           aria-pressed={overview}
-          onClick={() => (overview ? closeOverview() : setOverview(true))}
+          onClick={toggleOverview}
         >
           ⊞
         </button>
         <button
           type="button"
           data-cv-xbtn=""
-          aria-label="Settings"
-          onClick={() => void router.navigate({ to: "/settings" })}
+          aria-label="Kit"
+          aria-pressed={kitOpen}
+          onClick={toggleKit}
         >
           ⚙
         </button>
       </header>
       <div data-cv-body="">
         <nav data-cv-rail="" aria-label="Workspaces">
-          {workspaces.map((workspace, index) => (
-            <div key={workspace.key} data-cv-rail-item="">
-              {index > 0 && workspaces[index - 1]?.group !== workspace.group ? (
-                <hr data-cv-rsep="" />
-              ) : null}
-              <button
-                type="button"
-                data-cv-rl=""
-                data-group={workspace.group}
-                aria-current={workspace.key === selected?.key ? "true" : undefined}
-                aria-label={`${workspace.name}, ${GROUP_LABEL[workspace.group]}`}
-                onClick={() => {
-                  setSelectedKey(workspace.key);
-                  useDrawerStore.getState().close();
-                }}
-              >
-                <span>{workspaceInitials(workspace.name)}</span>
-                {workspace.group === "need" ? <i data-cv-dot="" aria-hidden /> : null}
-              </button>
-            </div>
-          ))}
+          {workspaces.map((workspace, index) => {
+            const newGroup = index === 0 || workspaces[index - 1]?.group !== workspace.group;
+            return (
+              <div key={workspace.key} data-cv-rail-item="">
+                {newGroup ? (
+                  <>
+                    {index > 0 ? <hr data-cv-rsep="" /> : null}
+                    <span data-cv-rgrp="">{GROUP_LABEL[workspace.group]}</span>
+                  </>
+                ) : null}
+                <button
+                  type="button"
+                  data-cv-rl=""
+                  data-group={workspace.group}
+                  aria-current={workspace.key === selected?.key ? "true" : undefined}
+                  aria-label={`${workspace.name}, ${GROUP_LABEL[workspace.group]}`}
+                  onClick={() => {
+                    setSelectedKey(workspace.key);
+                    useDrawerStore.getState().close();
+                  }}
+                >
+                  <span data-cv-tile="">
+                    <span data-cv-ini="">{workspaceInitials(workspace.name)}</span>
+                    {workspace.group === "need" ? <i data-cv-dot="" aria-hidden /> : null}
+                    <em data-cv-badge="" data-mode={workspace.mode} aria-hidden>
+                      <ModeIcon mode={workspace.mode} />
+                    </em>
+                  </span>
+                  <span data-cv-rtext="">
+                    <b>{workspace.name}</b>
+                    <small>
+                      {MODES[workspace.mode].label} ·{" "}
+                      {statusSentence(composeSessions(workspace.sessions.pills, modes))}
+                    </small>
+                  </span>
+                </button>
+              </div>
+            );
+          })}
           {hidden.length > 0 ? (
             <Menu>
               <MenuTrigger data-cv-hidden="" aria-label={`Hidden workspaces, ${hidden.length}`}>
@@ -226,6 +285,11 @@ export function CanvasShell() {
           </main>
         )}
       </div>
+      {kitOpen ? (
+        <section data-cv-kit="" aria-label="Kit">
+          {phone ? <p data-cv-kit-note="">The Kit is desktop only.</p> : <KitView />}
+        </section>
+      ) : null}
       {overview ? (
         <OverviewView
           workspaces={workspaces}
