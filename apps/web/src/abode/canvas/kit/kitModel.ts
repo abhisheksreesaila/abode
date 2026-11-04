@@ -287,8 +287,8 @@ export function maskCommand(command: string): string {
     .replace(/^\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)+/, (prefix) =>
       prefix.replace(/([A-Za-z_][A-Za-z0-9_]*)=\S*/g, "$1=•••"),
     )
-    .replace(/(--?[\w-]*(?:token|key|secret|password|auth)[\w-]*)(\s+|=)\S+/gi, "$1$2•••")
-    .replace(/\b(Bearer)\s+\S+/gi, "$1 •••");
+    .replace(/(--?[\w-]*(?:token|key|secret|password|auth)[\w-]*)(\s+|=)[^\s'"]+/gi, "$1$2•••")
+    .replace(/\b(Bearer)\s+[^\s'"]+/gi, "$1 •••");
 }
 
 /** The `hooks` of a Claude `settings.json`: event, matcher and command, in file order. */
