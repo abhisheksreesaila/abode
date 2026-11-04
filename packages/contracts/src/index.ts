@@ -73,3 +73,4 @@ export * from "./clientRpcPermissions.ts";
 // abode: customizations contract
 export * from "./abodeCustomizations.ts";
 export * from "./abodeVoice.ts"; // abode: voice
+export * from "./abodeTailnet.ts"; // abode: tailnet

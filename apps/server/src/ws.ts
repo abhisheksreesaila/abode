@@ -206,6 +206,7 @@ import * as KnownWorkspaces from "./workspace/KnownWorkspaces.ts";
 import * as WorkspaceFileSystem from "./workspace/WorkspaceFileSystem.ts";
 import * as Customizations from "./abode/Customizations.ts"; // abode:
 import * as Voice from "./abode/voice/VoiceLive.ts"; // abode: voice
+import * as Tailnet from "./abode/Tailnet.ts"; // abode: tailnet
 import { readWorkflowScript } from "./orchestration-v2/workflowScriptQuery.ts";
 import * as WorkspacePaths from "./workspace/WorkspacePaths.ts";
 import * as VcsStatusBroadcaster from "./vcs/VcsStatusBroadcaster.ts";
@@ -2852,6 +2853,7 @@ export const layerWsRpc = (
             .writeFile(input)
             .pipe(Effect.mapError(Customizations.toCustomizationsError)),
         [WS_METHODS.voice]: (input, metadata) => voice.handle(input, metadata.client.id), // abode: voice
+        [WS_METHODS.tailnetStatus]: () => Tailnet.status, // abode: tailnet
         [WS_METHODS.shellOpenInEditor]: (input) => externalLauncher.launchEditor(input),
         [WS_METHODS.filesystemGetMetadata]: (input) => workspaceFileSystem.getMetadata(input),
         [WS_METHODS.filesystemBrowse]: (input) =>

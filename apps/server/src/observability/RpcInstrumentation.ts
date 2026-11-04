@@ -159,6 +159,7 @@ const RPC_AGGREGATES = {
   [WS_METHODS.customizationsReadFile]: "workspace",
   [WS_METHODS.customizationsWriteFile]: "workspace",
   [WS_METHODS.voice]: "workspace", // abode: voice
+  [WS_METHODS.tailnetStatus]: "workspace", // abode: tailnet
   [WS_METHODS.shellOpenInEditor]: "workspace",
   [WS_METHODS.filesystemBrowse]: "workspace",
   [WS_METHODS.filesystemGetMetadata]: "workspace",

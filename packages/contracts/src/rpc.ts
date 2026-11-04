@@ -402,17 +402,7 @@ import {
   SourceControlSignInResult,
 } from "./sourceControl.ts";
 import { VcsError } from "./vcs.ts";
-// abode: customizations contract
-import {
-  CustomizationsError,
-  CustomizationsListInput,
-  CustomizationsListResult,
-  CustomizationsReadFileInput,
-  CustomizationsReadFileResult,
-  CustomizationsWriteFileInput,
-  CustomizationsWriteFileResult,
-} from "./abodeCustomizations.ts";
-import { WsVoiceRpc } from "./abodeVoice.ts"; // abode: voice
+import { ABODE_RPCS, ABODE_WS_METHODS } from "./abodeRpcs.ts"; // abode:
 import { Project, ProjectMutation, ProjectMutationError } from "./project.ts";
 
 export const WS_METHODS = {
@@ -426,11 +416,7 @@ export const WS_METHODS = {
   projectsEnsureScratch: "projects.ensureScratch",
   projectsCreateNew: "projects.createNew",
   projectsCreateFromThread: "projects.createFromThread",
-  // abode: customizations RPCs
-  customizationsList: "customizations.list",
-  customizationsReadFile: "customizations.readFile",
-  customizationsWriteFile: "customizations.writeFile",
-  voice: "voice.session", // abode: voice
+  ...ABODE_WS_METHODS, // abode:
 
   shellOpenInEditor: "shell.openInEditor",
 
@@ -1363,25 +1349,6 @@ const WsProjectsCreateFromThreadRpc = Rpc.make(WS_METHODS.projectsCreateFromThre
   error: Schema.Union([OrchestrationDispatchCommandError, EnvironmentAuthorizationError]),
 });
 
-// abode: customizations RPCs (add-only)
-const WsCustomizationsListRpc = Rpc.make(WS_METHODS.customizationsList, {
-  payload: CustomizationsListInput,
-  success: CustomizationsListResult,
-  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
-});
-
-const WsCustomizationsReadFileRpc = Rpc.make(WS_METHODS.customizationsReadFile, {
-  payload: CustomizationsReadFileInput,
-  success: CustomizationsReadFileResult,
-  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
-});
-
-const WsCustomizationsWriteFileRpc = Rpc.make(WS_METHODS.customizationsWriteFile, {
-  payload: CustomizationsWriteFileInput,
-  success: CustomizationsWriteFileResult,
-  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
-});
-
 const WsShellOpenInEditorRpc = Rpc.make(WS_METHODS.shellOpenInEditor, {
   payload: LaunchEditorInput,
   error: Schema.Union([ExternalLauncherError, EnvironmentAuthorizationError]),
@@ -2129,10 +2096,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsProjectsCreateFromThreadRpc,
   WsProjectsWriteFileRpc,
   WsProjectsMutateRpc,
-  WsCustomizationsListRpc, // abode:
-  WsCustomizationsReadFileRpc, // abode:
-  WsCustomizationsWriteFileRpc, // abode:
-  WsVoiceRpc, // abode: voice
+  ...ABODE_RPCS, // abode:
   WsShellOpenInEditorRpc,
   WsFilesystemBrowseRpc,
   WsFilesystemGetMetadataRpc,

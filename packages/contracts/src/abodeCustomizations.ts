@@ -1,5 +1,7 @@
 import * as Schema from "effect/Schema";
+import * as Rpc from "effect/rpc/Rpc";
 
+import { EnvironmentAuthorizationError } from "./auth.ts";
 import { TrimmedNonEmptyString } from "./baseSchemas.ts";
 
 /**
@@ -93,3 +95,21 @@ export class CustomizationsError extends Schema.TaggedError<CustomizationsError>
     cause: Schema.optional(Schema.Defect()),
   },
 ) {}
+
+export const WsCustomizationsListRpc = Rpc.make("customizations.list", {
+  payload: CustomizationsListInput,
+  success: CustomizationsListResult,
+  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
+});
+
+export const WsCustomizationsReadFileRpc = Rpc.make("customizations.readFile", {
+  payload: CustomizationsReadFileInput,
+  success: CustomizationsReadFileResult,
+  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
+});
+
+export const WsCustomizationsWriteFileRpc = Rpc.make("customizations.writeFile", {
+  payload: CustomizationsWriteFileInput,
+  success: CustomizationsWriteFileResult,
+  error: Schema.Union([CustomizationsError, EnvironmentAuthorizationError]),
+});
