@@ -19,6 +19,7 @@ import { modeOf, useSessionModeStore } from "./sessionModeStore";
 import { AddMachineGuide } from "./AddMachineGuide";
 import { useAddMachineStore } from "./addMachineStore";
 import { useDrawerStore } from "./drawerStore";
+import { useFreshMoment } from "./useFreshMoment";
 import { KitView } from "./kit/KitView";
 import { useKitStore } from "./kit/kitStore";
 import { ModeIcon } from "./ModeVisuals";
@@ -81,6 +82,12 @@ export function CanvasShell() {
   }, [isMobile, setOpenMobile]);
   const [overview, setOverview] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
+  // A workspace added from the palette gets the focus moment and is selected (spec 5.11).
+  const freshWorkspace = useFreshMoment(
+    "workspaces",
+    workspaces.map((workspace) => workspace.key),
+    setSelectedKey,
+  );
   const kitOpen = useKitStore((state) => state.open);
   const closeOverview = () => {
     if (overview) useLastSeenStore.getState().markSeen();
@@ -119,6 +126,7 @@ export function CanvasShell() {
       data-overview={overview ? "" : undefined}
       data-kit={kitOpen ? "" : undefined}
       data-rail={railOpen && !phone ? "open" : undefined}
+      data-focus={freshWorkspace === null ? undefined : ""}
       className="h-dvh min-h-0 overflow-hidden overscroll-y-none"
     >
       <header data-cv-top="">
@@ -192,6 +200,7 @@ export function CanvasShell() {
                   type="button"
                   data-cv-rl=""
                   data-group={workspace.group}
+                  data-fresh={workspace.key === freshWorkspace ? "" : undefined}
                   aria-current={workspace.key === selected?.key ? "true" : undefined}
                   aria-label={`${workspace.name}, ${GROUP_LABEL[workspace.group]}`}
                   onClick={() => {

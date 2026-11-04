@@ -162,7 +162,9 @@ main[data-cv-root] {
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 0.2s var(--cv-spring);
+  transition:
+    transform 0.2s var(--cv-spring),
+    filter 0.45s var(--cv-spring);
 }
 [data-cv-tile] {
   position: relative;
@@ -293,7 +295,9 @@ main[data-cv-root] {
     system-ui,
     sans-serif;
   cursor: pointer;
-  transition: background 0.15s;
+  transition:
+    background 0.15s,
+    filter 0.45s var(--cv-spring);
 }
 [data-cv-sc]:hover {
   background: rgb(237 237 239 / 0.1);
@@ -463,39 +467,68 @@ main[data-cv-root] {
   color: var(--cv-ink-2);
   font-size: 18px;
 }
-/* Creation focus moment (spec 5.11): the background blurs, the new item rings amber. */
+/* Creation focus moment (spec 5.11): the background blurs 3px at 70% brightness over 450ms, the new
+   item rings amber with a 24px glow (g3fresh, 1.8s), then both clear. */
 [data-cv-ws][data-fresh] [data-cv-head],
-[data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session]) {
+[data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session], [data-cv-new]),
+[data-cv-ws][data-fresh] [data-cv-map],
+[data-cv-ws][data-fresh] [data-cv-row],
+[data-cv-root][data-focus] [data-cv-top],
+[data-cv-root][data-focus] [data-cv-main],
+[data-cv-root][data-focus] [data-cv-dock],
+[data-cv-root][data-focus] [data-cv-rl]:not([data-fresh]) {
   filter: blur(3px) brightness(0.7);
-  transition: filter 0.45s;
 }
-[data-cv-ws][data-fresh] [data-cv-add-session] {
+[data-cv-head],
+[data-cv-map],
+[data-cv-row],
+[data-cv-top],
+[data-cv-main] {
+  transition: filter 0.45s var(--cv-spring);
+}
+[data-cv-ws][data-fresh] [data-cv-add-session],
+[data-cv-sc][data-cv-new],
+[data-cv-rl][data-fresh] [data-cv-tile] {
   box-shadow:
     inset 0 0 0 1.5px var(--cv-warn),
     0 0 0 4px rgb(245 165 36 / 0.25),
     0 0 24px rgb(245 165 36 / 0.45);
-  animation: cv-fresh 1.6s var(--cv-spring);
+  animation: cv-fresh 1.8s var(--cv-spring);
 }
 @keyframes cv-fresh {
   0% {
     transform: scale(0.9);
     opacity: 0;
   }
-  25% {
+  20% {
     transform: scale(1.06);
     opacity: 1;
   }
-  100% {
-    transform: scale(1);
+  40% {
+    transform: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   [data-cv-ws][data-fresh] [data-cv-head],
-  [data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session]) {
+  [data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session], [data-cv-new]),
+  [data-cv-ws][data-fresh] [data-cv-map],
+  [data-cv-ws][data-fresh] [data-cv-row],
+  [data-cv-root][data-focus] [data-cv-top],
+  [data-cv-root][data-focus] [data-cv-main],
+  [data-cv-root][data-focus] [data-cv-dock],
+  [data-cv-root][data-focus] [data-cv-rl]:not([data-fresh]) {
     filter: none;
+  }
+  [data-cv-head],
+  [data-cv-map],
+  [data-cv-row],
+  [data-cv-top],
+  [data-cv-main] {
     transition: none;
   }
-  [data-cv-ws][data-fresh] [data-cv-add-session] {
+  [data-cv-ws][data-fresh] [data-cv-add-session],
+  [data-cv-sc][data-cv-new],
+  [data-cv-rl][data-fresh] [data-cv-tile] {
     animation: none;
   }
 }
@@ -697,11 +730,13 @@ li[data-state="todo"] [data-cv-ic] {
 main[data-cv-root][data-rail="open"] {
   --cv-sbw: 320px;
 }
-[data-cv-body],
+[data-cv-body] {
+  transition: grid-template-columns 0.45s var(--cv-spring);
+}
 [data-cv-dock] {
   transition:
-    grid-template-columns 0.45s var(--cv-spring),
-    padding 0.45s var(--cv-spring);
+    padding 0.45s var(--cv-spring),
+    filter 0.45s var(--cv-spring);
 }
 [data-rail="open"] [data-cv-rail] {
   align-items: stretch;
