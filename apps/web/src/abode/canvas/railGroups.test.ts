@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { groupRailItems, workspaceGroup, workspaceInitials } from "./railGroups";
+import {
+  groupRailItems,
+  withJam,
+  workspaceGroup,
+  workspaceInitials,
+  workspaceMode,
+} from "./railGroups";
 
 const idle = { attention: null, failed: false } as const;
 const running = { attention: "running", failed: false } as const;
@@ -45,4 +51,38 @@ describe("workspaceInitials", () => {
     expect(workspaceInitials("my-cool-app")).toBe("Mc");
     expect(workspaceInitials("")).toBe("?");
   });
+});
+
+describe("withJam", () => {
+  it("moves a moving or quiet workspace with a Jam session into jam", () => {
+    expect(withJam("move", ["auto", "jam"])).toBe("jam");
+    expect(withJam("quiet", ["jam"])).toBe("jam");
+  });
+  it("leaves a workspace that needs you where it is", () => {
+    expect(withJam("need", ["jam"])).toBe("need");
+  });
+  it("changes nothing without a Jam session", () => {
+    expect(withJam("move", ["auto", "grill"])).toBe("move");
+  });
+});
+
+describe("workspaceMode", () => {
+  it("shows the most hands-on live mode", () => {
+    expect(workspaceMode(["auto", "tell", "grill"])).toBe("grill");
+    expect(workspaceMode(["auto", "jam", "grill"])).toBe("jam");
+    expect(workspaceMode(["auto", "tell"])).toBe("tell");
+  });
+  it("is Autopilot with no live session", () => {
+    expect(workspaceMode([])).toBe("auto");
+  });
+});
+
+it("orders need, jam, move, quiet", () => {
+  const items = [
+    { n: "q", group: "quiet" },
+    { n: "m", group: "move" },
+    { n: "j", group: "jam" },
+    { n: "n", group: "need" },
+  ] as const;
+  expect(groupRailItems(items).map((item) => item.n)).toEqual(["n", "j", "m", "q"]);
 });

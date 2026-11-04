@@ -38,6 +38,10 @@ main[data-cv-root] {
   background: var(--cv-s2);
   display: grid;
   place-items: center;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
   font:
     650 12px "Geist",
     system-ui,
@@ -66,12 +70,21 @@ main[data-cv-root] {
     monospace;
   color: var(--cv-ink-2);
   opacity: 0.7;
+  margin-left: 12px;
 }
-[data-cv-power] i {
+[data-cv-power] b {
+  display: inline-grid;
+  place-items: center;
   width: 16px;
   height: 16px;
   border-radius: 5px;
-  background: linear-gradient(135deg, #52a9ff, #8b7bff);
+  background: linear-gradient(135deg, #f43f5e, #a855f7);
+  color: #fff;
+  font:
+    800 7.5px "Geist",
+    system-ui,
+    sans-serif;
+  letter-spacing: -0.02em;
 }
 [data-cv-grow] {
   flex: 1;
@@ -89,6 +102,19 @@ main[data-cv-root] {
 [data-cv-xbtn]:hover {
   background: rgb(237 237 239 / 0.08);
   color: var(--cv-ink);
+}
+/* The active one of the two layers (and the open rail) sits on a 16% state fill (spec 5.1). */
+[data-cv-top] [data-cv-xbtn][aria-pressed="true"] {
+  background: rgb(237 237 239 / 0.16);
+  color: var(--cv-ink);
+}
+[data-cv-sideicon] {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
 }
 [data-cv-body] {
   display: grid;
@@ -130,14 +156,49 @@ main[data-cv-root] {
   height: 44px;
   flex: none;
   border: 0;
+  padding: 0;
   border-radius: 14px;
-  background: var(--cv-s1);
+  background: none;
   color: var(--cv-ink);
-  box-shadow: var(--cv-shadow-1);
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 0.2s var(--cv-spring);
+  transition:
+    transform 0.2s var(--cv-spring),
+    filter 0.45s var(--cv-spring);
+}
+[data-cv-tile] {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 14px;
+  background: var(--cv-s1);
+  box-shadow: var(--cv-shadow-1);
+  display: grid;
+  place-items: center;
+}
+/* Mode badge (spec 5.2): 20px, bottom-right, the mode icon in the mode colour. */
+[data-cv-badge] {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cv-s2);
+  box-shadow: 0 0 0 2px var(--cv-s0);
+  display: grid;
+  place-items: center;
+  font-style: normal;
+}
+[data-cv-badge] svg {
+  width: 12px;
+  height: 12px;
+}
+[data-cv-rtext],
+[data-cv-rgrp] {
+  display: none;
 }
 [data-cv-rl]:hover {
   transform: scale(1.06);
@@ -156,7 +217,7 @@ main[data-cv-root] {
     transform: none;
   }
 }
-[data-cv-rl] span {
+[data-cv-ini] {
   font:
     650 13px "Geist",
     system-ui,
@@ -165,6 +226,8 @@ main[data-cv-root] {
 }
 [data-cv-rl][data-group="quiet"] {
   opacity: 0.45;
+}
+[data-cv-rl][data-group="quiet"] [data-cv-tile] {
   box-shadow: none;
 }
 [data-cv-rl][aria-current="true"] {
@@ -179,6 +242,7 @@ main[data-cv-root] {
   height: 9px;
   border-radius: 50%;
   background: var(--cv-warn);
+  box-shadow: 0 0 0 2.5px var(--cv-s0);
 }
 [data-cv-rl][data-cv-add] {
   background: none;
@@ -232,7 +296,9 @@ main[data-cv-root] {
     system-ui,
     sans-serif;
   cursor: pointer;
-  transition: background 0.15s;
+  transition:
+    background 0.15s,
+    filter 0.45s var(--cv-spring);
 }
 [data-cv-sc]:hover {
   background: rgb(237 237 239 / 0.1);
@@ -402,39 +468,68 @@ main[data-cv-root] {
   color: var(--cv-ink-2);
   font-size: 18px;
 }
-/* Creation focus moment (spec 5.11): the background blurs, the new item rings amber. */
+/* Creation focus moment (spec 5.11): the background blurs 3px at 70% brightness over 450ms, the new
+   item rings amber with a 24px glow (g3fresh, 1.8s), then both clear. */
 [data-cv-ws][data-fresh] [data-cv-head],
-[data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session]) {
+[data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session], [data-cv-new]),
+[data-cv-ws][data-fresh] [data-cv-map],
+[data-cv-ws][data-fresh] [data-cv-row],
+[data-cv-root][data-focus] [data-cv-top],
+[data-cv-root][data-focus] [data-cv-main],
+[data-cv-root][data-focus] [data-cv-dock],
+[data-cv-root][data-focus] [data-cv-rl]:not([data-fresh]) {
   filter: blur(3px) brightness(0.7);
-  transition: filter 0.45s;
 }
-[data-cv-ws][data-fresh] [data-cv-add-session] {
+[data-cv-head],
+[data-cv-map],
+[data-cv-row],
+[data-cv-top],
+[data-cv-main] {
+  transition: filter 0.45s var(--cv-spring);
+}
+[data-cv-ws][data-fresh] [data-cv-add-session],
+[data-cv-sc][data-cv-new],
+[data-cv-rl][data-fresh] [data-cv-tile] {
   box-shadow:
     inset 0 0 0 1.5px var(--cv-warn),
     0 0 0 4px rgb(245 165 36 / 0.25),
     0 0 24px rgb(245 165 36 / 0.45);
-  animation: cv-fresh 1.6s var(--cv-spring);
+  animation: cv-fresh 1.8s var(--cv-spring);
 }
 @keyframes cv-fresh {
   0% {
     transform: scale(0.9);
     opacity: 0;
   }
-  25% {
+  20% {
     transform: scale(1.06);
     opacity: 1;
   }
-  100% {
-    transform: scale(1);
+  40% {
+    transform: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   [data-cv-ws][data-fresh] [data-cv-head],
-  [data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session]) {
+  [data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session], [data-cv-new]),
+  [data-cv-ws][data-fresh] [data-cv-map],
+  [data-cv-ws][data-fresh] [data-cv-row],
+  [data-cv-root][data-focus] [data-cv-top],
+  [data-cv-root][data-focus] [data-cv-main],
+  [data-cv-root][data-focus] [data-cv-dock],
+  [data-cv-root][data-focus] [data-cv-rl]:not([data-fresh]) {
     filter: none;
+  }
+  [data-cv-head],
+  [data-cv-map],
+  [data-cv-row],
+  [data-cv-top],
+  [data-cv-main] {
     transition: none;
   }
-  [data-cv-ws][data-fresh] [data-cv-add-session] {
+  [data-cv-ws][data-fresh] [data-cv-add-session],
+  [data-cv-sc][data-cv-new],
+  [data-cv-rl][data-fresh] [data-cv-tile] {
     animation: none;
   }
 }
@@ -629,5 +724,115 @@ li[data-state="todo"] [data-cv-ic] {
 @media (prefers-reduced-motion: reduce) {
   [data-cv-mbody] {
     transition: none;
+  }
+}
+
+/* Expanded rail (spec 5.2): 320px, one card per workspace with name, mode and a one-line status. */
+main[data-cv-root][data-rail="open"] {
+  --cv-sbw: 320px;
+}
+[data-cv-body] {
+  transition: grid-template-columns 0.45s var(--cv-spring);
+}
+[data-cv-dock] {
+  transition:
+    padding 0.45s var(--cv-spring),
+    filter 0.45s var(--cv-spring);
+}
+[data-rail="open"] [data-cv-rail] {
+  align-items: stretch;
+  padding: 6px 8px 12px 6px;
+}
+[data-rail="open"] [data-cv-rail-item] {
+  align-items: stretch;
+}
+[data-rail="open"] [data-cv-rsep] {
+  display: none;
+}
+[data-rail="open"] [data-cv-rgrp] {
+  display: block;
+  padding: 6px 4px 0;
+  font:
+    600 10.5px "Geist Mono",
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cv-ink-2);
+}
+[data-rail="open"] [data-cv-rl]:not([data-cv-add]) {
+  width: 100%;
+  height: auto;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 8px;
+  text-align: left;
+  background: var(--cv-s1);
+  box-shadow: var(--cv-shadow-1);
+}
+[data-rail="open"] [data-cv-rl][data-group="quiet"] {
+  box-shadow: none;
+}
+[data-rail="open"] [data-cv-rl]:not([data-cv-add]) [data-cv-tile] {
+  background: var(--cv-s2);
+  box-shadow: none;
+}
+[data-rail="open"] [data-cv-rl]:not([data-cv-add]):hover {
+  transform: none;
+}
+[data-rail="open"] [data-cv-rtext] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+[data-rail="open"] [data-cv-rtext] b {
+  font-size: 13.5px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-rail="open"] [data-cv-rtext] small {
+  font-size: 12px;
+  color: var(--cv-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-rail="open"] [data-cv-rl][data-cv-add] {
+  align-self: flex-start;
+}
+
+/* The Kit takes the body row like the overview; g3zoom once (350ms), a fade for reduced motion. */
+[data-cv-root][data-kit] [data-cv-body] {
+  display: none;
+}
+[data-cv-kit] {
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 22px 10px;
+  animation: cv-ov-zoom 350ms var(--cv-spring);
+}
+[data-cv-kit-note] {
+  margin: 12px 4px;
+  font-size: 13px;
+  color: var(--cv-ink-2);
+}
+@media (min-width: 641px) {
+  [data-cv-root][data-kit] [data-cv-dock],
+  [data-cv-root][data-overview] [data-cv-dock] {
+    padding-left: 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-cv-body],
+  [data-cv-dock] {
+    transition: none;
+  }
+  [data-cv-kit] {
+    animation-name: cv-ov-fade;
   }
 }

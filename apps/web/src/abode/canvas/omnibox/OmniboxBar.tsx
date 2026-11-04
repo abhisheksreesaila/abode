@@ -15,6 +15,7 @@ import { toastManager } from "~/components/ui/toast";
 import { openCommandPalette } from "~/commandPaletteBus";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
+import { useDrawerStore } from "../drawerStore";
 import { isLayerOpen } from "../overviewKeys";
 import { isTyping } from "../overviewState";
 import type { CanvasWorkspace } from "../useCanvasWorkspaces";
@@ -66,7 +67,8 @@ export function OmniboxBar(props: {
   const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const { pinned, onPin: setPinned, targetMode } = props;
-  const [drawerKey, setDrawerKey] = useState<string | null>(null);
+  const drawerKey = useDrawerStore((state) => state.sessionKey);
+  const setDrawerKey = useDrawerStore((state) => state.open);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
   // Dictation in flight: the caret it will land at, and whether the mic is hearing.
@@ -112,7 +114,7 @@ export function OmniboxBar(props: {
       event.preventDefault();
       if (action === "focus") inputRef.current?.focus();
       else if (action === "close-preview") setPreview(null);
-      else if (action === "close-drawer") setDrawerKey(null);
+      else if (action === "close-drawer") useDrawerStore.getState().close();
       else inputRef.current?.blur();
     };
     window.addEventListener("keydown", onKeyDown, true);

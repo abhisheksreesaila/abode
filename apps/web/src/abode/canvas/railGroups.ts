@@ -1,4 +1,5 @@
 import type { WorkspaceThreadState } from "../shell/workspaceList";
+import { DEFAULT_MODE, type SessionMode } from "./sessionMode";
 
 export type RailGroup = "need" | "jam" | "move" | "quiet";
 
@@ -26,4 +27,16 @@ export function groupRailItems<T extends { readonly group: RailGroup }>(
   items: ReadonlyArray<T>,
 ): T[] {
   return GROUP_ORDER.flatMap((group) => items.filter((item) => item.group === group));
+}
+
+/** A session in Jam moves its workspace into the jam group; needing the user still comes first. */
+export function withJam(group: RailGroup, liveModes: ReadonlyArray<SessionMode>): RailGroup {
+  return group !== "need" && liveModes.includes("jam") ? "jam" : group;
+}
+
+const MODE_LEAD: ReadonlyArray<SessionMode> = ["jam", "grill", "tell", "auto"];
+
+/** The mode shown on a workspace's rail badge: the most hands-on mode among its live sessions. */
+export function workspaceMode(liveModes: ReadonlyArray<SessionMode>): SessionMode {
+  return MODE_LEAD.find((mode) => liveModes.includes(mode)) ?? DEFAULT_MODE;
 }

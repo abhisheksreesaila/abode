@@ -19,6 +19,22 @@ const input = (over: Partial<FeedInput>): FeedInput => ({
 });
 
 describe("deriveFeed", () => {
+  it("names the session a line is about, so a click can open its chat", () => {
+    const feed = deriveFeed(
+      input({
+        sessions: [
+          session({ title: "fix", sessionKey: "env:t1", outcome: "waiting", at: 10 }),
+          session({ title: "ship", sessionKey: "env:t2", at: 200 }),
+        ],
+      }),
+      50,
+    );
+    expect(feed.map((item) => [item.text, item.sessionKey])).toEqual([
+      ["fix is waiting on you", "env:t1"],
+      ["ship finished", "env:t2"],
+    ]);
+  });
+
   it("lists finished and red runs newest first", () => {
     const feed = deriveFeed(
       input({

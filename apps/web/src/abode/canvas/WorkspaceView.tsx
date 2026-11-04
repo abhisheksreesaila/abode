@@ -1,15 +1,15 @@
-import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
-import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
-import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
+import { useDrawerStore } from "./drawerStore";
 import { composeBlocks, composeSessions, type Block } from "./composeBlocks";
+import { JourneyMap } from "./JourneyMap";
 import { ModeBlock } from "./ModeBlocks";
 import { ModeButton } from "./ModeButton";
 import { planBlock, type PlanBlock } from "./planBlock";
@@ -17,17 +17,26 @@ import type { Milestone, Ticket } from "./plan/parsePlan";
 import { modeOf, useSessionModeStore } from "./sessionModeStore";
 import type { SessionMode } from "./sessionMode";
 import type { SessionPill } from "./sessionPills";
+import { useFreshMoment } from "./useFreshMoment";
 import { usePlanFile } from "./usePlanFile";
 import type { CanvasWorkspace } from "./useCanvasWorkspaces";
 
 function Pill(props: {
   readonly pill: SessionPill;
   readonly mode: SessionMode;
+  /** Just created: the focus moment's amber ring (spec 5.11). */
+  readonly fresh?: boolean;
   readonly onOpen: () => void;
 }) {
   const { pill, mode, onOpen } = props;
   return (
-    <div data-cv-sc="" data-mode={mode} role="group" aria-label={pill.title}>
+    <div
+      data-cv-sc=""
+      data-mode={mode}
+      data-cv-new={props.fresh ? "" : undefined}
+      role="group"
+      aria-label={pill.title}
+    >
       <ModeButton pill={pill} mode={mode} />
       <button type="button" data-cv-open="" onClick={onOpen}>
         <b>{pill.title}</b>
@@ -136,10 +145,9 @@ export function WorkspaceView(props: {
   readonly onBack?: (() => void) | undefined;
 }) {
   const { workspace, onBack } = props;
-  const router = useRouter();
   const handleNewThread = useNewThreadHandler();
   const [showDone, setShowDone] = useState(false);
-  const [fresh, setFresh] = useState(false);
+  const [creating, setCreating] = useState(false);
   const { pills, done, doneCount } = workspace.sessions;
   const root = workspace.newSessionTarget;
   const planFile = usePlanFile(root?.environmentId, root?.workspaceRoot, workspace.turnSignal);
@@ -147,6 +155,11 @@ export function WorkspaceView(props: {
   const modes = useSessionModeStore((state) => state.modes);
   const sessions = composeSessions(pills, modes);
   const rows = composeBlocks(sessions);
+  const freshSession = useFreshMoment(
+    workspace.key,
+    pills.map((pill) => pill.key),
+  );
+  const fresh = creating || freshSession !== null;
 
   const renderBlock = (block: Block) => {
     if (block.block === "plan") {
@@ -167,22 +180,18 @@ export function WorkspaceView(props: {
     return <ModeBlock key={key} block={block} pills={pills} sessions={sessions} onOpen={open} />;
   };
 
-  const open = (pill: SessionPill) => {
-    void router.navigate({
-      to: "/$environmentId/$threadId",
-      params: buildThreadRouteParams(scopeThreadRef(pill.environmentId, pill.threadId)),
-    });
-  };
+  // A session opens in the chat drawer; the full thread route is reached from the drawer only.
+  const open = (pill: SessionPill) => useDrawerStore.getState().open(pill.key);
 
   const addSession = async () => {
     const target = workspace.newSessionTarget;
     if (target === undefined) return;
-    setFresh(true);
+    setCreating(true);
     // No options: branch, worktree and env mode come from the user's defaults, like the sidebar's "+".
     const result = await settlePromise(() =>
       handleNewThread(scopeProjectRef(target.environmentId, target.id)),
     );
-    setFresh(false);
+    setCreating(false);
     if (result._tag === "Failure") {
       const error = squashAtomCommandFailure(result);
       toastManager.add(
@@ -223,6 +232,7 @@ export function WorkspaceView(props: {
             key={pill.key}
             pill={pill}
             mode={modeOf(modes, pill.key)}
+            fresh={pill.key === freshSession}
             onOpen={() => open(pill)}
           />
         ))}
@@ -257,6 +267,7 @@ export function WorkspaceView(props: {
           +
         </button>
       </div>
+      {plan.kind === "ready" ? <JourneyMap plan={plan} sessions={sessions} /> : null}
       {rows.map((row, index) => (
         <div
           // oxlint-disable-next-line react/no-array-index-key -- rows are recomposed from the modes; position is their identity

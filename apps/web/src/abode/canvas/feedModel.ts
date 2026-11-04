@@ -7,6 +7,8 @@ export interface FeedItem {
   readonly type: FeedType;
   readonly workspaceKey: string;
   readonly workspaceName: string;
+  /** The session the line is about (a pill's key); milestone lines have none. */
+  readonly sessionKey?: string;
   readonly text: string;
   /** Epoch ms. */
   readonly at: number;
@@ -15,6 +17,7 @@ export interface FeedItem {
 export interface FeedSession {
   readonly workspaceKey: string;
   readonly workspaceName: string;
+  readonly sessionKey?: string;
   readonly title: string;
   /** waiting: a pending approval or question; limited: a usage limit stopped the run. */
   readonly outcome: "waiting" | "completed" | "failed" | "limited" | "other";
@@ -66,7 +69,12 @@ export function deriveFeed(input: FeedInput, lastSeenAt: number | null): FeedIte
   const pinned: FeedItem[] = [];
   const recent: FeedItem[] = [];
   for (const s of input.sessions) {
-    const base = { workspaceKey: s.workspaceKey, workspaceName: s.workspaceName, at: s.at };
+    const base = {
+      workspaceKey: s.workspaceKey,
+      workspaceName: s.workspaceName,
+      at: s.at,
+      ...(s.sessionKey === undefined ? {} : { sessionKey: s.sessionKey }),
+    };
     if (s.outcome === "waiting") {
       pinned.push({ ...base, type: "dec", text: `${s.title} is waiting on you` });
     } else if (s.at > since) {

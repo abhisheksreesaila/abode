@@ -78,7 +78,8 @@ function Row(props: {
 /** Zoomed-out view: every workspace on every machine, usage and what needs you (A-048). */
 export function OverviewView(props: {
   readonly workspaces: ReadonlyArray<CanvasWorkspace>;
-  readonly onSelect: (key: string) => void;
+  /** A feed line about a session also names it, so the shell can open its chat drawer. */
+  readonly onSelect: (key: string, sessionKey?: string) => void;
 }) {
   const inputs = useOverviewWorkspaces(props.workspaces);
   const machines = overviewMachines(
@@ -212,7 +213,10 @@ export function OverviewView(props: {
           <ul>
             {feed.items.map((item) => (
               <li key={`${item.type}|${item.workspaceKey}|${item.text}|${item.at}`}>
-                <button type="button" onClick={() => props.onSelect(item.workspaceKey)}>
+                <button
+                  type="button"
+                  onClick={() => props.onSelect(item.workspaceKey, item.sessionKey)}
+                >
                   <span data-cv-ov-fi={item.type} aria-hidden>
                     {FEED_GLYPH[item.type]}
                   </span>
