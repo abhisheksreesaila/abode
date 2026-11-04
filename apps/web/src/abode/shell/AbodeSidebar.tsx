@@ -38,6 +38,7 @@ import {
   resolveThreadRouteTarget,
 } from "~/threadRoutes";
 import { resolveProjectExpanded, useUiStateStore } from "~/uiStateStore";
+import { SidebarFlagSync } from "../canvas/SidebarFlagSync";
 import { CustomizationsSlot } from "./CustomizationsSlot";
 import {
   AbodeActiveRouteContext,
@@ -233,6 +234,7 @@ export function AbodeSidebar() {
   return (
     <AbodeSidebarContext value={context}>
       <AbodeActiveRouteContext value={activeRoute}>
+        <SidebarFlagSync />
         <div data-abode="title-strip" className={isElectron ? "drag-region" : undefined}>
           <SidebarTrigger className="md:hidden" />
           <Link

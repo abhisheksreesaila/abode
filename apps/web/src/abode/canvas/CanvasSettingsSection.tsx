@@ -13,7 +13,7 @@ export function CanvasSettingsSection() {
     <SettingsSection id="one-window" title="One window">
       <SettingsRow
         title="One window"
-        description="Replaces the Control room with one canvas: a rail of your workspaces, the selected workspace and an omnibox. Early preview. Off keeps abode as it was."
+        description="Replaces the Control room with one canvas: a rail of your workspaces, the selected workspace and an omnibox, and hides the sidebar. Early preview. Off keeps abode as it was."
         control={
           <Switch
             checked={enabled}

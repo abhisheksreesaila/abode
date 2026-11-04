@@ -1,0 +1,21 @@
+/* One Window's "back" pill on chat routes: top-left of the chat area (below the header, so the window-controls inset is already cleared), 48px touch target. */
+[data-cv-back] {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-cv-back]:hover {
+  background: var(--accent);
+}

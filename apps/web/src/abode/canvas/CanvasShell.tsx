@@ -1,5 +1,7 @@
+import { useRouter } from "@tanstack/react-router";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { openCommandPalette } from "~/commandPaletteBus";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { SidebarInset, useSidebar } from "~/components/ui/sidebar";
 
@@ -55,6 +57,7 @@ function PhoneRow(props: { readonly workspace: CanvasWorkspace; readonly onOpen:
 
 /** One Window (flag on): top bar, workspace rail, workspace view and omnibox. */
 export function CanvasShell() {
+  const router = useRouter();
   const { workspaces, hidden } = useCanvasWorkspaces();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = workspaces.find((workspace) => workspace.key === selectedKey) ?? workspaces[0];
@@ -120,7 +123,12 @@ export function CanvasShell() {
         >
           ⊞
         </button>
-        <button type="button" data-cv-xbtn="" aria-label="Kit" aria-disabled="true" tabIndex={-1}>
+        <button
+          type="button"
+          data-cv-xbtn=""
+          aria-label="Settings"
+          onClick={() => void router.navigate({ to: "/settings" })}
+        >
           ⚙
         </button>
       </header>
@@ -168,8 +176,7 @@ export function CanvasShell() {
             data-cv-rl=""
             data-cv-add=""
             aria-label="New workspace"
-            aria-disabled="true"
-            tabIndex={-1}
+            onClick={() => openCommandPalette({ open: "add-project" })}
           >
             +
           </button>
