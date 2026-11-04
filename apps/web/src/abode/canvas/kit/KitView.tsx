@@ -44,9 +44,16 @@ function SourcesColumn(props: { readonly skills: ReadonlyArray<KitSkill> }) {
             <b>{SOURCES[source.id].name}</b>
             <small>{SOURCES[source.id].by}</small>
           </div>
-          <span data-cvk-ct="">
-            <b>{source.inKit}</b>/{source.total}
-            {source.total > 0 ? <small>of {source.total} published</small> : null}
+          <span
+            data-cvk-ct=""
+            aria-label={
+              SOURCES[source.id].total > 0
+                ? `${source.inKit} in your kit of ${source.total} published`
+                : `${source.inKit} in your kit`
+            }
+          >
+            <b>{source.inKit}</b>
+            {SOURCES[source.id].total > 0 ? `/${source.total}` : null}
           </span>
         </div>
       ))}
