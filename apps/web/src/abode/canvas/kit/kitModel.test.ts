@@ -10,6 +10,7 @@ import {
   displayUserText,
   estimateContext,
   groupByCategory,
+  maskCommand,
   parseHooks,
   parsePlugins,
   pickCuratorProject,
@@ -189,5 +190,25 @@ describe("curator brief", () => {
     expect(brief).toContain("My kit now: 1 skills (Matt Pocock 1) and 1 MCP servers.");
     expect(displayUserText(brief)).toBe("drop duplicates");
     expect(displayUserText("plain follow-up")).toBe("plain follow-up");
+  });
+});
+
+describe("maskCommand", () => {
+  it("hides env prefixes and token arguments", () => {
+    expect(maskCommand("API_KEY=abc123 DEBUG=1 run.sh --flag")).toBe(
+      "API_KEY=••• DEBUG=••• run.sh --flag",
+    );
+    expect(maskCommand("curl --token s3cret -H 'Authorization: Bearer xyz' u")).toBe(
+      "curl --token ••• -H 'Authorization: Bearer •••' u",
+    );
+    expect(maskCommand("say --api-key=abc done")).toBe("say --api-key=••• done");
+    expect(maskCommand("prettier --write")).toBe("prettier --write");
+  });
+
+  it("masks commands that parseHooks returns", () => {
+    const text = JSON.stringify({
+      hooks: { Stop: [{ hooks: [{ command: "TOKEN=abc notify.sh" }] }] },
+    });
+    expect(parseHooks(text)[0]?.command).toBe("TOKEN=••• notify.sh");
   });
 });

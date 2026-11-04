@@ -2,6 +2,7 @@ import type { CustomizationHarness, CustomizationItem } from "@t3tools/contracts
 
 export type SourceId = "matt" | "gstack" | "pstack" | "tstack" | "anth" | "mine";
 
+/** `total` is each pack's published size, written down by hand; it is not read from the repos. */
 export const SOURCES: Record<
   SourceId,
   { readonly name: string; readonly by: string; readonly color: string; readonly total: number }
@@ -280,6 +281,16 @@ function parseSettings(text: string): Record<string, unknown> | null {
   return record(parsed);
 }
 
+/** Hides env-var values and token-looking arguments before a hook command is shown. */
+export function maskCommand(command: string): string {
+  return command
+    .replace(/^\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)+/, (prefix) =>
+      prefix.replace(/([A-Za-z_][A-Za-z0-9_]*)=\S*/g, "$1=•••"),
+    )
+    .replace(/(--?[\w-]*(?:token|key|secret|password|auth)[\w-]*)(\s+|=)\S+/gi, "$1$2•••")
+    .replace(/\b(Bearer)\s+\S+/gi, "$1 •••");
+}
+
 /** The `hooks` of a Claude `settings.json`: event, matcher and command, in file order. */
 export function parseHooks(settingsText: string): ReadonlyArray<KitHook> {
   const hooks = record(parseSettings(settingsText)?.hooks);
@@ -297,7 +308,7 @@ export function parseHooks(settingsText: string): ReadonlyArray<KitHook> {
           event: HOOK_EVENTS[eventName] ?? "other",
           eventName,
           matcher: typeof entry?.matcher === "string" ? entry.matcher : "",
-          command: command.trim(),
+          command: maskCommand(command.trim()),
         });
       }
     }

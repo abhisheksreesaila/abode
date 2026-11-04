@@ -664,3 +664,10 @@ textarea[data-cvk-md] {
     display: block;
   }
 }
+[data-cvk-scard] [data-cvk-ct] {
+  text-align: right;
+}
+[data-cvk-scard] [data-cvk-ct] small {
+  font-size: 9px;
+  opacity: 0.8;
+}

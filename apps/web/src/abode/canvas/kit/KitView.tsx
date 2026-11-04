@@ -16,8 +16,6 @@ import {
   CATEGORIES,
   estimateContext,
   groupByCategory,
-  parseHooks,
-  parsePlugins,
   SOURCES,
   sourceCounts,
   type CategoryId,
@@ -48,6 +46,7 @@ function SourcesColumn(props: { readonly skills: ReadonlyArray<KitSkill> }) {
           </div>
           <span data-cvk-ct="">
             <b>{source.inKit}</b>/{source.total}
+            {source.total > 0 ? <small>of {source.total} published</small> : null}
           </span>
         </div>
       ))}
@@ -126,8 +125,8 @@ function KitBody(props: { readonly scope: CustomizationsScope }) {
 
   const skills = buildKitSkills(items);
   const mcp = buildKitMcp(items);
-  const plugins = settings === null ? null : parsePlugins(settings);
-  const hooks = settings === null ? null : parseHooks(settings);
+  const plugins = settings?.plugins ?? null;
+  const hooks = settings?.hooks ?? null;
   const context = estimateContext(skills, mcp.length);
   const tabs: ReadonlyArray<readonly [Tab, string, number]> = [
     ["skills", "Skills", skills.length],

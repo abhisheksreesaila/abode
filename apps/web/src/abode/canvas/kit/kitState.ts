@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useAtomCommand } from "~/state/use-atom-command";
 
 import { customizationsEnvironment } from "../../customizations/customizationsState";
+import { parseHooks, parsePlugins, type KitHook, type KitPlugin } from "./kitModel";
 import type { CustomizationsScope } from "../../customizations/useCustomizationsScope";
 
 /** Everything the Customizations service lists for the workspace and the user folders. */
@@ -24,10 +25,16 @@ export function useKitItems(scope: CustomizationsScope) {
   };
 }
 
-/** Text of `~/.claude/settings.json`: null while loading, "" when it can't be read. */
-export function useClaudeSettings(scope: CustomizationsScope): string | null {
+/** Hooks and plugins from `~/.claude/settings.json`. Only the parsed rows are kept, never the file text. */
+export function useClaudeSettings(scope: CustomizationsScope): {
+  readonly hooks: ReadonlyArray<KitHook>;
+  readonly plugins: ReadonlyArray<KitPlugin>;
+} | null {
   const readFile = useAtomCommand(customizationsEnvironment.readFile, { reportFailure: false });
-  const [text, setText] = useState<string | null>(null);
+  const [parsed, setParsed] = useState<{
+    readonly hooks: ReadonlyArray<KitHook>;
+    readonly plugins: ReadonlyArray<KitPlugin>;
+  } | null>(null);
   const { environmentId, cwd } = scope;
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- reads the user's settings.json from the host once per workspace
@@ -36,7 +43,8 @@ export function useClaudeSettings(scope: CustomizationsScope): string | null {
     void readFile({ environmentId, input: { cwd, path: "~/.claude/settings.json" } }).then(
       (result) => {
         if (cancelled || isAtomCommandInterrupted(result)) return;
-        setText(result._tag === "Success" ? result.value.contents : "");
+        const text = result._tag === "Success" ? result.value.contents : "";
+        setParsed({ hooks: parseHooks(text), plugins: parsePlugins(text) });
       },
     );
     return () => {
@@ -44,5 +52,5 @@ export function useClaudeSettings(scope: CustomizationsScope): string | null {
     };
   }, [cwd, environmentId, readFile]);
 
-  return text;
+  return parsed;
 }
