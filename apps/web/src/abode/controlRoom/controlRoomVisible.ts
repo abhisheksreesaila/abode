@@ -1,11 +1,7 @@
-/**
- * What "/" shows: the room once shells are loaded and a project exists, nothing while
- * projects are still loading (upstream's landing would open a draft thread), else upstream's landing.
- */
-export function controlRoomView(input: {
+/** The Control room shows once the shells are loaded and there is at least one project. */
+export function controlRoomVisible(input: {
   readonly bootstrapped: boolean;
   readonly projectCount: number;
-}): "room" | "wait" | "fallback" {
-  if (input.projectCount === 0) return "fallback";
-  return input.bootstrapped ? "room" : "wait";
+}): boolean {
+  return input.bootstrapped && input.projectCount > 0;
 }

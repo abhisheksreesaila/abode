@@ -1,21 +1,17 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { controlRoomView } from "./controlRoomVisible";
+import { controlRoomVisible } from "./controlRoomVisible";
 
-describe("controlRoomView", () => {
-  it("shows the room once shells are loaded and a project exists", () => {
-    expect(controlRoomView({ bootstrapped: true, projectCount: 2 })).toBe("room");
+describe("controlRoomVisible", () => {
+  it("shows the table once shells are loaded and a project exists", () => {
+    expect(controlRoomVisible({ bootstrapped: true, projectCount: 2 })).toBe(true);
   });
 
   it("falls back to upstream's landing with no projects", () => {
-    expect(controlRoomView({ bootstrapped: true, projectCount: 0 })).toBe("fallback");
+    expect(controlRoomVisible({ bootstrapped: true, projectCount: 0 })).toBe(false);
   });
 
-  it("waits while projects load, so upstream's landing can't redirect to a new draft", () => {
-    expect(controlRoomView({ bootstrapped: false, projectCount: 3 })).toBe("wait");
-  });
-
-  it("falls back before any project arrives", () => {
-    expect(controlRoomView({ bootstrapped: false, projectCount: 0 })).toBe("fallback");
+  it("waits for the shells instead of flashing the empty hero", () => {
+    expect(controlRoomVisible({ bootstrapped: false, projectCount: 3 })).toBe(false);
   });
 });
