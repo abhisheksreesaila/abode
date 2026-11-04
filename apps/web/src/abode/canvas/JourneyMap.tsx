@@ -22,7 +22,7 @@ function hop(
   const place = (x: number, y: number) => bot.setAttribute("transform", `translate(${x} ${y})`);
   const dir = to > from ? 1 : -1;
   const arrive = () => {
-    const stations = svg.querySelectorAll("[data-j-st]");
+    const stations = svg.querySelectorAll("[data-cv-j-st]");
     stations[to - 1]?.animate([{ scale: 0.8 }, { scale: 1.12, offset: 0.6 }, { scale: 1 }], {
       duration: 600,
       easing: "cubic-bezier(0.3, 1.6, 0.5, 1)",
@@ -120,30 +120,30 @@ export function JourneyMap(props: {
           </filter>
         </defs>
         <g filter={filter}>
-          <path data-j-path="" d={layout.path} />
+          <path data-cv-j-path="" d={layout.path} />
           <path
-            data-j-path="done"
+            data-cv-j-path="done"
             d={layout.path}
             style={{ strokeDasharray: `${layout.walked * 1400} 2000` }}
           />
         </g>
-        <g data-j-start="" transform={`translate(${startX} ${startY})`} filter={filter}>
-          <path d="M-14 6 v-13 l14 -12 l14 12 v13 z" data-j-house="" />
-          <rect x="-4" y="-2" width="8" height="8" data-j-door="" />
+        <g data-cv-j-start="" transform={`translate(${startX} ${startY})`} filter={filter}>
+          <path d="M-14 6 v-13 l14 -12 l14 12 v13 z" data-cv-j-house="" />
+          <rect x="-4" y="-2" width="8" height="8" data-cv-j-door="" />
         </g>
-        <text data-j-small="" x={startX} y={startY + 28} textAnchor="middle">
+        <text data-cv-j-small="" x={startX} y={startY + 28} textAnchor="middle">
           start
         </text>
         <g filter={filter}>
           {layout.stations.map((station, i) => (
             <g
               key={plan.rows[i]?.key ?? station.name}
-              data-j-st=""
+              data-cv-j-st=""
               data-state={station.state}
               transform={`translate(${station.x} ${station.y}) rotate(${station.rotate})`}
             >
               <rect
-                data-j-shadow=""
+                data-cv-j-shadow=""
                 x={-station.width / 2 + 3}
                 y={-station.height / 2 + 4}
                 width={station.width}
@@ -151,62 +151,72 @@ export function JourneyMap(props: {
                 rx="13"
               />
               <rect
-                data-j-face=""
+                data-cv-j-face=""
                 x={-station.width / 2}
                 y={-station.height / 2}
                 width={station.width}
                 height={station.height}
                 rx="13"
               />
-              <text data-j-label="" y="6" textAnchor="middle">
+              <text data-cv-j-label="" y="6" textAnchor="middle">
                 {station.label}
               </text>
               {station.state === "done" ? (
                 <g transform={`translate(${station.width / 2 - 4} ${-station.height / 2 + 2})`}>
-                  <circle r="9" data-j-check="" />
-                  <path d="M-4 0 l3 3 l5 -6" data-j-tick="" />
+                  <circle r="9" data-cv-j-check="" />
+                  <path d="M-4 0 l3 3 l5 -6" data-cv-j-tick="" />
                 </g>
               ) : null}
             </g>
           ))}
         </g>
-        <g data-j-goal="" transform={`translate(${goalX} ${goalY})`}>
-          <ellipse rx="34" ry="9" data-j-hill="" filter={filter} />
-          <path d="M0 0 v-46" data-j-pole="" />
-          <path d="M0 -46 l26 8 l-26 8 z" data-j-flag={layout.done ? "won" : ""} filter={filter} />
+        <g data-cv-j-goal="" transform={`translate(${goalX} ${goalY})`}>
+          <ellipse rx="34" ry="9" data-cv-j-hill="" filter={filter} />
+          <path d="M0 0 v-46" data-cv-j-pole="" />
+          <path
+            d="M0 -46 l26 8 l-26 8 z"
+            data-cv-j-flag={layout.done ? "won" : ""}
+            filter={filter}
+          />
         </g>
         {layout.goalLines.map((line, k) => (
-          <text key={line} data-j-goaltext="" x={goalX} y={goalY + 24 + k * 15} textAnchor="middle">
+          <text
+            key={line}
+            data-cv-j-goaltext=""
+            x={goalX}
+            y={goalY + 24 + k * 15}
+            textAnchor="middle"
+          >
             {line}
           </text>
         ))}
         {jamming && currentStation ? (
           <g
-            data-j-jam=""
+            data-cv-j-jam=""
             transform={`translate(${currentStation.x + currentStation.width / 2 - 2} ${currentStation.y - currentStation.height / 2 - 30})`}
           >
             <path d="M-16 6 a8 8 0 0 1 2 -15 a10 10 0 0 1 18 -3 a8 8 0 0 1 12 9 a7 7 0 0 1 -2 13 z" />
-            <text x="0" y="5" textAnchor="middle" data-j-note="">
+            <text x="0" y="5" textAnchor="middle" data-cv-j-note="">
               ♪
             </text>
           </g>
         ) : null}
-        <g ref={botRef} data-j-bot="">
-          <path d="M-7 12 l-3 7 M7 12 l3 7" data-j-line="" />
-          <ellipse rx="15" ry="13" data-j-body="" />
-          <path d="M0 -13 v-7" data-j-line="" />
-          <circle cy="-22" r="3" data-j-ant="" />
-          <circle cx="-5" cy="-2" r="2.7" data-j-eye="" />
-          <circle cx="5" cy="-2" r="2.7" data-j-eye="" />
-          <path d="M-4 5 q4 4 8 0" data-j-line="" />
+        <g ref={botRef} data-cv-j-bot="">
+          <path d="M-7 12 l-3 7 M7 12 l3 7" data-cv-j-line="" />
+          <ellipse rx="15" ry="13" data-cv-j-body="" />
+          <path d="M0 -13 v-7" data-cv-j-line="" />
+          <circle cy="-22" r="3" data-cv-j-ant="" />
+          <circle cx="-5" cy="-2" r="2.7" data-cv-j-eye="" />
+          <circle cx="5" cy="-2" r="2.7" data-cv-j-eye="" />
+          <path d="M-4 5 q4 4 8 0" data-cv-j-line="" />
           <g transform="translate(14 -30)">
-            <rect x="0" y="-14" width="24" height="21" rx="9" data-j-bubble="" />
-            <path d="M4 6 l-4 6 l9 -5" data-j-bubble="" />
+            <rect x="0" y="-14" width="24" height="21" rx="9" data-cv-j-bubble="" />
+            <path d="M4 6 l-4 6 l9 -5" data-cv-j-bubble="" />
             <text
               x="12"
               y="2"
               textAnchor="middle"
-              data-j-sym=""
+              data-cv-j-sym=""
               style={{ fill: symbolTone(symbol) }}
             >
               {symbol}

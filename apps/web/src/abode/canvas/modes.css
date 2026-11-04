@@ -220,7 +220,7 @@
   text-decoration: underline;
   cursor: pointer;
 }
-/* Quips use Patrick Hand when the machine has it, else a system handwriting face; no font is loaded. */
+/* Quips use Patrick Hand (self-hosted, loaded by CanvasShell), else a system handwriting face. */
 [data-cv-quip] {
   margin: 0 0 4px;
   font:
