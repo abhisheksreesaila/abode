@@ -4,7 +4,7 @@ import type { LimitPool } from "@t3tools/shared/usageLimits";
 import { planBlock, type PlanFileState } from "./planBlock";
 import type { RailGroup } from "./railGroups";
 
-const GROUP_ORDER: ReadonlyArray<RailGroup> = ["need", "jam", "move", "quiet"];
+const GROUP_ORDER: ReadonlyArray<RailGroup> = ["need", "move", "quiet"];
 
 export interface OverviewWorkspace {
   readonly key: string;
@@ -43,7 +43,7 @@ export interface OverviewMachineInput {
 
 export interface OverviewMachine extends OverviewMachineInput {
   readonly agents: number;
-  /** Sorted need, jam, move, quiet; the given order holds inside a group. */
+  /** Sorted need, move, quiet; the given order holds inside a group. */
   readonly rows: ReadonlyArray<OverviewWorkspace>;
 }
 
@@ -99,7 +99,6 @@ export function statusWord(workspace: OverviewWorkspace): {
   if (workspace.red) return { word: "blocked", tone: "bad" };
   if (workspace.group === "need") return { word: "needs you", tone: "warn" };
   if (workspace.group === "move") return { word: "moving", tone: "neutral" };
-  if (workspace.group === "jam") return { word: "jamming", tone: "neutral" };
   return { word: "quiet", tone: "neutral" };
 }
 

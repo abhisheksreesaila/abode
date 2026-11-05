@@ -169,7 +169,7 @@ export function useUsageMeters(): UsageMeter[] {
   return usageMeters(collectLimitPools(collectLimitAccounts(presentations), now));
 }
 
-export function isTyping(target: EventTarget | null): boolean {
+function isTyping(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   return target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName);
 }

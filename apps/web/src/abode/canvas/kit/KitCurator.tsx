@@ -19,7 +19,7 @@ import { primaryServerProvidersAtom } from "~/state/server";
 import { useEnvironmentThread, threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
-import { useSessionSend } from "../omnibox/useSessionSend";
+import { useSessionSend } from "../useSessionSend";
 import { buildCuratorBrief, displayUserText, pickCuratorProject, type KitSkill } from "./kitModel";
 
 const TITLE = "Kit curator";

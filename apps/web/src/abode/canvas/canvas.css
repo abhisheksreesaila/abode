@@ -188,24 +188,6 @@ main[data-cv-root] {
   display: grid;
   place-items: center;
 }
-/* Mode badge (spec 5.2): 20px, bottom-right, the mode icon in the mode colour. */
-[data-cv-badge] {
-  position: absolute;
-  right: -4px;
-  bottom: -4px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--cv-s2);
-  box-shadow: 0 0 0 2px var(--cv-s0);
-  display: grid;
-  place-items: center;
-  font-style: normal;
-}
-[data-cv-badge] svg {
-  width: 12px;
-  height: 12px;
-}
 [data-cv-rtext],
 [data-cv-rgrp] {
   display: none;
@@ -316,24 +298,6 @@ main[data-cv-root] {
 [data-cv-sc] b {
   font-weight: 650;
 }
-[data-cv-mbtn] {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgb(237 237 239 / 0.07);
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    transform 0.2s var(--cv-spring);
-}
-[data-cv-mbtn]:hover {
-  background: rgb(237 237 239 / 0.16);
-  transform: scale(1.08);
-}
 [data-cv-open] {
   display: inline-flex;
   align-items: center;
@@ -344,34 +308,6 @@ main[data-cv-root] {
   color: inherit;
   font: inherit;
   cursor: pointer;
-}
-/* Mode colours (spec 5.4/7). Global names: the picker renders in a portal outside the canvas root. */
-:root {
-  --cv-m-auto: #8b7bff;
-  --cv-m-tell: #52a9ff;
-  --cv-m-grill: #ff8a3d;
-  --cv-m-jam: #2bc3ad;
-}
-[data-cv-mode] {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-[data-cv-mode="auto"] {
-  color: var(--cv-m-auto);
-}
-[data-cv-mode="tell"] {
-  color: var(--cv-m-tell);
-}
-[data-cv-mode="grill"] {
-  color: var(--cv-m-grill);
-}
-[data-cv-mode="jam"] {
-  color: var(--cv-m-jam);
 }
 [data-cv-mt] {
   display: inline-flex;
@@ -482,17 +418,12 @@ main[data-cv-root] {
    item rings amber with a 24px glow (g3fresh, 1.8s), then both clear. */
 [data-cv-ws][data-fresh] [data-cv-head],
 [data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session], [data-cv-new]),
-[data-cv-ws][data-fresh] [data-cv-map],
-[data-cv-ws][data-fresh] [data-cv-row],
 [data-cv-root][data-focus] [data-cv-top],
 [data-cv-root][data-focus] [data-cv-main],
-[data-cv-root][data-focus] [data-cv-dock],
 [data-cv-root][data-focus] [data-cv-rl]:not([data-fresh]) {
   filter: blur(3px) brightness(0.7);
 }
 [data-cv-head],
-[data-cv-map],
-[data-cv-row],
 [data-cv-top],
 [data-cv-main] {
   transition: filter 0.45s var(--cv-spring);
@@ -522,17 +453,12 @@ main[data-cv-root] {
 @media (prefers-reduced-motion: reduce) {
   [data-cv-ws][data-fresh] [data-cv-head],
   [data-cv-ws][data-fresh] [data-cv-sc]:not([data-cv-add-session], [data-cv-new]),
-  [data-cv-ws][data-fresh] [data-cv-map],
-  [data-cv-ws][data-fresh] [data-cv-row],
   [data-cv-root][data-focus] [data-cv-top],
   [data-cv-root][data-focus] [data-cv-main],
-  [data-cv-root][data-focus] [data-cv-dock],
   [data-cv-root][data-focus] [data-cv-rl]:not([data-fresh]) {
     filter: none;
   }
   [data-cv-head],
-  [data-cv-map],
-  [data-cv-row],
   [data-cv-top],
   [data-cv-main] {
     transition: none;
@@ -542,24 +468,6 @@ main[data-cv-root] {
   [data-cv-rl][data-fresh] [data-cv-tile] {
     animation: none;
   }
-}
-[data-cv-dock] {
-  padding: 12px 22px 14px calc(22px + var(--cv-sbw) + 16px);
-  display: flex;
-  justify-content: center;
-}
-[data-cv-bar] {
-  width: min(900px, 100%);
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 20px;
-  border-radius: 999px;
-  background: var(--cv-s2);
-  box-shadow:
-    var(--cv-shadow-2),
-    inset 0 0 0 1px var(--cv-line);
 }
 [data-cv-in] {
   all: unset;
@@ -744,11 +652,6 @@ main[data-cv-root][data-rail="open"] {
 [data-cv-body] {
   transition: grid-template-columns 0.45s var(--cv-spring);
 }
-[data-cv-dock] {
-  transition:
-    padding 0.45s var(--cv-spring),
-    filter 0.45s var(--cv-spring);
-}
 [data-rail="open"] [data-cv-rail] {
   align-items: stretch;
   padding: 6px 8px 12px 6px;
@@ -831,15 +734,8 @@ main[data-cv-root][data-rail="open"] {
   font-size: 13px;
   color: var(--cv-ink-2);
 }
-@media (min-width: 641px) {
-  [data-cv-root][data-kit] [data-cv-dock],
-  [data-cv-root][data-overview] [data-cv-dock] {
-    padding-left: 22px;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  [data-cv-body],
-  [data-cv-dock] {
+  [data-cv-body] {
     transition: none;
   }
   [data-cv-kit] {

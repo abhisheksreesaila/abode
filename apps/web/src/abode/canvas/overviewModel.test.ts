@@ -38,15 +38,14 @@ describe("overviewMachines", () => {
     { environmentId: "local", label: "ablearn", isPrimary: true, online: true, cpu: 20 },
     { environmentId: "mini", label: "m4-pro", isPrimary: false, online: true, cpu: 60 },
   ];
-  it("sorts rows need, jam, move, quiet per machine and sums running agents", () => {
+  it("sorts rows need, move, quiet per machine and sums running agents", () => {
     const sections = overviewMachines(machines, [
       ws({ key: "q1" }),
       ws({ key: "m1", group: "move", running: 2 }),
       ws({ key: "n1", group: "need", running: 1 }),
-      ws({ key: "j1", group: "jam" }),
       ws({ key: "x", environmentId: "mini", group: "move", running: 4 }),
     ]);
-    expect(sections[0]!.rows.map((row) => row.key)).toEqual(["n1", "j1", "m1", "q1"]);
+    expect(sections[0]!.rows.map((row) => row.key)).toEqual(["n1", "m1", "q1"]);
     expect(sections[0]!.agents).toBe(3);
     expect(sections[1]!.rows.map((row) => row.key)).toEqual(["x"]);
     expect(sections[1]!.agents).toBe(4);
