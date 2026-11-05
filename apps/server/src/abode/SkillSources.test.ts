@@ -119,6 +119,10 @@ describe("SkillSources", () => {
     const world = new FakeWorld();
     world.repos[MATT] = mattV1();
     world.npm.skills = "1.0.0";
+    world.installed = {
+      tdd: { "SKILL.md": mattV1()["skills/tdd/SKILL.md"] ?? "" },
+      wizard: { "SKILL.md": mattV1()["skills/wizard/SKILL.md"] ?? "" },
+    };
     return Effect.gen(function* () {
       const service = yield* SkillSources.SkillSources;
       const first = matt((yield* service.checkNow).sources);
@@ -152,7 +156,7 @@ describe("SkillSources", () => {
           description: "Test-driven development, now with spies.",
           tokens:
             20 + Math.ceil(("tdd".length + "Test-driven development, now with spies.".length) / 4),
-          local: "none",
+          local: "outdated",
         },
         {
           kind: "removed",
@@ -160,7 +164,7 @@ describe("SkillSources", () => {
           name: "wizard",
           description: "Interactive bash wizard.",
           tokens: 20 + Math.ceil(("wizard".length + "Interactive bash wizard.".length) / 4),
-          local: "none",
+          local: "same",
         },
       ]);
       expect(second.npm).toEqual({ package: "skills", latest: "1.1.0", seen: "1.0.0" });
@@ -278,52 +282,147 @@ describe("SkillSources", () => {
   });
 
   it.effect(
-    "remembers a skip, applies inherit once, and never touches an edited skill with take all",
+    "take all updates only installed, unedited skills; new skills are chosen one by one",
     () => {
       const world = new FakeWorld();
       const v1 = mattV1();
       world.repos[MATT] = v1;
       world.npm.skills = "1.0.0";
-      world.installed = { pr: { "SKILL.md": "my own pr skill" } };
+      world.installed = {
+        tdd: { "SKILL.md": v1["skills/tdd/SKILL.md"] ?? "" },
+        pr: { "SKILL.md": "my own pr skill" },
+        wizard: { "SKILL.md": v1["skills/wizard/SKILL.md"] ?? "" },
+      };
+      return Effect.gen(function* () {
+        const service = yield* SkillSources.SkillSources;
+        yield* service.checkNow;
+        const next = { ...v1 } as Record<string, string>;
+        next["skills/tdd/SKILL.md"] = skillMd("tdd", "TDD v2.");
+        next["skills/pr/SKILL.md"] = skillMd("pr", "PR v2.");
+        next["skills/zoom-out/SKILL.md"] = skillMd("zoom-out", "Zoom out.");
+        delete next["skills/wizard/SKILL.md"];
+        world.repos[MATT] = next;
+        world.npm.skills = "1.2.0";
+        const before = matt((yield* service.checkNow).sources);
+        expect(summary(before)).toEqual([
+          "new:zoom-out:none",
+          "updated:pr:edited",
+          "updated:tdd:outdated",
+          "removed:wizard:same",
+        ]);
+
+        const all = matt(
+          (yield* service.decide({ sourceId: "matt", decision: "takeAll" })).sources,
+        );
+        expect(world.installs).toEqual([["updated:tdd", "removed:wizard"]]);
+        expect(summary(all)).toEqual(["new:zoom-out:none", "updated:pr:edited"]);
+        // Two changes are still waiting, so the npm release is not accepted yet.
+        expect(all.npm?.seen).toBe("1.0.0");
+        expect(all.decisions.map((d) => [d.name, d.takeAll])).toEqual([
+          ["tdd", true],
+          ["wizard", true],
+        ]);
+      }).pipe(Effect.provide(world.layer(tempStateFile())));
+    },
+  );
+
+  it.effect("accepts the npm release once nothing is left to decide", () => {
+    const world = new FakeWorld();
+    world.repos[MATT] = mattV1();
+    world.npm.skills = "1.0.0";
+    return Effect.gen(function* () {
+      const service = yield* SkillSources.SkillSources;
+      yield* service.checkNow;
+      world.repos[MATT] = { ...mattV1(), "skills/zoom-out/SKILL.md": skillMd("zoom-out", "Zoom.") };
+      world.npm.skills = "1.1.0";
+      yield* service.checkNow;
+      const done = matt(
+        (yield* service.decide({ sourceId: "matt", decision: "inherit", key: "skills/zoom-out" }))
+          .sources,
+      );
+      expect(world.installs).toEqual([["new:zoom-out"]]);
+      expect(done.changes).toEqual([]);
+      expect(done.npm?.seen).toBe("1.1.0");
+    }).pipe(Effect.provide(world.layer(tempStateFile())));
+  });
+
+  it.effect("refuses to inherit over an edited skill, but lets it be skipped", () => {
+    const world = new FakeWorld();
+    const v1 = mattV1();
+    world.repos[MATT] = v1;
+    world.npm.skills = "1.0.0";
+    world.installed = { pr: { "SKILL.md": "my own pr skill" } };
+    return Effect.gen(function* () {
+      const service = yield* SkillSources.SkillSources;
+      yield* service.checkNow;
+      world.repos[MATT] = { ...v1, "skills/pr/SKILL.md": skillMd("pr", "PR v2.") };
+      yield* service.checkNow;
+      const refused = yield* service
+        .decide({ sourceId: "matt", decision: "inherit", key: "skills/pr" })
+        .pipe(Effect.flip);
+      expect(refused.failure).toBe("local_edited");
+      expect(world.installs).toEqual([]);
+      const skipped = matt(
+        (yield* service.decide({ sourceId: "matt", decision: "skip", key: "skills/pr" })).sources,
+      );
+      expect(skipped.changes).toEqual([]);
+    }).pipe(Effect.provide(world.layer(tempStateFile())));
+  });
+
+  it.effect("a skipped skill never comes back, even when upstream changes it again", () => {
+    const world = new FakeWorld();
+    const v1 = mattV1();
+    world.repos[MATT] = v1;
+    world.npm.skills = "1.0.0";
+    world.installed = { zoomed: { "SKILL.md": "x" } };
+    return Effect.gen(function* () {
+      const service = yield* SkillSources.SkillSources;
+      yield* service.checkNow;
+      world.repos[MATT] = { ...v1, "skills/zoom-out/SKILL.md": skillMd("zoom-out", "Zoom out.") };
+      yield* service.checkNow;
+      const skipped = matt(
+        (yield* service.decide({ sourceId: "matt", decision: "skip", key: "skills/zoom-out" }))
+          .sources,
+      );
+      expect(skipped.changes).toEqual([]);
+      expect(skipped.decisions.map((d) => [d.name, d.decision])).toEqual([["zoom-out", "skip"]]);
+
+      world.installed = { "zoom-out": { "SKILL.md": skillMd("zoom-out", "Zoom out.") } };
+      world.repos[MATT] = { ...v1, "skills/zoom-out/SKILL.md": skillMd("zoom-out", "Zoom v2.") };
+      expect(matt((yield* service.checkNow).sources).changes).toEqual([]);
+      world.repos[MATT] = { ...v1 };
+      expect(matt((yield* service.checkNow).sources).changes).toEqual([]);
+      world.repos[MATT] = { ...v1, "skills/zoom-out/SKILL.md": skillMd("zoom-out", "Zoom v3.") };
+      expect(matt((yield* service.checkNow).sources).changes).toEqual([]);
+    }).pipe(Effect.provide(world.layer(tempStateFile())));
+  });
+
+  it.effect(
+    "an update to a skill the person does not have is accepted quietly, not offered",
+    () => {
+      const world = new FakeWorld();
+      const v1 = mattV1();
+      world.repos[MATT] = v1;
+      world.npm.skills = "1.0.0";
       return Effect.gen(function* () {
         const service = yield* SkillSources.SkillSources;
         yield* service.checkNow;
         world.repos[MATT] = {
           ...v1,
-          "skills/pr/SKILL.md": skillMd("pr", "Write a PR body v2."),
+          "skills/tdd/SKILL.md": skillMd("tdd", "TDD v2."),
           "skills/zoom-out/SKILL.md": skillMd("zoom-out", "Zoom out."),
-          "skills/handoff/SKILL.md": skillMd("handoff", "Hand off."),
-          "skills/research/SKILL.md": skillMd("research", "Research."),
         };
-        world.npm.skills = "1.2.0";
-        yield* service.checkNow;
-
-        const skipped = matt(
-          (yield* service.decide({ sourceId: "matt", decision: "skip", key: "skills/zoom-out" }))
-            .sources,
-        );
-        expect(summary(skipped)).toEqual([
-          "new:handoff:none",
-          "new:research:none",
-          "updated:pr:edited",
+        expect(summary(matt((yield* service.checkNow).sources))).toEqual(["new:zoom-out:none"]);
+        // Installing tdd later and changing it upstream again offers the update.
+        world.installed = { tdd: { "SKILL.md": skillMd("tdd", "TDD v2.") } };
+        world.repos[MATT] = {
+          ...world.repos[MATT],
+          "skills/tdd/SKILL.md": skillMd("tdd", "TDD v3."),
+        } as Record<string, string>;
+        expect(summary(matt((yield* service.checkNow).sources))).toEqual([
+          "new:zoom-out:none",
+          "updated:tdd:outdated",
         ]);
-        expect(skipped.decisions.map((d) => [d.name, d.decision, d.takeAll])).toEqual([
-          ["zoom-out", "skip", false],
-        ]);
-
-        yield* service.decide({ sourceId: "matt", decision: "inherit", key: "skills/handoff" });
-        expect(world.installs).toEqual([["new:handoff"]]);
-
-        const all = matt(
-          (yield* service.decide({ sourceId: "matt", decision: "takeAll" })).sources,
-        );
-        expect(world.installs).toEqual([["new:handoff"], ["new:research"]]);
-        expect(summary(all)).toEqual(["updated:pr:edited"]);
-        expect(all.npm?.seen).toBe("1.2.0");
-
-        // Another check with the same upstream does not bring the skipped skill back.
-        const again = matt((yield* service.checkNow).sources);
-        expect(summary(again)).toEqual(["updated:pr:edited"]);
       }).pipe(Effect.provide(world.layer(tempStateFile())));
     },
   );

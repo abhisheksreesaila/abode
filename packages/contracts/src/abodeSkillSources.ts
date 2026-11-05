@@ -91,6 +91,8 @@ export const SkillSourcesFailure = Schema.Literals([
   "unknown_source",
   "unknown_change",
   "key_required",
+  /** Inherit refused: the installed copy was edited, so it needs a merge, not an overwrite. */
+  "local_edited",
   "failed",
 ]);
 export type SkillSourcesFailure = typeof SkillSourcesFailure.Type;

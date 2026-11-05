@@ -2856,9 +2856,7 @@ export const layerWsRpc = (
             .pipe(Effect.mapError(Customizations.toCustomizationsError)),
         [WS_METHODS.voice]: (input, metadata) => voice.handle(input, metadata.client.id), // abode: voice
         [WS_METHODS.tailnetStatus]: () => Tailnet.status, // abode: tailnet
-        [WS_METHODS.skillSourcesList]: () => skillSources.list, // abode: skill sources
-        [WS_METHODS.skillSourcesCheckNow]: () => skillSources.checkNow, // abode: skill sources
-        [WS_METHODS.skillSourcesDecide]: (input) => skillSources.decide(input), // abode: skill sources
+        ...SkillSources.handlers(skillSources), // abode: skill sources
         [WS_METHODS.shellOpenInEditor]: (input) => externalLauncher.launchEditor(input),
         [WS_METHODS.filesystemGetMetadata]: (input) => workspaceFileSystem.getMetadata(input),
         [WS_METHODS.filesystemBrowse]: (input) =>

@@ -1,3 +1,4 @@
+import { SKILL_SOURCES_RPC_SCOPES } from "../abode/skillSourcesRpcPolicy.ts"; // abode: skill sources
 import {
   CLIENT_GUARDED_RPC_SCOPES,
   type DeviceListInput,
@@ -158,9 +159,7 @@ export const RPC_REQUIRED_SCOPES = {
   [WS_METHODS.customizationsWriteFile]: AuthOrchestrationOperateScope,
   [WS_METHODS.voice]: AuthOrchestrationOperateScope, // abode: voice
   [WS_METHODS.tailnetStatus]: AuthOrchestrationReadScope, // abode: tailnet
-  [WS_METHODS.skillSourcesList]: AuthOrchestrationReadScope, // abode: skill sources
-  [WS_METHODS.skillSourcesCheckNow]: AuthOrchestrationOperateScope, // abode: skill sources
-  [WS_METHODS.skillSourcesDecide]: AuthOrchestrationOperateScope, // abode: skill sources
+  ...SKILL_SOURCES_RPC_SCOPES, // abode: skill sources
   [WS_METHODS.shellOpenInEditor]: AuthOrchestrationOperateScope,
   [WS_METHODS.filesystemBrowse]: AuthFilesystemReadScope,
   [WS_METHODS.filesystemGetMetadata]: AuthFilesystemReadScope,

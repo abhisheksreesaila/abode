@@ -8,6 +8,7 @@ import * as NodeFSP from "node:fs/promises";
 import * as NodePath from "node:path";
 
 import {
+  WS_METHODS,
   SkillSourcesError,
   type SkillChange,
   type SkillDecision,
@@ -88,6 +89,8 @@ interface SourceRecord {
   readonly lastOkAt?: string;
   readonly failure?: string;
   readonly decisions: ReadonlyArray<SkillDecision>;
+  /** Skills the person skipped; they never come back, whatever upstream does next. */
+  readonly skipped?: ReadonlyArray<string>;
 }
 
 interface PersistedState {
@@ -102,20 +105,16 @@ const SKILL_FETCH_CONCURRENCY = 4;
 const toMessage = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause));
 
 const readState = async (file: string): Promise<PersistedState> => {
-  try {
-    const parsed: unknown = JSON.parse(await NodeFSP.readFile(file, "utf8"));
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      (parsed as PersistedState).version === 1 &&
-      typeof (parsed as PersistedState).sources === "object"
-    ) {
-      return parsed as PersistedState;
-    }
-  } catch {
-    // Missing or unreadable: start over; the next check rebuilds the snapshot.
+  const parsed: unknown = JSON.parse(await NodeFSP.readFile(file, "utf8"));
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    (parsed as PersistedState).version === 1 &&
+    typeof (parsed as PersistedState).sources === "object"
+  ) {
+    return parsed as PersistedState;
   }
-  return { version: 1, sources: {} };
+  throw new Error("unrecognized format");
 };
 
 const writeState = async (file: string, state: PersistedState) => {
@@ -146,7 +145,16 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
   const scope = yield* Effect.scope;
   const lock = yield* Semaphore.make(1);
 
-  let state = yield* Effect.promise(() => readState(stateFile));
+  let state: PersistedState = yield* Effect.tryPromise({
+    try: () => readState(stateFile),
+    catch: toMessage,
+  }).pipe(
+    Effect.catch((reason) =>
+      Effect.logWarning(`skill sources state starts empty (${stateFile}): ${reason}`).pipe(
+        Effect.as({ version: 1, sources: {} } satisfies PersistedState),
+      ),
+    ),
+  );
   let checking = false;
 
   const recordOf = (id: string): SourceRecord => state.sources[id] ?? EMPTY_RECORD;
@@ -159,12 +167,20 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
     }).pipe(Effect.catch((message) => Effect.logWarning("skill sources state not saved", message)));
   });
 
+  const pendingOf = Effect.fn("SkillSources.pending")(function* (record: SourceRecord) {
+    const skipped = new Set(record.skipped);
+    const all = yield* Effect.forEach(
+      diffSnapshots(record.baseline, record.latest).filter((raw) => !skipped.has(raw.skill.key)),
+      (raw) => Effect.map(toChange(raw), (change) => ({ raw, change })),
+    );
+    // A change to a skill the person does not have is not news; only new skills are offered.
+    return all.filter(({ change }) => change.kind === "new" || change.local !== "none");
+  });
+
   const changesOf = Effect.fn("SkillSources.changes")(function* (
     record: SourceRecord,
   ): Effect.fn.Return<ReadonlyArray<SkillChange>> {
-    return yield* Effect.forEach(diffSnapshots(record.baseline, record.latest), (change) =>
-      toChange(change),
-    );
+    return (yield* pendingOf(record)).map(({ change }) => change);
   });
 
   const toChange = Effect.fn("SkillSources.toChange")(function* (change: RawChange) {
@@ -272,10 +288,18 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
     const { latest, npmVersion } = outcome.success;
     const first = record.lastOkAt === undefined;
     const { failure: _cleared, ...rest } = record;
+    // Upstream changes to skills the person never installed are accepted quietly.
+    const baseline: Record<string, SnapshotSkill> = { ...(first ? latest : record.baseline) };
+    for (const raw of diffSnapshots(baseline, latest)) {
+      if (raw.kind === "new") continue;
+      if ((yield* local.hashesFor(raw.skill.name, raw.skill.files)).length > 0) continue;
+      if (raw.kind === "removed") delete baseline[raw.skill.key];
+      else baseline[raw.skill.key] = raw.skill;
+    }
     yield* save(source.id, {
       ...rest,
       // The first look is the starting point, not a pile of "new" skills.
-      baseline: first ? latest : record.baseline,
+      baseline,
       latest,
       ...(npmVersion === undefined
         ? {}
@@ -312,15 +336,14 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
       });
     }
     const record = recordOf(source.id);
-    const outstanding = yield* Effect.forEach(
-      diffSnapshots(record.baseline, record.latest),
-      (raw) => Effect.map(toChange(raw), (change) => ({ raw, change })),
-    );
+    const outstanding = yield* pendingOf(record);
     const takeAll = input.decision === "takeAll";
     let picked = outstanding;
     if (takeAll) {
-      // Take all never touches a skill the person edited; those wait for a merge.
-      picked = outstanding.filter(({ change }) => change.local !== "edited");
+      // Take all updates what is installed and unedited; new skills are chosen one by one.
+      picked = outstanding.filter(
+        ({ change }) => change.kind !== "new" && change.local !== "edited",
+      );
     } else {
       if (input.key === undefined) {
         return yield* new SkillSourcesError({
@@ -337,6 +360,12 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
       }
     }
     const kind: SkillDecision["decision"] = input.decision === "skip" ? "skip" : "inherit";
+    if (kind === "inherit" && picked.some(({ change }) => change.local === "edited")) {
+      return yield* new SkillSourcesError({
+        failure: "local_edited",
+        message: `'${input.key}' was edited here; merge it instead of overwriting.`,
+      });
+    }
     if (kind === "inherit" && picked.length > 0) {
       yield* installer.install({
         source,
@@ -368,7 +397,14 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
       ...record,
       baseline,
       decisions,
-      ...(record.npm !== undefined && (takeAll || remaining === 0)
+      ...(kind === "skip"
+        ? {
+            skipped: [
+              ...new Set([...(record.skipped ?? []), ...picked.map(({ change }) => change.key)]),
+            ],
+          }
+        : {}),
+      ...(record.npm !== undefined && remaining === 0
         ? { npm: { latest: record.npm.latest, seen: record.npm.latest } }
         : {}),
     });
@@ -386,7 +422,9 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
         ),
       );
       yield* Effect.sleep(msUntilNextCheck(now, last === 0 ? null : last));
-      yield* runChecks;
+      yield* runChecks.pipe(
+        Effect.catchCause((cause) => Effect.logError("daily skill source check failed", cause)),
+      );
     }
   });
   yield* Effect.forkIn(schedule, scope);
@@ -413,3 +451,10 @@ export const layer = Layer.unwrap(
   Layer.provide(Layer.succeed(LocalSkills, localSkillsFor(defaultLocalSkillDirs()))),
   Layer.provide(SkillInstallerRecordOnly),
 );
+
+/** The `skillSources.*` handlers, spread into `ws.ts` in one line. */
+export const handlers = (service: SkillSources["Service"]) => ({
+  [WS_METHODS.skillSourcesList]: () => service.list,
+  [WS_METHODS.skillSourcesCheckNow]: () => service.checkNow,
+  [WS_METHODS.skillSourcesDecide]: (input: SkillSourcesDecideInput) => service.decide(input),
+});
