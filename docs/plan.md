@@ -581,7 +581,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-061: Daily source check (server)
 
-- **Status:** todo
+- **Status:** review (reviewer PASS after one fix round, merged; a live fetch against the real repos found 39 / 72 / 61 / 9 skills; the RPCs get a runtime check with A-062)
 - **What:** add-only server service in `apps/server/src/abode/`. Every day at 06:00, and on demand, it compares each source's skill folders (the GitHub repo's default branch) and the npm version for npx sources against its last snapshot, then records new, updated and removed skills with their SKILL.md descriptions. Its state lives in a file under T3 home (no migration). Exposed through add-only RPCs: list updates, decide (inherit / skip / take all).
 - **Acceptance:**
   - [ ] The snapshot diff (new / updated / removed, and edited locally vs upstream) is tested.
