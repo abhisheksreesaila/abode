@@ -33,7 +33,7 @@ export interface DesignGroup {
 // be absolute (only its docs/design/... part is kept).
 const FIND =
   /https?:\/\/(?:www\.)?claude\.ai\/(?:code\/)?artifact\/[A-Za-z0-9_-]+|https?:\/\/stitch\.(?:withgoogle|google)\.com\/[^\s)\]>"'`*~<]*|(?<![\w.:/-])(?:\/?[\w.-]+\/)*docs\/design\/(?:[\w.-]+\/)*[\w.-]+\.html/g;
-const TRAILING = /[.,;:!?_-]+$/;
+const TRAILING = /[.,;:!?]+$/;
 const LINK_TEXT = /\[([^\]\n]{1,80})\]\(\s*<?$/;
 const PHONE = /\b(?:phone|mobile|iphone|390)\b/i;
 const DESKTOP = /\b(?:desktop|laptop|1440)\b/i;
@@ -66,15 +66,16 @@ function cleanLabel(text: string): string {
     .trim();
 }
 
-function keyOf(raw: string): string {
-  return /^https?:/.test(raw)
-    ? raw.replace(TRAILING, "")
-    : raw.slice(raw.lastIndexOf("docs/design/"));
+/** A trailing `_` is part of the link unless emphasis opened with `_` right before it. */
+function keyOf(raw: string, opener: string | undefined): string {
+  if (!/^https?:/.test(raw)) return raw.slice(raw.lastIndexOf("docs/design/"));
+  const trimmed = raw.replace(TRAILING, "");
+  return opener === "_" ? trimmed.replace(/_+$/, "") : trimmed;
 }
 
 /** The dedupe keys of the designs a text mentions: all the badge needs, no titles or devices. */
 function designKeys(text: string): string[] {
-  return [...text.matchAll(FIND)].map((match) => keyOf(match[0]));
+  return [...text.matchAll(FIND)].map((match) => keyOf(match[0], text[match.index - 1]));
 }
 
 function describeMatch(text: string, index: number, raw: string): DesignCard {
@@ -83,7 +84,7 @@ function describeMatch(text: string, index: number, raw: string): DesignCard {
   const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
   const start = index - lineStart;
   const isFile = !/^https?:/.test(raw);
-  const key = keyOf(raw);
+  const key = keyOf(raw, text[index - 1]);
   const source: DesignSource = isFile ? "file" : raw.includes("claude.ai") ? "Claude" : "Stitch";
   const before = line.slice(0, start);
   const label = cleanLabel(LINK_TEXT.exec(before)?.[1] ?? before);

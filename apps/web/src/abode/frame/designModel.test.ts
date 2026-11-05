@@ -171,6 +171,20 @@ describe("collectDesigns edge cases", () => {
     ]);
   });
 
+  it("keeps a dash or underscore that ends the link, drops one that closes emphasis", () => {
+    expect(keysOf("https://claude.ai/artifact/abc-")).toEqual(["https://claude.ai/artifact/abc-"]);
+    expect(keysOf("https://claude.ai/artifact/abc_ done")).toEqual([
+      "https://claude.ai/artifact/abc_",
+    ]);
+    expect(keysOf("https://stitch.withgoogle.com/p/x_ ok")).toEqual([
+      "https://stitch.withgoogle.com/p/x_",
+    ]);
+    expect(keysOf("_https://stitch.withgoogle.com/p/x_")).toEqual([
+      "https://stitch.withgoogle.com/p/x",
+    ]);
+    expect(keysOf("_https://claude.ai/artifact/abc_")).toEqual(["https://claude.ai/artifact/abc"]);
+  });
+
   it("includes links inside code fences and two links on one line", () => {
     expect(keysOf("```\nstitch url screen 9\nhttps://stitch.withgoogle.com/p/9\n```")).toEqual([
       "https://stitch.withgoogle.com/p/9",
