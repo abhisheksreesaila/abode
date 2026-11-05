@@ -18,6 +18,7 @@ import {
   mergePrompt,
   overlapHint,
   sourceSummary,
+  takeAllTitle,
   updatesFooter,
 } from "./updatesModel";
 
@@ -88,9 +89,7 @@ function TakeAllCard(props: {
       data-testid="updates-take-all-card"
     >
       <header>
-        <b>
-          {changes.length} {changes.length === 1 ? "skill" : "skills"} changed upstream
-        </b>
+        <b>{takeAllTitle(changes)}</b>
         <small>you haven't edited {changes.length === 1 ? "it" : "them"}</small>
       </header>
       <ul data-abode-upd-list="">
@@ -98,7 +97,7 @@ function TakeAllCard(props: {
           <li key={change.key}>
             <b data-abode-upd-name="">{change.name}</b>
             <small>
-              {change.kind === "removed" ? "removed upstream, you keep your copy" : "updated"}
+              {change.kind === "removed" ? "Removed upstream · you keep your copy" : "Updated"}
             </small>
           </li>
         ))}
@@ -294,7 +293,12 @@ export function UpdatesPane(props: {
     if (scope.threadRef === null) return;
     fillComposer(
       scope.threadRef,
-      mergePrompt({ sourceName: source.name, repo: source.repo, change }),
+      mergePrompt({
+        sourceName: source.name,
+        repo: source.repo,
+        change,
+        localPath: kit.find((skill) => skill.name === change.name)?.path,
+      }),
     );
     onJam();
   };

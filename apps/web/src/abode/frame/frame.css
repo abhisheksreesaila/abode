@@ -684,7 +684,7 @@
   [data-abode-upd-actions] button,
   [data-abode-upd-bar] button {
     width: 100%;
-    min-height: 44px;
+    min-height: 48px;
   }
   [data-abode-upd-bar] button {
     width: auto;

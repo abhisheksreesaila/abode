@@ -160,6 +160,88 @@ describe("skill installer", () => {
     });
   });
 
+  it.effect("never writes through a symlinked SKILL.md or subfolder", () => {
+    const world = setup({ "skills/tdd/SKILL.md": "tdd v2", "skills/tdd/refs/a.md": "ref v2" });
+    const outside = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "outside-"));
+    NodeFS.writeFileSync(NodePath.join(outside, "secret.md"), "outside file");
+    NodeFS.mkdirSync(NodePath.join(outside, "refs"));
+    NodeFS.writeFileSync(NodePath.join(outside, "refs", "a.md"), "outside ref");
+    const folder = NodePath.join(world.claude, "tdd");
+    NodeFS.mkdirSync(folder);
+    NodeFS.symlinkSync(NodePath.join(outside, "secret.md"), NodePath.join(folder, "SKILL.md"));
+    NodeFS.symlinkSync(NodePath.join(outside, "refs"), NodePath.join(folder, "refs"));
+    const v2 = skillOf("skills/tdd", "tdd", { "SKILL.md": "tdd v2", "refs/a.md": "ref v2" }, [
+      folderHash([
+        { path: "SKILL.md", sha: gitBlobSha(enc("outside file")) },
+        { path: "refs/a.md", sha: gitBlobSha(enc("outside ref")) },
+      ]),
+    ]);
+    return Effect.gen(function* () {
+      yield* world.install(
+        request([{ kind: "updated", key: "skills/tdd", name: "tdd", skill: v2 }]),
+      );
+      expect(world.read(".claude", "skills", "tdd", "SKILL.md")).toBe("tdd v2");
+      expect(world.read(".claude", "skills", "tdd", "refs", "a.md")).toBe("ref v2");
+      expect(NodeFS.lstatSync(NodePath.join(folder, "SKILL.md")).isSymbolicLink()).toBe(false);
+      expect(NodeFS.lstatSync(NodePath.join(folder, "refs")).isSymbolicLink()).toBe(false);
+      expect(NodeFS.readFileSync(NodePath.join(outside, "secret.md"), "utf8")).toBe("outside file");
+      expect(NodeFS.readFileSync(NodePath.join(outside, "refs", "a.md"), "utf8")).toBe(
+        "outside ref",
+      );
+    });
+  });
+
+  it.effect("refuses a skill that lives outside the skill folders", () => {
+    const world = setup({ "skills/tdd/SKILL.md": "tdd v2" });
+    const outside = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "outside-"));
+    NodeFS.writeFileSync(NodePath.join(outside, "SKILL.md"), "tdd v1");
+    NodeFS.symlinkSync(outside, NodePath.join(world.claude, "tdd"));
+    const v2 = skillOf("skills/tdd", "tdd", { "SKILL.md": "tdd v2" }, [
+      folderHash([{ path: "SKILL.md", sha: gitBlobSha(enc("tdd v1")) }]),
+    ]);
+    return Effect.gen(function* () {
+      const error = yield* world
+        .install(request([{ kind: "updated", key: "skills/tdd", name: "tdd", skill: v2 }]))
+        .pipe(Effect.flip);
+      expect(error.message).toBe(
+        `tdd lives outside your skill folders (${NodeFS.realpathSync(outside)}); not updated`,
+      );
+      expect(NodeFS.readFileSync(NodePath.join(outside, "SKILL.md"), "utf8")).toBe("tdd v1");
+    });
+  });
+
+  it.effect("writes every real copy of a skill held in two roots", () => {
+    const world = setup({ "skills/tdd/SKILL.md": "tdd v2" });
+    for (const root of [world.claude, world.agents]) {
+      NodeFS.mkdirSync(NodePath.join(root, "tdd"));
+      NodeFS.writeFileSync(NodePath.join(root, "tdd", "SKILL.md"), "tdd v1");
+    }
+    const v2 = skillOf("skills/tdd", "tdd", { "SKILL.md": "tdd v2" }, [
+      folderHash([{ path: "SKILL.md", sha: gitBlobSha(enc("tdd v1")) }]),
+    ]);
+    return Effect.gen(function* () {
+      yield* world.install(
+        request([{ kind: "updated", key: "skills/tdd", name: "tdd", skill: v2 }]),
+      );
+      expect(world.read(".claude", "skills", "tdd", "SKILL.md")).toBe("tdd v2");
+      expect(world.read(".agents", "skills", "tdd", "SKILL.md")).toBe("tdd v2");
+    });
+  });
+
+  it.effect("refuses names that could escape the skill folder", () => {
+    const world = setup({ "x/SKILL.md": "x" });
+    return Effect.gen(function* () {
+      for (const name of ["", "../evil", ".hidden", "a\\b"]) {
+        const skill = skillOf("x", name || "x", { "SKILL.md": "x" });
+        const error = yield* world
+          .install(request([{ kind: "new", key: "x", name, skill }]))
+          .pipe(Effect.flip);
+        expect(error.message).toBe(`'${name}' is not a usable skill name.`);
+      }
+      expect(NodeFS.readdirSync(world.claude)).toEqual([]);
+    });
+  });
+
   it.effect("installs a repo-root skill from the repo root", () => {
     const world = setup({ "SKILL.md": "root skill", "extra.md": "x" });
     const root = skillOf(".", "gstack", { "SKILL.md": "root skill", "extra.md": "x" });

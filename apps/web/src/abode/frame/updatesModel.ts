@@ -124,19 +124,37 @@ export function updatesFooter(state: SkillSourcesState): UpdatesFooter {
   };
 }
 
+/** "2 updated · 1 removed upstream": the Take all card's title. */
+export function takeAllTitle(changes: ReadonlyArray<Pick<SkillChange, "kind">>): string {
+  const removed = changes.filter((change) => change.kind === "removed").length;
+  const updated = changes.length - removed;
+  return [
+    updated > 0 ? `${updated} updated` : null,
+    removed > 0 ? `${removed} removed upstream` : null,
+  ]
+    .filter((part) => part !== null)
+    .join(" · ");
+}
+
 /** The prompt "Merge in jam" puts in the composer; the person sends it. */
 export function mergePrompt(input: {
   readonly sourceName: string;
   readonly repo: string | undefined;
   readonly change: Pick<SkillChange, "key" | "name">;
+  /** Where the client saw the installed copy (the Customizations list), when it did. */
+  readonly localPath?: string | undefined;
 }): string {
-  const { change, repo, sourceName } = input;
+  const { change, repo, sourceName, localPath } = input;
   const upstream = repo === undefined ? sourceName : `${repo}`;
   const where = change.key === "." ? "the repo root" : `\`${change.key}\``;
+  const mine =
+    localPath === undefined
+      ? "the installed copy (check ~/.claude/skills, ~/.agents/skills, ~/.codex/skills)"
+      : `\`${localPath}\``;
   return [
     `Please do a 3-way merge of the skill "${change.name}".`,
     `Upstream: ${upstream} (${sourceName}), skill folder ${where} on the default branch.`,
-    `My copy: ~/.claude/skills/${change.name} (it may be a symlink; edit the real folder it points to).`,
+    `My copy: ${mine} (it may be a symlink; edit the real folder it points to).`,
     "I edited it and upstream changed it too. Keep my edits, bring in upstream's changes, show me the diff before you write anything, and don't touch other skills.",
   ].join("\n");
 }

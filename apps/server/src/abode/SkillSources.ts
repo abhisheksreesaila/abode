@@ -5,6 +5,7 @@
  * last good result.
  */
 import * as NodeFSP from "node:fs/promises";
+import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
 
 import {
@@ -458,7 +459,7 @@ export const layer = Layer.unwrap(
         fetcher: fetcherLive,
         local: liveLocal,
         dirs: liveDirs,
-        defaultDir: liveDirs[0] ?? "",
+        defaultDir: NodePath.join(NodeOS.homedir(), ".claude", "skills"),
       }),
     }),
   ),

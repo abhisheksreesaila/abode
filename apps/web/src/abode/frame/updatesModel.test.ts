@@ -8,6 +8,7 @@ import {
   overlapHint,
   pendingCount,
   sourceSummary,
+  takeAllTitle,
   updatesFooter,
 } from "./updatesModel";
 
@@ -149,14 +150,32 @@ describe("feed text, counts and footer", () => {
 });
 
 describe("mergePrompt", () => {
-  it("names the source repo, the skill path and the local path", () => {
-    const prompt = mergePrompt({
-      sourceName: "Matt Pocock",
-      repo: "mattpocock/skills",
-      change: { key: "skills/tdd", name: "tdd" },
-    });
+  const base = {
+    sourceName: "Matt Pocock",
+    repo: "mattpocock/skills",
+    change: { key: "skills/tdd", name: "tdd" },
+  };
+
+  it("names the source repo, the skill path and the real local path when known", () => {
+    const prompt = mergePrompt({ ...base, localPath: "/home/a/.agents/skills/tdd/SKILL.md" });
     expect(prompt).toContain("mattpocock/skills");
     expect(prompt).toContain("`skills/tdd`");
-    expect(prompt).toContain("~/.claude/skills/tdd");
+    expect(prompt).toContain("`/home/a/.agents/skills/tdd/SKILL.md`");
+  });
+
+  it("points at the skill roots when the local path is not known", () => {
+    expect(mergePrompt(base)).toContain(
+      "the installed copy (check ~/.claude/skills, ~/.agents/skills, ~/.codex/skills)",
+    );
+  });
+});
+
+describe("takeAllTitle", () => {
+  it("counts updated and removed items separately", () => {
+    expect(takeAllTitle([{ kind: "updated" }, { kind: "updated" }, { kind: "removed" }])).toBe(
+      "2 updated · 1 removed upstream",
+    );
+    expect(takeAllTitle([{ kind: "removed" }])).toBe("1 removed upstream");
+    expect(takeAllTitle([{ kind: "updated" }])).toBe("1 updated");
   });
 });
