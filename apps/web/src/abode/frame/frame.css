@@ -1,0 +1,292 @@
+/*
+ * The workspace frame (A-057): header, agent strip and tabs above T3's timeline. Graphite
+ * night from canvas.css's --cv-* tokens; nothing here animates. The frame is a flex child of
+ * the conversation area and publishes its height as --abode-frame-h, which the pane and the
+ * calm table start below, so the composer (z-20, a sibling of the area) is never covered.
+ */
+[data-abode-frame] {
+  --abode-info: #52a9ff;
+  position: relative;
+  z-index: 11;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 16px 0;
+  background: var(--cv-s0);
+  color: var(--cv-ink);
+  font-family: "Geist", system-ui, sans-serif;
+}
+
+/* Header */
+[data-abode-frame-head] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+[data-abode-frame] [data-cv-back] {
+  position: static;
+  min-height: 36px;
+  padding: 0 12px;
+  flex: none;
+  background: var(--cv-s2);
+  border-color: var(--cv-line);
+  color: var(--cv-ink);
+}
+[data-abode-frame] [data-cv-back]:hover {
+  background: var(--cv-line);
+}
+[data-abode-frame-title] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+[data-abode-frame-workspace] {
+  font-size: 15px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+[data-abode-frame-sep] {
+  color: var(--cv-ink-2);
+}
+[data-abode-frame-picker] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--cv-s2);
+  color: var(--cv-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+[data-abode-frame-picker]:hover {
+  background: var(--cv-line);
+}
+[data-abode-frame-thread] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-abode-frame-pill] {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--abode-info) 15%, transparent);
+  color: var(--abode-info);
+  font:
+    500 11.5px "Geist Mono",
+    ui-monospace,
+    monospace;
+}
+[data-abode-frame-pill] > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+[data-abode-short] {
+  display: none;
+}
+
+/* Agent strip: three cards across, more scroll sideways */
+[data-abode-strip] {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max(220px, calc((100% - 20px) / 3));
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+[data-abode-card] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--cv-line);
+  border-radius: 12px;
+  background: var(--cv-s1);
+  color: var(--cv-ink);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-card]:hover {
+  background: var(--cv-s2);
+}
+[data-abode-card][data-status="needs-you"] {
+  box-shadow: inset 0 0 0 1.5px var(--cv-warn);
+}
+[data-abode-card-top] {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+[data-abode-card-top] > b {
+  font-size: 13px;
+  font-weight: 650;
+}
+[data-abode-card-meta] {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cv-ink-2);
+  font:
+    400 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+}
+[data-abode-card-status] {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+[data-abode-card][data-status="in-progress"] [data-abode-card-status] {
+  color: var(--abode-info);
+}
+[data-abode-card][data-status="needs-you"] [data-abode-card-status] {
+  color: var(--cv-warn);
+}
+[data-abode-card][data-status="done"] [data-abode-card-status] {
+  color: var(--cv-ok);
+}
+[data-abode-card-doing] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cv-ink-2);
+  font-size: 12.5px;
+}
+[data-abode-card-bar] {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--cv-line);
+  overflow: hidden;
+}
+[data-abode-card-bar] > i {
+  display: block;
+  height: 100%;
+  background: var(--abode-info);
+}
+[data-abode-card][data-status="needs-you"] [data-abode-card-bar] > i {
+  background: var(--cv-warn);
+}
+[data-abode-card][data-status="done"] [data-abode-card-bar] > i {
+  background: var(--cv-ok);
+}
+
+/* Tabs: one quiet segmented bar, the selected one a filled ink pill */
+[data-abode-tabs] {
+  display: flex;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--cv-s1);
+  border: 1px solid var(--cv-line);
+  margin-bottom: 10px;
+}
+[data-abode-tabs] > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cv-ink-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-tabs] > button[data-selected] {
+  background: var(--cv-ink);
+  color: var(--cv-s0);
+}
+[data-abode-tabs] small {
+  font:
+    500 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+  opacity: 0.75;
+}
+
+/* Placeholder pane: covers the message list only. */
+[data-abode-frame-pane] {
+  position: absolute;
+  inset: var(--abode-frame-h, 0px) 0 0 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px;
+  background: var(--cv-s0);
+  color: var(--cv-ink-2);
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  [data-abode-frame] {
+    padding-inline: 12px;
+  }
+  [data-abode-frame] [data-cv-back-label] {
+    display: none;
+  }
+  [data-abode-frame] [data-cv-back] {
+    min-width: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+  [data-abode-frame-title] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+  [data-abode-frame-workspace] {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cv-ink-2);
+  }
+  [data-abode-frame-sep] {
+    display: none;
+  }
+  [data-abode-frame-picker] {
+    padding: 0;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 650;
+  }
+  [data-abode-long] {
+    display: none;
+  }
+  [data-abode-short] {
+    display: inline;
+  }
+  [data-abode-strip] {
+    grid-auto-columns: 220px;
+  }
+  [data-abode-tabs] {
+    width: 100%;
+  }
+  [data-abode-tabs] > button {
+    flex: 1;
+    min-height: 38px;
+  }
+}
