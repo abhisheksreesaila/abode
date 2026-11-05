@@ -18,6 +18,39 @@ const input = (over: Partial<FeedInput>): FeedInput => ({
   ...over,
 });
 
+describe("deriveFeed kit lines", () => {
+  const change = (name: string, kind: "new" | "updated") => ({
+    kind,
+    key: `skills/${name}`,
+    name,
+    description: "",
+    tokens: 40,
+    local: "none" as const,
+  });
+
+  it("adds one line per source with waiting changes, after decisions and whatever their age", () => {
+    const feed = deriveFeed(
+      input({
+        sessions: [session({ title: "fix", outcome: "waiting", at: 10 })],
+        kitSources: [
+          {
+            id: "matt",
+            name: "Matt Pocock",
+            changes: [change("a", "new"), change("b", "new"), change("c", "new")],
+            lastOkAt: "2026-11-04T06:00:00.000Z",
+          },
+          { id: "gstack", name: "gstack", changes: [] },
+        ],
+      }),
+      50,
+    );
+    expect(feed.map((item) => [item.type, item.workspaceName, item.text])).toEqual([
+      ["dec", "alpha", "fix is waiting on you"],
+      ["kit", "Kit", "Matt Pocock added 3 skills"],
+    ]);
+  });
+});
+
 describe("deriveFeed", () => {
   it("names the session a line is about, so a click can open its chat", () => {
     const feed = deriveFeed(

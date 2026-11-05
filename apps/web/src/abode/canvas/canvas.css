@@ -109,6 +109,24 @@ main[data-cv-root] {
   font-size: 16px;
   cursor: pointer;
 }
+[data-cv-xbtn]:has([data-cv-kit-badge]) {
+  position: relative;
+}
+[data-cv-kit-badge] {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--cv-warn);
+  color: #1a1304;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 15px;
+  text-align: center;
+}
 [data-cv-xbtn]:hover {
   background: rgb(237 237 239 / 0.08);
   color: var(--cv-ink);

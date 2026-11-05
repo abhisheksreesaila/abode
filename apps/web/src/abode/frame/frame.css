@@ -519,6 +519,182 @@
   font-size: 13px;
 }
 
+/* Updates tab (A-062): cards per source; a decided card dims, nothing animates. */
+[data-abode-updates] {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+[data-abode-upd-bar] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+[data-abode-upd-source] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+[data-abode-upd-source] > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+[data-abode-upd-source] > header code {
+  margin-left: 8px;
+  color: var(--muted-foreground);
+  font:
+    500 11.5px "Geist Mono",
+    ui-monospace,
+    monospace;
+}
+[data-abode-upd-source] > header > small {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+[data-abode-upd-avatar] {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 12px;
+}
+[data-abode-upd-card] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+}
+[data-abode-upd-card][data-edited] {
+  box-shadow: inset 0 0 0 1.5px var(--cv-warn, #f5a524);
+}
+[data-abode-upd-card][data-decided] {
+  opacity: 0.55;
+}
+[data-abode-upd-card] > header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+}
+[data-abode-upd-card] > header small {
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+[data-abode-upd-card] > p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+[data-abode-upd-name] {
+  font:
+    600 12.5px "Geist Mono",
+    ui-monospace,
+    monospace;
+}
+[data-abode-upd-cost] {
+  margin-left: auto;
+  font:
+    500 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--muted-foreground);
+}
+[data-abode-upd-overlap] {
+  color: var(--cv-warn, #f5a524);
+  font-size: 11.5px;
+}
+[data-abode-upd-list] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+[data-abode-upd-list] li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+[data-abode-upd-list] small {
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+[data-abode-upd-actions] {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+[data-abode-upd-actions] button,
+[data-abode-upd-bar] button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-upd-actions] button[data-primary] {
+  background: var(--foreground);
+  color: var(--background);
+}
+[data-abode-upd-actions] button:disabled,
+[data-abode-upd-bar] button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+[data-abode-upd-outcome] {
+  align-self: flex-end;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+[data-abode-upd-error] {
+  margin: 0;
+  color: var(--cv-bad, #ef5350);
+  font-size: 12.5px;
+}
+[data-abode-upd-footer] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+@media (max-width: 640px) {
+  [data-abode-upd-actions] {
+    flex-direction: column-reverse;
+  }
+  [data-abode-upd-actions] button,
+  [data-abode-upd-bar] button {
+    width: 100%;
+    min-height: 48px;
+  }
+  [data-abode-upd-bar] button {
+    width: auto;
+    padding: 0 18px;
+  }
+  [data-abode-upd-card] > header {
+    flex-wrap: wrap;
+  }
+}
+
 /* Context per session: skills and MCP stacked in one bar, the total in mono */
 [data-abode-meter] {
   display: flex;

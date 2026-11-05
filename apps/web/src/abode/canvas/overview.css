@@ -96,7 +96,8 @@
   color: var(--cv-bad);
   background: color-mix(in srgb, var(--cv-bad) 15%, transparent);
 }
-[data-cv-ov-fi="dec"] {
+[data-cv-ov-fi="dec"],
+[data-cv-ov-fi="kit"] {
   color: var(--cv-warn);
   background: color-mix(in srgb, var(--cv-warn) 15%, transparent);
 }

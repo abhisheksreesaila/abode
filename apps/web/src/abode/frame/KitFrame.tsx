@@ -1,5 +1,4 @@
 import { useAtomValue } from "@effect/atom-react";
-import type { EnvironmentId, SkillSourcesState } from "@t3tools/contracts";
 import * as Option from "effect/Option";
 import { AsyncResult } from "effect/reactivity";
 import { useState } from "react";
@@ -20,8 +19,10 @@ import {
 import { useClaudeSettings, useKitItems } from "../canvas/kit/kitState";
 import type { AgentCard } from "./agentCards";
 import "../canvas/kit/kit.css";
-import { skillSourcesAtom, skillUsageAtom } from "./kitData";
+import { skillUsageAtom, useSkillSourcesState } from "./kitData";
 import { dailyCheckCard, lastUsedLabel } from "./kitMode";
+import { UpdatesPane } from "./UpdatesPane";
+import { pendingCount } from "./updatesModel";
 
 const KIT_TABS = ["jam", "skills", "mcp", "plugins", "hooks", "updates"] as const;
 export type KitTab = (typeof KIT_TABS)[number];
@@ -36,15 +37,6 @@ const KIT_TAB_LABEL: Record<KitTab, string> = {
 };
 const CONTEXT_SCALE_K = 20;
 
-function useSkillSources(environmentId: EnvironmentId): SkillSourcesState | null {
-  const result = useAtomValue(skillSourcesAtom({ environmentId, input: undefined }));
-  return Option.getOrNull(AsyncResult.value(result));
-}
-
-function pendingCount(state: SkillSourcesState | null): number {
-  return state?.sources.reduce((sum, source) => sum + source.changes.length, 0) ?? 0;
-}
-
 /** Jam, Skills, MCP, Plugins, Hooks, Updates: counts only where the host already told us. */
 export function KitTabs(props: {
   readonly scope: CustomizationsScope;
@@ -53,7 +45,7 @@ export function KitTabs(props: {
 }) {
   const { scope, tab, onTab } = props;
   const { items } = useKitItems(scope);
-  const pending = pendingCount(useSkillSources(scope.environmentId));
+  const pending = pendingCount(useSkillSourcesState(scope.environmentId));
   const counts: Partial<Record<KitTab, number | undefined>> = {
     skills: items === null ? undefined : buildKitSkills(items).length,
     mcp: items === null ? undefined : buildKitMcp(items).length,
@@ -111,7 +103,7 @@ export function KitStrip(props: {
   readonly onTab: (tab: KitTab) => void;
 }) {
   const { scope, agent, nowMs, onTab } = props;
-  const check = dailyCheckCard(useSkillSources(scope.environmentId), nowMs);
+  const check = dailyCheckCard(useSkillSourcesState(scope.environmentId), nowMs);
   return (
     <div data-abode-strip="" data-kit="" aria-label="Kit agents">
       <button
@@ -189,32 +181,18 @@ function SkillsList(props: {
   );
 }
 
-function UpdatesPlaceholder(props: { readonly scope: CustomizationsScope }) {
-  const state = useSkillSources(props.scope.environmentId);
-  const pending = pendingCount(state);
-  return (
-    <div data-abode-kit-note="" data-testid="kit-updates">
-      {state === null
-        ? "Reading the last check…"
-        : pending === 0
-          ? "No source changes are waiting."
-          : `${pending} source ${pending === 1 ? "change is" : "changes are"} waiting.`}{" "}
-      The cards to decide on them are coming in A-062.
-    </div>
-  );
-}
-
 /** The pane over the timeline for every Kit tab but Jam. */
 export function KitPane(props: {
   readonly scope: CustomizationsScope;
   readonly tab: Exclude<KitTab, "jam">;
   readonly nowMs: number;
+  readonly onTab: (tab: KitTab) => void;
 }) {
-  const { scope, tab, nowMs } = props;
+  const { scope, tab, nowMs, onTab } = props;
   const { items, failure } = useKitItems(scope);
   const settings = useClaudeSettings(scope);
   const body = (() => {
-    if (tab === "updates") return <UpdatesPlaceholder scope={scope} />;
+    if (tab === "updates") return <UpdatesPane scope={scope} onJam={() => onTab("jam")} />;
     if (items === null) {
       return failure === null ? (
         <div data-cvk-empty="">

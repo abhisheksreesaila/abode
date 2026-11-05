@@ -21,7 +21,14 @@ import type { CanvasWorkspace } from "./useCanvasWorkspaces";
 import { usePlanFile } from "./usePlanFile";
 import "./overview.css";
 
-const FEED_GLYPH: Record<FeedType, string> = { ms: "◎", dec: "?", red: "!", pr: "↑", sess: "✓" };
+const FEED_GLYPH: Record<FeedType, string> = {
+  ms: "◎",
+  dec: "?",
+  red: "!",
+  pr: "↑",
+  sess: "✓",
+  kit: "⚙",
+};
 
 const METER_COLOUR: Record<string, string> = { claudeAgent: "#e07a52", codex: "#3ecf8e" };
 
@@ -80,6 +87,8 @@ export function OverviewView(props: {
   readonly workspaces: ReadonlyArray<CanvasWorkspace>;
   /** A feed line about a session also names it, so the shell can open its chat drawer. */
   readonly onSelect: (key: string, sessionKey?: string) => void;
+  /** A Kit feed line opens Kit on its Updates tab. */
+  readonly onOpenKitUpdates: () => void;
 }) {
   const inputs = useOverviewWorkspaces(props.workspaces);
   const machines = overviewMachines(
@@ -215,7 +224,11 @@ export function OverviewView(props: {
               <li key={`${item.type}|${item.workspaceKey}|${item.text}|${item.at}`}>
                 <button
                   type="button"
-                  onClick={() => props.onSelect(item.workspaceKey, item.sessionKey)}
+                  onClick={() =>
+                    item.type === "kit"
+                      ? props.onOpenKitUpdates()
+                      : props.onSelect(item.workspaceKey, item.sessionKey)
+                  }
                 >
                   <span data-cv-ov-fi={item.type} aria-hidden>
                     {FEED_GLYPH[item.type]}

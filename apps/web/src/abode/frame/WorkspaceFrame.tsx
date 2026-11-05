@@ -82,11 +82,12 @@ function LoadedFrame(props: {
   const currentKey = threadRef === null ? null : `${threadRef.environmentId}:${threadRef.threadId}`;
   const tab = useFrameStore((state) => tabFor(state.tabs, workspaceKey));
   const answerRequest = useFrameStore((state) => state.answerRequest);
+  const kitUpdatesRequested = useFrameStore((state) => state.kitUpdatesRequested);
   const visits = useUiStateStore((state) => state.threadLastVisitedAtById);
   const open = useOpenSession();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [kitTab, setKitTab] = useState<KitTab>("skills");
+  const [pickedKitTab, setPickedKitTab] = useState<KitTab>("skills");
   // Bumped when Milestones opens and when the window regains focus, so hand edits show too.
   const [planTick, setPlanTick] = useState(0);
 
@@ -234,6 +235,12 @@ function LoadedFrame(props: {
           borrowed: false,
         }
       : null;
+  // A feed line outside the frame asks for Updates; the next tab the person picks clears the ask.
+  const kitTab: KitTab = kitScope && kitUpdatesRequested ? "updates" : pickedKitTab;
+  const setKitTab = (next: KitTab) => {
+    useFrameStore.getState().setKitUpdatesRequested(false);
+    setPickedKitTab(next);
+  };
   // Marks the conversation area while a pane covers it, so frame.css can dock a draft's hero composer.
   const paneOpen = kitScope ? kitTab !== "jam" : tab !== "jam";
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- sets a data attribute on the conversation area, which upstream renders
@@ -363,7 +370,7 @@ function LoadedFrame(props: {
       </div>
       {kitScope ? (
         kitTab === "jam" ? null : (
-          <KitPane scope={kitScope} tab={kitTab} nowMs={nowMs} />
+          <KitPane scope={kitScope} tab={kitTab} nowMs={nowMs} onTab={setKitTab} />
         )
       ) : tab === "jam" ? null : (
         <section data-abode-frame-pane="" aria-label={TAB_LABEL[tab]} data-testid="frame-pane">

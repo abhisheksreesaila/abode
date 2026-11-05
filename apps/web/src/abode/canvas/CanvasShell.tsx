@@ -22,6 +22,10 @@ import { useAddMachineStore } from "./addMachineStore";
 import { useFreshMoment } from "./useFreshMoment";
 import { useOpenSession } from "./useOpenSession";
 import { useOpenKit } from "../frame/useOpenKit";
+import { useFrameStore } from "../frame/frameStore";
+import { useSkillSourcesState } from "../frame/kitData";
+import { pendingCount } from "../frame/updatesModel";
+import { usePrimaryEnvironmentId } from "../../state/environments";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
@@ -104,6 +108,11 @@ export function CanvasShell() {
     closeOverview();
     void openKit();
   };
+  const openKitUpdates = () => {
+    useFrameStore.getState().setKitUpdatesRequested(true);
+    toggleKit();
+  };
+  const kitPending = pendingCount(useSkillSourcesState(usePrimaryEnvironmentId()));
   useOverviewKeys(overview, toggleOverview, closeOverview);
   const openSession = useOpenSession();
 
@@ -160,8 +169,17 @@ export function CanvasShell() {
         >
           ⊞
         </button>
-        <button type="button" data-cv-xbtn="" aria-label="Kit" onClick={toggleKit}>
-          ⚙
+        <button
+          type="button"
+          data-cv-xbtn=""
+          aria-label={kitPending > 0 ? `Kit, ${kitPending} updates waiting` : "Kit"}
+          data-testid="kit-entry"
+          onClick={() => {
+            useFrameStore.getState().setKitUpdatesRequested(false);
+            toggleKit();
+          }}
+        >
+          ⚙{kitPending > 0 ? <small data-cv-kit-badge="">{kitPending}</small> : null}
         </button>
       </header>
       <div data-cv-body="">
@@ -268,6 +286,7 @@ export function CanvasShell() {
       {overview ? (
         <OverviewView
           workspaces={workspaces}
+          onOpenKitUpdates={openKitUpdates}
           onSelect={(key, sessionKey) => {
             setSelectedKey(key);
             closeOverview();

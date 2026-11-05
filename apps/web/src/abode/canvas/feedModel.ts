@@ -1,7 +1,12 @@
 /** "Since you last looked" (A-049) as plain data: the overview's feed, newest first. */
 import { planBlock, type PlanFileState } from "./planBlock";
 
-export type FeedType = "ms" | "dec" | "red" | "pr" | "sess";
+import type { SkillSourceStatus } from "@t3tools/contracts";
+
+import { kitFeedText } from "../frame/updatesModel";
+
+/** `kit`: a skill source has changes waiting; a click opens Kit on Updates. */
+export type FeedType = "ms" | "dec" | "red" | "pr" | "sess" | "kit";
 
 export interface FeedItem {
   readonly type: FeedType;
@@ -40,6 +45,10 @@ export interface FeedInput {
   /** Done milestone keys per workspace as of the last close; no entry = never seen. */
   readonly snapshot: Readonly<Record<string, ReadonlyArray<string>>>;
   readonly now: number;
+  /** The daily source check's sources; one line each while changes are waiting. */
+  readonly kitSources?: ReadonlyArray<
+    Pick<SkillSourceStatus, "id" | "name" | "changes" | "lastOkAt">
+  >;
 }
 
 /** Compact age for a feed line: "now", "5m", "3h", "2d". */
@@ -101,6 +110,18 @@ export function deriveFeed(input: FeedInput, lastSeenAt: number | null): FeedIte
       });
     }
   }
+  // Waiting changes stay until decided, so like decisions they show whatever their age.
+  const kit: FeedItem[] = [];
+  for (const source of input.kitSources ?? []) {
+    if (source.changes.length === 0) continue;
+    kit.push({
+      type: "kit",
+      workspaceKey: "",
+      workspaceName: "Kit",
+      text: kitFeedText(source.name, source.changes),
+      at: source.lastOkAt === undefined ? input.now : Date.parse(source.lastOkAt) || input.now,
+    });
+  }
   const newestFirst = (a: FeedItem, b: FeedItem) => b.at - a.at;
-  return [...pinned.sort(newestFirst), ...recent.sort(newestFirst)];
+  return [...pinned.sort(newestFirst), ...kit.sort(newestFirst), ...recent.sort(newestFirst)];
 }
