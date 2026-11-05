@@ -233,7 +233,7 @@ export async function cutSkills(
 export async function restoreSkills(
   dirs: ReadonlyArray<string>,
   names: ReadonlyArray<string>,
-  nowMs = Date.now(),
+  nowMs: number,
 ): Promise<SkillPruneResult> {
   const done: string[] = [];
   const skipped: Array<{ name: string; reason: string }> = [];

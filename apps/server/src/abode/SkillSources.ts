@@ -449,8 +449,9 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
     }),
     pruneTrash: Effect.promise(() => listTrash(defaultLocalSkillDirs())),
     pruneRestore: Effect.fn("SkillSources.pruneRestore")(function* (input) {
+      const now = yield* Clock.currentTimeMillis;
       return yield* lock.withPermits(1)(
-        Effect.promise(() => restoreSkills(defaultLocalSkillDirs(), input.names)),
+        Effect.promise(() => restoreSkills(defaultLocalSkillDirs(), input.names, now)),
       );
     }),
     list: snapshotState(),
@@ -479,7 +480,7 @@ export const layer = Layer.unwrap(
         fetcher: fetcherLive,
         local: liveLocal,
         dirs: liveDirs,
-        defaultDir: NodePath.join(NodeOS.homedir(), ".claude", "skills"),
+        defaultDir: liveDirs[0] ?? NodePath.join(NodeOS.homedir(), ".claude", "skills"),
       }),
     }),
   ),

@@ -46,7 +46,7 @@ describe("cutSkills / restoreSkills", () => {
       "index.json",
     ]);
 
-    const back = await restoreSkills(dirs, ["docs"]);
+    const back = await restoreSkills(dirs, ["docs"], 20_000);
     expect(back).toEqual({ done: ["docs"], skipped: [] });
     expect(NodeFS.readFileSync(NodePath.join(claude, "docs", "SKILL.md"), "utf8")).toContain(
       "body docs",
@@ -70,7 +70,7 @@ describe("cutSkills / restoreSkills", () => {
     );
     expect(kinds.toSorted()).toEqual(["folder", "link"]);
 
-    const back = await restoreSkills(dirs, ["tdd"]);
+    const back = await restoreSkills(dirs, ["tdd"], 20_000);
     expect(back.done).toEqual(["tdd"]);
     expect(NodeFS.lstatSync(NodePath.join(claude, "tdd")).isSymbolicLink()).toBe(true);
     expect(NodeFS.readlinkSync(NodePath.join(claude, "tdd"))).toBe(NodePath.join(agents, "tdd"));
@@ -100,7 +100,7 @@ describe("cutSkills / restoreSkills", () => {
     await cutSkills(dirs, ["docs"], 4_000);
     skill(claude, "docs");
 
-    expect(await restoreSkills(dirs, ["docs"])).toEqual({
+    expect(await restoreSkills(dirs, ["docs"], 20_000)).toEqual({
       done: [],
       skipped: [{ name: "docs", reason: "something is already there" }],
     });
@@ -128,7 +128,7 @@ describe("cutSkills / restoreSkills", () => {
 
   it("says so when there is nothing to restore", async () => {
     const { dirs } = setup();
-    expect(await restoreSkills(dirs, ["docs"])).toEqual({
+    expect(await restoreSkills(dirs, ["docs"], 20_000)).toEqual({
       done: [],
       skipped: [{ name: "docs", reason: "nothing in the trash by that name" }],
     });
@@ -156,7 +156,7 @@ describe("cutSkills / restoreSkills", () => {
       ],
     });
 
-    expect((await restoreSkills(dirs, ["tdd"])).done).toEqual(["tdd"]);
+    expect((await restoreSkills(dirs, ["tdd"], 20_000)).done).toEqual(["tdd"]);
     expect(NodeFS.lstatSync(NodePath.join(codex, "tdd")).isSymbolicLink()).toBe(true);
     expect(NodeFS.readFileSync(NodePath.join(codex, "tdd", "SKILL.md"), "utf8")).toContain(
       "body tdd",
@@ -175,10 +175,10 @@ describe("cutSkills / restoreSkills", () => {
     write("second");
     await cutSkills(dirs, ["docs"], 8_000);
 
-    await restoreSkills(dirs, ["docs"]);
+    await restoreSkills(dirs, ["docs"], 20_000);
     expect(NodeFS.readFileSync(NodePath.join(claude, "docs", "SKILL.md"), "utf8")).toBe("second");
     NodeFS.rmSync(NodePath.join(claude, "docs"), { recursive: true });
-    await restoreSkills(dirs, ["docs"]);
+    await restoreSkills(dirs, ["docs"], 20_000);
     expect(NodeFS.readFileSync(NodePath.join(claude, "docs", "SKILL.md"), "utf8")).toBe("first");
   });
 
@@ -203,13 +203,13 @@ describe("cutSkills / restoreSkills", () => {
     link(NodePath.join(agents, "tdd"), NodePath.join(claude, "tdd"));
     await cutSkills(dirs, ["tdd"], 10_000);
     NodeFS.chmodSync(claude, 0o555);
-    const result = await restoreSkills(dirs, ["tdd"]);
+    const result = await restoreSkills(dirs, ["tdd"], 20_000);
     NodeFS.chmodSync(claude, 0o755);
 
     expect(result.done).toEqual([]);
     expect(exists(NodePath.join(agents, "tdd"))).toBe(false);
     expect((await listTrash(dirs)).entries).toHaveLength(1);
-    expect((await restoreSkills(dirs, ["tdd"])).done).toEqual(["tdd"]);
+    expect((await restoreSkills(dirs, ["tdd"], 20_000)).done).toEqual(["tdd"]);
   });
 
   it("refuses to restore over an empty folder that appeared meanwhile", async () => {
@@ -217,7 +217,7 @@ describe("cutSkills / restoreSkills", () => {
     skill(claude, "docs");
     await cutSkills(dirs, ["docs"], 11_000);
     NodeFS.mkdirSync(NodePath.join(claude, "docs"));
-    expect((await restoreSkills(dirs, ["docs"])).skipped[0]?.reason).toBe(
+    expect((await restoreSkills(dirs, ["docs"], 20_000)).skipped[0]?.reason).toBe(
       "something is already there",
     );
   });
@@ -236,7 +236,7 @@ describe("cutSkills / restoreSkills", () => {
       { ...entry, name: "../docs" },
     ]) {
       NodeFS.writeFileSync(index, JSON.stringify({ version: 1, entries: [bad] }));
-      const result = await restoreSkills(dirs, [bad.name]);
+      const result = await restoreSkills(dirs, [bad.name], 20_000);
       expect(result.done).toEqual([]);
       expect(exists(NodePath.join(claude, "docs"))).toBe(false);
     }
