@@ -259,3 +259,13 @@
     padding-left: calc(var(--workspace-titlebar-content-left) - var(--abode-sidebar-gutter));
   }
 }
+
+/* Touch screens have no hover: show the row actions and give them a 44px hit area. */
+@media (hover: none) {
+  [data-abode~="inline-action"] {
+    opacity: 1;
+    width: 44px;
+    height: 44px;
+    margin-block: calc((var(--abode-row-height) - 44px) / 2);
+  }
+}

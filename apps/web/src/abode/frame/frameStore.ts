@@ -10,7 +10,7 @@ const FRAME_STORAGE_KEY = "abode:frame:v1";
 
 export function sanitizeFrameTabs(persisted: unknown): Record<string, FrameTab> {
   const saved = (persisted as { tabs?: unknown } | null)?.tabs;
-  if (typeof saved !== "object" || saved === null) return {};
+  if (typeof saved !== "object" || saved === null || Array.isArray(saved)) return {};
   return Object.fromEntries(
     Object.entries(saved).filter(
       (entry): entry is [string, FrameTab] =>
@@ -26,10 +26,11 @@ export function tabFor(tabs: Readonly<Record<string, FrameTab>>, workspaceKey: s
 interface FrameStore {
   /** The last-used tab per workspace key. */
   readonly tabs: Readonly<Record<string, FrameTab>>;
-  /** A needs-you card asked for this thread's pending question to open once its chat shows. */
-  readonly answerThreadKey: string | null;
+  /** A needs-you card asked for this thread's pending question to open; `at` lets it expire. */
+  readonly answerRequest: { readonly key: string; readonly at: number } | null;
   setTab: (workspaceKey: string, tab: FrameTab) => void;
-  setAnswerThreadKey: (threadKey: string | null) => void;
+  requestAnswer: (threadKey: string) => void;
+  setAnswerRequest: (request: { readonly key: string; readonly at: number } | null) => void;
 }
 
 /** Per-device, client-only; never sent to the server. */
@@ -37,10 +38,11 @@ export const useFrameStore = create<FrameStore>()(
   persist(
     (set) => ({
       tabs: {},
-      answerThreadKey: null,
+      answerRequest: null,
       setTab: (workspaceKey, tab) =>
         set((state) => ({ tabs: { ...state.tabs, [workspaceKey]: tab } })),
-      setAnswerThreadKey: (answerThreadKey) => set({ answerThreadKey }),
+      requestAnswer: (key) => set({ answerRequest: { key, at: Date.now() } }),
+      setAnswerRequest: (answerRequest) => set({ answerRequest }),
     }),
     {
       name: FRAME_STORAGE_KEY,

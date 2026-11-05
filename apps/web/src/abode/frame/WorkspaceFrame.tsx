@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, ListIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
@@ -9,7 +9,7 @@ import { useThreadProjection, useThreadShell } from "~/state/entities";
 import { resolveActiveThreadRouteRef, resolveThreadRouteTarget } from "~/threadRoutes";
 import { useUiStateStore } from "~/uiStateStore";
 
-import { openPendingQuestion } from "../calm/openPendingQuestion";
+import { openPendingQuestion, watchPendingQuestion } from "../calm/openPendingQuestion";
 import { BackToCanvas } from "../canvas/BackToCanvas";
 import { useCanvasStore } from "../canvas/canvasStore";
 import { planBlock } from "../canvas/planBlock";
@@ -19,6 +19,7 @@ import { useWorkspaceGroups, type WorkspaceGroup } from "../shell/useWorkspaceGr
 import { threadShellKey } from "../shell/workspaceModel";
 import { agentCards, runningCount, type AgentCard } from "./agentCards";
 import { FRAME_TABS, tabFor, useFrameStore, type FrameTab } from "./frameStore";
+import { workspaceOf } from "./frameWorkspace";
 import "./frame.css";
 
 const TAB_LABEL: Record<FrameTab, string> = {
@@ -31,28 +32,17 @@ const PLACEHOLDER: Record<Exclude<FrameTab, "jam">, string> = {
   design: "Design: coming in A-059",
 };
 const TICK_MS = 30_000;
+const ANSWER_TTL_MS = 5_000;
 const NO_TYPES: ReadonlyMap<string, string> = new Map();
 
 /**
- * The frame above the chat (A-057): which workspace and thread this is, the agents working in
- * it, and the Jam, Milestones and Design tabs. Mounted from CalmTable, so only chat routes
+ * The frame above the chat (A-057): one row with the way back, the workspace's threads, the
+ * Jam, Milestones and Design tabs and the running count, then the agents working in it. Mounted from CalmTable, so only chat routes
  * (a thread or a new-thread draft) see it, and only with One window on.
  */
 export function WorkspaceFrame() {
   const enabled = useCanvasStore((state) => state.enabled);
   return enabled ? <Frame /> : null;
-}
-
-function workspaceOf(
-  groups: ReadonlyArray<WorkspaceGroup>,
-  ref: { readonly environmentId: string; readonly projectId: string } | null,
-): WorkspaceGroup | undefined {
-  if (ref === null) return undefined;
-  return groups.find((group) =>
-    group.project.memberProjectRefs.some(
-      (member) => member.environmentId === ref.environmentId && member.projectId === ref.projectId,
-    ),
-  );
 }
 
 function Frame() {
@@ -66,21 +56,18 @@ function Frame() {
   const group = workspaceOf(groups, shell ?? draft);
   // A thread that is not loaded yet, or a workspace not listed: keep the way back, nothing else.
   if (group === undefined) return <BackToCanvas />;
-  return (
-    <LoadedFrame group={group} threadRef={threadRef} threadTitle={shell?.title ?? "New session"} />
-  );
+  return <LoadedFrame group={group} threadRef={threadRef} />;
 }
 
 function LoadedFrame(props: {
   readonly group: WorkspaceGroup;
   readonly threadRef: ReturnType<typeof resolveActiveThreadRouteRef>;
-  readonly threadTitle: string;
 }) {
-  const { group, threadRef, threadTitle } = props;
+  const { group, threadRef } = props;
   const workspaceKey = group.project.projectKey;
   const currentKey = threadRef === null ? null : `${threadRef.environmentId}:${threadRef.threadId}`;
   const tab = useFrameStore((state) => tabFor(state.tabs, workspaceKey));
-  const answerKey = useFrameStore((state) => state.answerThreadKey);
+  const answerRequest = useFrameStore((state) => state.answerRequest);
   const visits = useUiStateStore((state) => state.threadLastVisitedAtById);
   const open = useOpenSession();
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -106,13 +93,25 @@ function LoadedFrame(props: {
     nowMs,
   });
   const running = runningCount(cards);
+  const anyRunning = running > 0;
+  const pendingKeys = new Set(
+    [...group.threads, ...[...group.runningSubagentsByParentKey.values()].flat()]
+      .filter((thread) => thread.hasPendingApprovals || thread.hasPendingUserInput)
+      .map(threadShellKey),
+  );
+  const currentHasQuestion = currentKey !== null && pendingKeys.has(currentKey);
 
-  // Elapsed times refresh twice a minute; nothing animates.
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- interval that refreshes the elapsed-time labels
+  // Elapsed times refresh twice a minute while an agent runs; nothing animates.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- timers that refresh the elapsed-time labels
   useEffect(() => {
+    if (!anyRunning) return;
+    const first = setTimeout(() => setNowMs(Date.now()), 1000);
     const timer = setInterval(() => setNowMs(Date.now()), TICK_MS);
-    return () => clearInterval(timer);
-  }, []);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [anyRunning]);
 
   // The pane and the calm table start below the frame, which is as tall as its content.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes the frame's height as a CSS variable on the conversation area
@@ -129,21 +128,25 @@ function LoadedFrame(props: {
     };
   }, []);
 
-  // A needs-you card on another thread opens that chat; its question panel appears a moment
-  // later, so keep trying briefly.
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- retries opening upstream's question panel in the composer once the chat has rendered it
+  // A needs-you card asks for a thread's question to open. It waits for the composer to render
+  // it (no polling), only when the thread has one, and the request expires.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- watches upstream's composer DOM for the question panel and clears the store request
   useEffect(() => {
-    if (answerKey === null || answerKey !== currentKey) return;
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      if (openPendingQuestion(rootRef.current) || tries >= 15) {
-        clearInterval(timer);
-        useFrameStore.getState().setAnswerThreadKey(null);
-      }
-    }, 150);
-    return () => clearInterval(timer);
-  }, [answerKey, currentKey]);
+    if (answerRequest === null) return;
+    const clear = () => useFrameStore.getState().setAnswerRequest(null);
+    const left = ANSWER_TTL_MS - (Date.now() - answerRequest.at);
+    if (left <= 0 || (answerRequest.key === currentKey && !currentHasQuestion)) {
+      clear();
+      return;
+    }
+    const expire = setTimeout(clear, left);
+    const stop =
+      answerRequest.key === currentKey ? watchPendingQuestion(rootRef.current, clear) : undefined;
+    return () => {
+      clearTimeout(expire);
+      stop?.();
+    };
+  }, [answerRequest, currentKey, currentHasQuestion]);
 
   const root = group.project.memberProjects[0];
   const turnSignal = group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|");
@@ -154,12 +157,14 @@ function LoadedFrame(props: {
       ? `${block.rows.reduce((sum, row) => sum + row.done, 0)}/${block.rows.reduce((sum, row) => sum + row.total, 0)}`
       : null;
 
+  const showJam = () => useFrameStore.getState().setTab(workspaceKey, "jam");
   const pickCard = (card: AgentCard) => {
+    showJam();
     if (card.key === currentKey) {
       if (card.status === "needs-you") openPendingQuestion(rootRef.current);
       return;
     }
-    if (card.status === "needs-you") useFrameStore.getState().setAnswerThreadKey(card.key);
+    if (card.status === "needs-you") useFrameStore.getState().requestAnswer(card.key);
     open(card);
   };
 
@@ -167,27 +172,30 @@ function LoadedFrame(props: {
     <>
       <div ref={rootRef} data-abode-frame="" data-testid="workspace-frame">
         <div data-abode-frame-head="">
-          <BackToCanvas />
-          <div data-abode-frame-title="">
-            <span data-abode-frame-workspace="">{group.name}</span>
-            <span data-abode-frame-sep="" aria-hidden>
-              /
-            </span>
+          <div data-abode-frame-left="">
+            <BackToCanvas />
             <Menu>
-              <MenuTrigger data-abode-frame-picker="" aria-label={`Thread: ${threadTitle}`}>
-                <span data-abode-frame-thread="">{threadTitle}</span>
-                <ChevronDownIcon aria-hidden className="size-3.5 shrink-0" />
+              <MenuTrigger
+                data-abode-frame-picker=""
+                data-testid="frame-threads"
+                aria-label={`Threads, ${group.threads.length}`}
+              >
+                <ListIcon aria-hidden className="size-4 shrink-0 min-[641px]:hidden" />
+                <span data-abode-long="">Threads</span>
+                <small>{group.threads.length}</small>
+                <ChevronDownIcon aria-hidden className="size-3.5 shrink-0 max-[640px]:hidden" />
               </MenuTrigger>
               <MenuPopup align="start">
                 {group.threads.length === 0 ? (
-                  <MenuItem disabled>No other threads</MenuItem>
+                  <MenuItem disabled>No threads yet</MenuItem>
                 ) : (
                   group.threads.map((thread) => (
                     <MenuItem
                       key={threadShellKey(thread)}
-                      onClick={() =>
-                        open({ environmentId: thread.environmentId, threadId: thread.id })
-                      }
+                      onClick={() => {
+                        showJam();
+                        open({ environmentId: thread.environmentId, threadId: thread.id });
+                      }}
                     >
                       {thread.title}
                     </MenuItem>
@@ -196,13 +204,26 @@ function LoadedFrame(props: {
               </MenuPopup>
             </Menu>
           </div>
+          <div data-abode-tabs="" role="tablist" aria-label="Workspace views">
+            {FRAME_TABS.map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={tab === value}
+                data-selected={tab === value ? "" : undefined}
+                data-testid={`frame-tab-${value}`}
+                onClick={() => useFrameStore.getState().setTab(workspaceKey, value)}
+              >
+                {TAB_LABEL[value]}
+                {value === "milestones" && count !== null ? <small>{count}</small> : null}
+              </button>
+            ))}
+          </div>
           {running > 0 ? (
             <span data-abode-frame-pill="" data-testid="frame-running">
               <i aria-hidden />
-              <span data-abode-long="">
-                {running} {running === 1 ? "agent" : "agents"} running
-              </span>
-              <span data-abode-short="">{running} running</span>
+              {running} {running === 1 ? "agent" : "agents"} running
             </span>
           ) : null}
         </div>
@@ -230,22 +251,6 @@ function LoadedFrame(props: {
             ))}
           </div>
         ) : null}
-        <div data-abode-tabs="" role="tablist" aria-label="Workspace views">
-          {FRAME_TABS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={tab === value}
-              data-selected={tab === value ? "" : undefined}
-              data-testid={`frame-tab-${value}`}
-              onClick={() => useFrameStore.getState().setTab(workspaceKey, value)}
-            >
-              {TAB_LABEL[value]}
-              {value === "milestones" && count !== null ? <small>{count}</small> : null}
-            </button>
-          ))}
-        </div>
       </div>
       {tab === "jam" ? null : (
         <section data-abode-frame-pane="" aria-label={TAB_LABEL[tab]} data-testid="frame-pane">

@@ -1,8 +1,8 @@
 /*
- * The workspace frame (A-057): header, agent strip and tabs above T3's timeline. Graphite
- * night from canvas.css's --cv-* tokens; nothing here animates. The frame is a flex child of
- * the conversation area and publishes its height as --abode-frame-h, which the pane and the
- * calm table start below, so the composer (z-20, a sibling of the area) is never covered.
+ * The workspace frame (A-057): one row of controls and the agent strip above T3's timeline,
+ * on the chat surface's theme tokens (status colours aside). Nothing here animates. It is a
+ * flex child of the conversation area and publishes its height as --abode-frame-h, which the
+ * pane and the calm table start below, so the composer (z-20 sibling) is never covered.
  */
 [data-abode-frame] {
   --abode-info: #52a9ff;
@@ -12,17 +12,25 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 10px 16px 0;
-  background: var(--cv-s0);
-  color: var(--cv-ink);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
   font-family: "Geist", system-ui, sans-serif;
 }
 
-/* Header */
+/* One row: back and threads on the left, tabs in the middle, the running pill on the right */
 [data-abode-frame-head] {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+[data-abode-frame-left] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 [data-abode-frame] [data-cv-back] {
@@ -30,59 +38,46 @@
   min-height: 36px;
   padding: 0 12px;
   flex: none;
-  background: var(--cv-s2);
-  border-color: var(--cv-line);
-  color: var(--cv-ink);
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
 }
 [data-abode-frame] [data-cv-back]:hover {
-  background: var(--cv-line);
-}
-[data-abode-frame-title] {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
-}
-[data-abode-frame-workspace] {
-  font-size: 15px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-[data-abode-frame-sep] {
-  color: var(--cv-ink-2);
+  background: var(--accent);
 }
 [data-abode-frame-picker] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 6px 10px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--cv-s2);
-  color: var(--cv-ink);
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
   font-size: 13px;
   cursor: pointer;
 }
 [data-abode-frame-picker]:hover {
-  background: var(--cv-line);
+  background: var(--accent);
 }
-[data-abode-frame-thread] {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+[data-abode-frame-picker] small {
+  font:
+    500 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--muted-foreground);
 }
 [data-abode-frame-pill] {
+  justify-self: end;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  flex: none;
   padding: 4px 11px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--abode-info) 15%, transparent);
   color: var(--abode-info);
+  white-space: nowrap;
   font:
     500 11.5px "Geist Mono",
     ui-monospace,
@@ -93,9 +88,6 @@
   height: 7px;
   border-radius: 50%;
   background: currentColor;
-}
-[data-abode-short] {
-  display: none;
 }
 
 /* Agent strip: three cards across, more scroll sideways */
@@ -114,16 +106,16 @@
   gap: 6px;
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid var(--cv-line);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--cv-s1);
-  color: var(--cv-ink);
+  background: var(--card);
+  color: var(--foreground);
   text-align: left;
   cursor: pointer;
   touch-action: manipulation;
 }
 [data-abode-card]:hover {
-  background: var(--cv-s2);
+  background: var(--accent);
 }
 [data-abode-card][data-status="needs-you"] {
   box-shadow: inset 0 0 0 1.5px var(--cv-warn);
@@ -144,7 +136,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--cv-ink-2);
+  color: var(--muted-foreground);
   font:
     400 11px "Geist Mono",
     ui-monospace,
@@ -168,13 +160,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--cv-ink-2);
+  color: var(--muted-foreground);
   font-size: 12.5px;
 }
 [data-abode-card-bar] {
   height: 3px;
   border-radius: 2px;
-  background: var(--cv-line);
+  background: var(--border);
   overflow: hidden;
 }
 [data-abode-card-bar] > i {
@@ -197,9 +189,9 @@
   padding: 3px;
   gap: 2px;
   border-radius: 999px;
-  background: var(--cv-s1);
-  border: 1px solid var(--cv-line);
-  margin-bottom: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  margin-bottom: 0;
 }
 [data-abode-tabs] > button {
   display: inline-flex;
@@ -211,15 +203,15 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--cv-ink-2);
+  color: var(--muted-foreground);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   touch-action: manipulation;
 }
 [data-abode-tabs] > button[data-selected] {
-  background: var(--cv-ink);
-  color: var(--cv-s0);
+  background: var(--foreground);
+  color: var(--background);
 }
 [data-abode-tabs] small {
   font:
@@ -237,8 +229,8 @@
   display: flex;
   justify-content: center;
   padding: 48px 16px;
-  background: var(--cv-s0);
-  color: var(--cv-ink-2);
+  background: var(--background);
+  color: var(--muted-foreground);
   font-size: 14px;
 }
 
@@ -246,47 +238,44 @@
   [data-abode-frame] {
     padding-inline: 12px;
   }
-  [data-abode-frame] [data-cv-back-label] {
+  [data-abode-frame-head] {
+    display: flex;
+    gap: 8px;
+  }
+  [data-abode-frame-left] {
+    display: contents;
+  }
+  [data-abode-frame] [data-cv-back-label],
+  [data-abode-long],
+  [data-abode-frame-pill] {
     display: none;
   }
   [data-abode-frame] [data-cv-back] {
-    min-width: 40px;
+    order: 0;
+    min-width: 44px;
+    min-height: 44px;
     justify-content: center;
     padding: 0;
   }
-  [data-abode-frame-title] {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
-  }
-  [data-abode-frame-workspace] {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--cv-ink-2);
-  }
-  [data-abode-frame-sep] {
-    display: none;
-  }
-  [data-abode-frame-picker] {
-    padding: 0;
-    background: transparent;
-    font-size: 15px;
-    font-weight: 650;
-  }
-  [data-abode-long] {
-    display: none;
-  }
-  [data-abode-short] {
-    display: inline;
-  }
-  [data-abode-strip] {
-    grid-auto-columns: 220px;
-  }
   [data-abode-tabs] {
-    width: 100%;
+    order: 1;
+    flex: 1;
+    width: auto;
+    margin-bottom: 0;
   }
   [data-abode-tabs] > button {
     flex: 1;
-    min-height: 38px;
+    min-height: 44px;
+    padding: 0 8px;
+  }
+  [data-abode-frame-picker] {
+    order: 2;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 0 8px;
+  }
+  [data-abode-strip] {
+    grid-auto-columns: 220px;
   }
 }

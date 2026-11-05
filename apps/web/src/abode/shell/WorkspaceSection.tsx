@@ -168,6 +168,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
     if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
     else if (clicked.value === WORKSPACE_REMOVE_MENU_ITEM.id) {
       useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
+      if (activeIsHere || activeDraftIsHere) void router.navigate({ to: "/" });
     } else if (clicked.value === "copy-path" && firstMember) {
       copyPath(firstMember.workspaceRoot, { path: firstMember.workspaceRoot });
     } else if (clicked.value === "project-settings") {
@@ -242,6 +243,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
                   onClick={(event) => {
                     event.stopPropagation();
                     useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
+                    if (activeIsHere || activeDraftIsHere) void router.navigate({ to: "/" });
                   }}
                 />
               }

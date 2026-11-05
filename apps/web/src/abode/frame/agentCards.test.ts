@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import type { SidebarThreadSummary } from "../../types";
 import { agentCards, runningCount } from "./agentCards";
+import { workspaceOf } from "./frameWorkspace";
 import { FRAME_TABS, sanitizeFrameTabs, tabFor } from "./frameStore";
 
 const NOW = Date.parse("2026-11-04T12:10:00.000Z");
@@ -147,5 +148,28 @@ describe("frame tabs", () => {
       a: "milestones",
     });
     expect(sanitizeFrameTabs(null)).toEqual({});
+  });
+
+  it("survives corrupt saved state", () => {
+    expect(sanitizeFrameTabs(undefined)).toEqual({});
+    expect(sanitizeFrameTabs("jam")).toEqual({});
+    expect(sanitizeFrameTabs({ tabs: ["jam"] })).toEqual({});
+    expect(sanitizeFrameTabs({ tabs: "design" })).toEqual({});
+  });
+});
+
+describe("workspaceOf", () => {
+  const groups = [
+    { name: "a", project: { memberProjectRefs: [{ environmentId: "e1", projectId: "p1" }] } },
+    { name: "b", project: { memberProjectRefs: [{ environmentId: "e1", projectId: "p2" }] } },
+  ];
+
+  it("finds the workspace of a thread's or a draft's project", () => {
+    expect(workspaceOf(groups, { environmentId: "e1", projectId: "p2" })?.name).toBe("b");
+  });
+
+  it("is undefined for an unknown project or no route", () => {
+    expect(workspaceOf(groups, { environmentId: "e2", projectId: "p1" })).toBeUndefined();
+    expect(workspaceOf(groups, null)).toBeUndefined();
   });
 });
