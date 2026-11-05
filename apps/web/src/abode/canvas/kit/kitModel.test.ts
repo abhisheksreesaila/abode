@@ -2,19 +2,15 @@ import type { CustomizationItem } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  buildCuratorBrief,
   buildKitMcp,
   buildKitSkills,
   categorise,
   detectSource,
-  displayUserText,
   estimateContext,
-  groupByCategory,
   maskCommand,
   parseHooks,
   parsePlugins,
-  pickCuratorProject,
-  sourceCounts,
+  skillTokens,
 } from "./kitModel";
 
 const skill = (
@@ -79,29 +75,6 @@ describe("buildKitSkills", () => {
   });
 });
 
-describe("sourceCounts and groupByCategory", () => {
-  const skills = buildKitSkills([
-    skill("tdd", "/a/tdd/SKILL.md"),
-    skill("qa", "/a/gstack/qa/SKILL.md"),
-    skill("review", "/a/gstack/review/SKILL.md"),
-  ]);
-
-  it("counts in-kit against each pack's total", () => {
-    const counts = sourceCounts(skills);
-    expect(counts.find((c) => c.id === "gstack")).toEqual({ id: "gstack", inKit: 2, total: 31 });
-    expect(counts.find((c) => c.id === "mine")).toEqual({ id: "mine", inKit: 0, total: 0 });
-  });
-
-  it("groups by category and filters to one", () => {
-    expect(groupByCategory(skills, null).map((g) => [g.label, g.skills.length])).toEqual([
-      ["Build", 1],
-      ["Review", 1],
-      ["Test & QA", 1],
-    ]);
-    expect(groupByCategory(skills, "review").map((g) => g.skills[0]?.name)).toEqual(["review"]);
-  });
-});
-
 describe("buildKitMcp", () => {
   it("makes one row per server with its agents and leaves out Codex's config.toml", () => {
     const rows = buildKitMcp([
@@ -141,6 +114,12 @@ describe("estimateContext", () => {
   });
 });
 
+describe("skillTokens", () => {
+  it("is the overhead plus a quarter of the name and description length", () => {
+    expect(skillTokens({ name: "abcd", description: "x".repeat(76) })).toBe(40);
+  });
+});
+
 describe("parseHooks", () => {
   it("turns settings hooks into event sentences", () => {
     const text = JSON.stringify({
@@ -171,25 +150,6 @@ describe("parsePlugins", () => {
       { name: "a", marketplace: "mk", enabled: true },
       { name: "b", marketplace: "mk", enabled: false },
     ]);
-  });
-});
-
-describe("pickCuratorProject", () => {
-  it("prefers the home folder, then the first project", () => {
-    const projects = [{ workspaceRoot: "/home/ab/code/app" }, { workspaceRoot: "/home/ab" }];
-    expect(pickCuratorProject(projects)?.workspaceRoot).toBe("/home/ab");
-    expect(pickCuratorProject(projects.slice(0, 1))?.workspaceRoot).toBe("/home/ab/code/app");
-    expect(pickCuratorProject([])).toBeNull();
-  });
-});
-
-describe("curator brief", () => {
-  it("keeps the person's request recoverable from the first message", () => {
-    const skills = buildKitSkills([skill("tdd", "/a/tdd/SKILL.md")]);
-    const brief = buildCuratorBrief({ skills, mcpServers: 1, request: "drop duplicates" });
-    expect(brief).toContain("My kit now: 1 skills (Matt Pocock 1) and 1 MCP servers.");
-    expect(displayUserText(brief)).toBe("drop duplicates");
-    expect(displayUserText("plain follow-up")).toBe("plain follow-up");
   });
 });
 

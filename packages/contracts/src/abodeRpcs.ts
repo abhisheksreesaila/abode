@@ -7,6 +7,7 @@ import {
   WsSkillSourcesCheckNowRpc,
   WsSkillSourcesDecideRpc,
   WsSkillSourcesListRpc,
+  WsSkillUsageListRpc,
 } from "./abodeSkillSources.ts";
 import { WsTailnetStatusRpc } from "./abodeTailnet.ts";
 import { WsVoiceRpc } from "./abodeVoice.ts";
@@ -21,6 +22,7 @@ export const ABODE_WS_METHODS = {
   skillSourcesList: "skillSources.list",
   skillSourcesCheckNow: "skillSources.checkNow",
   skillSourcesDecide: "skillSources.decide",
+  skillUsageList: "skillUsage.list",
 } as const;
 
 export const ABODE_RPCS = [
@@ -32,4 +34,5 @@ export const ABODE_RPCS = [
   WsSkillSourcesListRpc,
   WsSkillSourcesCheckNowRpc,
   WsSkillSourcesDecideRpc,
+  WsSkillUsageListRpc,
 ] as const;

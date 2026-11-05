@@ -15,15 +15,6 @@ export const SOURCES: Record<
   mine: { name: "Mine", by: "~/.claude/skills", color: "#e4e4e7", total: 0 },
 };
 
-const SOURCE_ORDER: ReadonlyArray<SourceId> = [
-  "matt",
-  "gstack",
-  "pstack",
-  "tstack",
-  "anth",
-  "mine",
-];
-
 const MATT_SKILLS = new Set([
   "tdd",
   "grill-me",
@@ -170,20 +161,6 @@ export function buildKitSkills(items: ReadonlyArray<CustomizationItem>): Readonl
     .toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
-export function sourceCounts(skills: ReadonlyArray<KitSkill>) {
-  return SOURCE_ORDER.map((id) => {
-    const inKit = skills.filter((skill) => skill.source === id).length;
-    return { id, inKit, total: Math.max(SOURCES[id].total, inKit) };
-  });
-}
-
-export function groupByCategory(skills: ReadonlyArray<KitSkill>, only: CategoryId | null) {
-  return CATEGORIES.map((category) => ({
-    ...category,
-    skills: skills.filter((skill) => skill.category === category.id),
-  })).filter((group) => group.skills.length > 0 && (only === null || group.id === only));
-}
-
 /** One MCP row per server name, with every agent that declares it. */
 export interface KitMcp {
   readonly name: string;
@@ -225,13 +202,14 @@ export function buildKitMcp(items: ReadonlyArray<CustomizationItem>): ReadonlyAr
 const MCP_TOKENS_ESTIMATE = 1500;
 const SKILL_OVERHEAD_TOKENS = 20;
 
+/** What one skill's name and description cost in every session. */
+export function skillTokens(skill: Pick<KitSkill, "name" | "description">): number {
+  return SKILL_OVERHEAD_TOKENS + Math.ceil((skill.name.length + skill.description.length) / 4);
+}
+
 export function estimateContext(skills: ReadonlyArray<KitSkill>, mcpServers: number) {
-  const skillTokens = skills.reduce(
-    (sum, skill) =>
-      sum + SKILL_OVERHEAD_TOKENS + Math.ceil((skill.name.length + skill.description.length) / 4),
-    0,
-  );
-  const skillsK = skillTokens / 1000;
+  const skillTokenTotal = skills.reduce((sum, skill) => sum + skillTokens(skill), 0);
+  const skillsK = skillTokenTotal / 1000;
   const mcpK = (mcpServers * MCP_TOKENS_ESTIMATE) / 1000;
   return { skillsK, mcpK, totalK: skillsK + mcpK };
 }
@@ -336,41 +314,4 @@ export function parsePlugins(settingsText: string): ReadonlyArray<KitPlugin> {
       };
     })
     .toSorted((a, b) => Number(b.enabled) - Number(a.enabled) || a.name.localeCompare(b.name));
-}
-
-const HOME_ROOT = /^(?:\/home|\/Users)\/[^/]+\/?$/;
-
-/** The curator runs in the user's home folder when that is a project, else in the first project. */
-export function pickCuratorProject<T extends { readonly workspaceRoot: string }>(
-  projects: ReadonlyArray<T>,
-): T | null {
-  return projects.find((project) => HOME_ROOT.test(project.workspaceRoot)) ?? projects[0] ?? null;
-}
-
-const REQUEST_MARKER = "\n\n---\nMy request: ";
-
-export function buildCuratorBrief(input: {
-  readonly skills: ReadonlyArray<KitSkill>;
-  readonly mcpServers: number;
-  readonly request: string;
-}): string {
-  const sources = sourceCounts(input.skills)
-    .filter((source) => source.inKit > 0)
-    .map((source) => `${SOURCES[source.id].name} ${source.inKit}`)
-    .join(", ");
-  const names = input.skills.map((skill) => skill.name).join(", ");
-  const brief = [
-    "You are the curator of my agent kit in abode. I use Claude Code and Codex and keep skills from several packs (Matt Pocock, gstack, pstack, tstack, Anthropic, and my own).",
-    `My kit now: ${input.skills.length} skills (${sources}) and ${input.mcpServers} MCP servers.`,
-    `Skills: ${names}.`,
-    "Your job: say which skills overlap and which I can drop, label where each comes from and what kind it is, and suggest what's missing for how I work. Propose changes; install, edit or delete nothing until I say yes. When you propose a change, show the exact command or file edit first.",
-    "Answer briefly, in plain words.",
-  ].join("\n\n");
-  return `${brief}${REQUEST_MARKER}${input.request}`;
-}
-
-/** The part of a first message the person typed, without the curator brief. */
-export function displayUserText(text: string): string {
-  const at = text.indexOf(REQUEST_MARKER);
-  return at === -1 ? text : text.slice(at + REQUEST_MARKER.length);
 }
