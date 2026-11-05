@@ -572,7 +572,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-060: Kit in the workspace frame
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after one fix round; checked in the browser at 1440 and 390 on seeded data: a first ⚙ open created the Kit project at ~ and a draft, Kit tabs and strip showed, the daily check ran live (4 sources, 0 changed), Skills listed 25 real skills with sources, cost and last use from real logs; the draft composer docks under the pane)
 - **Depends on:** A-057
 - **What:** Kit opens as a Kit thread in a project rooted at `~`, created on first use, with the frame on top: the strip (daily check, kit agent) and the tabs Skills · MCP · Plugins · Hooks · Updates over the existing Kit lists. Skills shows each skill's source, context cost and last use, read from the providers' own session logs where present.
 - **Acceptance:**
