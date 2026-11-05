@@ -590,7 +590,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-062: Updates tab, badge and feed
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after three rounds, the installer writes only inside the three skill roots, symlinked slots and outside links are refused with tests; checked in the browser at 1440 on real source data with three Matt skills made to look new: ⚙ badge 3, cards with real descriptions and costs, "Looks like grilling, which you already have", Skip dimmed the card and dropped the badge to 2, nothing written to ~/.claude/skills, overview feed "Matt Pocock added 2 skills"; Inherit was exercised by tests on a temp home only)
 - **Depends on:** A-060, A-061
 - **What:** cards grouped by source. Each new skill shows what it does, its context cost, any overlap, and Inherit / Skip (Skip is remembered). Unedited updates come as one "Take all" card, and edited skills get a diff plus "Merge in jam", which sends the diff to the Kit thread. A count badge sits on Kit in the rail, and a "Matt added 3 skills" line goes into the overview's since-you-last-looked feed.
 - **Acceptance:**
