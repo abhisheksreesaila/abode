@@ -5,7 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { observeResize } from "~/lib/observeResize";
-import { useThreadProjection, useThreadShell } from "~/state/entities";
+import { deriveWorkspaceMutationId } from "~/components/ChatView.logic";
+import {
+  useQuietThreadVisibleTurnItems,
+  useThreadProjection,
+  useThreadShell,
+} from "~/state/entities";
 import { resolveActiveThreadRouteRef, resolveThreadRouteTarget } from "~/threadRoutes";
 import { useUiStateStore } from "~/uiStateStore";
 
@@ -20,6 +25,7 @@ import { threadShellKey } from "../shell/workspaceModel";
 import { agentCards, runningCount, type AgentCard } from "./agentCards";
 import { FRAME_TABS, tabFor, useFrameStore, type FrameTab } from "./frameStore";
 import { workspaceOf } from "./frameWorkspace";
+import { MilestonesPane } from "./MilestonesPane";
 import "./frame.css";
 
 const TAB_LABEL: Record<FrameTab, string> = {
@@ -27,10 +33,8 @@ const TAB_LABEL: Record<FrameTab, string> = {
   milestones: "Milestones",
   design: "Design",
 };
-const PLACEHOLDER: Record<Exclude<FrameTab, "jam">, string> = {
-  milestones: "Milestones: coming in A-058",
-  design: "Design: coming in A-059",
-};
+const PLAN_PROMPT =
+  "There is no docs/plan.md with milestones yet. Please read the project and write one: a Goal: line, then milestones (## Milestone: name) with tickets (### X-001: title, then - **Status:** todo). Don't start building.";
 const TICK_MS = 30_000;
 const ANSWER_TTL_MS = 5_000;
 const NO_TYPES: ReadonlyMap<string, string> = new Map();
@@ -93,7 +97,7 @@ function LoadedFrame(props: {
     nowMs,
   });
   const running = runningCount(cards);
-  const anyRunning = running > 0;
+  const anyRunning = running > 0 || tab === "milestones";
   const pendingKeys = new Set(
     [...group.threads, ...[...group.runningSubagentsByParentKey.values()].flat()]
       .filter((thread) => thread.hasPendingApprovals || thread.hasPendingUserInput)
@@ -101,7 +105,7 @@ function LoadedFrame(props: {
   );
   const currentHasQuestion = currentKey !== null && pendingKeys.has(currentKey);
 
-  // Elapsed times refresh twice a minute while an agent runs; nothing animates.
+  // Elapsed times refresh twice a minute while an agent runs or Milestones shows; nothing animates.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- timers that refresh the elapsed-time labels
   useEffect(() => {
     if (!anyRunning) return;
@@ -149,8 +153,17 @@ function LoadedFrame(props: {
   }, [answerRequest, currentKey, currentHasQuestion]);
 
   const root = group.project.memberProjects[0];
-  const turnSignal = group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|");
+  // The plan refetches when an agent finishes a command or file edit in this thread (the same
+  // marker the chat's file previews use) or any thread in the workspace finishes a run.
+  const editMarker = deriveWorkspaceMutationId(useQuietThreadVisibleTurnItems(threadRef), null);
+  const turnSignal = `${editMarker ?? ""}|${group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|")}`;
   const plan = usePlanFile(root?.environmentId, root?.workspaceRoot, turnSignal);
+  const planText = plan.file?.contents;
+  // Stamps when the plan's text changes, for Milestones' "updated Xm ago".
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- records the arrival time of an edit (impure) in the frame store
+  useEffect(() => {
+    if (planText !== undefined) useFrameStore.getState().notePlan(workspaceKey, planText);
+  }, [workspaceKey, planText]);
   const block = plan.pending ? null : planBlock(plan);
   const count =
     block?.kind === "ready"
@@ -254,7 +267,20 @@ function LoadedFrame(props: {
       </div>
       {tab === "jam" ? null : (
         <section data-abode-frame-pane="" aria-label={TAB_LABEL[tab]} data-testid="frame-pane">
-          <p>{PLACEHOLDER[tab]}</p>
+          {tab === "milestones" ? (
+            <MilestonesPane
+              block={block ?? { kind: "loading" }}
+              workspaceKey={workspaceKey}
+              nowMs={nowMs}
+              onAskToPlan={
+                threadRef === null
+                  ? undefined
+                  : () => useComposerDraftStore.getState().setPrompt(threadRef, PLAN_PROMPT)
+              }
+            />
+          ) : (
+            <p>Design: coming in A-059</p>
+          )}
         </section>
       )}
     </>
