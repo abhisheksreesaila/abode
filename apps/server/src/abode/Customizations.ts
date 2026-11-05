@@ -25,9 +25,12 @@ import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import { parse as parseYamlDocument } from "yaml";
 
-import { expandHomePath } from "@t3tools/provider-core/server/pathExpansion";
 import { discoverClaudeSkills } from "../provider/Drivers/ClaudeSkills.ts";
-import { resolveClaudeHomePath } from "../provider/Drivers/ClaudeHome.ts";
+import {
+  agentsHomeDir as agentsHome,
+  claudeConfigDir,
+  codexHomeDir as codexHome,
+} from "./skillRoots.ts";
 import * as ProjectStore from "../orchestration-v2/ProjectStore.ts";
 
 const CUSTOMIZATIONS_READ_MAX_BYTES = 1024 * 1024;
@@ -169,25 +172,9 @@ const make = Effect.gen(function* () {
   const path = yield* Path.Path;
   const projectStore = yield* ProjectStore.ProjectStoreV2;
 
-  const resolveConfigDir = resolveClaudeHomePath({ homePath: "" }, process.env).pipe(
-    Effect.provideService(Path.Path, path),
-  );
-
-  /** Codex reads `CODEX_HOME` when set, `~/.codex` otherwise. */
-  const codexHomeDir = () => {
-    const configured = process.env.CODEX_HOME?.trim() ?? "";
-    return configured.length > 0
-      ? path.resolve(expandHomePath(configured, NodeOS.homedir()))
-      : path.join(NodeOS.homedir(), ".codex");
-  };
-
-  /** The shared skills folder (`~/.agents/skills`); `AGENTS_HOME` moves it. */
-  const agentsHomeDir = () => {
-    const configured = process.env.AGENTS_HOME?.trim() ?? "";
-    return configured.length > 0
-      ? path.resolve(expandHomePath(configured, NodeOS.homedir()))
-      : path.join(NodeOS.homedir(), ".agents");
-  };
+  const resolveConfigDir = Effect.sync(() => claudeConfigDir());
+  const codexHomeDir = () => codexHome();
+  const agentsHomeDir = () => agentsHome();
 
   /**
    * `~/.claude/...` and `~/.codex/...` name the user-scope folders without the client knowing

@@ -7,6 +7,7 @@ import {
   WS_METHODS,
   type EnvironmentId,
   type SkillSourcesState,
+  type SkillTrashResult,
   type SkillUsageListResult,
 } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
@@ -71,5 +72,41 @@ export const skillSourcesCommands = {
     tag: WS_METHODS.skillSourcesDecide,
     onSuccess: ({ environmentId }, registry) =>
       Effect.sync(() => registry.refresh(skillSourcesAtom({ environmentId, input: undefined }))),
+  }),
+};
+
+/** What is in the host's skill trash (cut by "Prune by jam"), newest first. */
+const skillTrashAtom = createEnvironmentRpcQueryAtomFamily(connectionAtomRuntime, {
+  label: "environment-data:abode:skill-trash",
+  tag: WS_METHODS.skillPruneTrash,
+  staleTimeMs: 10_000,
+  idleTtlMs: 60_000,
+});
+
+const NO_TRASH = Atom.make(AsyncResult.initial<SkillTrashResult, never>(false));
+
+/** The trash list for a machine; null until it has answered. */
+export function useSkillTrash(
+  environmentId: EnvironmentId | null | undefined,
+): SkillTrashResult | null {
+  const result = useAtomValue(
+    environmentId == null ? NO_TRASH : skillTrashAtom({ environmentId, input: undefined }),
+  );
+  return Option.getOrNull(AsyncResult.value(result));
+}
+
+/** Prune by jam: moving skills to the host's trash and back. The caller refreshes the skill lists it shows. */
+export const skillPruneCommands = {
+  cut: createEnvironmentRpcCommand(connectionAtomRuntime, {
+    label: "environment-data:abode:skill-prune-cut",
+    tag: WS_METHODS.skillPruneCut,
+    onSuccess: ({ environmentId }, registry) =>
+      Effect.sync(() => registry.refresh(skillTrashAtom({ environmentId, input: undefined }))),
+  }),
+  restore: createEnvironmentRpcCommand(connectionAtomRuntime, {
+    label: "environment-data:abode:skill-prune-restore",
+    tag: WS_METHODS.skillPruneRestore,
+    onSuccess: ({ environmentId }, registry) =>
+      Effect.sync(() => registry.refresh(skillTrashAtom({ environmentId, input: undefined }))),
   }),
 };

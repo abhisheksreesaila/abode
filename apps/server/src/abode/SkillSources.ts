@@ -14,6 +14,9 @@ import {
   type SkillChange,
   type SkillDecision,
   type SkillSourcesDecideInput,
+  type SkillPruneInput,
+  type SkillPruneResult,
+  type SkillTrashResult,
   type SkillUsageListInput,
   type SkillUsageListResult,
   type SkillSourcesState,
@@ -42,6 +45,7 @@ import {
   type Snapshot,
   type SnapshotSkill,
 } from "./skillSourcesCore.ts";
+import { cutSkills, listTrash, restoreSkills } from "./skillPruneIO.ts";
 import { makeInstall, type SkillInstallRequest } from "./skillInstallerIO.ts";
 import {
   LocalSkills,
@@ -132,6 +136,10 @@ export class SkillSources extends Context.Service<
     ) => Effect.Effect<SkillSourcesState, SkillSourcesError>;
     /** Built here so it is created once per server with the rest of the Kit's host state. */
     readonly usageList: (input: SkillUsageListInput) => Effect.Effect<SkillUsageListResult>;
+    /** Moves skills to `~/.claude/skills/.trash`, and back. Nothing else moves them. */
+    readonly pruneCut: (input: SkillPruneInput) => Effect.Effect<SkillPruneResult>;
+    readonly pruneRestore: (input: SkillPruneInput) => Effect.Effect<SkillPruneResult>;
+    readonly pruneTrash: Effect.Effect<SkillTrashResult>;
   }
 >()("t3/abode/SkillSources") {}
 
@@ -433,6 +441,19 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
 
   return SkillSources.of({
     usageList: skillUsage.list,
+    pruneCut: Effect.fn("SkillSources.pruneCut")(function* (input) {
+      const now = yield* Clock.currentTimeMillis;
+      return yield* lock.withPermits(1)(
+        Effect.promise(() => cutSkills(defaultLocalSkillDirs(), input.names, now)),
+      );
+    }),
+    pruneTrash: Effect.promise(() => listTrash(defaultLocalSkillDirs())),
+    pruneRestore: Effect.fn("SkillSources.pruneRestore")(function* (input) {
+      const now = yield* Clock.currentTimeMillis;
+      return yield* lock.withPermits(1)(
+        Effect.promise(() => restoreSkills(defaultLocalSkillDirs(), input.names, now)),
+      );
+    }),
     list: snapshotState(),
     checkNow: runChecks.pipe(Effect.andThen(snapshotState())),
     decide: Effect.fn("SkillSources.decideLocked")(function* (input) {
@@ -459,7 +480,7 @@ export const layer = Layer.unwrap(
         fetcher: fetcherLive,
         local: liveLocal,
         dirs: liveDirs,
-        defaultDir: NodePath.join(NodeOS.homedir(), ".claude", "skills"),
+        defaultDir: liveDirs[0] ?? NodePath.join(NodeOS.homedir(), ".claude", "skills"),
       }),
     }),
   ),
@@ -473,4 +494,7 @@ export const handlers = (service: SkillSources["Service"]) => ({
   [WS_METHODS.skillSourcesCheckNow]: () => service.checkNow,
   [WS_METHODS.skillSourcesDecide]: (input: SkillSourcesDecideInput) => service.decide(input),
   [WS_METHODS.skillUsageList]: (input: SkillUsageListInput) => service.usageList(input),
+  [WS_METHODS.skillPruneCut]: (input: SkillPruneInput) => service.pruneCut(input),
+  [WS_METHODS.skillPruneRestore]: (input: SkillPruneInput) => service.pruneRestore(input),
+  [WS_METHODS.skillPruneTrash]: () => service.pruneTrash,
 });

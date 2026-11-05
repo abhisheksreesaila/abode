@@ -12,7 +12,7 @@ import { parseHooks, parsePlugins, type KitHook, type KitPlugin } from "./kitMod
 import type { CustomizationsScope } from "../../customizations/useCustomizationsScope";
 
 /** Everything the Customizations service lists for the workspace and the user folders. */
-export function useKitItems(scope: CustomizationsScope) {
+export function useKitItems(scope: Pick<CustomizationsScope, "environmentId" | "cwd">) {
   const result = useAtomValue(
     customizationsEnvironment.list({
       environmentId: scope.environmentId,

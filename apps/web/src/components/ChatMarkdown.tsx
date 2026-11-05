@@ -189,6 +189,7 @@ import {
 import { resolveLinkTarget } from "../browser/browserLinkTarget";
 import { PullRequestLinkPreview } from "./pullRequest/PullRequestLinkPreview";
 import { ABODE_ALERT_PRESENTATIONS, withAbodeCallouts } from "~/abode/chat/callouts"; // abode: chat cards
+import { PruneBlock } from "~/abode/chat/prune/PruneCard"; // abode: prune card
 import { MarkdownCodeBlock, SuspenseShikiCodeBlock } from "./chat/MarkdownCodeBlock";
 import { createMarkdownRenderer } from "./chat/markdownRenderer";
 import { splitMarkdownBlocks } from "./chat/markdownStreamBlocks";
@@ -1572,6 +1573,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
     }
 
     const language = extractFenceLanguage(codeBlock.className);
+    if (language === "abode-prune") return <PruneBlock>{children}</PruneBlock>; // abode: prune card
     if (
       mathEnabled &&
       language === "math" &&

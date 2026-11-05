@@ -1,7 +1,13 @@
 import type { SkillSourcesState, SkillSourceStatus } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { dailyCheckCard, isKitProject, lastUsedLabel, singleFlight } from "./kitMode";
+import {
+  dailyCheckCard,
+  isKitProject,
+  lastUsedLabel,
+  singleFlight,
+  withoutKitProject,
+} from "./kitMode";
 
 const NOW = Date.parse("2026-11-04T12:00:00.000Z");
 
@@ -27,6 +33,17 @@ describe("isKitProject with the host's home known", () => {
     expect(isKitProject("/root/", "/root")).toBe(true);
     expect(isKitProject("/home/abhi", "/root")).toBe(false);
     expect(isKitProject("/home/abhi/Projects/app", "/home/abhi")).toBe(false);
+  });
+});
+
+describe("withoutKitProject", () => {
+  it("drops the home-rooted project from a workspace list and keeps the rest in order", () => {
+    const group = (workspaceRoot: string) => ({ project: { workspaceRoot } });
+    const groups = [group("/home/abhi/Projects/a"), group("/home/abhi"), group("/srv/b")];
+    expect(withoutKitProject(groups, "/home/abhi").map((g) => g.project.workspaceRoot)).toEqual([
+      "/home/abhi/Projects/a",
+      "/srv/b",
+    ]);
   });
 });
 

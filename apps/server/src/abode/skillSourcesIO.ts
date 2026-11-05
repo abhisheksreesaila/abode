@@ -4,8 +4,9 @@
  * reported, not worked around), and the installed skill folders on disk.
  */
 import * as NodeFSP from "node:fs/promises";
-import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
+
+import { skillRootDirs } from "./skillRoots.ts";
 
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
@@ -161,10 +162,7 @@ export const localSkillHashes = async (
   return hashes;
 };
 
-export const defaultLocalSkillDirs = (): string[] => {
-  const home = NodeOS.homedir();
-  return [".claude", ".agents", ".codex"].map((dir) => NodePath.join(home, dir, "skills"));
-};
+export const defaultLocalSkillDirs = (): string[] => skillRootDirs();
 
 export const localSkillsFor = (dirs: ReadonlyArray<string>): LocalSkillsShape => ({
   hashesFor: (name, files) => Effect.promise(() => localSkillHashes(dirs, name, files)),
