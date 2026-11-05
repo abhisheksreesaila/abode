@@ -1565,7 +1565,6 @@ const CHAT_MARKDOWN_COMPONENTS = {
       onRunShellCommand,
       inline,
       mathEnabled,
-      threadRef, // abode: prune card
     } = use(ChatMarkdownRendererContext);
     const text = use(ChatMarkdownTextContext);
     const codeBlock = extractCodeBlock(children);
@@ -1574,6 +1573,8 @@ const CHAT_MARKDOWN_COMPONENTS = {
     }
 
     const language = extractFenceLanguage(codeBlock.className);
+    if (language === "abode-prune")
+      return <PruneBlock code={codeBlock.code}>{children}</PruneBlock>; // abode: prune card
     if (
       mathEnabled &&
       language === "math" &&
@@ -1605,17 +1606,6 @@ const CHAT_MARKDOWN_COMPONENTS = {
         </Suspense>
       </RenderErrorBoundary>
     );
-    if (language === "abode-prune") {
-      // abode: prune card (Kit threads only; elsewhere the fallback is the plain block)
-      return (
-        <PruneBlock
-          code={codeBlock.code}
-          threadRef={threadRef}
-          isStreaming={isStreaming}
-          fallback={highlightedCode}
-        />
-      );
-    }
     if (language === "mermaid") {
       return (
         <MarkdownMermaidCodeBlock

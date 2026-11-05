@@ -1,4 +1,3 @@
-import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
@@ -7,7 +6,7 @@ import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useState, type ReactNode } from "react";
 
 import { appAtomRegistry } from "~/rpc/atomRegistry";
-import { useProject, useThreadShell } from "~/state/entities";
+import { useThreadShell } from "~/state/entities";
 import { useAtomCommand } from "~/state/use-atom-command";
 
 import { SourceBadge } from "../../canvas/kit/KitSkillDetail";
@@ -18,33 +17,28 @@ import { customizationsEnvironment } from "../../customizations/customizationsSt
 import { useRefreshProviderSkills } from "../../customizations/useRefreshProviderSkills";
 import { skillPruneCommands, useHostHomePath } from "../../frame/kitData";
 import { isKitProject } from "../../frame/kitMode";
+import { useActiveCustomizationsScope } from "../../customizations/useCustomizationsScope";
+import { deriveWorkspaceThreadState } from "../../shell/threadState";
 import { parsePruneBlock, pruneHeadline, rowTokens } from "./pruneModel";
 import { setPruneOutcome, usePruneOutcome } from "./pruneOutcomes";
 
-/**
- * The ```abode-prune block as a pick list, in Kit threads only; anywhere else the plain code
- * block stays. Hooked into upstream's markdown `pre` renderer (one line there).
- */
-export function PruneBlock(props: {
-  readonly code: string;
-  readonly threadRef: ScopedThreadRef | undefined;
-  readonly isStreaming: boolean;
-  readonly fallback: ReactNode;
-}) {
-  const { code, threadRef, isStreaming, fallback } = props;
-  const shell = useThreadShell(threadRef ?? null);
-  const project = useProject(shell ? scopeProjectRef(shell.environmentId, shell.projectId) : null);
-  const homePath = useHostHomePath(shell?.environmentId);
-  if (!shell || !threadRef || !project || !isKitProject(project.workspaceRoot, homePath)) {
-    return fallback;
+/** The ```abode-prune block as a pick list in Kit threads; elsewhere a plain code block. */
+export function PruneBlock(props: { readonly code: string; readonly children: ReactNode }) {
+  const scope = useActiveCustomizationsScope();
+  const shell = useThreadShell(scope?.threadRef ?? null);
+  const homePath = useHostHomePath(scope?.environmentId);
+  if (!scope || scope.borrowed || !scope.threadRef || !isKitProject(scope.cwd, homePath)) {
+    return <pre>{props.children}</pre>;
   }
   return (
     <PruneCard
-      code={code}
-      environmentId={shell.environmentId}
-      cwd={project.workspaceRoot}
-      threadRef={threadRef}
-      isStreaming={isStreaming}
+      code={props.code}
+      environmentId={scope.environmentId}
+      cwd={scope.cwd}
+      threadRef={scope.threadRef}
+      isStreaming={
+        shell !== null && deriveWorkspaceThreadState(shell, undefined).attention === "running"
+      }
     />
   );
 }
