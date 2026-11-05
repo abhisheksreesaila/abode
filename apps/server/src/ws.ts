@@ -207,6 +207,7 @@ import * as WorkspaceFileSystem from "./workspace/WorkspaceFileSystem.ts";
 import * as Customizations from "./abode/Customizations.ts"; // abode:
 import * as Voice from "./abode/voice/VoiceLive.ts"; // abode: voice
 import * as Tailnet from "./abode/Tailnet.ts"; // abode: tailnet
+import * as SkillSources from "./abode/SkillSources.ts"; // abode: skill sources
 import { readWorkflowScript } from "./orchestration-v2/workflowScriptQuery.ts";
 import * as WorkspacePaths from "./workspace/WorkspacePaths.ts";
 import * as VcsStatusBroadcaster from "./vcs/VcsStatusBroadcaster.ts";
@@ -1351,6 +1352,7 @@ export const layerWsRpc = (
       const workspaceFileSystem = yield* WorkspaceFileSystem.WorkspaceFileSystem;
       const customizations = yield* Customizations.Customizations; // abode:
       const voice = yield* Voice.Voice; // abode: voice
+      const skillSources = yield* SkillSources.SkillSources; // abode: skill sources
       const serverEnvironment = yield* ServerEnvironment.ServerEnvironment;
       const backgroundPolicy = yield* BackgroundPolicy.BackgroundPolicy;
       const rpcClientIds = yield* Ref.make(new Set<RpcClientId>());
@@ -2854,6 +2856,7 @@ export const layerWsRpc = (
             .pipe(Effect.mapError(Customizations.toCustomizationsError)),
         [WS_METHODS.voice]: (input, metadata) => voice.handle(input, metadata.client.id), // abode: voice
         [WS_METHODS.tailnetStatus]: () => Tailnet.status, // abode: tailnet
+        ...SkillSources.handlers(skillSources), // abode: skill sources
         [WS_METHODS.shellOpenInEditor]: (input) => externalLauncher.launchEditor(input),
         [WS_METHODS.filesystemGetMetadata]: (input) => workspaceFileSystem.getMetadata(input),
         [WS_METHODS.filesystemBrowse]: (input) =>
@@ -3301,6 +3304,7 @@ export const layer = Layer.unwrap(
     const peerLinkRequests = yield* PeerLinkRequests.PeerLinkRequests;
     const sql = yield* SqlClient.SqlClient;
     const voice = yield* Layer.build(Voice.layer); // abode: voice, one per server (it owns the download and the model)
+    const skillSources = yield* Layer.build(SkillSources.layer); // abode: skill sources, one per server (it owns the daily timer and the state file)
     return HttpRouter.add(
       "GET",
       "/ws",
@@ -3371,6 +3375,7 @@ export const layer = Layer.unwrap(
               Layer.provide(AgentSessionScanner.layer),
               Layer.provide(Customizations.layer), // abode:
               Layer.provide(Layer.succeedContext(voice)), // abode: voice
+              Layer.provide(Layer.succeedContext(skillSources)), // abode: skill sources
               Layer.provide(ProviderMaintenanceRunner.layer),
               Layer.provide(Layer.succeed(NpmRelease.NpmRelease, npmRelease)),
               Layer.provide(Layer.succeed(ServerSelfUpdate.ServerSelfUpdate, serverSelfUpdate)),

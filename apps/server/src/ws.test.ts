@@ -103,6 +103,7 @@ import * as WorkspaceEntries from "./workspace/WorkspaceEntries.ts";
 import * as WorkspaceFileSystem from "./workspace/WorkspaceFileSystem.ts";
 import * as Customizations from "./abode/Customizations.ts"; // abode:
 import * as Voice from "./abode/voice/VoiceLive.ts"; // abode: voice
+import * as SkillSources from "./abode/SkillSources.ts"; // abode: skill sources
 import * as WorktreeSetupTracker from "./project/WorktreeSetupTracker.ts";
 import * as ProjectFaviconResolver from "./project/ProjectFaviconResolver.ts";
 import * as TraceDiagnostics from "./diagnostics/TraceDiagnostics.ts";
@@ -556,6 +557,7 @@ const layerUnusedConfigRpcServices = Layer.mergeAll(
   Layer.mock(WorktreeSetupTracker.WorktreeSetupTracker)({}),
   Layer.mock(Customizations.Customizations)({}), // abode:
   Layer.mock(Voice.Voice)({}), // abode: voice
+  Layer.mock(SkillSources.SkillSources)({}), // abode: skill sources
 );
 
 const layerConfigSources = Layer.mergeAll(

@@ -1,3 +1,4 @@
+import { SKILL_SOURCES_RPC_AGGREGATES } from "../abode/skillSourcesRpcPolicy.ts"; // abode: skill sources
 import { ORCHESTRATION_V2_WS_METHODS, WS_METHODS, type WsRpcGroup } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -160,6 +161,7 @@ const RPC_AGGREGATES = {
   [WS_METHODS.customizationsWriteFile]: "workspace",
   [WS_METHODS.voice]: "workspace", // abode: voice
   [WS_METHODS.tailnetStatus]: "workspace", // abode: tailnet
+  ...SKILL_SOURCES_RPC_AGGREGATES, // abode: skill sources
   [WS_METHODS.shellOpenInEditor]: "workspace",
   [WS_METHODS.filesystemBrowse]: "workspace",
   [WS_METHODS.filesystemGetMetadata]: "workspace",
