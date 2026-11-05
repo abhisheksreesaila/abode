@@ -535,7 +535,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-056: Subtract the parts of One Window we no longer use
 
-- **Status:** todo
+- **Status:** review (reviewer PASS after one fix round, merged; the browser check at 1440 and 390 comes with A-057)
 - **What:** remove the journey map, keyword routing, the chat drawer, the mode pills and blocks, and the omnibox commands, along with their tests and CSS. Sessions open in T3's chat route. The overview, the rail, Kit and the One window switch stay (still on by default; off gives stock T3).
 - **Acceptance:**
   - [ ] No code, CSS or test of the removed parts is left, and knip passes on abode.
