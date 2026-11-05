@@ -26,7 +26,10 @@ import { threadShellKey } from "../shell/workspaceModel";
 import { agentCards, runningCount, type AgentCard } from "./agentCards";
 import { FRAME_TABS, tabFor, useFrameStore, type FrameTab } from "./frameStore";
 import { workspaceOf } from "./frameWorkspace";
+import { DesignPane } from "./DesignPane";
+import { collectDesigns, newDesignCount, type DesignMessage } from "./designModel";
 import { MilestonesPane } from "./MilestonesPane";
+import { useOpenDesign } from "./useOpenDesign";
 import "./frame.css";
 
 const TAB_LABEL: Record<FrameTab, string> = {
@@ -100,6 +103,26 @@ function LoadedFrame(props: {
     nowMs,
   });
   const running = runningCount(cards);
+  // The thread's own messages, already in the projection the chat loaded: no extra subscription.
+  const designs = collectDesigns(
+    projection?.visibleTurnItems.flatMap((row): DesignMessage[] =>
+      row.item.type === "user_message" || row.item.type === "assistant_message"
+        ? [
+            {
+              role: row.item.type === "user_message" ? "user" : "assistant",
+              text: row.item.text,
+              at: String(row.item.startedAt ?? row.item.updatedAt),
+            },
+          ]
+        : [],
+    ) ?? [],
+  );
+  const designCount = designs.reduce((sum, group) => sum + group.cards.length, 0);
+  const designSeen = useFrameStore((state) =>
+    currentKey === null ? undefined : state.designSeen[currentKey],
+  );
+  const designNew = tab === "design" ? 0 : newDesignCount(designCount, designSeen);
+  const openDesign = useOpenDesign(threadRef, group.project.memberProjects[0]?.workspaceRoot);
   const anyRunning = running > 0 || tab === "milestones";
   const pendingKeys = new Set(
     [...group.threads, ...[...group.runningSubagentsByParentKey.values()].flat()]
@@ -151,6 +174,14 @@ function LoadedFrame(props: {
     area.setAttribute("data-abode-pane-open", "");
     return () => area.removeAttribute("data-abode-pane-open");
   }, [paneOpen]);
+
+  // Opening Design (and new cards arriving while it is open) marks the current cards as seen.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- records what the user has looked at in the persisted frame store
+  useEffect(() => {
+    if (tab === "design" && currentKey !== null) {
+      useFrameStore.getState().noteDesignSeen(currentKey, designCount);
+    }
+  }, [tab, currentKey, designCount]);
 
   // A needs-you card asks for a thread's question to open. It waits for the composer to render
   // it (no polling), only when the thread has one, and the request expires.
@@ -253,6 +284,9 @@ function LoadedFrame(props: {
               >
                 {TAB_LABEL[value]}
                 {value === "milestones" && count !== null ? <small>{count}</small> : null}
+                {value === "design" && designNew > 0 ? (
+                  <small data-testid="design-new">{designNew} new</small>
+                ) : null}
               </button>
             ))}
           </div>
@@ -300,7 +334,13 @@ function LoadedFrame(props: {
               }
             />
           ) : (
-            <p>Design: coming in A-059</p>
+            <DesignPane
+              threadKey={currentKey}
+              groups={designs}
+              nowMs={nowMs}
+              onPreview={openDesign}
+              onSendPicks={threadRef === null ? undefined : (text) => fillComposer(threadRef, text)}
+            />
           )}
         </section>
       )}

@@ -42,6 +42,17 @@ export function sanitizeMilestoneOpen(persisted: unknown): OpenMap {
   );
 }
 
+/** Per thread key: how many design cards the Design tab showed when it was last opened. */
+export function sanitizeDesignSeen(persisted: unknown): Record<string, number> {
+  const saved = (persisted as { designSeen?: unknown } | null)?.designSeen;
+  if (typeof saved !== "object" || saved === null || Array.isArray(saved)) return {};
+  return Object.fromEntries(
+    Object.entries(saved).filter(
+      (entry): entry is [string, number] => Number.isInteger(entry[1]) && (entry[1] as number) >= 0,
+    ),
+  );
+}
+
 export function tabFor(tabs: Readonly<Record<string, FrameTab>>, workspaceKey: string): FrameTab {
   return tabs[workspaceKey] ?? "jam";
 }
@@ -51,6 +62,10 @@ interface FrameStore {
   readonly tabs: Readonly<Record<string, FrameTab>>;
   /** Milestones the user opened or closed, per workspace key; unset ones follow their default. */
   readonly milestoneOpen: OpenMap;
+  /** Design cards seen when the Design tab was last opened, per thread key. */
+  readonly designSeen: Readonly<Record<string, number>>;
+  /** Design cards ticked for "Send picks", per thread key, by card key. In memory only. */
+  readonly designPicks: Readonly<Record<string, ReadonlyArray<string>>>;
   /** Per workspace: the plan text last seen and when it last changed under us (null: first read). Not persisted. */
   readonly planSeen: Readonly<
     Record<string, { readonly contents: string; readonly changedAt: number | null }>
@@ -59,6 +74,9 @@ interface FrameStore {
   readonly answerRequest: { readonly key: string; readonly at: number } | null;
   setTab: (workspaceKey: string, tab: FrameTab) => void;
   setMilestoneOpen: (workspaceKey: string, milestoneKey: string, open: boolean) => void;
+  noteDesignSeen: (threadKey: string, count: number) => void;
+  toggleDesignPick: (threadKey: string, cardKey: string) => void;
+  clearDesignPicks: (threadKey: string) => void;
   notePlan: (workspaceKey: string, contents: string) => void;
   requestAnswer: (threadKey: string) => void;
   setAnswerRequest: (request: { readonly key: string; readonly at: number } | null) => void;
@@ -70,6 +88,8 @@ export const useFrameStore = create<FrameStore>()(
     (set) => ({
       tabs: {},
       milestoneOpen: {},
+      designSeen: {},
+      designPicks: {},
       planSeen: {},
       answerRequest: null,
       setTab: (workspaceKey, tab) =>
@@ -81,6 +101,26 @@ export const useFrameStore = create<FrameStore>()(
             [workspaceKey]: { ...state.milestoneOpen[workspaceKey], [milestoneKey]: open },
           },
         })),
+      noteDesignSeen: (threadKey, count) =>
+        set((state) =>
+          state.designSeen[threadKey] === count
+            ? state
+            : { designSeen: { ...state.designSeen, [threadKey]: count } },
+        ),
+      toggleDesignPick: (threadKey, cardKey) =>
+        set((state) => {
+          const now = state.designPicks[threadKey] ?? [];
+          return {
+            designPicks: {
+              ...state.designPicks,
+              [threadKey]: now.includes(cardKey)
+                ? now.filter((key) => key !== cardKey)
+                : [...now, cardKey],
+            },
+          };
+        }),
+      clearDesignPicks: (threadKey) =>
+        set((state) => ({ designPicks: { ...state.designPicks, [threadKey]: [] } })),
       notePlan: (workspaceKey, contents) =>
         set((state) => {
           const before = state.planSeen[workspaceKey];
@@ -105,8 +145,9 @@ export const useFrameStore = create<FrameStore>()(
         ...current,
         tabs: sanitizeFrameTabs(persisted),
         milestoneOpen: sanitizeMilestoneOpen(persisted),
+        designSeen: sanitizeDesignSeen(persisted),
       }),
-      partialize: ({ tabs, milestoneOpen }) => ({ tabs, milestoneOpen }),
+      partialize: ({ tabs, milestoneOpen, designSeen }) => ({ tabs, milestoneOpen, designSeen }),
     },
   ),
 );
