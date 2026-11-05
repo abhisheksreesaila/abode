@@ -174,9 +174,9 @@ function PruneCard(props: {
           Cut {picked.length}
         </button>
       </p>
-      <ul data-abode-prune-rows="">
+      <div role="list" data-abode-prune-rows="">
         {rows.map(({ row, skill, copies, tokens, cuttable }) => (
-          <li key={row.name} data-testid="prune-row">
+          <div role="listitem" key={row.name} data-testid="prune-row">
             <label data-abode-prune-row="" data-disabled={cuttable ? undefined : ""}>
               <input
                 type="checkbox"
@@ -199,9 +199,9 @@ function PruneCard(props: {
               </span>
               {items !== null && !cuttable ? null : <b data-abode-prune-tok="">−{tokens} tok</b>}
             </label>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
       {error ? <p data-abode-prune-error="">{error}</p> : null}
     </div>
   );
