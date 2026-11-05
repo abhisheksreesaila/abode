@@ -1085,3 +1085,38 @@
   color: var(--abode-warn);
   font-size: 12px;
 }
+
+/* "In trash" under the Skills list: quiet, one row per cut skill with a way back. */
+[data-abode-trash] {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+[data-abode-trash] h4 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-abode-trash-row] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  font-size: 12px;
+}
+[data-abode-trash-row] code {
+  font: 600 12px var(--font-mono, ui-monospace, monospace);
+  color: var(--foreground);
+}
+[data-abode-trash-row] small {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 640px), (pointer: coarse) {
+  [data-abode-trash-row] {
+    min-height: 48px;
+  }
+}

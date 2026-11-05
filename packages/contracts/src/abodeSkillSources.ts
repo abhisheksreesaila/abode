@@ -182,3 +182,20 @@ export const WsSkillPruneRestoreRpc = Rpc.make("skillPrune.restore", {
   success: SkillPruneResult,
   error: EnvironmentAuthorizationError,
 });
+
+export const SkillTrashEntry = Schema.Struct({
+  name: TrimmedNonEmptyString,
+  /** Epoch ms of the cut. */
+  movedAt: Schema.Number,
+  /** Where each copy will go back to. */
+  paths: Schema.Array(TrimmedNonEmptyString),
+});
+export type SkillTrashEntry = typeof SkillTrashEntry.Type;
+
+export const SkillTrashResult = Schema.Struct({ entries: Schema.Array(SkillTrashEntry) });
+export type SkillTrashResult = typeof SkillTrashResult.Type;
+
+export const WsSkillPruneTrashRpc = Rpc.make("skillPrune.trash", {
+  success: SkillTrashResult,
+  error: EnvironmentAuthorizationError,
+});

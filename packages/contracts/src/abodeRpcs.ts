@@ -10,6 +10,7 @@ import {
   WsSkillUsageListRpc,
   WsSkillPruneCutRpc,
   WsSkillPruneRestoreRpc,
+  WsSkillPruneTrashRpc,
 } from "./abodeSkillSources.ts";
 import { WsTailnetStatusRpc } from "./abodeTailnet.ts";
 import { WsVoiceRpc } from "./abodeVoice.ts";
@@ -27,6 +28,7 @@ export const ABODE_WS_METHODS = {
   skillUsageList: "skillUsage.list",
   skillPruneCut: "skillPrune.cut",
   skillPruneRestore: "skillPrune.restore",
+  skillPruneTrash: "skillPrune.trash",
 } as const;
 
 export const ABODE_RPCS = [
@@ -41,4 +43,5 @@ export const ABODE_RPCS = [
   WsSkillUsageListRpc,
   WsSkillPruneCutRpc,
   WsSkillPruneRestoreRpc,
+  WsSkillPruneTrashRpc,
 ] as const;

@@ -39,10 +39,10 @@ describe("parsePruneBlock", () => {
 });
 
 describe("rowTokens and pruneHeadline", () => {
-  it("prefers the agent's figure, then the measured one, then zero", () => {
-    expect(rowTokens({ name: "a", reason: "", tokens: 5 }, { tokens: 9 })).toBe(5);
-    expect(rowTokens({ name: "a", reason: "", tokens: null }, { tokens: 9 })).toBe(9);
-    expect(rowTokens({ name: "a", reason: "", tokens: null }, undefined)).toBe(0);
+  it("prefers the agent's figure, then the measured copies added up, then zero", () => {
+    expect(rowTokens({ name: "a", reason: "", tokens: 5 }, [9])).toBe(5);
+    expect(rowTokens({ name: "a", reason: "", tokens: null }, [9, 4])).toBe(13);
+    expect(rowTokens({ name: "a", reason: "", tokens: null }, [])).toBe(0);
   });
   it("words the header", () => {
     expect(pruneHeadline(3, 1430)).toBe("I'd cut 3 · saves 1,430 tokens per session");

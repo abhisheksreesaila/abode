@@ -197,3 +197,9 @@ html[data-abode-chat] [data-timeline-row-kind="message"][data-message-role="user
     padding-left: 30px;
   }
 }
+
+[data-abode-prune-copies] {
+  flex: none;
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}

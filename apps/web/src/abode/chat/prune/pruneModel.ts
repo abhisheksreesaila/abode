@@ -44,9 +44,9 @@ export function parsePruneBlock(code: string): ReadonlyArray<PruneRow> {
   return rows;
 }
 
-/** The agent's figure, else what the Kit measured for the skill, else nothing. */
-export function rowTokens(row: PruneRow, known: { readonly tokens: number } | undefined): number {
-  return row.tokens ?? known?.tokens ?? 0;
+/** The agent's figure, else what the Kit measured for the skill's copies added up, else nothing. */
+export function rowTokens(row: PruneRow, measured: ReadonlyArray<number>): number {
+  return row.tokens ?? measured.reduce((sum, tokens) => sum + tokens, 0);
 }
 
 export function pruneHeadline(count: number, tokens: number): string {

@@ -5,7 +5,7 @@ import * as NodePath from "node:path";
 
 import { describe, expect, it } from "vite-plus/test";
 
-import { cutSkills, restoreSkills } from "./skillPruneIO.ts";
+import { cutSkills, listTrash, restoreSkills } from "./skillPruneIO.ts";
 
 const setup = () => {
   const home = NodeFS.realpathSync(NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "prune-")));
@@ -132,5 +132,141 @@ describe("cutSkills / restoreSkills", () => {
       done: [],
       skipped: [{ name: "docs", reason: "nothing in the trash by that name" }],
     });
+  });
+
+  it("cuts a skill held by three roots and restores all three copies", async () => {
+    const { claude, agents, codex, dirs, skill, link } = setup();
+    skill(agents, "tdd");
+    link(NodePath.join(agents, "tdd"), NodePath.join(claude, "tdd"));
+    link(NodePath.join(agents, "tdd"), NodePath.join(codex, "tdd"));
+
+    expect((await cutSkills(dirs, ["tdd"], 6_000)).done).toEqual(["tdd"]);
+    for (const dir of dirs) expect(exists(NodePath.join(dir, "tdd"))).toBe(false);
+    expect(await listTrash(dirs)).toEqual({
+      entries: [
+        {
+          name: "tdd",
+          movedAt: 6_000,
+          paths: [
+            NodePath.join(claude, "tdd"),
+            NodePath.join(codex, "tdd"),
+            NodePath.join(agents, "tdd"),
+          ],
+        },
+      ],
+    });
+
+    expect((await restoreSkills(dirs, ["tdd"])).done).toEqual(["tdd"]);
+    expect(NodeFS.lstatSync(NodePath.join(codex, "tdd")).isSymbolicLink()).toBe(true);
+    expect(NodeFS.readFileSync(NodePath.join(codex, "tdd", "SKILL.md"), "utf8")).toContain(
+      "body tdd",
+    );
+    expect((await listTrash(dirs)).entries).toEqual([]);
+  });
+
+  it("restores the latest cut of a name first when it was cut twice", async () => {
+    const { claude, dirs } = setup();
+    const write = (text: string) => {
+      NodeFS.mkdirSync(NodePath.join(claude, "docs"), { recursive: true });
+      NodeFS.writeFileSync(NodePath.join(claude, "docs", "SKILL.md"), text);
+    };
+    write("first");
+    await cutSkills(dirs, ["docs"], 7_000);
+    write("second");
+    await cutSkills(dirs, ["docs"], 8_000);
+
+    await restoreSkills(dirs, ["docs"]);
+    expect(NodeFS.readFileSync(NodePath.join(claude, "docs", "SKILL.md"), "utf8")).toBe("second");
+    NodeFS.rmSync(NodePath.join(claude, "docs"), { recursive: true });
+    await restoreSkills(dirs, ["docs"]);
+    expect(NodeFS.readFileSync(NodePath.join(claude, "docs", "SKILL.md"), "utf8")).toBe("first");
+  });
+
+  it("puts the link back when the folder of the same skill cannot be moved", async () => {
+    const { claude, agents, dirs, skill, link } = setup();
+    skill(agents, "tdd");
+    link(NodePath.join(agents, "tdd"), NodePath.join(claude, "tdd"));
+    NodeFS.chmodSync(agents, 0o555);
+    const result = await cutSkills(dirs, ["tdd"], 9_000);
+    NodeFS.chmodSync(agents, 0o755);
+
+    expect(result.done).toEqual([]);
+    expect(result.skipped[0]?.reason).toContain("could not move it");
+    expect(NodeFS.lstatSync(NodePath.join(claude, "tdd")).isSymbolicLink()).toBe(true);
+    expect(exists(NodePath.join(agents, "tdd", "SKILL.md"))).toBe(true);
+    expect(NodeFS.readdirSync(NodePath.join(claude, ".trash"))).toEqual([]);
+  });
+
+  it("puts the folder back in the trash when the link cannot be restored", async () => {
+    const { claude, agents, dirs, skill, link } = setup();
+    skill(agents, "tdd");
+    link(NodePath.join(agents, "tdd"), NodePath.join(claude, "tdd"));
+    await cutSkills(dirs, ["tdd"], 10_000);
+    NodeFS.chmodSync(claude, 0o555);
+    const result = await restoreSkills(dirs, ["tdd"]);
+    NodeFS.chmodSync(claude, 0o755);
+
+    expect(result.done).toEqual([]);
+    expect(exists(NodePath.join(agents, "tdd"))).toBe(false);
+    expect((await listTrash(dirs)).entries).toHaveLength(1);
+    expect((await restoreSkills(dirs, ["tdd"])).done).toEqual(["tdd"]);
+  });
+
+  it("refuses to restore over an empty folder that appeared meanwhile", async () => {
+    const { claude, dirs, skill } = setup();
+    skill(claude, "docs");
+    await cutSkills(dirs, ["docs"], 11_000);
+    NodeFS.mkdirSync(NodePath.join(claude, "docs"));
+    expect((await restoreSkills(dirs, ["docs"])).skipped[0]?.reason).toBe(
+      "something is already there",
+    );
+  });
+
+  it("does not trust a tampered index", async () => {
+    const { home, claude, dirs, skill } = setup();
+    skill(claude, "docs");
+    await cutSkills(dirs, ["docs"], 12_000);
+    const index = NodePath.join(claude, ".trash", "index.json");
+    const real = JSON.parse(NodeFS.readFileSync(index, "utf8"));
+    const entry = real.entries[0];
+    for (const bad of [
+      { ...entry, items: [{ dir: NodePath.join(home, "elsewhere"), slot: "0" }] },
+      { ...entry, items: [{ dir: claude, slot: "../x" }] },
+      { ...entry, id: ".." },
+      { ...entry, name: "../docs" },
+    ]) {
+      NodeFS.writeFileSync(index, JSON.stringify({ version: 1, entries: [bad] }));
+      const result = await restoreSkills(dirs, [bad.name]);
+      expect(result.done).toEqual([]);
+      expect(exists(NodePath.join(claude, "docs"))).toBe(false);
+    }
+    expect((await listTrash(dirs)).entries).toEqual([]);
+  });
+
+  it("moves a corrupt index aside and refuses instead of treating it as empty", async () => {
+    const { claude, dirs, skill } = setup();
+    skill(claude, "docs");
+    skill(claude, "other");
+    await cutSkills(dirs, ["docs"], 13_000);
+    NodeFS.writeFileSync(NodePath.join(claude, ".trash", "index.json"), "{not json");
+
+    const result = await cutSkills(dirs, ["other"], 14_000);
+    expect(result.done).toEqual([]);
+    expect(result.skipped[0]?.reason).toContain("moved aside to index.json.bad-14000");
+    expect(exists(NodePath.join(claude, "other", "SKILL.md"))).toBe(true);
+    expect(exists(NodePath.join(claude, ".trash", "index.json.bad-14000"))).toBe(true);
+  });
+
+  it("refuses a trash folder that is a link", async () => {
+    const { home, claude, dirs, skill, link } = setup();
+    skill(claude, "docs");
+    const elsewhere = NodePath.join(home, "elsewhere");
+    NodeFS.mkdirSync(elsewhere);
+    link(elsewhere, NodePath.join(claude, ".trash"));
+    const result = await cutSkills(dirs, ["docs"], 15_000);
+    expect(result.done).toEqual([]);
+    expect(result.skipped[0]?.reason).toContain("is a link");
+    expect(exists(NodePath.join(claude, "docs", "SKILL.md"))).toBe(true);
+    expect(NodeFS.readdirSync(elsewhere)).toEqual([]);
   });
 });

@@ -18,6 +18,7 @@ import {
   type KitSkill,
 } from "../canvas/kit/kitModel";
 import { pruneAskPrompt } from "../chat/prune/pruneAsk";
+import { TrashSection } from "../chat/prune/TrashSection";
 import { fillComposer } from "../composerFill";
 import { useClaudeSettings, useKitItems } from "../canvas/kit/kitState";
 import type { AgentCard } from "./agentCards";
@@ -206,6 +207,7 @@ function SkillsList(props: {
           </button>
         ))}
       </div>
+      <TrashSection scope={scope} nowMs={nowMs} />
       {open ? (
         <KitSkillDetail key={open.path} scope={scope} skill={open} onClose={() => setOpen(null)} />
       ) : null}

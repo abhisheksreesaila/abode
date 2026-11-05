@@ -10,7 +10,7 @@ import { useThreadShell } from "~/state/entities";
 import { useAtomCommand } from "~/state/use-atom-command";
 
 import { SourceBadge } from "../../canvas/kit/KitSkillDetail";
-import { buildKitSkills, skillTokens } from "../../canvas/kit/kitModel";
+import { buildKitSkills, skillCopies, skillTokens } from "../../canvas/kit/kitModel";
 import { useKitItems } from "../../canvas/kit/kitState";
 import "../../canvas/kit/kit.css";
 import { customizationsEnvironment } from "../../customizations/customizationsState";
@@ -62,7 +62,8 @@ function PruneCard(props: {
 }) {
   const { code, environmentId, cwd, threadRef, isStreaming } = props;
   const { items } = useKitItems({ environmentId, cwd });
-  const outcome = usePruneOutcome(code);
+  const outcomeKey = `${threadRef.threadId}\n${code}`;
+  const outcome = usePruneOutcome(outcomeKey);
   const cut = useAtomCommand(skillPruneCommands.cut, { reportFailure: false });
   const restore = useAtomCommand(skillPruneCommands.restore, { reportFailure: false });
   const refreshSkills = useRefreshProviderSkills({
@@ -77,10 +78,15 @@ function PruneCard(props: {
   const known = new Map((items ? buildKitSkills(items) : []).map((skill) => [skill.name, skill]));
   const rows = parsePruneBlock(code).map((row) => {
     const skill = known.get(row.name);
+    const copies = items ? skillCopies(items, row.name) : [];
     return {
       row,
       skill,
-      tokens: rowTokens(row, skill && { tokens: skillTokens(skill) }),
+      copies: copies.length,
+      tokens: rowTokens(
+        row,
+        copies.map((copy) => skillTokens({ name: copy.name, description: copy.description ?? "" })),
+      ),
       // Until the list arrives nothing can be cut: a name is not "unknown" yet, just unchecked.
       cuttable: skill !== undefined,
     };
@@ -120,7 +126,7 @@ function PruneCard(props: {
     );
     if (result === null) return;
     if (result.done.length === 0) setError(result.note ?? "Nothing was moved.");
-    else setPruneOutcome(code, { moved: result.done, note: result.note });
+    else setPruneOutcome(outcomeKey, { moved: result.done, note: result.note });
   };
 
   const onRestore = async () => {
@@ -129,7 +135,7 @@ function PruneCard(props: {
     if (result === null) return;
     const left = outcome.moved.filter((name) => !result.done.includes(name));
     if (left.length > 0) setError(result.note ?? "Some skills could not be restored.");
-    setPruneOutcome(code, left.length === 0 ? null : { moved: left, note: result.note });
+    setPruneOutcome(outcomeKey, left.length === 0 ? null : { moved: left, note: result.note });
   };
 
   if (outcome !== null) {
@@ -169,7 +175,7 @@ function PruneCard(props: {
         </button>
       </p>
       <ul data-abode-prune-rows="">
-        {rows.map(({ row, skill, tokens, cuttable }) => (
+        {rows.map(({ row, skill, copies, tokens, cuttable }) => (
           <li key={row.name} data-testid="prune-row">
             <label data-abode-prune-row="" data-disabled={cuttable ? undefined : ""}>
               <input
@@ -187,6 +193,7 @@ function PruneCard(props: {
               />
               <code>{row.name}</code>
               {skill ? <SourceBadge id={skill.source} /> : null}
+              {copies > 1 ? <small data-abode-prune-copies="">{copies} copies</small> : null}
               <span data-abode-prune-reason="">
                 {items !== null && !cuttable ? "not in your kit" : row.reason}
               </span>

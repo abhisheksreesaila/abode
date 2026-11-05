@@ -16,6 +16,7 @@ import {
   type SkillSourcesDecideInput,
   type SkillPruneInput,
   type SkillPruneResult,
+  type SkillTrashResult,
   type SkillUsageListInput,
   type SkillUsageListResult,
   type SkillSourcesState,
@@ -44,7 +45,7 @@ import {
   type Snapshot,
   type SnapshotSkill,
 } from "./skillSourcesCore.ts";
-import { cutSkills, restoreSkills } from "./skillPruneIO.ts";
+import { cutSkills, listTrash, restoreSkills } from "./skillPruneIO.ts";
 import { makeInstall, type SkillInstallRequest } from "./skillInstallerIO.ts";
 import {
   LocalSkills,
@@ -138,6 +139,7 @@ export class SkillSources extends Context.Service<
     /** Moves skills to `~/.claude/skills/.trash`, and back. Nothing else moves them. */
     readonly pruneCut: (input: SkillPruneInput) => Effect.Effect<SkillPruneResult>;
     readonly pruneRestore: (input: SkillPruneInput) => Effect.Effect<SkillPruneResult>;
+    readonly pruneTrash: Effect.Effect<SkillTrashResult>;
   }
 >()("t3/abode/SkillSources") {}
 
@@ -445,6 +447,7 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
         Effect.promise(() => cutSkills(defaultLocalSkillDirs(), input.names, now)),
       );
     }),
+    pruneTrash: Effect.promise(() => listTrash(defaultLocalSkillDirs())),
     pruneRestore: Effect.fn("SkillSources.pruneRestore")(function* (input) {
       return yield* lock.withPermits(1)(
         Effect.promise(() => restoreSkills(defaultLocalSkillDirs(), input.names)),
@@ -492,4 +495,5 @@ export const handlers = (service: SkillSources["Service"]) => ({
   [WS_METHODS.skillUsageList]: (input: SkillUsageListInput) => service.usageList(input),
   [WS_METHODS.skillPruneCut]: (input: SkillPruneInput) => service.pruneCut(input),
   [WS_METHODS.skillPruneRestore]: (input: SkillPruneInput) => service.pruneRestore(input),
+  [WS_METHODS.skillPruneTrash]: () => service.pruneTrash,
 });

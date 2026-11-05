@@ -161,6 +161,20 @@ export function buildKitSkills(items: ReadonlyArray<CustomizationItem>): Readonl
     .toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Separate Claude-side folders holding a skill of this name (say `~/.claude/skills/x` and a real
+ * `~/.agents/skills/x`). Links to one folder are listed once, so this is not inflated by them.
+ */
+export function skillCopies(
+  items: ReadonlyArray<CustomizationItem>,
+  name: string,
+): ReadonlyArray<CustomizationItem> {
+  return items.filter(
+    (item) =>
+      item.kind === "skill" && item.name === name && (item.harness ?? "claude") === "claude",
+  );
+}
+
 /** One MCP row per server name, with every agent that declares it. */
 export interface KitMcp {
   readonly name: string;

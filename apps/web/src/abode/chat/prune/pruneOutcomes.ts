@@ -18,6 +18,16 @@ export function setPruneOutcome(key: string, outcome: PruneOutcome | null): void
   for (const listener of listeners) listener();
 }
 
+/** A skill restored from the Kit's trash list is no longer "moved" on any card. */
+export function forgetPruned(names: ReadonlyArray<string>): void {
+  for (const [key, outcome] of outcomes) {
+    const moved = outcome.moved.filter((name) => !names.includes(name));
+    if (moved.length === 0) outcomes.delete(key);
+    else if (moved.length !== outcome.moved.length) outcomes.set(key, { ...outcome, moved });
+  }
+  for (const listener of listeners) listener();
+}
+
 export function usePruneOutcome(key: string): PruneOutcome | null {
   return useSyncExternalStore(
     (listener) => {
