@@ -72,12 +72,29 @@ const installTargets = async (
   const roots = await realRoots(dirs);
   const found = new Set<string>();
   for (const dir of dirs) {
+    const slot = NodePath.join(dir, name);
+    let linked: boolean;
+    try {
+      linked = (await NodeFSP.lstat(slot)).isSymbolicLink();
+    } catch {
+      continue; // nothing there
+    }
     let real: string;
     try {
-      real = await NodeFSP.realpath(NodePath.join(dir, name));
+      real = await NodeFSP.realpath(slot);
+    } catch {
+      throw new Error(`${name} is a link that points nowhere (${slot}); not updated`);
+    }
+    if (linked && !inside(roots, real)) {
+      throw new Error(`${name} lives outside your skill folders (${real}); not updated`);
+    }
+    try {
       await NodeFSP.stat(NodePath.join(real, "SKILL.md"));
     } catch {
-      continue; // not installed in this folder
+      if (linked) {
+        throw new Error(`${name} is a link to a folder without SKILL.md (${real}); not updated`);
+      }
+      continue; // a plain folder that is not a skill
     }
     if (!inside(roots, real)) {
       throw new Error(`${name} lives outside your skill folders (${real}); not updated`);
@@ -97,7 +114,7 @@ interface Staged {
 }
 
 /** Makes `path` (inside `temp`) a regular file or folder if it is a link; the link's target is untouched. */
-const unlinkInTemp = async (temp: string, file: string) => {
+const unlinkInTemp = async (temp: string, file: string, roots: ReadonlyArray<string>) => {
   const parts = NodePath.relative(temp, file).split(NodePath.sep);
   let current = temp;
   for (const [index, part] of parts.entries()) {
@@ -122,6 +139,9 @@ const unlinkInTemp = async (temp: string, file: string) => {
     } catch {
       // dangling link
     }
+    if (source !== null && !inside(roots, source)) {
+      throw new Error(`${part} is a link to ${source}, outside your skill folders`);
+    }
     await NodeFSP.rm(current, { force: true });
     if (source === null) await NodeFSP.mkdir(current);
     else await NodeFSP.cp(source, current, { recursive: true, dereference: true });
@@ -132,9 +152,17 @@ const unlinkInTemp = async (temp: string, file: string) => {
 const stageSkillFolder = async (
   target: string,
   files: ReadonlyMap<string, string>,
+  roots: ReadonlyArray<string>,
 ): Promise<Staged> => {
   const parent = NodePath.dirname(target);
   await NodeFSP.mkdir(parent, { recursive: true });
+  try {
+    if ((await NodeFSP.lstat(target)).isSymbolicLink()) {
+      throw new Error(`${target} is a link; not updated`);
+    }
+  } catch (cause) {
+    if (codeOf(cause) !== "ENOENT") throw cause;
+  }
   const stamp = `${process.pid}-${NodeCrypto.randomUUID().slice(0, 8)}`;
   const base = NodePath.basename(target);
   const temp = NodePath.join(parent, `.${base}.tmp-${stamp}`);
@@ -151,9 +179,10 @@ const stageSkillFolder = async (
     await NodeFSP.mkdir(temp, { recursive: true });
   }
   try {
+    if ((await NodeFSP.lstat(temp)).isSymbolicLink()) throw new Error(`${temp} is a link`);
     for (const [path, content] of files) {
       const file = NodePath.join(temp, path);
-      await unlinkInTemp(temp, file);
+      await unlinkInTemp(temp, file, roots);
       await NodeFSP.mkdir(NodePath.dirname(file), { recursive: true });
       await NodeFSP.writeFile(file, content, "utf8");
     }
@@ -252,13 +281,14 @@ export const makeInstall =
         prepared.push({ name, skill, targets, files });
       }
 
+      const roots = yield* Effect.promise(() => realRoots(deps.dirs));
       const staged: Staged[] = [];
       const run = Effect.gen(function* () {
         for (const { name, targets, files } of prepared) {
           for (const target of targets) {
             staged.push(
               yield* Effect.tryPromise({
-                try: () => stageSkillFolder(target, files),
+                try: () => stageSkillFolder(target, files, roots),
                 catch: (cause) => failed(`'${name}' not installed: ${toMessage(cause)}`),
               }),
             );

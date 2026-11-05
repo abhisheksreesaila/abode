@@ -164,12 +164,13 @@ describe("skill installer", () => {
     const world = setup({ "skills/tdd/SKILL.md": "tdd v2", "skills/tdd/refs/a.md": "ref v2" });
     const outside = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "outside-"));
     NodeFS.writeFileSync(NodePath.join(outside, "secret.md"), "outside file");
-    NodeFS.mkdirSync(NodePath.join(outside, "refs"));
-    NodeFS.writeFileSync(NodePath.join(outside, "refs", "a.md"), "outside ref");
+    const shared = NodePath.join(world.agents, "shared-refs");
+    NodeFS.mkdirSync(shared);
+    NodeFS.writeFileSync(NodePath.join(shared, "a.md"), "outside ref");
     const folder = NodePath.join(world.claude, "tdd");
     NodeFS.mkdirSync(folder);
     NodeFS.symlinkSync(NodePath.join(outside, "secret.md"), NodePath.join(folder, "SKILL.md"));
-    NodeFS.symlinkSync(NodePath.join(outside, "refs"), NodePath.join(folder, "refs"));
+    NodeFS.symlinkSync(shared, NodePath.join(folder, "refs"));
     const v2 = skillOf("skills/tdd", "tdd", { "SKILL.md": "tdd v2", "refs/a.md": "ref v2" }, [
       folderHash([
         { path: "SKILL.md", sha: gitBlobSha(enc("outside file")) },
@@ -185,9 +186,7 @@ describe("skill installer", () => {
       expect(NodeFS.lstatSync(NodePath.join(folder, "SKILL.md")).isSymbolicLink()).toBe(false);
       expect(NodeFS.lstatSync(NodePath.join(folder, "refs")).isSymbolicLink()).toBe(false);
       expect(NodeFS.readFileSync(NodePath.join(outside, "secret.md"), "utf8")).toBe("outside file");
-      expect(NodeFS.readFileSync(NodePath.join(outside, "refs", "a.md"), "utf8")).toBe(
-        "outside ref",
-      );
+      expect(NodeFS.readFileSync(NodePath.join(shared, "a.md"), "utf8")).toBe("outside ref");
     });
   });
 
@@ -207,6 +206,51 @@ describe("skill installer", () => {
         `tdd lives outside your skill folders (${NodeFS.realpathSync(outside)}); not updated`,
       );
       expect(NodeFS.readFileSync(NodePath.join(outside, "SKILL.md"), "utf8")).toBe("tdd v1");
+    });
+  });
+
+  it.effect("refuses a slot that links to a folder without SKILL.md, or to nowhere", () => {
+    const world = setup({ "skills/tdd/SKILL.md": "tdd v1", "skills/pr/SKILL.md": "pr v1" });
+    const outside = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "outside-"));
+    NodeFS.writeFileSync(NodePath.join(outside, "keep.md"), "outside");
+    NodeFS.symlinkSync(outside, NodePath.join(world.claude, "tdd"));
+    NodeFS.symlinkSync(NodePath.join(outside, "gone"), NodePath.join(world.agents, "pr"));
+    const tdd = skillOf("skills/tdd", "tdd", { "SKILL.md": "tdd v1" });
+    const pr = skillOf("skills/pr", "pr", { "SKILL.md": "pr v1" });
+    return Effect.gen(function* () {
+      const noSkillMd = yield* world
+        .install(request([{ kind: "new", key: "skills/tdd", name: "tdd", skill: tdd }]))
+        .pipe(Effect.flip);
+      expect(noSkillMd.message).toContain("tdd lives outside your skill folders");
+      const dangling = yield* world
+        .install(request([{ kind: "new", key: "skills/pr", name: "pr", skill: pr }]))
+        .pipe(Effect.flip);
+      expect(dangling.message).toContain("pr is a link that points nowhere");
+      expect(NodeFS.readdirSync(outside)).toEqual(["keep.md"]);
+      expect(NodeFS.readFileSync(NodePath.join(outside, "keep.md"), "utf8")).toBe("outside");
+    });
+  });
+
+  it.effect("refuses a linked subfolder that resolves outside the skill folders", () => {
+    const world = setup({ "skills/tdd/SKILL.md": "tdd v2", "skills/tdd/refs/a.md": "ref v2" });
+    const outside = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "outside-"));
+    NodeFS.writeFileSync(NodePath.join(outside, "b.md"), "outside ref");
+    const folder = NodePath.join(world.claude, "tdd");
+    NodeFS.mkdirSync(folder);
+    NodeFS.writeFileSync(NodePath.join(folder, "SKILL.md"), "tdd v1");
+    NodeFS.symlinkSync(outside, NodePath.join(folder, "refs"));
+    const v2 = skillOf("skills/tdd", "tdd", { "SKILL.md": "tdd v2", "refs/a.md": "ref v2" }, [
+      folderHash([{ path: "SKILL.md", sha: gitBlobSha(enc("tdd v1")) }]),
+    ]);
+    return Effect.gen(function* () {
+      const error = yield* world
+        .install(request([{ kind: "updated", key: "skills/tdd", name: "tdd", skill: v2 }]))
+        .pipe(Effect.flip);
+      expect(error.message).toContain("outside your skill folders");
+      expect(NodeFS.readFileSync(NodePath.join(outside, "b.md"), "utf8")).toBe("outside ref");
+      expect(NodeFS.readdirSync(outside)).toEqual(["b.md"]);
+      expect(NodeFS.readFileSync(NodePath.join(folder, "SKILL.md"), "utf8")).toBe("tdd v1");
+      expect(NodeFS.readdirSync(world.claude)).toEqual(["tdd"]);
     });
   });
 
