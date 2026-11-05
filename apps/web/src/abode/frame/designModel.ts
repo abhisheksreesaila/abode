@@ -29,8 +29,11 @@ export interface DesignGroup {
 }
 
 // One pass over claude.ai artifact links, Stitch links and docs/design html paths.
+// A URL stops at emphasis (`*`, `~`), brackets, angle brackets and backticks; a file path may
+// be absolute (only its docs/design/... part is kept).
 const FIND =
-  /https?:\/\/(?:www\.)?claude\.ai\/(?:code\/)?artifact\/[A-Za-z0-9_-]+|https?:\/\/stitch\.(?:withgoogle|google)\.com\/[^\s)\]>"'`]*|(?<![\w./-])(?:[\w.-]+\/)*docs\/design\/(?:[\w.-]+\/)*[\w.-]+\.html/g;
+  /https?:\/\/(?:www\.)?claude\.ai\/(?:code\/)?artifact\/[A-Za-z0-9_-]+|https?:\/\/stitch\.(?:withgoogle|google)\.com\/[^\s)\]>"'`*~<]*|(?<![\w.:/-])(?:\/?[\w.-]+\/)*docs\/design\/(?:[\w.-]+\/)*[\w.-]+\.html/g;
+const TRAILING = /[.,;:!?_-]+$/;
 const LINK_TEXT = /\[([^\]\n]{1,80})\]\(\s*<?$/;
 const PHONE = /\b(?:phone|mobile|iphone|390)\b/i;
 const DESKTOP = /\b(?:desktop|laptop|1440)\b/i;
@@ -63,13 +66,24 @@ function cleanLabel(text: string): string {
     .trim();
 }
 
+function keyOf(raw: string): string {
+  return /^https?:/.test(raw)
+    ? raw.replace(TRAILING, "")
+    : raw.slice(raw.lastIndexOf("docs/design/"));
+}
+
+/** The dedupe keys of the designs a text mentions: all the badge needs, no titles or devices. */
+function designKeys(text: string): string[] {
+  return [...text.matchAll(FIND)].map((match) => keyOf(match[0]));
+}
+
 function describeMatch(text: string, index: number, raw: string): DesignCard {
   const lineStart = text.lastIndexOf("\n", index - 1) + 1;
   const lineEnd = text.indexOf("\n", index);
   const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
   const start = index - lineStart;
   const isFile = !/^https?:/.test(raw);
-  const key = isFile ? raw.slice(raw.lastIndexOf("docs/design/")) : raw.replace(/[.,;:!?]+$/, "");
+  const key = keyOf(raw);
   const source: DesignSource = isFile ? "file" : raw.includes("claude.ai") ? "Claude" : "Stitch";
   const before = line.slice(0, start);
   const label = cleanLabel(LINK_TEXT.exec(before)?.[1] ?? before);
@@ -147,4 +161,23 @@ export function pickPrompt(picks: ReadonlyArray<DesignPick>): string {
 /** Cards added since the Design tab was last opened; never opened: all of them. */
 export function newDesignCount(total: number, seen: number | undefined): number {
   return Math.max(0, total - (seen ?? 0));
+}
+
+const KEYS_BY_ITEM = new WeakMap<object, ReadonlyArray<string>>();
+
+/**
+ * How many distinct designs a thread's messages mention, for the tab badge. A message object
+ * is scanned once and remembered, so a streaming reply costs one scan per tick, not the thread.
+ */
+export function countDesigns(items: ReadonlyArray<{ readonly text: string }>): number {
+  const all = new Set<string>();
+  for (const item of items) {
+    let keys = KEYS_BY_ITEM.get(item);
+    if (keys === undefined) {
+      keys = designKeys(item.text);
+      KEYS_BY_ITEM.set(item, keys);
+    }
+    for (const key of keys) all.add(key);
+  }
+  return all.size;
 }

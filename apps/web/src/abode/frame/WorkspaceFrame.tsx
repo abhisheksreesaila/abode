@@ -30,7 +30,7 @@ import { KitMeter, KitPane, KitStrip, KitTabs, type KitTab } from "./KitFrame";
 import { useHostHomePath } from "./kitData";
 import { isKitProject } from "./kitMode";
 import { DesignPane } from "./DesignPane";
-import { collectDesigns, newDesignCount, type DesignMessage } from "./designModel";
+import { collectDesigns, countDesigns, newDesignCount, type DesignMessage } from "./designModel";
 import { MilestonesPane } from "./MilestonesPane";
 import { useOpenDesign } from "./useOpenDesign";
 import "./frame.css";
@@ -67,14 +67,17 @@ function Frame() {
   const group = workspaceOf(groups, shell ?? draft);
   // A thread that is not loaded yet, or a workspace not listed: keep the way back, nothing else.
   if (group === undefined) return <BackToCanvas />;
-  return <LoadedFrame group={group} threadRef={threadRef} />;
+  return (
+    <LoadedFrame group={group} threadRef={threadRef} worktreePath={shell?.worktreePath ?? null} />
+  );
 }
 
 function LoadedFrame(props: {
+  readonly worktreePath: string | null;
   readonly group: WorkspaceGroup;
   readonly threadRef: ReturnType<typeof resolveActiveThreadRouteRef>;
 }) {
-  const { group, threadRef } = props;
+  const { group, threadRef, worktreePath } = props;
   const workspaceKey = group.project.projectKey;
   const currentKey = threadRef === null ? null : `${threadRef.environmentId}:${threadRef.threadId}`;
   const tab = useFrameStore((state) => tabFor(state.tabs, workspaceKey));
@@ -108,25 +111,29 @@ function LoadedFrame(props: {
   });
   const running = runningCount(cards);
   // The thread's own messages, already in the projection the chat loaded: no extra subscription.
-  const designs = collectDesigns(
-    projection?.visibleTurnItems.flatMap((row): DesignMessage[] =>
-      row.item.type === "user_message" || row.item.type === "assistant_message"
-        ? [
-            {
-              role: row.item.type === "user_message" ? "user" : "assistant",
-              text: row.item.text,
-              at: String(row.item.startedAt ?? row.item.updatedAt),
-            },
-          ]
-        : [],
-    ) ?? [],
+  // The badge only counts (each message is scanned once); the full collection runs while Design is open.
+  const messageItems = (projection?.visibleTurnItems ?? []).flatMap((row) =>
+    row.item.type === "user_message" || row.item.type === "assistant_message" ? [row.item] : [],
   );
-  const designCount = designs.reduce((sum, group) => sum + group.cards.length, 0);
+  const designCount = countDesigns(messageItems);
+  const designs =
+    tab === "design"
+      ? collectDesigns(
+          messageItems.map((item): DesignMessage => ({
+            role: item.type === "user_message" ? "user" : "assistant",
+            text: item.text,
+            at: String(item.startedAt ?? item.updatedAt),
+          })),
+        )
+      : [];
   const designSeen = useFrameStore((state) =>
     currentKey === null ? undefined : state.designSeen[currentKey],
   );
   const designNew = tab === "design" ? 0 : newDesignCount(designCount, designSeen);
-  const openDesign = useOpenDesign(threadRef, group.project.memberProjects[0]?.workspaceRoot);
+  const openDesign = useOpenDesign(
+    threadRef,
+    worktreePath ?? group.project.memberProjects[0]?.workspaceRoot,
+  );
   const anyRunning = running > 0 || tab === "milestones";
   const pendingKeys = new Set(
     [...group.threads, ...[...group.runningSubagentsByParentKey.values()].flat()]

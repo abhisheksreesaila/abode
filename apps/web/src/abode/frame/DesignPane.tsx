@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { useFrameStore } from "./frameStore";
 import { ageLabel } from "./milestonesModel";
 import { pickPrompt, type DesignCard, type DesignGroup } from "./designModel";
@@ -12,7 +14,8 @@ export function DesignPane(props: {
   readonly threadKey: string | null;
   readonly groups: ReadonlyArray<DesignGroup>;
   readonly nowMs: number;
-  readonly onPreview: (card: DesignCard) => void;
+  /** Resolves false when nothing could open. */
+  readonly onPreview: (card: DesignCard) => Promise<boolean>;
   /** Fills the composer without sending; absent when there is nowhere to type. */
   readonly onSendPicks: ((text: string) => void) | undefined;
 }) {
@@ -20,6 +23,15 @@ export function DesignPane(props: {
   const picked = useFrameStore((state) =>
     threadKey === null ? NO_PICKS : (state.designPicks[threadKey] ?? NO_PICKS),
   );
+  const [failed, setFailed] = useState<ReadonlyArray<string>>([]);
+  const preview = (card: DesignCard) =>
+    onPreview(card).then((opened) =>
+      setFailed((now) =>
+        opened
+          ? now.filter((key) => key !== card.key)
+          : [...now.filter((key) => key !== card.key), card.key],
+      ),
+    );
   if (groups.length === 0) {
     return (
       <div data-abode-ds="">
@@ -55,6 +67,11 @@ export function DesignPane(props: {
                   </span>
                   <b>{card.title}</b>
                   {card.path === null ? null : <code data-abode-ds-path="">{card.path}</code>}
+                  {failed.includes(card.key) ? (
+                    <small data-abode-ds-note="" role="status">
+                      Open in the desktop app to preview
+                    </small>
+                  ) : null}
                   <span data-abode-ds-actions="">
                     <label>
                       <input
@@ -68,7 +85,7 @@ export function DesignPane(props: {
                       />
                       Pick
                     </label>
-                    <button type="button" onClick={() => onPreview(card)}>
+                    <button type="button" onClick={() => void preview(card)}>
                       Preview
                     </button>
                   </span>

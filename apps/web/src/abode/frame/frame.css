@@ -883,3 +883,8 @@
     min-height: 44px;
   }
 }
+
+[data-abode-ds-note] {
+  color: var(--abode-warn);
+  font-size: 12px;
+}

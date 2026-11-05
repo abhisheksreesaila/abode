@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { sanitizeDesignSeen } from "./frameStore";
-import { collectDesigns, newDesignCount, pickPrompt, type DesignMessage } from "./designModel";
+import {
+  collectDesigns,
+  countDesigns,
+  newDesignCount,
+  pickPrompt,
+  type DesignMessage,
+} from "./designModel";
 
 const NOW = Date.parse("2026-11-04T12:00:00Z");
 const at = (minutes: number) => new Date(NOW - minutes * 60_000).toISOString();
@@ -135,5 +141,62 @@ describe("sanitizeDesignSeen", () => {
     });
     expect(sanitizeDesignSeen({ designSeen: [1] })).toEqual({});
     expect(sanitizeDesignSeen(null)).toEqual({});
+  });
+});
+
+describe("collectDesigns edge cases", () => {
+  const keysOf = (text: string) =>
+    collectDesigns([{ role: "assistant", text, at: null }]).flatMap((group) =>
+      group.cards.map((card) => card.key),
+    );
+
+  it("stops a link at bold, angle brackets, parentheses and sentence punctuation", () => {
+    expect(keysOf("**https://claude.ai/artifact/abc123**")).toEqual([
+      "https://claude.ai/artifact/abc123",
+    ]);
+    expect(keysOf("**https://stitch.withgoogle.com/p/1/s/2**")).toEqual([
+      "https://stitch.withgoogle.com/p/1/s/2",
+    ]);
+    expect(
+      keysOf("_https://stitch.withgoogle.com/p/1/s/2_ and ~https://claude.ai/artifact/x1~"),
+    ).toEqual(["https://stitch.withgoogle.com/p/1/s/2", "https://claude.ai/artifact/x1"]);
+    expect(keysOf("<https://stitch.withgoogle.com/p/1>")).toEqual([
+      "https://stitch.withgoogle.com/p/1",
+    ]);
+    expect(keysOf("(see https://stitch.withgoogle.com/p/1/s/2?pli=1).")).toEqual([
+      "https://stitch.withgoogle.com/p/1/s/2?pli=1",
+    ]);
+    expect(keysOf("Open https://stitch.withgoogle.com/p/1?a=b.")).toEqual([
+      "https://stitch.withgoogle.com/p/1?a=b",
+    ]);
+  });
+
+  it("includes links inside code fences and two links on one line", () => {
+    expect(keysOf("```\nstitch url screen 9\nhttps://stitch.withgoogle.com/p/9\n```")).toEqual([
+      "https://stitch.withgoogle.com/p/9",
+    ]);
+    expect(keysOf("A https://claude.ai/artifact/a1 and B https://claude.ai/artifact/b2")).toEqual([
+      "https://claude.ai/artifact/a1",
+      "https://claude.ai/artifact/b2",
+    ]);
+  });
+
+  it("normalises absolute paths to the docs/design part and ignores other hosts", () => {
+    expect(keysOf("wrote /home/x/proj/docs/design/a.html and ~/p/docs/design/b/c.html")).toEqual([
+      "docs/design/a.html",
+      "docs/design/b/c.html",
+    ]);
+    expect(keysOf("see https://example.com/docs/design/a.html")).toEqual([]);
+  });
+});
+
+describe("countDesigns", () => {
+  it("counts distinct designs across messages", () => {
+    const items = [
+      { text: "https://claude.ai/artifact/a1 and docs/design/x.html" },
+      { text: "again https://claude.ai/artifact/a1" },
+    ];
+    expect(countDesigns(items)).toBe(2);
+    expect(countDesigns([...items, { text: "https://stitch.withgoogle.com/p/1" }])).toBe(3);
   });
 });
