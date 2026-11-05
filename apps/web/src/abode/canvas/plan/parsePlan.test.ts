@@ -83,6 +83,7 @@ describe("parsePlan", () => {
               id: "A-002",
               name: "abode theme and fonts",
               state: "done",
+              review: true,
               note: "reviewer PASS, merged. Needs Abhishek to look",
             },
           ],
@@ -260,6 +261,14 @@ describe("parsePlan, [status] format", () => {
       ["F-191", "todo", "found by F-162"],
       ["F-190", "done", undefined],
       ["F-060c", "done", undefined],
+    ]);
+  });
+
+  it("flags review tickets in the bracket format too", () => {
+    const plan = parsePlan("# A\n## F-1 x [review]\n## F-2 y [done]\n");
+    expect(plan.milestones[0]!.tickets).toEqual([
+      { id: "F-1", name: "x", state: "done", review: true },
+      { id: "F-2", name: "y", state: "done" },
     ]);
   });
 
