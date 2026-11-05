@@ -5,13 +5,19 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { observeResize } from "~/lib/observeResize";
-import { useThreadProjection, useThreadShell } from "~/state/entities";
+import { deriveWorkspaceMutationId } from "~/components/ChatView.logic";
+import {
+  useQuietThreadVisibleTurnItems,
+  useThreadProjection,
+  useThreadShell,
+} from "~/state/entities";
 import { resolveActiveThreadRouteRef, resolveThreadRouteTarget } from "~/threadRoutes";
 import { useUiStateStore } from "~/uiStateStore";
 
 import { openPendingQuestion, watchPendingQuestion } from "../calm/openPendingQuestion";
 import { BackToCanvas } from "../canvas/BackToCanvas";
 import { useCanvasStore } from "../canvas/canvasStore";
+import { fillComposer } from "../composerFill";
 import { planBlock } from "../canvas/planBlock";
 import { usePlanFile } from "../canvas/usePlanFile";
 import { useOpenSession } from "../canvas/useOpenSession";
@@ -23,6 +29,7 @@ import { workspaceOf } from "./frameWorkspace";
 import { KitMeter, KitPane, KitStrip, KitTabs, type KitTab } from "./KitFrame";
 import { useHostHomePath } from "./kitData";
 import { isKitProject } from "./kitMode";
+import { MilestonesPane } from "./MilestonesPane";
 import "./frame.css";
 
 const TAB_LABEL: Record<FrameTab, string> = {
@@ -30,10 +37,8 @@ const TAB_LABEL: Record<FrameTab, string> = {
   milestones: "Milestones",
   design: "Design",
 };
-const PLACEHOLDER: Record<Exclude<FrameTab, "jam">, string> = {
-  milestones: "Milestones: coming in A-058",
-  design: "Design: coming in A-059",
-};
+const PLAN_PROMPT =
+  "There is no docs/plan.md with milestones yet. Please read the project and write one: a Goal: line, then milestones (## Milestone: name) with tickets (### X-001: title, then - **Status:** todo). Don't start building.";
 const TICK_MS = 30_000;
 const ANSWER_TTL_MS = 5_000;
 const NO_TYPES: ReadonlyMap<string, string> = new Map();
@@ -76,6 +81,8 @@ function LoadedFrame(props: {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [kitTab, setKitTab] = useState<KitTab>("skills");
+  // Bumped when Milestones opens and when the window regains focus, so hand edits show too.
+  const [planTick, setPlanTick] = useState(0);
 
   // The current thread's projection is already loaded by the chat, so its subagent types
   // come free; other threads' subagents are just "subagent".
@@ -97,7 +104,7 @@ function LoadedFrame(props: {
     nowMs,
   });
   const running = runningCount(cards);
-  const anyRunning = running > 0;
+  const anyRunning = running > 0 || tab === "milestones";
   const pendingKeys = new Set(
     [...group.threads, ...[...group.runningSubagentsByParentKey.values()].flat()]
       .filter((thread) => thread.hasPendingApprovals || thread.hasPendingUserInput)
@@ -105,7 +112,7 @@ function LoadedFrame(props: {
   );
   const currentHasQuestion = currentKey !== null && pendingKeys.has(currentKey);
 
-  // Elapsed times refresh twice a minute while an agent runs; nothing animates.
+  // Elapsed times refresh twice a minute while an agent runs or Milestones shows; nothing animates.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- timers that refresh the elapsed-time labels
   useEffect(() => {
     if (!anyRunning) return;
@@ -116,6 +123,13 @@ function LoadedFrame(props: {
       clearInterval(timer);
     };
   }, [anyRunning]);
+
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window focus is an external event that should re-read the plan file
+  useEffect(() => {
+    const bump = () => setPlanTick((tick) => tick + 1);
+    window.addEventListener("focus", bump);
+    return () => window.removeEventListener("focus", bump);
+  }, []);
 
   // The pane and the calm table start below the frame, which is as tall as its content.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes the frame's height as a CSS variable on the conversation area
@@ -153,8 +167,17 @@ function LoadedFrame(props: {
   }, [answerRequest, currentKey, currentHasQuestion]);
 
   const root = group.project.memberProjects[0];
-  const turnSignal = group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|");
+  // The plan refetches when an agent finishes a command or file edit in this thread (the same
+  // marker the chat's file previews use) or any thread in the workspace finishes a run.
+  const editMarker = deriveWorkspaceMutationId(useQuietThreadVisibleTurnItems(threadRef), null);
+  const turnSignal = `${planTick}|${editMarker ?? ""}|${group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|")}`;
   const plan = usePlanFile(root?.environmentId, root?.workspaceRoot, turnSignal);
+  const planText = plan.file?.contents;
+  // Stamps when the plan's text changes, for Milestones' "updated Xm ago".
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- records the arrival time of an edit (impure) in the frame store
+  useEffect(() => {
+    if (planText !== undefined) useFrameStore.getState().notePlan(workspaceKey, planText);
+  }, [workspaceKey, planText]);
   const block = plan.pending ? null : planBlock(plan);
   const count =
     block?.kind === "ready"
@@ -173,6 +196,16 @@ function LoadedFrame(props: {
           borrowed: false,
         }
       : null;
+  // Marks the conversation area while a pane covers it, so frame.css can dock a draft's hero composer.
+  const paneOpen = kitScope ? kitTab !== "jam" : tab !== "jam";
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- sets a data attribute on the conversation area, which upstream renders
+  useEffect(() => {
+    const area = rootRef.current?.parentElement;
+    if (!area || !paneOpen) return;
+    area.setAttribute("data-abode-pane-open", "");
+    return () => area.removeAttribute("data-abode-pane-open");
+  }, [paneOpen]);
+
   const showJam = () => {
     useFrameStore.getState().setTab(workspaceKey, "jam");
     setKitTab("jam");
@@ -235,7 +268,10 @@ function LoadedFrame(props: {
                   aria-selected={tab === value}
                   data-selected={tab === value ? "" : undefined}
                   data-testid={`frame-tab-${value}`}
-                  onClick={() => useFrameStore.getState().setTab(workspaceKey, value)}
+                  onClick={() => {
+                    if (value === "milestones" && tab !== value) setPlanTick((tick) => tick + 1);
+                    useFrameStore.getState().setTab(workspaceKey, value);
+                  }}
                 >
                   {TAB_LABEL[value]}
                   {value === "milestones" && count !== null ? <small>{count}</small> : null}
@@ -290,7 +326,18 @@ function LoadedFrame(props: {
         )
       ) : tab === "jam" ? null : (
         <section data-abode-frame-pane="" aria-label={TAB_LABEL[tab]} data-testid="frame-pane">
-          <p>{PLACEHOLDER[tab]}</p>
+          {tab === "milestones" ? (
+            <MilestonesPane
+              block={block ?? { kind: "loading" }}
+              workspaceKey={workspaceKey}
+              nowMs={nowMs}
+              onAskToPlan={
+                threadRef === null ? undefined : () => fillComposer(threadRef, PLAN_PROMPT)
+              }
+            />
+          ) : (
+            <p>Design: coming in A-059</p>
+          )}
         </section>
       )}
     </>

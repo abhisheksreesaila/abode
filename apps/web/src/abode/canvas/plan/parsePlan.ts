@@ -11,6 +11,8 @@ export interface Ticket {
   id: string;
   name: string;
   state: TicketState;
+  /** The status word was `review`: counted as done, shown as "in review". */
+  review?: true;
   note?: string;
 }
 
@@ -108,6 +110,7 @@ function parseStatusPlan(markdown: string): Group[] {
       name: t[2]!,
       state: STATUS_STATE[t[3]!.toLowerCase()] ?? "todo",
     };
+    if (t[3]!.toLowerCase() === "review") ticket.review = true;
     const note = (t[4] ?? t[5] ?? "").trim();
     if (note) ticket.note = note;
     group?.tickets.push(ticket);
@@ -151,6 +154,7 @@ export function parsePlan(markdown: string): Plan {
     const status = STATUS.exec(line);
     if (status && ticket && awaitingStatus) {
       ticket.state = STATUS_STATE[status[1]!.toLowerCase()] ?? "todo";
+      if (status[1]!.toLowerCase() === "review") ticket.review = true;
       const note = (status[2] ?? status[3] ?? "").trim();
       if (note) ticket.note = note;
     }

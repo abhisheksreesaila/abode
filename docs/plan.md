@@ -554,7 +554,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-058: Milestones tab
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after two rounds; checked in the browser at 1440 and 390 on mxframe's real plan: M1–M10 with counts, current milestone open with its tickets, 173/198 on the tab; on a draft the composer docks under the pane)
 - **Depends on:** A-057
 - **What:** the A-044 parser over the project's `docs/plan.md`: the goal line, then M1…Mn as an accordion with each ticket's ID, title, who and a status chip. It refreshes when the file changes. Statuses are the agent's (read-only). With no plan, the tab says so and offers "Ask the agent to plan", which fills the composer.
 - **Acceptance:**
