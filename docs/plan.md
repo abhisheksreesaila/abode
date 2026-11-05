@@ -528,3 +528,80 @@ Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `
   - [ ] Mobile app untouched: protocol 2, contracts add-only.
 
 Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.
+
+## Phase H: Workspace tabs and the Kit window (briefs: docs/briefs/workspace-tabs.md, docs/briefs/kit-window.md; screens: https://claude.ai/artifact/MAxT8zMrArrRvoFEjMrcWB)
+
+The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`CalmTable`, top of the conversation area), so Jam is T3's own timeline and composer. No new upstream hooks unless a ticket says so; `hook-report.sh` stays at or under 369. Every UI ticket is checked at 1440 and 390 on seeded data.
+
+### A-056: Subtract the parts of One Window we no longer use
+
+- **Status:** todo
+- **What:** remove the journey map, keyword routing, the chat drawer, the mode pills and blocks, and the omnibox commands, along with their tests and CSS. Sessions open in T3's chat route. The overview, the rail, Kit and the One window switch stay (still on by default; off gives stock T3).
+- **Acceptance:**
+  - [ ] No code, CSS or test of the removed parts is left, and knip passes on abode.
+  - [ ] Opening a session from the rail or the overview lands on T3's chat for that thread.
+  - [ ] One window off: abode looks the way it did before One Window.
+
+### A-057: Workspace frame: agent strip and tabs
+
+- **Status:** todo
+- **Depends on:** A-056
+- **What:** above the timeline, through the A-033 mount: the "N agents running" pill and one card per running thread or subagent in this workspace (what it's doing, status: in progress / needs you / done, elapsed time), then the Jam · Milestones · Design tabs. Jam shows T3's timeline untouched. The last-used tab is remembered per workspace and per device. On a phone, the cards scroll sideways and the tabs are a full-width segmented control.
+- **Acceptance:**
+  - [ ] The agent cards come from a tested pure function over real thread and subagent shapes.
+  - [ ] A needs-you card opens the pending question.
+  - [ ] Works on a draft as well as a thread (see lessons).
+
+### A-058: Milestones tab
+
+- **Status:** todo
+- **Depends on:** A-057
+- **What:** the A-044 parser over the project's `docs/plan.md`: the goal line, then M1…Mn as an accordion with each ticket's ID, title, who and a status chip. It refreshes when the file changes. Statuses are the agent's (read-only). With no plan, the tab says so and offers "Ask the agent to plan", which fills the composer.
+- **Acceptance:**
+  - [ ] An edit to plan.md shows without a reload.
+  - [ ] All three plan formats A-044 reads still render.
+
+### A-059: Design tab
+
+- **Status:** todo
+- **Depends on:** A-057
+- **What:** cards for every claude.ai artifact link, Stitch link and `docs/design/*.html` found in this workspace's threads, grouped by the message that asked for them, newest first, each marked Stitch / Claude / file and desktop / phone where known. Clicking a card previews it in T3's browser panel (a new tab where that panel isn't available). Pick boxes; "Send picks" puts "I pick: …" into the composer.
+- **Acceptance:**
+  - [ ] Link and file collection is a tested pure function over real message text.
+  - [ ] Picks reach the composer without sending on their own.
+
+### A-060: Kit in the workspace frame
+
+- **Status:** todo
+- **Depends on:** A-057
+- **What:** Kit opens as a Kit thread in a project rooted at `~`, created on first use, with the frame on top: the strip (daily check, kit agent) and the tabs Skills · MCP · Plugins · Hooks · Updates over the existing Kit lists. Skills shows each skill's source, context cost and last use, read from the providers' own session logs where present.
+- **Acceptance:**
+  - [ ] The skills come from the real `~/.claude/skills`, `~/.agents/skills` and `~/.codex/skills`, following symlinks.
+  - [ ] Last use is a tested parser over real transcript lines; it shows "unknown" when there is no data.
+
+### A-061: Daily source check (server)
+
+- **Status:** todo
+- **What:** add-only server service in `apps/server/src/abode/`. Every day at 06:00, and on demand, it compares each source's skill folders (the GitHub repo's default branch) and the npm version for npx sources against its last snapshot, then records new, updated and removed skills with their SKILL.md descriptions. Its state lives in a file under T3 home (no migration). Exposed through add-only RPCs: list updates, decide (inherit / skip / take all).
+- **Acceptance:**
+  - [ ] The snapshot diff (new / updated / removed, and edited locally vs upstream) is tested.
+  - [ ] Network failures leave the last result in place and say "check failed" with the time.
+  - [ ] Protocol stays 2; contracts add-only.
+
+### A-062: Updates tab, badge and feed
+
+- **Status:** todo
+- **Depends on:** A-060, A-061
+- **What:** cards grouped by source. Each new skill shows what it does, its context cost, any overlap, and Inherit / Skip (Skip is remembered). Unedited updates come as one "Take all" card, and edited skills get a diff plus "Merge in jam", which sends the diff to the Kit thread. A count badge sits on Kit in the rail, and a "Matt added 3 skills" line goes into the overview's since-you-last-looked feed.
+- **Acceptance:**
+  - [ ] Inherit installs only that skill, and Take all never touches an edited skill.
+  - [ ] Checked against a real source change (or a recorded one).
+
+### A-063: Prune by jam
+
+- **Status:** todo
+- **Depends on:** A-060
+- **What:** asked "what don't I need?", the kit agent answers with a pick list of cuts (skill, source, reason, tokens saved) rendered as an abode chat card. "Cut N" moves the ticked skills to `~/.claude/skills/.trash`, and the context meter updates. A restore is the same move back.
+- **Acceptance:**
+  - [ ] Nothing moves without the button.
+  - [ ] Restore puts a cut skill back where it was, symlink included.
