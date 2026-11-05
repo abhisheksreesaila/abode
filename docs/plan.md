@@ -599,7 +599,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-063: Prune by jam
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after three rounds; checked in the browser against a scratch copy of the real skill folders: "What don't I need?" filled the composer on a new Kit draft, a replayed reply rendered the pick list (isometric, handoff · 2 copies, a greyed "not in your kit" row), Cut 2 moved them to the trash, "In trash · 2" listed them, Restore put both back at their exact paths and emptied the trash; real ~/.claude/skills untouched)
 - **Depends on:** A-060
 - **What:** asked "what don't I need?", the kit agent answers with a pick list of cuts (skill, source, reason, tokens saved) rendered as an abode chat card. "Cut N" moves the ticked skills to `~/.claude/skills/.trash`, and the context meter updates. A restore is the same move back.
 - **Acceptance:**
