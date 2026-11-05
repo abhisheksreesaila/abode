@@ -15,6 +15,7 @@ import { describeCustomizationsError } from "../../customizations/customizations
 import { customizationsEnvironment } from "../../customizations/customizationsState";
 import type { CustomizationsScope } from "../../customizations/useCustomizationsScope";
 import { useRefreshProviderSkills } from "../../customizations/useRefreshProviderSkills";
+import { fillComposer } from "../../composerFill";
 import { askClaudeAction } from "./askClaude";
 import { CATEGORIES, SOURCES, type KitSkill } from "./kitModel";
 
@@ -109,9 +110,7 @@ export function KitSkillDetail(props: {
   const ask = askClaudeAction({ hasThreadRef: scope.threadRef !== null, isDraft });
   const askClaude = () => {
     if (ask.kind === "disabled" || !scope.threadRef) return;
-    useComposerDraftStore
-      .getState()
-      .setPrompt(scope.threadRef, `Change the ${skill.name} skill (${skill.path}): `);
+    fillComposer(scope.threadRef, `Change the ${skill.name} skill (${skill.path}): `);
     if (ask.kind === "prompt-and-open") {
       void router.navigate({
         to: "/$environmentId/$threadId",

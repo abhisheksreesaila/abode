@@ -17,6 +17,7 @@ import { useUiStateStore } from "~/uiStateStore";
 import { openPendingQuestion, watchPendingQuestion } from "../calm/openPendingQuestion";
 import { BackToCanvas } from "../canvas/BackToCanvas";
 import { useCanvasStore } from "../canvas/canvasStore";
+import { fillComposer } from "../composerFill";
 import { planBlock } from "../canvas/planBlock";
 import { usePlanFile } from "../canvas/usePlanFile";
 import { useOpenSession } from "../canvas/useOpenSession";
@@ -76,6 +77,8 @@ function LoadedFrame(props: {
   const open = useOpenSession();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  // Bumped when Milestones opens and when the window regains focus, so hand edits show too.
+  const [planTick, setPlanTick] = useState(0);
 
   // The current thread's projection is already loaded by the chat, so its subagent types
   // come free; other threads' subagents are just "subagent".
@@ -117,6 +120,13 @@ function LoadedFrame(props: {
     };
   }, [anyRunning]);
 
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window focus is an external event that should re-read the plan file
+  useEffect(() => {
+    const bump = () => setPlanTick((tick) => tick + 1);
+    window.addEventListener("focus", bump);
+    return () => window.removeEventListener("focus", bump);
+  }, []);
+
   // The pane and the calm table start below the frame, which is as tall as its content.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes the frame's height as a CSS variable on the conversation area
   useEffect(() => {
@@ -156,7 +166,7 @@ function LoadedFrame(props: {
   // The plan refetches when an agent finishes a command or file edit in this thread (the same
   // marker the chat's file previews use) or any thread in the workspace finishes a run.
   const editMarker = deriveWorkspaceMutationId(useQuietThreadVisibleTurnItems(threadRef), null);
-  const turnSignal = `${editMarker ?? ""}|${group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|")}`;
+  const turnSignal = `${planTick}|${editMarker ?? ""}|${group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|")}`;
   const plan = usePlanFile(root?.environmentId, root?.workspaceRoot, turnSignal);
   const planText = plan.file?.contents;
   // Stamps when the plan's text changes, for Milestones' "updated Xm ago".
@@ -226,7 +236,10 @@ function LoadedFrame(props: {
                 aria-selected={tab === value}
                 data-selected={tab === value ? "" : undefined}
                 data-testid={`frame-tab-${value}`}
-                onClick={() => useFrameStore.getState().setTab(workspaceKey, value)}
+                onClick={() => {
+                  if (value === "milestones" && tab !== value) setPlanTick((tick) => tick + 1);
+                  useFrameStore.getState().setTab(workspaceKey, value);
+                }}
               >
                 {TAB_LABEL[value]}
                 {value === "milestones" && count !== null ? <small>{count}</small> : null}
@@ -273,9 +286,7 @@ function LoadedFrame(props: {
               workspaceKey={workspaceKey}
               nowMs={nowMs}
               onAskToPlan={
-                threadRef === null
-                  ? undefined
-                  : () => useComposerDraftStore.getState().setPrompt(threadRef, PLAN_PROMPT)
+                threadRef === null ? undefined : () => fillComposer(threadRef, PLAN_PROMPT)
               }
             />
           ) : (
