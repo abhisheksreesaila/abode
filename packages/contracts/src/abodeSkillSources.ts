@@ -153,3 +153,32 @@ export const WsSkillUsageListRpc = Rpc.make("skillUsage.list", {
   success: SkillUsageListResult,
   error: EnvironmentAuthorizationError,
 });
+
+/**
+ * "Prune by jam": the Kit moves skills the person ticked into `~/.claude/skills/.trash` (cut) and
+ * back to where they were (restore). Per-name outcomes, so one bad name does not stop the rest.
+ */
+export const SkillPruneInput = Schema.Struct({
+  names: Schema.Array(TrimmedNonEmptyString).check(Schema.isMaxLength(200)),
+});
+export type SkillPruneInput = typeof SkillPruneInput.Type;
+
+export const SkillPruneResult = Schema.Struct({
+  /** Names that were moved. */
+  done: Schema.Array(TrimmedNonEmptyString),
+  /** Names left alone, each with the reason shown to the person. */
+  skipped: Schema.Array(Schema.Struct({ name: Schema.String, reason: TrimmedNonEmptyString })),
+});
+export type SkillPruneResult = typeof SkillPruneResult.Type;
+
+export const WsSkillPruneCutRpc = Rpc.make("skillPrune.cut", {
+  payload: SkillPruneInput,
+  success: SkillPruneResult,
+  error: EnvironmentAuthorizationError,
+});
+
+export const WsSkillPruneRestoreRpc = Rpc.make("skillPrune.restore", {
+  payload: SkillPruneInput,
+  success: SkillPruneResult,
+  error: EnvironmentAuthorizationError,
+});

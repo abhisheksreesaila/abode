@@ -73,3 +73,15 @@ export const skillSourcesCommands = {
       Effect.sync(() => registry.refresh(skillSourcesAtom({ environmentId, input: undefined }))),
   }),
 };
+
+/** Prune by jam: moving skills to the host's trash and back. The caller refreshes the lists it shows. */
+export const skillPruneCommands = {
+  cut: createEnvironmentRpcCommand(connectionAtomRuntime, {
+    label: "environment-data:abode:skill-prune-cut",
+    tag: WS_METHODS.skillPruneCut,
+  }),
+  restore: createEnvironmentRpcCommand(connectionAtomRuntime, {
+    label: "environment-data:abode:skill-prune-restore",
+    tag: WS_METHODS.skillPruneRestore,
+  }),
+};

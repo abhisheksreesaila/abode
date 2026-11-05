@@ -10,12 +10,15 @@ import type { CustomizationsScope } from "../customizations/useCustomizationsSco
 import { HooksTab, McpTab, PluginsTab } from "../canvas/kit/KitLists";
 import { KitSkillDetail, SourceBadge } from "../canvas/kit/KitSkillDetail";
 import {
+  SOURCES,
   buildKitMcp,
   buildKitSkills,
   estimateContext,
   skillTokens,
   type KitSkill,
 } from "../canvas/kit/kitModel";
+import { pruneAskPrompt } from "../chat/prune/pruneAsk";
+import { fillComposer } from "../composerFill";
 import { useClaudeSettings, useKitItems } from "../canvas/kit/kitState";
 import type { AgentCard } from "./agentCards";
 import "../canvas/kit/kit.css";
@@ -142,16 +145,45 @@ function SkillsList(props: {
   readonly scope: CustomizationsScope;
   readonly skills: ReadonlyArray<KitSkill>;
   readonly nowMs: number;
+  readonly onJam: () => void;
 }) {
-  const { scope, skills, nowMs } = props;
+  const { scope, skills, nowMs, onJam } = props;
   const [open, setOpen] = useState<KitSkill | null>(null);
   const usage = useAtomValue(
     skillUsageAtom({ environmentId: scope.environmentId, input: { scan: true } }),
   );
   const loaded = Option.getOrNull(AsyncResult.value(usage));
   const lastUsed = new Map(loaded?.skills.map((entry) => [entry.name, entry.lastUsedAt]));
+  // Never-used skills first, so a long list cut at the cap still holds the likeliest cuts.
+  const askPrune = () => {
+    if (scope.threadRef === null) return;
+    const used = (skill: KitSkill) => Date.parse(lastUsed.get(skill.name) ?? "") || 0;
+    fillComposer(
+      scope.threadRef,
+      pruneAskPrompt(
+        skills
+          .toSorted((a, b) => used(a) - used(b))
+          .map((skill) => ({
+            name: skill.name,
+            source: SOURCES[skill.source].name,
+            tokens: skillTokens(skill),
+            lastUsed: loaded === null ? "unknown" : lastUsedLabel(lastUsed.get(skill.name), nowMs),
+          })),
+      ),
+    );
+    onJam();
+  };
   return (
     <>
+      <button
+        type="button"
+        data-abode-prune-ask=""
+        data-testid="kit-prune-ask"
+        disabled={scope.threadRef === null}
+        onClick={askPrune}
+      >
+        What don't I need?
+      </button>
       <div data-abode-skills="" role="list">
         {skills.map((skill) => (
           <button
@@ -203,7 +235,14 @@ export function KitPane(props: {
       );
     }
     if (tab === "skills") {
-      return <SkillsList scope={scope} skills={buildKitSkills(items)} nowMs={nowMs} />;
+      return (
+        <SkillsList
+          scope={scope}
+          skills={buildKitSkills(items)}
+          nowMs={nowMs}
+          onJam={() => onTab("jam")}
+        />
+      );
     }
     if (tab === "mcp") return <McpTab rows={buildKitMcp(items)} cwd={scope.cwd} />;
     if (tab === "plugins") return <PluginsTab rows={settings?.plugins ?? null} />;

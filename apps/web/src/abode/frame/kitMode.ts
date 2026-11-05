@@ -13,6 +13,13 @@ export function isKitProject(workspaceRoot: string | undefined, homePath?: strin
   return HOME_ROOT.test(workspaceRoot);
 }
 
+/** The workspace lists leave the Kit project out: it has its own ⚙ entry. */
+export function withoutKitProject<
+  T extends { readonly project: { readonly workspaceRoot: string } },
+>(groups: ReadonlyArray<T>, homePath?: string): T[] {
+  return groups.filter((group) => !isKitProject(group.project.workspaceRoot, homePath));
+}
+
 /** Runs `task` unless one is already running; a second tap gets the first one's promise. */
 export function singleFlight() {
   let running: Promise<void> | null = null;

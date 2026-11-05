@@ -1,10 +1,13 @@
 import { useAtomValue } from "@effect/atom-react";
 
 import { deriveProviderInstanceEntries } from "~/providerInstances";
+import { usePrimaryEnvironmentId } from "~/state/environments";
 import type { SidebarProjectGroupMember } from "~/sidebarProjectGrouping";
 import { primaryServerProvidersAtom } from "~/state/server";
 import { useUiStateStore } from "~/uiStateStore";
 
+import { useHostHomePath } from "../frame/kitData";
+import { withoutKitProject } from "../frame/kitMode";
 import { deriveWorkspaceThreadState } from "../shell/threadState";
 import { useWorkspaceGroups } from "../shell/useWorkspaceGroups";
 import { threadShellKey } from "../shell/workspaceModel";
@@ -41,7 +44,11 @@ export function useCanvasWorkspaces(): {
   const driverByInstance = new Map(
     deriveProviderInstanceEntries(providers).map((entry) => [entry.instanceId, entry.driverKind]),
   );
-  const real = groups.filter((group) => !group.isScratch);
+  const hostHome = useHostHomePath(usePrimaryEnvironmentId() ?? undefined);
+  const real = withoutKitProject(
+    groups.filter((group) => !group.isScratch),
+    hostHome,
+  );
   const hidden = real
     .filter((group) => removedKeys.includes(group.project.projectKey))
     .map((group) => ({ key: group.project.projectKey, name: group.name }));

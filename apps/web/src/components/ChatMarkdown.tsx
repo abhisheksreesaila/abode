@@ -189,6 +189,7 @@ import {
 import { resolveLinkTarget } from "../browser/browserLinkTarget";
 import { PullRequestLinkPreview } from "./pullRequest/PullRequestLinkPreview";
 import { ABODE_ALERT_PRESENTATIONS, withAbodeCallouts } from "~/abode/chat/callouts"; // abode: chat cards
+import { PruneBlock } from "~/abode/chat/prune/PruneCard"; // abode: prune card
 import { MarkdownCodeBlock, SuspenseShikiCodeBlock } from "./chat/MarkdownCodeBlock";
 import { createMarkdownRenderer } from "./chat/markdownRenderer";
 import { splitMarkdownBlocks } from "./chat/markdownStreamBlocks";
@@ -1564,6 +1565,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
       onRunShellCommand,
       inline,
       mathEnabled,
+      threadRef, // abode: prune card
     } = use(ChatMarkdownRendererContext);
     const text = use(ChatMarkdownTextContext);
     const codeBlock = extractCodeBlock(children);
@@ -1603,6 +1605,17 @@ const CHAT_MARKDOWN_COMPONENTS = {
         </Suspense>
       </RenderErrorBoundary>
     );
+    if (language === "abode-prune") {
+      // abode: prune card (Kit threads only; elsewhere the fallback is the plain block)
+      return (
+        <PruneBlock
+          code={codeBlock.code}
+          threadRef={threadRef}
+          isStreaming={isStreaming}
+          fallback={highlightedCode}
+        />
+      );
+    }
     if (language === "mermaid") {
       return (
         <MarkdownMermaidCodeBlock
