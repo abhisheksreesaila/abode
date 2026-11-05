@@ -23,7 +23,7 @@ import { parsePruneBlock, pruneHeadline, rowTokens } from "./pruneModel";
 import { setPruneOutcome, usePruneOutcome } from "./pruneOutcomes";
 
 /** The fenced text inside the `<code>` element the markdown renderer hands over. */
-function codeText(children: ReactNode): string {
+export function codeText(children: ReactNode): string {
   const inner = isValidElement<{ children?: unknown }>(children) ? children.props.children : "";
   return (typeof inner === "string" ? inner : "").replace(/\n$/, "");
 }
