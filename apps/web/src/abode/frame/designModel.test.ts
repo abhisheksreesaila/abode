@@ -185,6 +185,42 @@ describe("collectDesigns edge cases", () => {
     expect(keysOf("_https://claude.ai/artifact/abc_")).toEqual(["https://claude.ai/artifact/abc"]);
   });
 
+  it("collects a local preview server's docs/design URL as a file, deduped with the bare path", () => {
+    const groups = collectDesigns([
+      { role: "user", text: "show split", at: null },
+      {
+        role: "assistant",
+        text: "Preview: http://127.0.0.1:8791/docs/design/split.html?v=2 and http://localhost:3000/app and [::1] http://[::1]:80/x/docs/design/b.html.\nSource: docs/design/split.html",
+        at: null,
+      },
+    ]);
+    expect(groups[0]!.cards).toEqual([
+      {
+        key: "docs/design/split.html",
+        href: "http://127.0.0.1:8791/docs/design/split.html?v=2",
+        path: "docs/design/split.html",
+        source: "file",
+        device: null,
+        title: "split.html",
+        host: "docs/design",
+      },
+      {
+        key: "docs/design/b.html",
+        href: "http://[::1]:80/x/docs/design/b.html",
+        path: "docs/design/b.html",
+        source: "file",
+        device: null,
+        title: "b.html",
+        host: "docs/design",
+      },
+    ]);
+    expect(
+      countDesigns([
+        { text: "http://127.0.0.1:8791/docs/design/split.html docs/design/split.html" },
+      ]),
+    ).toBe(1);
+  });
+
   it("includes links inside code fences and two links on one line", () => {
     expect(keysOf("```\nstitch url screen 9\nhttps://stitch.withgoogle.com/p/9\n```")).toEqual([
       "https://stitch.withgoogle.com/p/9",

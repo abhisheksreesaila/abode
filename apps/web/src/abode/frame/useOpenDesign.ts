@@ -43,7 +43,7 @@ export function useOpenDesign(
           return true;
         }
       }
-      return newTab(href);
+      if (card.path === null || !inApp) return newTab(href);
     }
     if (threadRef === null || card.path === null || workspaceRoot === undefined) return false;
     const connection = readPreparedConnection(threadRef.environmentId);

@@ -30,9 +30,10 @@ export interface DesignGroup {
 
 // One pass over claude.ai artifact links, Stitch links and docs/design html paths.
 // A URL stops at emphasis (`*`, `~`), brackets, angle brackets and backticks; a file path may
-// be absolute (only its docs/design/... part is kept).
+// be absolute (only its docs/design/... part is kept). A local preview server's URL
+// (localhost, 127.0.0.1, [::1]) with docs/design in its path is the same file.
 const FIND =
-  /https?:\/\/(?:www\.)?claude\.ai\/(?:code\/)?artifact\/[A-Za-z0-9_-]+|https?:\/\/stitch\.(?:withgoogle|google)\.com\/[^\s)\]>"'`*~<]*|(?<![\w.:/-])(?:\/?[\w.-]+\/)*docs\/design\/(?:[\w.-]+\/)*[\w.-]+\.html/g;
+  /https?:\/\/(?:www\.)?claude\.ai\/(?:code\/)?artifact\/[A-Za-z0-9_-]+|https?:\/\/stitch\.(?:withgoogle|google)\.com\/[^\s)\]>"'`*~<]*|https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?\/(?=[^\s)\]>"'`*~<]*docs\/design\/)[^\s)\]>"'`*~<]*|(?<![\w.:/-])(?:\/?[\w.-]+\/)*docs\/design\/(?:[\w.-]+\/)*[\w.-]+\.html/g;
 const TRAILING = /[.,;:!?]+$/;
 const LINK_TEXT = /\[([^\]\n]{1,80})\]\(\s*<?$/;
 const PHONE = /\b(?:phone|mobile|iphone|390)\b/i;
@@ -67,10 +68,19 @@ function cleanLabel(text: string): string {
 }
 
 /** A trailing `_` is part of the link unless emphasis opened with `_` right before it. */
-function keyOf(raw: string, opener: string | undefined): string {
-  if (!/^https?:/.test(raw)) return raw.slice(raw.lastIndexOf("docs/design/"));
+function urlOf(raw: string, opener: string | undefined): string {
   const trimmed = raw.replace(TRAILING, "");
   return opener === "_" ? trimmed.replace(/_+$/, "") : trimmed;
+}
+
+const LOCAL_HOST = /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])[:/]/;
+
+function keyOf(raw: string, opener: string | undefined): string {
+  if (!/^https?:/.test(raw)) return raw.slice(raw.lastIndexOf("docs/design/"));
+  const url = urlOf(raw, opener);
+  return LOCAL_HOST.test(url)
+    ? url.slice(url.lastIndexOf("docs/design/")).replace(/[?#].*$/, "")
+    : url;
 }
 
 /** The dedupe keys of the designs a text mentions: all the badge needs, no titles or devices. */
@@ -83,7 +93,8 @@ function describeMatch(text: string, index: number, raw: string): DesignCard {
   const lineEnd = text.indexOf("\n", index);
   const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
   const start = index - lineStart;
-  const isFile = !/^https?:/.test(raw);
+  const local = LOCAL_HOST.test(raw);
+  const isFile = !/^https?:/.test(raw) || local;
   const key = keyOf(raw, text[index - 1]);
   const source: DesignSource = isFile ? "file" : raw.includes("claude.ai") ? "Claude" : "Stitch";
   const before = line.slice(0, start);
@@ -96,7 +107,7 @@ function describeMatch(text: string, index: number, raw: string): DesignCard {
       : "Stitch screen";
   return {
     key,
-    href: isFile ? null : key,
+    href: local ? urlOf(raw, text[index - 1]) : isFile ? null : key,
     path: isFile ? key : null,
     source,
     device: deviceNear(line, start, raw.length),

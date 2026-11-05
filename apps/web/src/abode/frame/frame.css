@@ -232,7 +232,7 @@
   --abode-review: #a78bfa;
   position: absolute;
   inset: var(--abode-frame-h, 0px) 0 0 0;
-  z-index: 10;
+  z-index: 15;
   overflow-y: auto;
   /* Room to scroll the last rows clear of the composer, which floats over the pane's bottom. */
   padding: 24px 16px 200px;
