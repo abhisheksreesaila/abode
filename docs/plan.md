@@ -563,7 +563,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-059: Design tab
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after two rounds; checked in the browser at 1440 and 390 on omxqua's real design thread: split.html and cover.html grouped under the asking messages, Pick + Send picks filled the composer with "I pick: split.html (file)" without sending; found and fixed a pane-under-Calm stacking bug and missed local preview URLs)
 - **Depends on:** A-057
 - **What:** cards for every claude.ai artifact link, Stitch link and `docs/design/*.html` found in the current thread, grouped by the message that asked for them, newest first, each marked Stitch / Claude / file and desktop / phone where known. Clicking a card previews it in T3's browser panel (a new tab where that panel isn't available). Pick boxes; "Send picks" puts "I pick: …" into the composer.
 - **Acceptance:**
