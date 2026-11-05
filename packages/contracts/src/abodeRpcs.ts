@@ -3,6 +3,11 @@ import {
   WsCustomizationsReadFileRpc,
   WsCustomizationsWriteFileRpc,
 } from "./abodeCustomizations.ts";
+import {
+  WsSkillSourcesCheckNowRpc,
+  WsSkillSourcesDecideRpc,
+  WsSkillSourcesListRpc,
+} from "./abodeSkillSources.ts";
 import { WsTailnetStatusRpc } from "./abodeTailnet.ts";
 import { WsVoiceRpc } from "./abodeVoice.ts";
 
@@ -13,6 +18,9 @@ export const ABODE_WS_METHODS = {
   customizationsWriteFile: "customizations.writeFile",
   voice: "voice.session",
   tailnetStatus: "tailnet.status",
+  skillSourcesList: "skillSources.list",
+  skillSourcesCheckNow: "skillSources.checkNow",
+  skillSourcesDecide: "skillSources.decide",
 } as const;
 
 export const ABODE_RPCS = [
@@ -21,4 +29,7 @@ export const ABODE_RPCS = [
   WsCustomizationsWriteFileRpc,
   WsVoiceRpc,
   WsTailnetStatusRpc,
+  WsSkillSourcesListRpc,
+  WsSkillSourcesCheckNowRpc,
+  WsSkillSourcesDecideRpc,
 ] as const;
