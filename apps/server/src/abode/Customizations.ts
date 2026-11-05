@@ -181,6 +181,14 @@ const make = Effect.gen(function* () {
       : path.join(NodeOS.homedir(), ".codex");
   };
 
+  /** The shared skills folder (`~/.agents/skills`); `AGENTS_HOME` moves it. */
+  const agentsHomeDir = () => {
+    const configured = process.env.AGENTS_HOME?.trim() ?? "";
+    return configured.length > 0
+      ? path.resolve(expandHomePath(configured, NodeOS.homedir()))
+      : path.join(NodeOS.homedir(), ".agents");
+  };
+
   /**
    * `~/.claude/...` and `~/.codex/...` name the user-scope folders without the client knowing
    * the home directory; they map onto the same dirs the lists use (so `CLAUDE_CONFIG_DIR` and
@@ -190,6 +198,7 @@ const make = Effect.gen(function* () {
     for (const [prefix, root] of [
       ["~/.claude", configDir],
       ["~/.codex", codexHomeDir()],
+      ["~/.agents", agentsHomeDir()],
     ] as const) {
       if (requested === prefix) return root;
       if (requested.startsWith(`${prefix}/`)) {
@@ -258,14 +267,19 @@ const make = Effect.gen(function* () {
     workspaceRoot: string,
   ) {
     const roots = [
-      { root: configDir, bound: null },
-      { root: codexHomeDir(), bound: null },
-      { root: path.join(workspaceRoot, ".claude"), bound: workspaceRoot },
+      { root: configDir, bound: null, folders: ["skills", "agents"] },
+      { root: codexHomeDir(), bound: null, folders: ["skills", "agents"] },
+      { root: agentsHomeDir(), bound: null, folders: ["skills"] },
+      {
+        root: path.join(workspaceRoot, ".claude"),
+        bound: workspaceRoot,
+        folders: ["skills", "agents"],
+      },
     ];
-    for (const { root, bound } of roots) {
+    for (const { root, bound, folders } of roots) {
       if (!isInside(root, absolutePath)) continue;
       const [folder, name] = path.relative(root, absolutePath).split(path.sep);
-      if ((folder !== "skills" && folder !== "agents") || !name) continue;
+      if (folder === undefined || !folders.includes(folder) || !name) continue;
       const entry = path.join(root, folder, name);
       const isLink = yield* fileSystem.readLink(entry).pipe(
         Effect.as(true),
@@ -341,6 +355,8 @@ const make = Effect.gen(function* () {
     const realCodexSkills = yield* realPathAllowingMissing(path.join(codexHomeDir(), "skills"));
     const realCodexPrompts = yield* realPathAllowingMissing(path.join(codexHomeDir(), "prompts"));
     const underCodexSkills = isInside(realCodexSkills, realTarget);
+    const realAgentsSkills = yield* realPathAllowingMissing(path.join(agentsHomeDir(), "skills"));
+    const underAgentsSkills = isInside(realAgentsSkills, realTarget);
     const isCodexPrompt =
       path.dirname(realTarget) === realCodexPrompts && realTarget.endsWith(".md");
     const workspaceClaude = path.join(realWorkspaceRoot, ".claude");
@@ -361,6 +377,7 @@ const make = Effect.gen(function* () {
       !isWorkspaceCredentials &&
       (underConfigDir ||
         underCodexSkills ||
+        underAgentsSkills ||
         isCodexPrompt ||
         isInside(path.join(realWorkspaceRoot, ".claude"), realTarget) ||
         WORKSPACE_WRITABLE_FILES.some((file) => realTarget === path.join(realWorkspaceRoot, file)));
@@ -428,6 +445,40 @@ const make = Effect.gen(function* () {
         harness: "codex",
       });
     }
+    // Shared skills: `<agents home>/skills/<name>/SKILL.md`, usually linked into the folders above.
+    // A skill already listed (the same folder reached through a link) is not listed twice.
+    const listedSkillFiles = new Set<string>();
+    for (const item of items) {
+      if (item.kind !== "skill") continue;
+      listedSkillFiles.add(
+        yield* fileSystem.realPath(item.path).pipe(Effect.orElseSucceed(() => item.path)),
+      );
+    }
+    const agentSkillDirs = yield* fileSystem
+      .readDirectory(path.join(agentsHomeDir(), "skills"))
+      .pipe(Effect.orElseSucceed((): ReadonlyArray<string> => []));
+    for (const entry of [...agentSkillDirs].sort()) {
+      if (entry.startsWith(".")) continue;
+      const skillPath = path.join(agentsHomeDir(), "skills", entry, "SKILL.md");
+      const real = yield* fileSystem
+        .realPath(skillPath)
+        .pipe(Effect.orElseSucceed(() => undefined));
+      if (real === undefined || listedSkillFiles.has(real)) continue;
+      const contents = yield* readText(skillPath);
+      if (contents === undefined) continue;
+      listedSkillFiles.add(real);
+      const frontmatter = parseFrontmatter(contents);
+      items.push({
+        kind: "skill",
+        name: frontmatter.name ?? entry,
+        ...(frontmatter.description ? { description: frontmatter.description } : {}),
+        path: skillPath,
+        scope: "user",
+        readOnly: false,
+        harness: "claude",
+      });
+    }
+
     const promptFiles = yield* fileSystem
       .readDirectory(path.join(codexDir, "prompts"))
       .pipe(Effect.orElseSucceed((): ReadonlyArray<string> => []));

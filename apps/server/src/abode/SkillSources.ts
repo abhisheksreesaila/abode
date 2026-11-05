@@ -13,6 +13,8 @@ import {
   type SkillChange,
   type SkillDecision,
   type SkillSourcesDecideInput,
+  type SkillUsageListInput,
+  type SkillUsageListResult,
   type SkillSourcesState,
   type SkillSourceStatus,
 } from "@t3tools/contracts";
@@ -24,6 +26,7 @@ import * as Layer from "effect/Layer";
 import * as Semaphore from "effect/Semaphore";
 
 import { ServerConfig } from "../config.ts";
+import * as SkillUsage from "./SkillUsage.ts";
 import {
   classifyLocal,
   diffSnapshots,
@@ -133,6 +136,8 @@ export class SkillSources extends Context.Service<
     readonly decide: (
       input: SkillSourcesDecideInput,
     ) => Effect.Effect<SkillSourcesState, SkillSourcesError>;
+    /** Built here so it is created once per server with the rest of the Kit's host state. */
+    readonly usageList: (input: SkillUsageListInput) => Effect.Effect<SkillUsageListResult>;
   }
 >()("t3/abode/SkillSources") {}
 
@@ -429,7 +434,10 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
   });
   yield* Effect.forkIn(schedule, scope);
 
+  const skillUsage = yield* SkillUsage.makeWith();
+
   return SkillSources.of({
+    usageList: skillUsage.list,
     list: snapshotState(),
     checkNow: runChecks.pipe(Effect.andThen(snapshotState())),
     decide: Effect.fn("SkillSources.decideLocked")(function* (input) {
@@ -457,4 +465,5 @@ export const handlers = (service: SkillSources["Service"]) => ({
   [WS_METHODS.skillSourcesList]: () => service.list,
   [WS_METHODS.skillSourcesCheckNow]: () => service.checkNow,
   [WS_METHODS.skillSourcesDecide]: (input: SkillSourcesDecideInput) => service.decide(input),
+  [WS_METHODS.skillUsageList]: (input: SkillUsageListInput) => service.usageList(input),
 });

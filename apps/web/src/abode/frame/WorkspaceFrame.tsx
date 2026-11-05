@@ -26,6 +26,9 @@ import { threadShellKey } from "../shell/workspaceModel";
 import { agentCards, runningCount, type AgentCard } from "./agentCards";
 import { FRAME_TABS, tabFor, useFrameStore, type FrameTab } from "./frameStore";
 import { workspaceOf } from "./frameWorkspace";
+import { KitMeter, KitPane, KitStrip, KitTabs, type KitTab } from "./KitFrame";
+import { useHostHomePath } from "./kitData";
+import { isKitProject } from "./kitMode";
 import { DesignPane } from "./DesignPane";
 import { collectDesigns, newDesignCount, type DesignMessage } from "./designModel";
 import { MilestonesPane } from "./MilestonesPane";
@@ -80,6 +83,7 @@ function LoadedFrame(props: {
   const open = useOpenSession();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [kitTab, setKitTab] = useState<KitTab>("skills");
   // Bumped when Milestones opens and when the window regains focus, so hand edits show too.
   const [planTick, setPlanTick] = useState(0);
 
@@ -165,16 +169,6 @@ function LoadedFrame(props: {
     };
   }, []);
 
-  // Marks the conversation area while a pane covers it, so frame.css can dock a draft's hero composer.
-  const paneOpen = tab !== "jam";
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- sets a data attribute on the conversation area, which upstream renders
-  useEffect(() => {
-    const area = rootRef.current?.parentElement;
-    if (!area || !paneOpen) return;
-    area.setAttribute("data-abode-pane-open", "");
-    return () => area.removeAttribute("data-abode-pane-open");
-  }, [paneOpen]);
-
   // Opening Design (and new cards arriving while it is open) marks the current cards as seen.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- records what the user has looked at in the persisted frame store
   useEffect(() => {
@@ -221,7 +215,32 @@ function LoadedFrame(props: {
       ? `${block.rows.reduce((sum, row) => sum + row.done, 0)}/${block.rows.reduce((sum, row) => sum + row.total, 0)}`
       : null;
 
-  const showJam = () => useFrameStore.getState().setTab(workspaceKey, "jam");
+  // The Kit thread (a project rooted at the home folder) swaps Jam/Milestones/Design for the Kit tabs.
+  const hostHome = useHostHomePath(root?.environmentId);
+  const kitScope =
+    root && isKitProject(root.workspaceRoot, hostHome)
+      ? {
+          environmentId: root.environmentId,
+          cwd: root.workspaceRoot,
+          projectName: root.title,
+          threadRef,
+          borrowed: false,
+        }
+      : null;
+  // Marks the conversation area while a pane covers it, so frame.css can dock a draft's hero composer.
+  const paneOpen = kitScope ? kitTab !== "jam" : tab !== "jam";
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- sets a data attribute on the conversation area, which upstream renders
+  useEffect(() => {
+    const area = rootRef.current?.parentElement;
+    if (!area || !paneOpen) return;
+    area.setAttribute("data-abode-pane-open", "");
+    return () => area.removeAttribute("data-abode-pane-open");
+  }, [paneOpen]);
+
+  const showJam = () => {
+    useFrameStore.getState().setTab(workspaceKey, "jam");
+    setKitTab("jam");
+  };
   const pickCard = (card: AgentCard) => {
     showJam();
     if (card.key === currentKey) {
@@ -268,36 +287,49 @@ function LoadedFrame(props: {
               </MenuPopup>
             </Menu>
           </div>
-          <div data-abode-tabs="" role="tablist" aria-label="Workspace views">
-            {FRAME_TABS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={tab === value}
-                data-selected={tab === value ? "" : undefined}
-                data-testid={`frame-tab-${value}`}
-                onClick={() => {
-                  if (value === "milestones" && tab !== value) setPlanTick((tick) => tick + 1);
-                  useFrameStore.getState().setTab(workspaceKey, value);
-                }}
-              >
-                {TAB_LABEL[value]}
-                {value === "milestones" && count !== null ? <small>{count}</small> : null}
-                {value === "design" && designNew > 0 ? (
-                  <small data-testid="design-new">{designNew} new</small>
-                ) : null}
-              </button>
-            ))}
-          </div>
-          {running > 0 ? (
+          {kitScope ? (
+            <KitTabs scope={kitScope} tab={kitTab} onTab={setKitTab} />
+          ) : (
+            <div data-abode-tabs="" role="tablist" aria-label="Workspace views">
+              {FRAME_TABS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === value}
+                  data-selected={tab === value ? "" : undefined}
+                  data-testid={`frame-tab-${value}`}
+                  onClick={() => {
+                    if (value === "milestones" && tab !== value) setPlanTick((tick) => tick + 1);
+                    useFrameStore.getState().setTab(workspaceKey, value);
+                  }}
+                >
+                  {TAB_LABEL[value]}
+                  {value === "milestones" && count !== null ? <small>{count}</small> : null}
+                  {value === "design" && designNew > 0 ? (
+                    <small data-testid="design-new">{designNew} new</small>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          )}
+          {kitScope ? (
+            <KitMeter scope={kitScope} where="head" />
+          ) : running > 0 ? (
             <span data-abode-frame-pill="" data-testid="frame-running">
               <i aria-hidden />
               {running} {running === 1 ? "agent" : "agents"} running
             </span>
           ) : null}
         </div>
-        {cards.length > 0 ? (
+        {kitScope ? (
+          <KitStrip
+            scope={kitScope}
+            agent={cards.find((card) => card.key === currentKey) ?? null}
+            nowMs={nowMs}
+            onTab={setKitTab}
+          />
+        ) : cards.length > 0 ? (
           <div data-abode-strip="" aria-label="Agents">
             {cards.map((card) => (
               <button
@@ -322,7 +354,11 @@ function LoadedFrame(props: {
           </div>
         ) : null}
       </div>
-      {tab === "jam" ? null : (
+      {kitScope ? (
+        kitTab === "jam" ? null : (
+          <KitPane scope={kitScope} tab={kitTab} nowMs={nowMs} />
+        )
+      ) : tab === "jam" ? null : (
         <section data-abode-frame-pane="" aria-label={TAB_LABEL[tab]} data-testid="frame-pane">
           {tab === "milestones" ? (
             <MilestonesPane

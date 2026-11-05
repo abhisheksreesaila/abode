@@ -48,6 +48,10 @@ const makeSandbox = Effect.gen(function* () {
 
   const codexDir = path.join(realRoot, "codex-home");
   yield* fileSystem.makeDirectory(codexDir, { recursive: true });
+  const agentsDir = path.join(realRoot, "agents-home");
+  yield* fileSystem.makeDirectory(agentsDir, { recursive: true });
+  const previousAgents = process.env.AGENTS_HOME;
+  process.env.AGENTS_HOME = agentsDir;
   const previous = process.env.CLAUDE_CONFIG_DIR;
   const previousCodex = process.env.CODEX_HOME;
   process.env.CLAUDE_CONFIG_DIR = configDir;
@@ -58,11 +62,13 @@ const makeSandbox = Effect.gen(function* () {
       registeredRoots.delete(workspace);
       if (previous === undefined) delete process.env.CLAUDE_CONFIG_DIR;
       else process.env.CLAUDE_CONFIG_DIR = previous;
+      if (previousAgents === undefined) delete process.env.AGENTS_HOME;
+      else process.env.AGENTS_HOME = previousAgents;
       if (previousCodex === undefined) delete process.env.CODEX_HOME;
       else process.env.CODEX_HOME = previousCodex;
     }),
   );
-  return { path, fileSystem, root: realRoot, configDir, codexDir, workspace, outside };
+  return { path, fileSystem, root: realRoot, configDir, codexDir, agentsDir, workspace, outside };
 });
 
 const put = (filePath: string, contents: string) =>
@@ -228,6 +234,59 @@ describe("Customizations", () => {
       yield* customizations.writeFile({ cwd: workspace, path: "CLAUDE.md", contents: "rel" });
       expect(yield* fileSystem.readFileString(path.join(workspace, "CLAUDE.md"))).toBe("rel");
     }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported)(
+    "lists ~/.agents/skills once, even when ~/.claude/skills links to the same folder",
+    () =>
+      Effect.gen(function* () {
+        const customizations = yield* Customizations.Customizations;
+        const { path, configDir, agentsDir, workspace } = yield* makeSandbox;
+        yield* put(
+          path.join(agentsDir, "skills", "tdd", "SKILL.md"),
+          "---\ndescription: red green\n---\n",
+        );
+        yield* put(
+          path.join(agentsDir, "skills", "mengto", "SKILL.md"),
+          "---\ndescription: only here\n---\n",
+        );
+        yield* put(path.join(agentsDir, "skills", ".hidden", "SKILL.md"), "hidden");
+        yield* mkdirp(path.join(configDir, "skills"));
+        NodeFS.symlinkSync(
+          path.join(agentsDir, "skills", "tdd"),
+          path.join(configDir, "skills", "tdd"),
+        );
+
+        const { items } = yield* customizations.list({ cwd: workspace });
+        const skills = items.filter((item) => item.kind === "skill");
+        expect(skills.map((item) => `${item.name}:${item.path}`).sort()).toEqual([
+          `mengto:${path.join(agentsDir, "skills", "mengto", "SKILL.md")}`,
+          `tdd:${path.join(configDir, "skills", "tdd", "SKILL.md")}`,
+        ]);
+      }).pipe(Effect.scoped, Effect.provide(TestLayer)),
+  );
+
+  it.effect.skipIf(!symlinksSupported)(
+    "opens ~/.agents/skills files and nothing else under ~/.agents",
+    () =>
+      Effect.gen(function* () {
+        const customizations = yield* Customizations.Customizations;
+        const { path, agentsDir, workspace } = yield* makeSandbox;
+        yield* put(path.join(agentsDir, "skills", "mengto", "SKILL.md"), "mengto");
+        yield* put(path.join(agentsDir, "auth.json"), "{}");
+        const read = (target: string) => customizations.readFile({ cwd: workspace, path: target });
+        expect((yield* read(path.join(agentsDir, "skills", "mengto", "SKILL.md"))).contents).toBe(
+          "mengto",
+        );
+        expect((yield* read("~/.agents/skills/mengto/SKILL.md")).contents).toBe("mengto");
+        // Only the skills folder is open: the rest of ~/.agents is not.
+        expect((yield* read(path.join(agentsDir, "auth.json")).pipe(Effect.flip))._tag).toBe(
+          "CustomizationsPathNotAllowedError",
+        );
+        expect((yield* read("~/.agents/auth.json").pipe(Effect.flip))._tag).toBe(
+          "CustomizationsPathNotAllowedError",
+        );
+      }).pipe(Effect.scoped, Effect.provide(TestLayer)),
   );
 
   it.effect("lists Codex skills, prompts and the workspace AGENTS.md with a codex harness", () =>

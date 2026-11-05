@@ -9,10 +9,12 @@ export const SKILL_SOURCES_RPC_SCOPES = {
   [WS_METHODS.skillSourcesList]: AuthOrchestrationReadScope,
   [WS_METHODS.skillSourcesCheckNow]: AuthOrchestrationOperateScope,
   [WS_METHODS.skillSourcesDecide]: AuthOrchestrationOperateScope,
+  [WS_METHODS.skillUsageList]: AuthOrchestrationReadScope,
 } as const;
 
 export const SKILL_SOURCES_RPC_AGGREGATES = {
   [WS_METHODS.skillSourcesList]: "workspace",
   [WS_METHODS.skillSourcesCheckNow]: "workspace",
   [WS_METHODS.skillSourcesDecide]: "workspace",
+  [WS_METHODS.skillUsageList]: "workspace",
 } as const;
