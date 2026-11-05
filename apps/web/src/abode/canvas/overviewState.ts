@@ -6,7 +6,9 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { resolveStorage } from "../../lib/storage";
 import { environmentPresentations } from "../../state/presentation";
+import { usePrimaryEnvironmentId } from "../../state/environments";
 import { useUiStateStore } from "../../uiStateStore";
+import { useSkillSourcesState } from "../frame/kitData";
 import { deriveWorkspaceThreadState } from "../shell/threadState";
 import { useWorkspaceGroups } from "../shell/useWorkspaceGroups";
 import { threadShellKey } from "../shell/workspaceModel";
@@ -107,6 +109,7 @@ export function useOverviewFeed(workspaces: ReadonlyArray<CanvasWorkspace>): {
   const done = useLiveDoneStore((state) => state.byWorkspace);
   const lastSeenAt = useLastSeenStore((state) => state.lastSeenAt);
   const doneSnapshot = useLastSeenStore((state) => state.doneSnapshot);
+  const kitSources = useSkillSourcesState(usePrimaryEnvironmentId())?.sources;
   // Fixed at mount like the meters: the overview is short-lived.
   const [now] = useState(Date.now);
   const names = new Map(workspaces.map((workspace) => [workspace.key, workspace.name]));
@@ -130,6 +133,7 @@ export function useOverviewFeed(workspaces: ReadonlyArray<CanvasWorkspace>): {
     }),
     snapshot: doneSnapshot,
     now,
+    ...(kitSources === undefined ? {} : { kitSources }),
   };
   return { items: deriveFeed(input, lastSeenAt), now };
 }

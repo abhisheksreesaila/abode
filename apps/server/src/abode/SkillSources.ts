@@ -41,6 +41,7 @@ import {
   type Snapshot,
   type SnapshotSkill,
 } from "./skillSourcesCore.ts";
+import { makeInstall, type SkillInstallRequest } from "./skillInstallerIO.ts";
 import {
   LocalSkills,
   SkillSourceFetchError,
@@ -68,20 +69,12 @@ const SKILL_SOURCES: ReadonlyArray<SkillSourceDefinition> = [
   { id: "tstack", name: "tstack", repo: "t3dotgg/tstack" },
 ];
 
-/** What "inherit" does on disk. A-062 provides the real installer; until then a decision is only recorded. */
-export interface SkillInstallRequest {
-  readonly source: SkillSourceDefinition;
-  readonly changes: ReadonlyArray<Pick<SkillChange, "kind" | "key" | "name">>;
-}
+export type { SkillInstallRequest };
 
 export class SkillInstaller extends Context.Service<
   SkillInstaller,
   { readonly install: (request: SkillInstallRequest) => Effect.Effect<void, SkillSourcesError> }
 >()("t3/abode/SkillSources/SkillInstaller") {}
-
-const SkillInstallerRecordOnly = Layer.succeed(SkillInstaller, {
-  install: Effect.fn("SkillInstaller.recordOnly")(function* () {}),
-});
 
 interface SourceRecord {
   /** What the person last accepted (or skipped); changes are `latest` minus this. */
@@ -374,10 +367,11 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
     if (kind === "inherit" && picked.length > 0) {
       yield* installer.install({
         source,
-        changes: picked.map(({ change }) => ({
+        changes: picked.map(({ change, raw }) => ({
           kind: change.kind,
           key: change.key,
           name: change.name,
+          skill: raw.skill,
         })),
       });
     }
@@ -448,6 +442,9 @@ const makeWith = Effect.fn("SkillSources.make")(function* (stateFile: string) {
 
 export const layerWith = (stateFile: string) => Layer.effect(SkillSources, makeWith(stateFile));
 
+const liveDirs = defaultLocalSkillDirs();
+const liveLocal = localSkillsFor(liveDirs);
+
 /** Live wiring: state in `<state dir>/abode/skill-sources.json`, GitHub and npm over HTTPS, the person's skill folders. */
 export const layer = Layer.unwrap(
   Effect.gen(function* () {
@@ -455,9 +452,18 @@ export const layer = Layer.unwrap(
     return layerWith(NodePath.join(config.stateDir, "abode", "skill-sources.json"));
   }),
 ).pipe(
+  Layer.provide(
+    Layer.succeed(SkillInstaller, {
+      install: makeInstall({
+        fetcher: fetcherLive,
+        local: liveLocal,
+        dirs: liveDirs,
+        defaultDir: liveDirs[0] ?? "",
+      }),
+    }),
+  ),
   Layer.provide(Layer.succeed(SkillSourceFetcher, fetcherLive)),
-  Layer.provide(Layer.succeed(LocalSkills, localSkillsFor(defaultLocalSkillDirs()))),
-  Layer.provide(SkillInstallerRecordOnly),
+  Layer.provide(Layer.succeed(LocalSkills, liveLocal)),
 );
 
 /** The `skillSources.*` handlers, spread into `ws.ts` in one line. */

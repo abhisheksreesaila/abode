@@ -57,6 +57,9 @@ interface FrameStore {
   >;
   /** A needs-you card asked for this thread's pending question to open; `at` lets it expire. */
   readonly answerRequest: { readonly key: string; readonly at: number } | null;
+  /** A feed line asked for Kit to open on Updates; the Kit frame takes it once. Not persisted. */
+  readonly kitUpdatesRequested: boolean;
+  setKitUpdatesRequested: (requested: boolean) => void;
   setTab: (workspaceKey: string, tab: FrameTab) => void;
   setMilestoneOpen: (workspaceKey: string, milestoneKey: string, open: boolean) => void;
   notePlan: (workspaceKey: string, contents: string) => void;
@@ -72,6 +75,8 @@ export const useFrameStore = create<FrameStore>()(
       milestoneOpen: {},
       planSeen: {},
       answerRequest: null,
+      kitUpdatesRequested: false,
+      setKitUpdatesRequested: (kitUpdatesRequested) => set({ kitUpdatesRequested }),
       setTab: (workspaceKey, tab) =>
         set((state) => ({ tabs: { ...state.tabs, [workspaceKey]: tab } })),
       setMilestoneOpen: (workspaceKey, milestoneKey, open) =>
