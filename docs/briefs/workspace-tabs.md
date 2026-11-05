@@ -42,6 +42,7 @@ Replaces parts of docs/briefs/one-window.md (journey map, drawer, omnibox routin
 - **Designs are auto-collected from links and files** (Abhishek). Pro: the agent needs no new habits. Con: the odd non-design link may show up.
 - **Keep the overview and rail, cut the rest** (Abhishek). Pro: far less to maintain. Con: there is no more messaging another workspace from anywhere.
 - **Milestones reads `docs/plan.md` only**, using A-044's parser. When a project has no plan, the tab says so and offers "Ask the agent to plan". (assumed)
+- **Many sessions, one tracker** (Abhishek, 2026-11-04). Jam shows one thread, switched from the header's thread picker or by clicking an agent card; Milestones and Design belong to the workspace, so all its threads share them. Pro: no tabs inside tabs. Con: two chats can't sit side by side.
 - **The tab is remembered per workspace and per device.** (assumed)
 
 ## Open questions

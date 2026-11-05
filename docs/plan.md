@@ -546,7 +546,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 - **Status:** todo
 - **Depends on:** A-056
-- **What:** above the timeline, through the A-033 mount: the "N agents running" pill and one card per running thread or subagent in this workspace (what it's doing, status: in progress / needs you / done, elapsed time), then the Jam · Milestones · Design tabs. Jam shows T3's timeline untouched. The last-used tab is remembered per workspace and per device. On a phone, the cards scroll sideways and the tabs are a full-width segmented control.
+- **What:** above the timeline, through the A-033 mount: the "N agents running" pill and one card per running thread or subagent in this workspace (what it's doing, status: in progress / needs you / done, elapsed time), then the Jam · Milestones · Design tabs. Jam shows T3's timeline untouched, for one thread at a time: the header's thread picker and a click on any agent card switch Jam to that thread, while Milestones and Design stay per workspace (one tracker for all its threads). No nested or per-thread tabs. The last-used tab is remembered per workspace and per device. On a phone, the cards scroll sideways and the tabs are a full-width segmented control.
 - **Acceptance:**
   - [ ] The agent cards come from a tested pure function over real thread and subagent shapes.
   - [ ] A needs-you card opens the pending question.
