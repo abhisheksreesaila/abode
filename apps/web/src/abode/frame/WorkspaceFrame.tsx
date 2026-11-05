@@ -1,3 +1,4 @@
+import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { useParams } from "@tanstack/react-router";
 import { ChevronDownIcon, ListIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -68,7 +69,14 @@ function Frame() {
   // A thread that is not loaded yet, or a workspace not listed: keep the way back, nothing else.
   if (group === undefined) return <BackToCanvas />;
   return (
-    <LoadedFrame group={group} threadRef={threadRef} worktreePath={shell?.worktreePath ?? null} />
+    <LoadedFrame
+      group={group}
+      threadRef={threadRef}
+      composerRef={
+        threadRef ?? (draft === null ? null : scopeThreadRef(draft.environmentId, draft.threadId))
+      }
+      worktreePath={shell?.worktreePath ?? null}
+    />
   );
 }
 
@@ -76,8 +84,10 @@ function LoadedFrame(props: {
   readonly worktreePath: string | null;
   readonly group: WorkspaceGroup;
   readonly threadRef: ReturnType<typeof resolveActiveThreadRouteRef>;
+  /** The composer to fill: the thread, or an unsent draft's own ref (drafts have no thread yet). */
+  readonly composerRef: ReturnType<typeof resolveActiveThreadRouteRef>;
 }) {
-  const { group, threadRef, worktreePath } = props;
+  const { group, threadRef, composerRef, worktreePath } = props;
   const workspaceKey = group.project.projectKey;
   const currentKey = threadRef === null ? null : `${threadRef.environmentId}:${threadRef.threadId}`;
   const tab = useFrameStore((state) => tabFor(state.tabs, workspaceKey));
@@ -231,7 +241,7 @@ function LoadedFrame(props: {
           environmentId: root.environmentId,
           cwd: root.workspaceRoot,
           projectName: root.title,
-          threadRef,
+          threadRef: composerRef,
           borrowed: false,
         }
       : null;
@@ -380,7 +390,7 @@ function LoadedFrame(props: {
               workspaceKey={workspaceKey}
               nowMs={nowMs}
               onAskToPlan={
-                threadRef === null ? undefined : () => fillComposer(threadRef, PLAN_PROMPT)
+                composerRef === null ? undefined : () => fillComposer(composerRef, PLAN_PROMPT)
               }
             />
           ) : (
@@ -389,7 +399,9 @@ function LoadedFrame(props: {
               groups={designs}
               nowMs={nowMs}
               onPreview={openDesign}
-              onSendPicks={threadRef === null ? undefined : (text) => fillComposer(threadRef, text)}
+              onSendPicks={
+                composerRef === null ? undefined : (text) => fillComposer(composerRef, text)
+              }
             />
           )}
         </section>
