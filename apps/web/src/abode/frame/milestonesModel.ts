@@ -21,9 +21,10 @@ export function ticketChip(ticket: Ticket): { readonly tone: ChipTone; readonly 
 const STATE_WORD: Record<MilestoneState, string> = {
   done: "done",
   current: "in progress",
-  todo: "next",
+  todo: "",
 };
 
+/** Empty for a milestone that is neither finished nor the one in progress. */
 export function milestoneStateWord(state: MilestoneState): string {
   return STATE_WORD[state];
 }

@@ -95,7 +95,9 @@ function MilestoneCard(props: {
       >
         <span data-abode-ms-id="">{milestoneId(index)}</span>
         <b>{milestone.name}</b>
-        <span data-abode-ms-state="">{milestoneStateWord(milestone.state)}</span>
+        {milestoneStateWord(milestone.state) === "" ? null : (
+          <span data-abode-ms-state="">{milestoneStateWord(milestone.state)}</span>
+        )}
         <span data-abode-ms-bar="" aria-hidden>
           <i style={{ width: `${(milestone.done / milestone.total) * 100}%` }} />
         </span>

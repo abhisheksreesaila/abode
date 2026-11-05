@@ -142,6 +142,16 @@ function LoadedFrame(props: {
     };
   }, []);
 
+  // Marks the conversation area while a pane covers it, so frame.css can dock a draft's hero composer.
+  const paneOpen = tab !== "jam";
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- sets a data attribute on the conversation area, which upstream renders
+  useEffect(() => {
+    const area = rootRef.current?.parentElement;
+    if (!area || !paneOpen) return;
+    area.setAttribute("data-abode-pane-open", "");
+    return () => area.removeAttribute("data-abode-pane-open");
+  }, [paneOpen]);
+
   // A needs-you card asks for a thread's question to open. It waits for the composer to render
   // it (no polling), only when the thread has one, and the request expires.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- watches upstream's composer DOM for the question panel and clears the store request

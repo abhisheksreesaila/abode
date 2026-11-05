@@ -49,11 +49,7 @@ describe("milestones", () => {
   const { milestones } = parsePlan(PLAN);
 
   it("names the state with the design's words", () => {
-    expect(milestones.map((m) => milestoneStateWord(m.state))).toEqual([
-      "done",
-      "in progress",
-      "next",
-    ]);
+    expect(milestones.map((m) => milestoneStateWord(m.state))).toEqual(["done", "in progress", ""]);
   });
 
   it("opens only the milestone in progress by default", () => {

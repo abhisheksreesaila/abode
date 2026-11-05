@@ -510,3 +510,13 @@
     grid-area: chip;
   }
 }
+
+/* A draft's hero puts the composer mid-area under a headline; with a pane open, dock it like a thread's. */
+[data-abode-pane-open] [data-chat-composer-overlay] {
+  top: auto;
+  align-items: flex-end;
+  padding-top: 6px;
+}
+[data-abode-pane-open] [data-chat-composer-stack] > .absolute.inset-x-0.bottom-full {
+  display: none;
+}
