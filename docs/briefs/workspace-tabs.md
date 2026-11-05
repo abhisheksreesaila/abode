@@ -18,7 +18,7 @@ Replaces parts of docs/briefs/one-window.md (journey map, drawer, omnibox routin
 1. **Three tabs per workspace:**
    - **Jam** is T3's real chat view for the current thread, at full width.
    - **Milestones** shows the project's `docs/plan.md` as an accordion, M1, M2, M3…, with tickets and their status inside each milestone. It refreshes as the agent edits the file.
-   - **Design** shows every design found in the workspace: Claude artifact links, Stitch links and `docs/design/*.html` from its threads. They appear as cards that preview in the browser panel, and picking one sends "I pick X" to the chat.
+   - **Design** shows every design from this thread: Claude artifact links, Stitch links and `docs/design/*.html` files it produced. They appear as cards that preview in the browser panel, and picking one sends "I pick X" to the chat.
 2. **Agent strip above the tabs:** "3 agents running", then one line per running thread or subagent in this workspace, each saying what it is doing and its status (in progress, needs you, done).
 3. **One composer on all three tabs:** T3's own large rectangular composer, bound to the current thread. (assumed)
 4. **Removed:** the journey map, keyword routing, the chat drawer, the mode pills and the omnibox commands.
@@ -42,7 +42,7 @@ Replaces parts of docs/briefs/one-window.md (journey map, drawer, omnibox routin
 - **Designs are auto-collected from links and files** (Abhishek). Pro: the agent needs no new habits. Con: the odd non-design link may show up.
 - **Keep the overview and rail, cut the rest** (Abhishek). Pro: far less to maintain. Con: there is no more messaging another workspace from anywhere.
 - **Milestones reads `docs/plan.md` only**, using A-044's parser. When a project has no plan, the tab says so and offers "Ask the agent to plan". (assumed)
-- **Many sessions, one tracker** (Abhishek, 2026-11-04). Jam shows one thread, switched from the header's thread picker or by clicking an agent card; Milestones and Design belong to the workspace, so all its threads share them. Pro: no tabs inside tabs. Con: two chats can't sit side by side.
+- **Many sessions, one tracker** (Abhishek, 2026-11-04). The rail lists workspaces, and clicking one opens its threads. Jam and Design belong to the current thread; Milestones belongs to the workspace, so every thread shares one tracker. Threads and workspaces can be archived and brought back. Pro: no tabs inside tabs, and tickets are never split across sessions. Con: two chats can't sit side by side.
 - **The tab is remembered per workspace and per device.** (assumed)
 
 ## Open questions

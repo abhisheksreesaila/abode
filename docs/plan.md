@@ -546,7 +546,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 - **Status:** todo
 - **Depends on:** A-056
-- **What:** above the timeline, through the A-033 mount: the "N agents running" pill and one card per running thread or subagent in this workspace (what it's doing, status: in progress / needs you / done, elapsed time), then the Jam · Milestones · Design tabs. Jam shows T3's timeline untouched, for one thread at a time: the header's thread picker and a click on any agent card switch Jam to that thread, while Milestones and Design stay per workspace (one tracker for all its threads). No nested or per-thread tabs. The last-used tab is remembered per workspace and per device. On a phone, the cards scroll sideways and the tabs are a full-width segmented control.
+- **What:** above the timeline, through the A-033 mount: the "N agents running" pill and one card per running thread or subagent in this workspace (what it's doing, status: in progress / needs you / done, elapsed time), then the Jam · Milestones · Design tabs. Jam shows T3's timeline untouched, for one thread at a time: the header's thread picker and a click on any agent card switch Jam to that thread, Milestones belongs to the workspace (one tracker shared by all its threads); Jam and Design belong to the current thread. No nested tabs. The rail lists workspaces; clicking one opens its threads beneath it. Each thread can be archived (upstream's archive) and each workspace too (abode's hide), with an Archived list at the bottom of the rail to bring either back. The last-used tab is remembered per workspace and per device. On a phone, the cards scroll sideways and the tabs are a full-width segmented control.
 - **Acceptance:**
   - [ ] The agent cards come from a tested pure function over real thread and subagent shapes.
   - [ ] A needs-you card opens the pending question.
@@ -565,7 +565,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 - **Status:** todo
 - **Depends on:** A-057
-- **What:** cards for every claude.ai artifact link, Stitch link and `docs/design/*.html` found in this workspace's threads, grouped by the message that asked for them, newest first, each marked Stitch / Claude / file and desktop / phone where known. Clicking a card previews it in T3's browser panel (a new tab where that panel isn't available). Pick boxes; "Send picks" puts "I pick: …" into the composer.
+- **What:** cards for every claude.ai artifact link, Stitch link and `docs/design/*.html` found in the current thread, grouped by the message that asked for them, newest first, each marked Stitch / Claude / file and desktop / phone where known. Clicking a card previews it in T3's browser panel (a new tab where that panel isn't available). Pick boxes; "Send picks" puts "I pick: …" into the composer.
 - **Acceptance:**
   - [ ] Link and file collection is a tested pure function over real message text.
   - [ ] Picks reach the composer without sending on their own.
