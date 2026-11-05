@@ -232,7 +232,7 @@
   --abode-review: #a78bfa;
   position: absolute;
   inset: var(--abode-frame-h, 0px) 0 0 0;
-  z-index: 10;
+  z-index: 15;
   overflow-y: auto;
   /* Room to scroll the last rows clear of the composer, which floats over the pane's bottom. */
   padding: 24px 16px 200px;
@@ -709,4 +709,183 @@
   [data-chat-composer-stack]
   > .absolute.inset-x-0.bottom-full {
   display: none;
+}
+
+/* Design (A-059): groups of preview cards in a responsive grid; phone gets one column of rows. */
+[data-abode-ds] {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 980px;
+  margin-inline: auto;
+}
+[data-abode-ds-group] h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 10px;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+[data-abode-ds-group] h3 small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 400;
+}
+[data-abode-ds-group] ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+[data-abode-ds-card] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+[data-abode-ds-tile] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 110px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--muted-foreground) 10%, transparent);
+  color: var(--muted-foreground);
+  font:
+    500 12px "Geist Mono",
+    ui-monospace,
+    monospace;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+[data-abode-ds-body] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px 12px;
+}
+[data-abode-ds-body] b {
+  overflow: hidden;
+  color: var(--foreground);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-abode-ds-path] {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-abode-ds-meta] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+[data-abode-ds-chip] {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted-foreground) 14%, transparent);
+  color: var(--muted-foreground);
+}
+[data-abode-ds-chip][data-source="Claude"] {
+  background: color-mix(in srgb, var(--abode-warn) 16%, transparent);
+  color: var(--abode-warn);
+}
+[data-abode-ds-chip][data-source="Stitch"] {
+  background: color-mix(in srgb, var(--abode-info) 16%, transparent);
+  color: var(--abode-info);
+}
+[data-abode-ds-actions] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+[data-abode-ds-actions] label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  color: var(--foreground);
+}
+[data-abode-ds-actions] button,
+[data-abode-ds-bar] button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+}
+[data-abode-ds-empty] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 32px;
+  text-align: center;
+}
+[data-abode-ds-empty] small {
+  font-size: 12px;
+}
+/* The picks bar pins to the pane's top: the composer floats over the bottom, and cards scroll under the bar. */
+[data-abode-ds-bar] {
+  position: sticky;
+  top: -24px;
+  margin-bottom: 12px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+}
+[data-abode-ds-bar] button {
+  background: var(--foreground);
+  color: var(--background);
+}
+[data-abode-ds-bar] button:disabled {
+  opacity: 0.5;
+}
+
+@media (max-width: 640px) {
+  [data-abode-ds-bar] {
+    bottom: 180px;
+  }
+  [data-abode-ds-group] ul {
+    grid-template-columns: 1fr;
+  }
+  [data-abode-ds-card] {
+    flex-direction: row;
+    min-height: 96px;
+  }
+  [data-abode-ds-tile] {
+    flex: none;
+    width: 96px;
+    height: auto;
+    font-size: 10px;
+  }
+  [data-abode-ds-actions] label,
+  [data-abode-ds-actions] button,
+  [data-abode-ds-bar] button {
+    min-height: 44px;
+  }
+}
+
+[data-abode-ds-note] {
+  color: var(--abode-warn);
+  font-size: 12px;
 }

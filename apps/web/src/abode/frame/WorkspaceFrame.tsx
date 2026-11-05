@@ -29,7 +29,10 @@ import { workspaceOf } from "./frameWorkspace";
 import { KitMeter, KitPane, KitStrip, KitTabs, type KitTab } from "./KitFrame";
 import { useHostHomePath } from "./kitData";
 import { isKitProject } from "./kitMode";
+import { DesignPane } from "./DesignPane";
+import { collectDesigns, countDesigns, newDesignCount, type DesignMessage } from "./designModel";
 import { MilestonesPane } from "./MilestonesPane";
+import { useOpenDesign } from "./useOpenDesign";
 import "./frame.css";
 
 const TAB_LABEL: Record<FrameTab, string> = {
@@ -64,14 +67,17 @@ function Frame() {
   const group = workspaceOf(groups, shell ?? draft);
   // A thread that is not loaded yet, or a workspace not listed: keep the way back, nothing else.
   if (group === undefined) return <BackToCanvas />;
-  return <LoadedFrame group={group} threadRef={threadRef} />;
+  return (
+    <LoadedFrame group={group} threadRef={threadRef} worktreePath={shell?.worktreePath ?? null} />
+  );
 }
 
 function LoadedFrame(props: {
+  readonly worktreePath: string | null;
   readonly group: WorkspaceGroup;
   readonly threadRef: ReturnType<typeof resolveActiveThreadRouteRef>;
 }) {
-  const { group, threadRef } = props;
+  const { group, threadRef, worktreePath } = props;
   const workspaceKey = group.project.projectKey;
   const currentKey = threadRef === null ? null : `${threadRef.environmentId}:${threadRef.threadId}`;
   const tab = useFrameStore((state) => tabFor(state.tabs, workspaceKey));
@@ -104,6 +110,30 @@ function LoadedFrame(props: {
     nowMs,
   });
   const running = runningCount(cards);
+  // The thread's own messages, already in the projection the chat loaded: no extra subscription.
+  // The badge only counts (each message is scanned once); the full collection runs while Design is open.
+  const messageItems = (projection?.visibleTurnItems ?? []).flatMap((row) =>
+    row.item.type === "user_message" || row.item.type === "assistant_message" ? [row.item] : [],
+  );
+  const designCount = countDesigns(messageItems);
+  const designs =
+    tab === "design"
+      ? collectDesigns(
+          messageItems.map((item): DesignMessage => ({
+            role: item.type === "user_message" ? "user" : "assistant",
+            text: item.text,
+            at: String(item.startedAt ?? item.updatedAt),
+          })),
+        )
+      : [];
+  const designSeen = useFrameStore((state) =>
+    currentKey === null ? undefined : state.designSeen[currentKey],
+  );
+  const designNew = tab === "design" ? 0 : newDesignCount(designCount, designSeen);
+  const openDesign = useOpenDesign(
+    threadRef,
+    worktreePath ?? group.project.memberProjects[0]?.workspaceRoot,
+  );
   const anyRunning = running > 0 || tab === "milestones";
   const pendingKeys = new Set(
     [...group.threads, ...[...group.runningSubagentsByParentKey.values()].flat()]
@@ -145,6 +175,14 @@ function LoadedFrame(props: {
       area.style.removeProperty("--abode-frame-h");
     };
   }, []);
+
+  // Opening Design (and new cards arriving while it is open) marks the current cards as seen.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- records what the user has looked at in the persisted frame store
+  useEffect(() => {
+    if (tab === "design" && currentKey !== null) {
+      useFrameStore.getState().noteDesignSeen(currentKey, designCount);
+    }
+  }, [tab, currentKey, designCount]);
 
   // A needs-you card asks for a thread's question to open. It waits for the composer to render
   // it (no polling), only when the thread has one, and the request expires.
@@ -275,6 +313,9 @@ function LoadedFrame(props: {
                 >
                   {TAB_LABEL[value]}
                   {value === "milestones" && count !== null ? <small>{count}</small> : null}
+                  {value === "design" && designNew > 0 ? (
+                    <small data-testid="design-new">{designNew} new</small>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -336,7 +377,13 @@ function LoadedFrame(props: {
               }
             />
           ) : (
-            <p>Design: coming in A-059</p>
+            <DesignPane
+              threadKey={currentKey}
+              groups={designs}
+              nowMs={nowMs}
+              onPreview={openDesign}
+              onSendPicks={threadRef === null ? undefined : (text) => fillComposer(threadRef, text)}
+            />
           )}
         </section>
       )}
