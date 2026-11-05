@@ -279,3 +279,181 @@
     grid-auto-columns: 220px;
   }
 }
+
+/* Kit mode (A-060): the strip holds two cards, the tab row scrolls, the pane lists the kit. */
+[data-abode-strip][data-kit] {
+  grid-auto-columns: minmax(220px, 1fr);
+}
+[data-abode-card][data-status="idle"] [data-abode-card-status] {
+  color: var(--muted-foreground);
+}
+[data-abode-tabs][data-kit] {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+[data-abode-tabs][data-kit] > button {
+  flex: none;
+}
+[data-abode-frame-pane][data-kit] {
+  display: block;
+  overflow-y: auto;
+  padding: 16px;
+  color: var(--foreground);
+}
+[data-abode-kit-body] {
+  --k-05: color-mix(in srgb, var(--foreground) 5%, transparent);
+  --k-06: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --k-mono: "Geist Mono", ui-monospace, monospace;
+  --cv-ink: var(--foreground);
+  --cv-ink-2: var(--muted-foreground);
+  --cv-s1: var(--card);
+  --cv-shadow-1: none;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-abode-kit-body] [data-cvk-wide] {
+  overflow: visible;
+}
+[data-abode-kit-body] [data-cvk-card] {
+  border: 1px solid var(--border);
+}
+[data-abode-kit-note] {
+  padding: 18px 6px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+/* Context per session: skills and MCP stacked in one bar, the total in mono */
+[data-abode-meter] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+[data-abode-meter] > b {
+  font:
+    500 12px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--foreground);
+}
+[data-abode-meter-bar] {
+  display: flex;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border);
+}
+[data-abode-meter-bar] > i {
+  display: block;
+  height: 100%;
+}
+[data-abode-meter-bar] > i[data-part="skills"] {
+  background: #ffd166;
+}
+[data-abode-meter-bar] > i[data-part="mcp"] {
+  background: #4dd4c6;
+}
+[data-abode-meter][data-where="pane"] {
+  display: none;
+  justify-self: start;
+}
+
+/* Skills: name and what it does, where it came from, what it costs, when it was last used */
+[data-abode-skills] {
+  display: flex;
+  flex-direction: column;
+}
+[data-abode-skill] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 76px 84px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 6px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-skill]:hover {
+  background: var(--accent);
+}
+[data-abode-skill-name] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+[data-abode-skill-name] > b {
+  font:
+    600 13px "Geist Mono",
+    ui-monospace,
+    monospace;
+}
+[data-abode-skill-name] > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+[data-abode-skill-cost],
+[data-abode-skill-used] {
+  font:
+    500 11px "Geist Mono",
+    ui-monospace,
+    monospace;
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  [data-abode-tabs][data-kit] {
+    margin: 0;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  [data-abode-tabs][data-kit] > button {
+    flex: none;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+  [data-abode-tabs][data-kit] > button[data-selected] {
+    background: var(--foreground);
+  }
+  [data-abode-meter][data-where="head"] {
+    display: none;
+  }
+  [data-abode-meter][data-where="pane"] {
+    display: flex;
+  }
+  [data-abode-strip][data-kit] {
+    grid-auto-columns: 220px;
+  }
+  [data-abode-skill] {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+  }
+  [data-abode-skill-name] {
+    grid-column: 1 / -1;
+  }
+  [data-abode-skill-cost],
+  [data-abode-skill-used] {
+    text-align: left;
+  }
+}

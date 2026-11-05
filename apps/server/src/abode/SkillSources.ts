@@ -24,6 +24,7 @@ import * as Layer from "effect/Layer";
 import * as Semaphore from "effect/Semaphore";
 
 import { ServerConfig } from "../config.ts";
+import * as SkillUsage from "./SkillUsage.ts";
 import {
   classifyLocal,
   diffSnapshots,
@@ -457,4 +458,5 @@ export const handlers = (service: SkillSources["Service"]) => ({
   [WS_METHODS.skillSourcesList]: () => service.list,
   [WS_METHODS.skillSourcesCheckNow]: () => service.checkNow,
   [WS_METHODS.skillSourcesDecide]: (input: SkillSourcesDecideInput) => service.decide(input),
+  ...SkillUsage.handlers(),
 });

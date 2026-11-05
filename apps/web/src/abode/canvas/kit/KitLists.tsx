@@ -123,23 +123,3 @@ export function HooksTab(props: { readonly rows: ReadonlyArray<KitHook> | null }
     </div>
   );
 }
-
-export function WeeklyMergeTab() {
-  return (
-    <div data-cvk-wide="">
-      <div data-cvk-card="">
-        <div>
-          <h2>Weekly merge · Friday</h2>
-          <p>
-            T3 Code is the engine and the skill packs keep moving. Once a week, we take what's new
-            and keep our own UI.
-          </p>
-        </div>
-        <div data-cvk-empty="">
-          Nothing to merge yet. The Friday list of T3 Code and skill-pack updates isn't connected to
-          this screen.
-        </div>
-      </div>
-    </div>
-  );
-}

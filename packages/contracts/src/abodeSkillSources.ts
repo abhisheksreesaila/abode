@@ -120,3 +120,36 @@ export const WsSkillSourcesDecideRpc = Rpc.make("skillSources.decide", {
   success: SkillSourcesState,
   error: Schema.Union([SkillSourcesError, EnvironmentAuthorizationError]),
 });
+
+/**
+ * When each skill was last used, read from the providers' own session logs on the host
+ * (`~/.claude/projects/**` Skill tool calls). `scan: false` is the cheap call: it only returns
+ * `homePath`, which is how the client finds the Kit project (a project rooted at the home folder).
+ */
+export const SkillUsageListInput = Schema.Struct({
+  scan: Schema.optional(Schema.Boolean),
+});
+export type SkillUsageListInput = typeof SkillUsageListInput.Type;
+
+export const SkillUsageEntry = Schema.Struct({
+  /** The skill's name, without a plugin prefix. */
+  name: TrimmedNonEmptyString,
+  /** ISO time of the most recent use found in any log. */
+  lastUsedAt: Schema.String,
+  uses: Schema.Number,
+});
+export type SkillUsageEntry = typeof SkillUsageEntry.Type;
+
+export const SkillUsageListResult = Schema.Struct({
+  homePath: TrimmedNonEmptyString,
+  /** False when the call did not read the logs. Absent entries then mean "not looked up". */
+  scanned: Schema.Boolean,
+  skills: Schema.Array(SkillUsageEntry),
+});
+export type SkillUsageListResult = typeof SkillUsageListResult.Type;
+
+export const WsSkillUsageListRpc = Rpc.make("skillUsage.list", {
+  payload: SkillUsageListInput,
+  success: SkillUsageListResult,
+  error: EnvironmentAuthorizationError,
+});

@@ -719,26 +719,8 @@ main[data-cv-root][data-rail="open"] {
   align-self: flex-start;
 }
 
-/* The Kit takes the body row like the overview; g3zoom once (350ms), a fade for reduced motion. */
-[data-cv-root][data-kit] [data-cv-body] {
-  display: none;
-}
-[data-cv-kit] {
-  min-height: 0;
-  overflow: auto;
-  padding: 4px 22px 10px;
-  animation: cv-ov-zoom 350ms var(--cv-spring);
-}
-[data-cv-kit-note] {
-  margin: 12px 4px;
-  font-size: 13px;
-  color: var(--cv-ink-2);
-}
 @media (prefers-reduced-motion: reduce) {
   [data-cv-body] {
     transition: none;
-  }
-  [data-cv-kit] {
-    animation-name: cv-ov-fade;
   }
 }

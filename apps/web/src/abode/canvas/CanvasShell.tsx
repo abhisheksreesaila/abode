@@ -21,8 +21,7 @@ import { AddMachineGuide } from "./AddMachineGuide";
 import { useAddMachineStore } from "./addMachineStore";
 import { useFreshMoment } from "./useFreshMoment";
 import { useOpenSession } from "./useOpenSession";
-import { KitView } from "./kit/KitView";
-import { useKitStore } from "./kit/kitStore";
+import { useOpenKit } from "../frame/useOpenKit";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
@@ -91,20 +90,19 @@ export function CanvasShell() {
     workspaces.map((workspace) => workspace.key),
     setSelectedKey,
   );
-  const kitOpen = useKitStore((state) => state.open);
+  const openKit = useOpenKit();
   const closeOverview = () => {
     if (overview) useLastSeenStore.getState().markSeen();
     setOverview(false);
   };
-  // The overview and the Kit each take the body row, so only one is open at a time.
   const toggleOverview = () => {
     if (overview) return closeOverview();
-    useKitStore.getState().setOpen(false);
     setOverview(true);
   };
+  // The Kit is a thread in the home-folder project, so it leaves the control room.
   const toggleKit = () => {
     closeOverview();
-    useKitStore.getState().setOpen(!kitOpen);
+    void openKit();
   };
   useOverviewKeys(overview, toggleOverview, closeOverview);
   const openSession = useOpenSession();
@@ -113,7 +111,6 @@ export function CanvasShell() {
     <SidebarInset
       data-cv-root=""
       data-overview={overview ? "" : undefined}
-      data-kit={kitOpen ? "" : undefined}
       data-rail={railOpen && !phone ? "open" : undefined}
       data-focus={freshWorkspace === null ? undefined : ""}
       className="h-dvh min-h-0 overflow-hidden overscroll-y-none"
@@ -163,13 +160,7 @@ export function CanvasShell() {
         >
           ⊞
         </button>
-        <button
-          type="button"
-          data-cv-xbtn=""
-          aria-label="Kit"
-          aria-pressed={kitOpen}
-          onClick={toggleKit}
-        >
+        <button type="button" data-cv-xbtn="" aria-label="Kit" onClick={toggleKit}>
           ⚙
         </button>
       </header>
@@ -274,11 +265,6 @@ export function CanvasShell() {
           </main>
         )}
       </div>
-      {kitOpen ? (
-        <section data-cv-kit="" aria-label="Kit">
-          {phone ? <p data-cv-kit-note="">The Kit is desktop only.</p> : <KitView />}
-        </section>
-      ) : null}
       {overview ? (
         <OverviewView
           workspaces={workspaces}
