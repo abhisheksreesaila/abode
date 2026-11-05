@@ -1,39 +1,32 @@
+import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { useState } from "react";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
+import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
-import { useDrawerStore } from "./drawerStore";
-import { composeBlocks, composeSessions, type Block } from "./composeBlocks";
-import { JourneyMap } from "./JourneyMap";
-import { ModeBlock } from "./ModeBlocks";
-import { ModeButton } from "./ModeButton";
 import { planBlock, type PlanBlock } from "./planBlock";
 import type { Milestone, Ticket } from "./plan/parsePlan";
-import { modeOf, useSessionModeStore } from "./sessionModeStore";
-import type { SessionMode } from "./sessionMode";
 import type { SessionPill } from "./sessionPills";
 import { useFreshMoment } from "./useFreshMoment";
+import { useOpenSession } from "./useOpenSession";
 import { usePlanFile } from "./usePlanFile";
 import type { CanvasWorkspace } from "./useCanvasWorkspaces";
 
 function Pill(props: {
   readonly pill: SessionPill;
-  readonly mode: SessionMode;
   /** Just created: the focus moment's amber ring (spec 5.11). */
   readonly fresh?: boolean;
   readonly onOpen: () => void;
 }) {
-  const { pill, mode, onOpen } = props;
+  const { pill, onOpen } = props;
   return (
     <div
       data-cv-sc=""
-      data-mode={mode}
       data-cv-new={props.fresh ? "" : undefined}
       role="group"
       aria-label={pill.title}
     >
-      <ModeButton pill={pill} mode={mode} />
       <button type="button" data-cv-open="" onClick={onOpen}>
         <b>{pill.title}</b>
         <span data-cv-mt="" aria-hidden>
@@ -134,7 +127,7 @@ function PlanBody(props: { readonly block: PlanBlock }) {
   );
 }
 
-/** The selected workspace: its name and menu, then one pill per live session, "N done" and "+". */
+/** The selected workspace: its name and menu, one pill per live session, "N done" and "+", then the plan. */
 export function WorkspaceView(props: {
   readonly workspace: CanvasWorkspace;
   /** Phone only: back to the workspace list. */
@@ -146,43 +139,19 @@ export function WorkspaceView(props: {
   const root = workspace.newSessionTarget;
   const planFile = usePlanFile(root?.environmentId, root?.workspaceRoot, workspace.turnSignal);
   const plan: PlanBlock = planFile.pending ? { kind: "loading" } : planBlock(planFile);
-  const modes = useSessionModeStore((state) => state.modes);
-  const sessions = composeSessions(pills, modes);
-  const rows = composeBlocks(sessions);
   const freshSession = useFreshMoment(
     workspace.key,
     pills.map((pill) => pill.key),
   );
-  // The draft drawer is open for this workspace, or a session was just created: the focus moment.
-  const drafting = useDrawerStore((state) => state.draftWorkspaceKey) === workspace.key;
-  const fresh = drafting || freshSession !== null;
-
-  const renderBlock = (block: Block) => {
-    if (block.block === "plan") {
-      return (
-        <section key="plan" data-cv-plan="" aria-label="Plan">
-          <PlanBody block={plan} />
-        </section>
-      );
-    }
-    if (block.block === "side") {
-      return (
-        <div key="side" data-cv-side="">
-          {block.items.map((item) => renderBlock(item))}
-        </div>
-      );
-    }
-    const key = "sessionKey" in block ? `${block.block}:${block.sessionKey}` : block.block;
-    return <ModeBlock key={key} block={block} pills={pills} sessions={sessions} onOpen={open} />;
+  const open = useOpenSession();
+  const handleNewThread = useNewThreadHandler();
+  // A new session is T3's own draft in the workspace's first project.
+  const addSession = () => {
+    if (root) void handleNewThread(scopeProjectRef(root.environmentId, root.id));
   };
 
-  // A session opens in the chat drawer; the full thread route is reached from the drawer only.
-  const open = (pill: SessionPill) => useDrawerStore.getState().open(pill.key);
-
-  const addSession = () => useDrawerStore.getState().openDraft(workspace.key);
-
   return (
-    <div data-cv-ws="" data-fresh={fresh ? "" : undefined}>
+    <div data-cv-ws="" data-fresh={freshSession !== null ? "" : undefined}>
       <div data-cv-head="">
         {onBack ? (
           <button type="button" data-cv-back="" onClick={onBack}>
@@ -208,20 +177,12 @@ export function WorkspaceView(props: {
           <Pill
             key={pill.key}
             pill={pill}
-            mode={modeOf(modes, pill.key)}
             fresh={pill.key === freshSession}
             onOpen={() => open(pill)}
           />
         ))}
         {showDone
-          ? done.map((pill) => (
-              <Pill
-                key={pill.key}
-                pill={pill}
-                mode={modeOf(modes, pill.key)}
-                onOpen={() => open(pill)}
-              />
-            ))
+          ? done.map((pill) => <Pill key={pill.key} pill={pill} onOpen={() => open(pill)} />)
           : null}
         {doneCount > 0 ? (
           <button
@@ -244,16 +205,9 @@ export function WorkspaceView(props: {
           +
         </button>
       </div>
-      {plan.kind === "ready" ? <JourneyMap plan={plan} sessions={sessions} /> : null}
-      {rows.map((row, index) => (
-        <div
-          // oxlint-disable-next-line react/no-array-index-key -- rows are recomposed from the modes; position is their identity
-          key={index}
-          data-cv-row={row.some((block) => block.block === "plan") ? "plan" : ""}
-        >
-          {row.map((block) => renderBlock(block))}
-        </div>
-      ))}
+      <section data-cv-plan="" aria-label="Plan">
+        <PlanBody block={plan} />
+      </section>
     </div>
   );
 }

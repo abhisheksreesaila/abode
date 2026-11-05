@@ -10,23 +10,13 @@ import { useWorkspaceGroups } from "../shell/useWorkspaceGroups";
 import { threadShellKey } from "../shell/workspaceModel";
 import { shownWorkspaces } from "../shell/workspaceRemoved";
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
-import {
-  groupRailItems,
-  withJam,
-  workspaceGroup,
-  workspaceMode,
-  type RailGroup,
-} from "./railGroups";
-import { modeOf, useSessionModeStore } from "./sessionModeStore";
-import type { SessionMode } from "./sessionMode";
+import { groupRailItems, workspaceGroup, type RailGroup } from "./railGroups";
 import { sessionPills, type SessionPills } from "./sessionPills";
 
 export interface CanvasWorkspace {
   readonly key: string;
   readonly name: string;
   readonly group: RailGroup;
-  /** The most hands-on mode among the live sessions (the rail badge). */
-  readonly mode: SessionMode;
   readonly sessions: SessionPills;
   /** Where "+" starts a session: the first member project, like the sidebar's "+". */
   readonly newSessionTarget: SidebarProjectGroupMember | undefined;
@@ -47,7 +37,6 @@ export function useCanvasWorkspaces(): {
   const groups = useWorkspaceGroups();
   const visits = useUiStateStore((state) => state.threadLastVisitedAtById);
   const removedKeys = useRemovedWorkspacesStore((state) => state.removedKeys);
-  const modes = useSessionModeStore((state) => state.modes);
   const providers = useAtomValue(primaryServerProvidersAtom);
   const driverByInstance = new Map(
     deriveProviderInstanceEntries(providers).map((entry) => [entry.instanceId, entry.driverKind]),
@@ -64,19 +53,14 @@ export function useCanvasWorkspaces(): {
           visitedAt: (thread) => visits[threadShellKey(thread)],
           driverOf: (thread) => driverByInstance.get(thread.modelSelection.instanceId),
         });
-        const liveModes = sessions.pills.map((pill) => modeOf(modes, pill.key));
         return {
           key: group.project.projectKey,
           name: group.name,
-          group: withJam(
-            workspaceGroup(
-              group.threads.map((thread) =>
-                deriveWorkspaceThreadState(thread, visits[threadShellKey(thread)]),
-              ),
+          group: workspaceGroup(
+            group.threads.map((thread) =>
+              deriveWorkspaceThreadState(thread, visits[threadShellKey(thread)]),
             ),
-            liveModes,
           ),
-          mode: workspaceMode(liveModes),
           sessions,
           newSessionTarget: group.project.memberProjects[0],
           turnSignal: group.threads.map((thread) => thread.latestRun?.completedAt ?? "").join("|"),

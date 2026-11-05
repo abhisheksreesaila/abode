@@ -1,11 +1,10 @@
 import type { WorkspaceThreadState } from "../shell/workspaceList";
-import { DEFAULT_MODE, type SessionMode } from "./sessionMode";
 
-export type RailGroup = "need" | "jam" | "move" | "quiet";
+export type RailGroup = "need" | "move" | "quiet";
 
-const GROUP_ORDER: ReadonlyArray<RailGroup> = ["need", "jam", "move", "quiet"];
+const GROUP_ORDER: ReadonlyArray<RailGroup> = ["need", "move", "quiet"];
 
-/** Pulls on the user (a question, an approval, a blocked run), else running, else quiet. Jam needs session modes (later). */
+/** Pulls on the user (a question, an approval, a blocked run), else running, else quiet. */
 export function workspaceGroup(threads: ReadonlyArray<WorkspaceThreadState>): RailGroup {
   // A failed or usage-limited run counts as blocked (spec 4: need = blocked, waiting, irreversible).
   if (threads.some((thread) => thread.attention === "needs-you" || thread.failed)) return "need";
@@ -22,21 +21,9 @@ export function workspaceInitials(name: string): string {
   return letters.charAt(0).toUpperCase() + letters.slice(1).toLowerCase();
 }
 
-/** Rail order: need, jam, move, quiet; the given order holds inside a group. */
+/** Rail order: need, move, quiet; the given order holds inside a group. */
 export function groupRailItems<T extends { readonly group: RailGroup }>(
   items: ReadonlyArray<T>,
 ): T[] {
   return GROUP_ORDER.flatMap((group) => items.filter((item) => item.group === group));
-}
-
-/** A session in Jam moves its workspace into the jam group; needing the user still comes first. */
-export function withJam(group: RailGroup, liveModes: ReadonlyArray<SessionMode>): RailGroup {
-  return group !== "need" && liveModes.includes("jam") ? "jam" : group;
-}
-
-const MODE_LEAD: ReadonlyArray<SessionMode> = ["jam", "grill", "tell", "auto"];
-
-/** The mode shown on a workspace's rail badge: the most hands-on mode among its live sessions. */
-export function workspaceMode(liveModes: ReadonlyArray<SessionMode>): SessionMode {
-  return MODE_LEAD.find((mode) => liveModes.includes(mode)) ?? DEFAULT_MODE;
 }

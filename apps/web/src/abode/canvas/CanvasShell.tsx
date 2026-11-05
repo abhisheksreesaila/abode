@@ -14,32 +14,23 @@ import { SidebarInset, useSidebar } from "~/components/ui/sidebar";
 
 import { useRemovedWorkspacesStore } from "../shell/workspaceRemovedStore";
 import { useCanvasWorkspaces, type CanvasWorkspace } from "./useCanvasWorkspaces";
-import { composeSessions, statusSentence } from "./composeBlocks";
 import { currentMilestoneName, planBlock } from "./planBlock";
-import { MODES } from "./sessionMode";
 import { usePlanFile } from "./usePlanFile";
 import { workspaceInitials, type RailGroup } from "./railGroups";
-import { OmniboxBar } from "./omnibox/OmniboxBar";
-import { buildRouteContext, findSession } from "./omnibox/omniboxLogic";
-import { routeMessage } from "./omnibox/routeMessage";
-import { modeOf, useSessionModeStore } from "./sessionModeStore";
 import { AddMachineGuide } from "./AddMachineGuide";
 import { useAddMachineStore } from "./addMachineStore";
-import { useDrawerStore } from "./drawerStore";
 import { useFreshMoment } from "./useFreshMoment";
+import { useOpenSession } from "./useOpenSession";
 import { KitView } from "./kit/KitView";
 import { useKitStore } from "./kit/kitStore";
-import { ModeIcon } from "./ModeVisuals";
 import { OverviewView } from "./OverviewView";
 import { useLastSeenStore, useOverviewKeys } from "./overviewState";
 import { WorkspaceView } from "./WorkspaceView";
 import "./canvas.css";
-import "./modes.css";
 import "./phone.css";
 
 const GROUP_LABEL: Record<RailGroup, string> = {
   need: "needs you",
-  jam: "jam",
   move: "moving",
   quiet: "quiet",
 };
@@ -51,6 +42,11 @@ const subscribePhone = (notify: () => void) => {
   return () => query.removeEventListener("change", notify);
 };
 const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
+
+function sessionCount(workspace: CanvasWorkspace): string {
+  const live = workspace.sessions.pills.length;
+  return live === 0 ? "No live sessions" : `${live} live ${live === 1 ? "session" : "sessions"}`;
+}
 
 /** One phone list row (spec 6): initials, name, status word, current milestone. */
 function PhoneRow(props: { readonly workspace: CanvasWorkspace; readonly onOpen: () => void }) {
@@ -71,7 +67,7 @@ function PhoneRow(props: { readonly workspace: CanvasWorkspace; readonly onOpen:
   );
 }
 
-/** One Window (flag on): top bar, workspace rail, workspace view and omnibox. */
+/** One Window (flag on): top bar, workspace rail and workspace view. */
 export function CanvasShell() {
   const router = useRouter();
   const { workspaces, hidden } = useCanvasWorkspaces();
@@ -111,21 +107,7 @@ export function CanvasShell() {
     useKitStore.getState().setOpen(!kitOpen);
   };
   useOverviewKeys(overview, toggleOverview, closeOverview);
-  const [pinned, setPinned] = useState<string | undefined>(undefined);
-  const modes = useSessionModeStore((state) => state.modes);
-  // The session a message would reach with nothing typed: pinned, else routed (spec 5.5).
-  const target = routeMessage(
-    "",
-    buildRouteContext({
-      workspaces,
-      view: overview ? "overview" : "workspace",
-      selectedKey: selected?.key ?? "",
-      pinned: pinned !== undefined && findSession(workspaces, pinned) ? pinned : undefined,
-      modeOf: (key) => modeOf(modes, key),
-    }),
-  ).target;
-  const targetMode =
-    "all" in target || target.sessionId === null ? null : modeOf(modes, target.sessionId);
+  const openSession = useOpenSession();
 
   return (
     <SidebarInset
@@ -210,24 +192,15 @@ export function CanvasShell() {
                   data-fresh={workspace.key === freshWorkspace ? "" : undefined}
                   aria-current={workspace.key === selected?.key ? "true" : undefined}
                   aria-label={`${workspace.name}, ${GROUP_LABEL[workspace.group]}`}
-                  onClick={() => {
-                    setSelectedKey(workspace.key);
-                    useDrawerStore.getState().close();
-                  }}
+                  onClick={() => setSelectedKey(workspace.key)}
                 >
                   <span data-cv-tile="">
                     <span data-cv-ini="">{workspaceInitials(workspace.name)}</span>
                     {workspace.group === "need" ? <i data-cv-dot="" aria-hidden /> : null}
-                    <em data-cv-badge="" data-mode={workspace.mode} aria-hidden>
-                      <ModeIcon mode={workspace.mode} />
-                    </em>
                   </span>
                   <span data-cv-rtext="">
                     <b>{workspace.name}</b>
-                    <small>
-                      {MODES[workspace.mode].label} ·{" "}
-                      {statusSentence(composeSessions(workspace.sessions.pills, modes))}
-                    </small>
+                    <small>{sessionCount(workspace)}</small>
                   </span>
                 </button>
               </div>
@@ -289,7 +262,7 @@ export function CanvasShell() {
             ))}
           </nav>
         ) : (
-          <main data-cv-main="" data-mode={targetMode ?? undefined}>
+          <main data-cv-main="">
             {selected ? (
               <WorkspaceView
                 workspace={selected}
@@ -312,21 +285,14 @@ export function CanvasShell() {
           onSelect={(key, sessionKey) => {
             setSelectedKey(key);
             closeOverview();
-            if (sessionKey !== undefined) useDrawerStore.getState().open(sessionKey);
+            const pill = workspaces
+              .flatMap((w) => [...w.sessions.pills, ...w.sessions.done])
+              .find((p) => p.key === sessionKey);
+            if (pill) openSession(pill);
           }}
         />
       ) : null}
       <AddMachineGuide />
-      <div data-cv-dock="">
-        <OmniboxBar
-          workspaces={workspaces}
-          selectedKey={selected?.key ?? ""}
-          overview={overview}
-          pinned={pinned}
-          onPin={setPinned}
-          targetMode={targetMode}
-        />
-      </div>
     </SidebarInset>
   );
 }
