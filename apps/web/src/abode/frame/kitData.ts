@@ -1,5 +1,8 @@
+import { useAtomValue } from "@effect/atom-react";
 import { createEnvironmentRpcQueryAtomFamily } from "@t3tools/client-runtime/state/runtime";
-import { WS_METHODS } from "@t3tools/contracts";
+import { WS_METHODS, type EnvironmentId, type SkillUsageListResult } from "@t3tools/contracts";
+import * as Option from "effect/Option";
+import { AsyncResult, Atom } from "effect/reactivity";
 
 import { connectionAtomRuntime } from "~/connection/runtime";
 
@@ -21,3 +24,15 @@ export const skillUsageAtom = createEnvironmentRpcQueryAtomFamily(connectionAtom
   staleTimeMs: 60_000,
   idleTtlMs: 5 * 60_000,
 });
+
+const NO_HOME = Atom.make(AsyncResult.initial<SkillUsageListResult, never>(false));
+
+/** The host's home folder, once it has answered (the cheap, no-scan call). */
+export function useHostHomePath(environmentId: EnvironmentId | undefined): string | undefined {
+  const result = useAtomValue(
+    environmentId === undefined
+      ? NO_HOME
+      : skillUsageAtom({ environmentId, input: { scan: false } }),
+  );
+  return Option.getOrUndefined(AsyncResult.value(result))?.homePath;
+}

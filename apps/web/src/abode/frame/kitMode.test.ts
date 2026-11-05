@@ -1,7 +1,7 @@
 import type { SkillSourcesState, SkillSourceStatus } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { dailyCheckCard, isKitProject, lastUsedLabel } from "./kitMode";
+import { dailyCheckCard, isKitProject, lastUsedLabel, singleFlight } from "./kitMode";
 
 const NOW = Date.parse("2026-11-04T12:00:00.000Z");
 
@@ -18,6 +18,38 @@ describe("isKitProject", () => {
     expect(isKitProject("/home")).toBe(false);
     expect(isKitProject("/srv/app")).toBe(false);
     expect(isKitProject(undefined)).toBe(false);
+  });
+});
+
+describe("isKitProject with the host's home known", () => {
+  it("compares against that home, not the pattern", () => {
+    expect(isKitProject("/root", "/root")).toBe(true);
+    expect(isKitProject("/root/", "/root")).toBe(true);
+    expect(isKitProject("/home/abhi", "/root")).toBe(false);
+    expect(isKitProject("/home/abhi/Projects/app", "/home/abhi")).toBe(false);
+  });
+});
+
+describe("singleFlight", () => {
+  it("gives a second call the running one's promise, and runs again after it ends", async () => {
+    const run = singleFlight();
+    let calls = 0;
+    let finish = () => {};
+    const task = () => {
+      calls += 1;
+      return new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+    };
+    const first = run(task);
+    const second = run(task);
+    expect(calls).toBe(1);
+    finish();
+    await Promise.all([first, second]);
+    const third = run(task);
+    expect(calls).toBe(2);
+    finish();
+    await third;
   });
 });
 

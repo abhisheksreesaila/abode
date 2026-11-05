@@ -1,10 +1,27 @@
+import { findProjectByPath } from "@t3tools/client-runtime/state/projects";
 import type { SkillSourcesState } from "@t3tools/contracts";
 
 const HOME_ROOT = /^(?:\/home|\/Users|[A-Za-z]:[\\/]Users)[\\/][^\\/]+[\\/]?$/;
 
-/** The Kit project is the one rooted at a home folder (`~`), so the agent can edit the skill folders. */
-export function isKitProject(workspaceRoot: string | undefined): boolean {
-  return workspaceRoot !== undefined && HOME_ROOT.test(workspaceRoot);
+/**
+ * The Kit project is the one rooted at the host's home folder (`~`), so the agent can edit the
+ * skill folders. Until the host's home is known, a home-shaped path stands in for it.
+ */
+export function isKitProject(workspaceRoot: string | undefined, homePath?: string): boolean {
+  if (workspaceRoot === undefined) return false;
+  if (homePath !== undefined) return findProjectByPath([{ workspaceRoot }], homePath) !== undefined;
+  return HOME_ROOT.test(workspaceRoot);
+}
+
+/** Runs `task` unless one is already running; a second tap gets the first one's promise. */
+export function singleFlight() {
+  let running: Promise<void> | null = null;
+  return (task: () => Promise<void>): Promise<void> => {
+    running ??= task().finally(() => {
+      running = null;
+    });
+    return running;
+  };
 }
 
 const HOUR_MS = 3_600_000;

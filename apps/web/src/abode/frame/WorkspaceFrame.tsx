@@ -21,6 +21,7 @@ import { agentCards, runningCount, type AgentCard } from "./agentCards";
 import { FRAME_TABS, tabFor, useFrameStore, type FrameTab } from "./frameStore";
 import { workspaceOf } from "./frameWorkspace";
 import { KitMeter, KitPane, KitStrip, KitTabs, type KitTab } from "./KitFrame";
+import { useHostHomePath } from "./kitData";
 import { isKitProject } from "./kitMode";
 import "./frame.css";
 
@@ -161,8 +162,9 @@ function LoadedFrame(props: {
       : null;
 
   // The Kit thread (a project rooted at the home folder) swaps Jam/Milestones/Design for the Kit tabs.
+  const hostHome = useHostHomePath(root?.environmentId);
   const kitScope =
-    root && isKitProject(root.workspaceRoot)
+    root && isKitProject(root.workspaceRoot, hostHome)
       ? {
           environmentId: root.environmentId,
           cwd: root.workspaceRoot,

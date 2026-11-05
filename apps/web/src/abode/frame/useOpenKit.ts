@@ -8,7 +8,7 @@ import {
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 import { newProjectId } from "~/lib/utils";
-import { readProjects, readThreadShells } from "~/state/entities";
+import { readProjects, readThreadShells, waitForProject } from "~/state/entities";
 import { usePrimaryEnvironmentId } from "~/state/environments";
 import { projectEnvironment } from "~/state/projects";
 import { useAtomQueryRunner } from "~/state/use-atom-query-runner";
@@ -16,8 +16,11 @@ import { useAtomCommand } from "~/state/use-atom-command";
 
 import { useOpenSession } from "../canvas/useOpenSession";
 import { skillUsageAtom } from "./kitData";
+import { singleFlight } from "./kitMode";
 
 const KIT_TITLE = "Kit";
+// One open at a time, across renders: a double tap must not add two Kit projects.
+const openOnce = singleFlight();
 
 function fail(description: string) {
   toastManager.add(
@@ -39,7 +42,7 @@ export function useOpenKit() {
   const handleNewThread = useNewThreadHandler();
   const openSession = useOpenSession();
 
-  return async () => {
+  const run = async () => {
     if (environmentId === null) return fail("No machine is connected yet.");
     const home = await loadHome({ environmentId, input: { scan: false } });
     if (home._tag === "Failure") {
@@ -47,7 +50,7 @@ export function useOpenKit() {
       return;
     }
     const homePath = home.value.homePath;
-    let project = findProjectByPath(
+    const project = findProjectByPath(
       readProjects().filter((candidate) => candidate.environmentId === environmentId),
       homePath,
     );
@@ -71,6 +74,12 @@ export function useOpenKit() {
         }
         return;
       }
+      // The draft needs the project in the client store, which the create call doesn't wait for.
+      const arrived = await waitForProject(scopeProjectRef(environmentId, projectId)).then(
+        () => true,
+        () => false,
+      );
+      if (!arrived) return fail("The Kit project was added but has not shown up yet. Try again.");
     }
     const latest = readThreadShells()
       .filter(
@@ -86,4 +95,6 @@ export function useOpenKit() {
       fail(error instanceof Error ? error.message : "A Kit thread could not be started."),
     );
   };
+
+  return () => openOnce(run);
 }
