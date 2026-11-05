@@ -15,6 +15,7 @@ import { describeCustomizationsError } from "../../customizations/customizations
 import { customizationsEnvironment } from "../../customizations/customizationsState";
 import type { CustomizationsScope } from "../../customizations/useCustomizationsScope";
 import { useRefreshProviderSkills } from "../../customizations/useRefreshProviderSkills";
+import { askClaudeAction } from "./askClaude";
 import { CATEGORIES, SOURCES, type KitSkill } from "./kitModel";
 
 const AGENT_NAME = { claude: "Claude Code", codex: "Codex" } as const;
@@ -102,11 +103,16 @@ export function KitSkillDetail(props: {
     setError(describeCustomizationsError(squashAtomCommandFailure(result)));
   };
 
+  const isDraft = useComposerDraftStore((store) =>
+    scope.threadRef ? store.getDraftSessionByRef(scope.threadRef) !== null : false,
+  );
+  const ask = askClaudeAction({ hasThreadRef: scope.threadRef !== null, isDraft });
   const askClaude = () => {
-    if (scope.threadRef) {
-      useComposerDraftStore
-        .getState()
-        .setPrompt(scope.threadRef, `Change the ${skill.name} skill (${skill.path}): `);
+    if (ask.kind === "disabled" || !scope.threadRef) return;
+    useComposerDraftStore
+      .getState()
+      .setPrompt(scope.threadRef, `Change the ${skill.name} skill (${skill.path}): `);
+    if (ask.kind === "prompt-and-open") {
       void router.navigate({
         to: "/$environmentId/$threadId",
         params: buildThreadRouteParams(scope.threadRef),
@@ -183,9 +189,15 @@ export function KitSkillDetail(props: {
               >
                 Edit SKILL.md
               </button>
-              <button type="button" data-cvk-btn="" onClick={askClaude}>
+              <button
+                type="button"
+                data-cvk-btn=""
+                disabled={ask.kind === "disabled"}
+                onClick={askClaude}
+              >
                 Ask Claude to change it
               </button>
+              {ask.kind === "disabled" ? <span data-cvk-hint="">{ask.reason}</span> : null}
             </>
           )}
         </div>

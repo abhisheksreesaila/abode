@@ -19,7 +19,7 @@ export interface SessionPill {
   /** The session's model, then the model of each live subagent it delegated to. */
   readonly dots: ReadonlyArray<ProviderKey>;
   readonly pair: boolean;
-  /** A run is in progress (the omnibox routes to a live session before the first one). */
+  /** A run is in progress. */
   readonly running: boolean;
   /** Only when the session needs the user, is stuck or landed unseen; running sessions say nothing. */
   readonly status: "waiting on you" | "blocked" | "landed" | null;

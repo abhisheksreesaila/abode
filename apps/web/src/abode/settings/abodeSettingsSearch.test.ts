@@ -11,7 +11,6 @@ describe("settings search finds abode's settings", () => {
     ["calm", "abode-chat"],
     ["avatars", "abode-chat"],
     ["one window", "one-window"],
-    ["omnibox", "one-window"],
   ])("%s opens the %s section in General", (query, id) => {
     expect(searchSettings(query)[0]).toMatchObject({ id, to: "/settings/general" });
   });

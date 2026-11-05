@@ -26,6 +26,6 @@ export const ABODE_SETTINGS_SEARCH_ITEMS = [
     id: "one-window",
     title: "One window",
     to: "/settings/general",
-    searchTerms: ["canvas rail workspaces omnibox control room overview preview flag"],
+    searchTerms: ["canvas rail workspaces control room overview preview flag"],
   },
 ] as const satisfies ReadonlyArray<SettingsSearchItem>;
