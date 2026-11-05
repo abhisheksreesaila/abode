@@ -98,7 +98,10 @@
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 2px;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+[data-abode-strip]::-webkit-scrollbar {
+  display: none;
 }
 [data-abode-card] {
   display: flex;
@@ -640,6 +643,9 @@
   }
   [data-abode-skill-name] {
     grid-column: 1 / -1;
+  }
+  [data-abode-skill] > :nth-child(2) {
+    justify-self: start;
   }
   [data-abode-skill-cost],
   [data-abode-skill-used] {
