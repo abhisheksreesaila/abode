@@ -1573,8 +1573,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
     }
 
     const language = extractFenceLanguage(codeBlock.className);
-    if (language === "abode-prune")
-      return <PruneBlock code={codeBlock.code}>{children}</PruneBlock>; // abode: prune card
+    if (language === "abode-prune") return <PruneBlock>{children}</PruneBlock>; // abode: prune card
     if (
       mathEnabled &&
       language === "math" &&

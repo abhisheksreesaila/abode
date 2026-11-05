@@ -3,7 +3,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
-import { useState, type ReactNode } from "react";
+import { isValidElement, useState, type ReactNode } from "react";
 
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { useThreadShell } from "~/state/entities";
@@ -22,8 +22,15 @@ import { deriveWorkspaceThreadState } from "../../shell/threadState";
 import { parsePruneBlock, pruneHeadline, rowTokens } from "./pruneModel";
 import { setPruneOutcome, usePruneOutcome } from "./pruneOutcomes";
 
+/** The fenced text inside the `<code>` element the markdown renderer hands over. */
+function codeText(children: ReactNode): string {
+  const inner = isValidElement<{ children?: unknown }>(children) ? children.props.children : "";
+  return (typeof inner === "string" ? inner : "").replace(/\n$/, "");
+}
+
 /** The ```abode-prune block as a pick list in Kit threads; elsewhere a plain code block. */
-export function PruneBlock(props: { readonly code: string; readonly children: ReactNode }) {
+export function PruneBlock(props: { readonly children: ReactNode }) {
+  const code = codeText(props.children);
   const scope = useActiveCustomizationsScope();
   const shell = useThreadShell(scope?.threadRef ?? null);
   const homePath = useHostHomePath(scope?.environmentId);
@@ -32,7 +39,7 @@ export function PruneBlock(props: { readonly code: string; readonly children: Re
   }
   return (
     <PruneCard
-      code={props.code}
+      code={code}
       environmentId={scope.environmentId}
       cwd={scope.cwd}
       threadRef={scope.threadRef}
