@@ -2,7 +2,7 @@ import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import type { ContextMenuItem } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
-import { FolderIcon, FolderOpenIcon, PlusIcon } from "lucide-react";
+import { ArchiveIcon, FolderIcon, FolderOpenIcon, PlusIcon } from "lucide-react";
 import { memo, type MouseEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -168,6 +168,7 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
     if (clicked.value === "new-session" && firstMember) void createSession(firstMember);
     else if (clicked.value === WORKSPACE_REMOVE_MENU_ITEM.id) {
       useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
+      if (activeIsHere || activeDraftIsHere) void router.navigate({ to: "/" });
     } else if (clicked.value === "copy-path" && firstMember) {
       copyPath(firstMember.workspaceRoot, { path: firstMember.workspaceRoot });
     } else if (clicked.value === "project-settings") {
@@ -230,6 +231,28 @@ export const WorkspaceSection = memo(function WorkspaceSection(props: {
           </TooltipTrigger>
           <TooltipPopup side="right">New session in {group.name}</TooltipPopup>
         </Tooltip>
+        {group.isScratch ? null : (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label={`Archive ${group.name}`}
+                  data-testid="workspace-archive"
+                  data-abode="inline-action"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    useRemovedWorkspacesStore.getState().setRemoved(project.projectKey, true);
+                    if (activeIsHere || activeDraftIsHere) void router.navigate({ to: "/" });
+                  }}
+                />
+              }
+            >
+              <ArchiveIcon className="size-3.5" />
+            </TooltipTrigger>
+            <TooltipPopup side="right">Archive {group.name}</TooltipPopup>
+          </Tooltip>
+        )}
       </div>
       {expanded || activeIsHere || activeDraftIsHere ? (
         <ul data-abode="guide">

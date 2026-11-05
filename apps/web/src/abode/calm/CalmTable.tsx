@@ -12,7 +12,7 @@ import { resolveSidebarThreadStatus } from "~/components/Sidebar.logic";
 import { deriveActivePlanState } from "~/abode/activePlan";
 import { useProject, useThreadProjection, useThreadShell } from "~/state/entities";
 
-import { BackToCanvas } from "../canvas/BackToCanvas";
+import { WorkspaceFrame } from "../frame/WorkspaceFrame";
 import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
 import {
   batchRunIds,
@@ -21,6 +21,7 @@ import {
   formatDuration,
   type PlanRowStatus,
 } from "./planTable";
+import { openPendingQuestion } from "./openPendingQuestion";
 import "./calm.css";
 
 const STATUS_LABEL: Record<PlanRowStatus, string> = {
@@ -35,16 +36,14 @@ const ms = (value: DateTime.DateTime | null | undefined) =>
   value == null ? null : DateTime.toEpochMillis(value);
 
 /**
- * Calm's session area: no chat, the plan as a table (A-033). Mounted over the timeline in
- * the timeline's own wrapper, which keeps rendering underneath, so Detailed comes back
- * with its scroll position. The composer stays above it, so upstream's question and
- * approval panels work as usual. Static: nothing animates.
+ * The workspace frame (A-057), then Calm's plan table (A-033), which covers the timeline in
+ * its wrapper (still rendering underneath) and stays below the composer. Nothing animates.
  */
 export function CalmTable(props: { readonly threadRef: ScopedThreadRef | null }) {
   const calm = useTranscriptModeStore((state) => state.mode === "calm");
   return (
     <>
-      <BackToCanvas />
+      <WorkspaceFrame />
       {calm && props.threadRef !== null ? <Loaded threadRef={props.threadRef} /> : null}
     </>
   );
@@ -215,7 +214,7 @@ function Body({
         <div data-abode-calm-banner="" role="status">
           <span data-abode-calm-badge="">Needs you</span>
           <span data-abode-calm-question="">{table.needsYou}</span>
-          <button type="button" onClick={() => answer(rootRef.current)}>
+          <button type="button" onClick={() => openPendingQuestion(rootRef.current)}>
             Answer
           </button>
         </div>
@@ -254,28 +253,4 @@ function Body({
       ) : null}
     </section>
   );
-}
-
-/**
- * Opens and focuses upstream's pending question or approval panel in the composer of this
- * thread (found from our own root, not the document). Never focuses a decision button.
- * Couples to upstream's `data-chat-composer-overlay`, `data-chat-composer-form="true"`,
- * `data-pending-user-input-toggle` and `data-approval-detail` (docs/upstream-sync.md).
- */
-function answer(root: HTMLElement | null) {
-  const overlay = root?.parentElement?.parentElement?.querySelector<HTMLElement>(
-    "[data-chat-composer-overlay]",
-  );
-  const form = overlay?.querySelector<HTMLElement>('[data-chat-composer-form="true"]');
-  if (!form) return;
-  form.querySelector<HTMLElement>('[data-pending-user-input-toggle="collapsed"]')?.click();
-  form.scrollIntoView({ block: "nearest" });
-  const target =
-    form.querySelector<HTMLElement>("[data-pending-user-input-toggle]") ??
-    form.querySelector<HTMLElement>("[data-approval-detail]");
-  if (target) {
-    target.focus();
-    return;
-  }
-  form.querySelector<HTMLElement>("[contenteditable='true'], textarea")?.focus();
 }

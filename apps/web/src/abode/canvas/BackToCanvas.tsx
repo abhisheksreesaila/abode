@@ -9,8 +9,13 @@ export function BackToCanvas() {
   const router = useRouter();
   if (!enabled) return null;
   return (
-    <button type="button" data-cv-back="" onClick={() => void router.navigate({ to: "/" })}>
-      ← One window
+    <button
+      type="button"
+      data-cv-back=""
+      aria-label="Back to One window"
+      onClick={() => void router.navigate({ to: "/" })}
+    >
+      ←<span data-cv-back-label=""> One window</span>
     </button>
   );
 }

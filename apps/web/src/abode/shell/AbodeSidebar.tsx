@@ -39,6 +39,7 @@ import {
 } from "~/threadRoutes";
 import { resolveProjectExpanded, useUiStateStore } from "~/uiStateStore";
 import { SidebarFlagSync } from "../canvas/SidebarFlagSync";
+import { ArchivedSection } from "./ArchivedSection";
 import { CustomizationsSlot } from "./CustomizationsSlot";
 import {
   AbodeActiveRouteContext,
@@ -135,6 +136,9 @@ export function AbodeSidebar() {
     removedKeys,
     keyOf: (group) => group.project.projectKey,
   });
+  const hiddenWorkspaces = groups
+    .filter((group) => !group.isScratch && removedKeys.includes(group.project.projectKey))
+    .map((group) => ({ key: group.project.projectKey, name: group.name }));
   const openRouteId = activeThreadKey ?? activeDraftId;
   const openWorkspaceKey =
     groups.find(
@@ -338,6 +342,7 @@ export function AbodeSidebar() {
               No workspaces yet
             </div>
           ) : null}
+          <ArchivedSection hiddenWorkspaces={hiddenWorkspaces} />
         </SidebarContent>
         <CustomizationsSlot />
         <SidebarFooter>
