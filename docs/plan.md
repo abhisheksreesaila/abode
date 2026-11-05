@@ -535,7 +535,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-056: Subtract the parts of One Window we no longer use
 
-- **Status:** review (reviewer PASS after one fix round, merged; the browser check at 1440 and 390 comes with A-057)
+- **Status:** done (reviewer PASS after one fix round; checked in the browser with A-057 on seeded data: sessions open in T3 chat, nothing of the old omnibox left)
 - **What:** remove the journey map, keyword routing, the chat drawer, the mode pills and blocks, and the omnibox commands, along with their tests and CSS. Sessions open in T3's chat route. The overview, the rail, Kit and the One window switch stay (still on by default; off gives stock T3).
 - **Acceptance:**
   - [ ] No code, CSS or test of the removed parts is left, and knip passes on abode.
@@ -544,7 +544,7 @@ The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`C
 
 ### A-057: Workspace frame: agent strip and tabs
 
-- **Status:** todo
+- **Status:** done (reviewer PASS after one fix round; checked in the browser at 1440 and 390 on seeded data: one-row frame in the Amber theme, tabs remembered per workspace, the Milestones pane covers the chat while the composer stays usable, rail lists workspaces with their threads, archive icons and an Archived section; a Replay turn showed a needs-you card with the amber outline)
 - **Depends on:** A-056
 - **What:** above the timeline, through the A-033 mount: the "N agents running" pill and one card per running thread or subagent in this workspace (what it's doing, status: in progress / needs you / done, elapsed time), then the Jam · Milestones · Design tabs. Jam shows T3's timeline untouched, for one thread at a time: the header's thread picker and a click on any agent card switch Jam to that thread, Milestones belongs to the workspace (one tracker shared by all its threads); Jam and Design belong to the current thread. No nested tabs. The rail lists workspaces; clicking one opens its threads beneath it. Each thread can be archived (upstream's archive) and each workspace too (abode's hide), with an Archived list at the bottom of the rail to bring either back. The last-used tab is remembered per workspace and per device. On a phone, the cards scroll sideways and the tabs are a full-width segmented control.
 - **Acceptance:**
