@@ -46,6 +46,21 @@ export function DesignPane(props: {
   const picks = cards.filter((card) => picked.includes(card.key));
   return (
     <div data-abode-ds="" data-testid="design">
+      {picks.length === 0 ? null : (
+        <div data-abode-ds-bar="" data-testid="design-picks">
+          <span>{picks.length} picked</span>
+          <button
+            type="button"
+            disabled={onSendPicks === undefined}
+            onClick={() => {
+              onSendPicks?.(pickPrompt(picks));
+              if (threadKey !== null) useFrameStore.getState().clearDesignPicks(threadKey);
+            }}
+          >
+            Send picks
+          </button>
+        </div>
+      )}
       {groups.map((group) => (
         <section key={group.key} data-abode-ds-group="">
           <h3>
@@ -95,21 +110,6 @@ export function DesignPane(props: {
           </ul>
         </section>
       ))}
-      {picks.length === 0 ? null : (
-        <div data-abode-ds-bar="" data-testid="design-picks">
-          <span>{picks.length} picked</span>
-          <button
-            type="button"
-            disabled={onSendPicks === undefined}
-            onClick={() => {
-              onSendPicks?.(pickPrompt(picks));
-              if (threadKey !== null) useFrameStore.getState().clearDesignPicks(threadKey);
-            }}
-          >
-            Send picks
-          </button>
-        </div>
-      )}
     </div>
   );
 }

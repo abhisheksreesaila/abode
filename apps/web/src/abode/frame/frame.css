@@ -837,10 +837,11 @@
 [data-abode-ds-empty] small {
   font-size: 12px;
 }
-/* The picks bar sits inside the pane, above the composer that floats over its bottom. */
+/* The picks bar pins to the pane's top: the composer floats over the bottom, and cards scroll under the bar. */
 [data-abode-ds-bar] {
   position: sticky;
-  bottom: 200px;
+  top: -24px;
+  margin-bottom: 12px;
   z-index: 1;
   display: flex;
   align-items: center;
