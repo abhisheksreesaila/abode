@@ -37,11 +37,17 @@ export class SkillSourceFetcher extends Context.Service<
 
 const REQUEST_TIMEOUT_MS = 20_000;
 
+/** GitHub's media type only for GitHub; npm's registry answers 406 to it. */
+export const requestHeaders = (url: string): Record<string, string> =>
+  new URL(url).hostname === "api.github.com"
+    ? { "user-agent": "abode-skill-check", accept: "application/vnd.github+json" }
+    : { "user-agent": "abode-skill-check", accept: "application/json" };
+
 const request = (url: string, what: string) =>
   Effect.tryPromise({
     try: async () => {
       const response = await fetch(url, {
-        headers: { "user-agent": "abode-skill-check", accept: "application/vnd.github+json" },
+        headers: requestHeaders(url),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
       if (response.status === 403 || response.status === 429) {
