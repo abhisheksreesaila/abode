@@ -1120,3 +1120,13 @@
     min-height: 48px;
   }
 }
+
+/* T3's thread details card floats at the canvas's top right (inline top/max-height); start it below the frame row. */
+[data-chat-canvas]:has([data-abode-frame]) > [data-thread-details-panel="inline"] {
+  top: calc(var(--abode-frame-h, 0px) + 12px) !important;
+  max-height: calc(100% - var(--abode-frame-h, 0px) - 24px) !important;
+}
+/* It describes the chat (machine, editor, branch), so it stays on Jam and leaves the panes' own controls clear. */
+[data-chat-canvas]:has([data-abode-pane-open]) > [data-thread-details-panel="inline"] {
+  visibility: hidden;
+}

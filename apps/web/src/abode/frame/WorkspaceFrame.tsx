@@ -176,7 +176,8 @@ function LoadedFrame(props: {
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes the frame's height as a CSS variable on the conversation area
   useEffect(() => {
     const root = rootRef.current;
-    const area = root?.parentElement;
+    // On the canvas, so T3's thread details card (a canvas child) can start below the frame too.
+    const area = root?.closest<HTMLElement>("[data-chat-canvas]") ?? root?.parentElement;
     if (!root || !area) return;
     const apply = () => area.style.setProperty("--abode-frame-h", `${root.offsetHeight}px`);
     apply();
