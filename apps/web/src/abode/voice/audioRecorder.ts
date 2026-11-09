@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import { createDownsampler, createPcmStore } from "./pcmBuffer";
 import { levelOf } from "./voiceLevel";
 
@@ -12,15 +13,20 @@ export interface ActiveRecording {
 
 export const INSECURE_CONTEXT_MESSAGE = "Voice needs HTTPS (use Tailscale HTTPS or localhost).";
 
-export class InsecureContextError extends Error {
-  constructor() {
-    super(INSECURE_CONTEXT_MESSAGE);
+export class InsecureContextError extends Schema.TaggedError<InsecureContextError>()(
+  "InsecureContextError",
+  {},
+) {
+  override get message() {
+    return INSECURE_CONTEXT_MESSAGE;
   }
 }
 
+const isInsecureContextError = Schema.is(InsecureContextError);
+
 /** One-line, user-facing text for a failed `getUserMedia` call. */
 export function describeMicrophoneError(error: unknown): string {
-  if (error instanceof InsecureContextError) return INSECURE_CONTEXT_MESSAGE;
+  if (isInsecureContextError(error)) return INSECURE_CONTEXT_MESSAGE;
   const name = error instanceof DOMException ? error.name : "";
   if (name === "NotAllowedError" || name === "SecurityError") {
     return "Microphone blocked. Allow it in system settings.";

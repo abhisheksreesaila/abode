@@ -61,6 +61,7 @@ import {
   useState,
 } from "react";
 import { BackgroundThreadContext } from "./backgroundThread";
+import { isInSideChatPane } from "../../lib/sideChatPane";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { isAbodeEditorKeyEvent } from "../../abode/customizations/editorKeys"; // abode:editor
 
@@ -702,8 +703,8 @@ export function useComposerStash(input: {
       { "composer.stash": handleStashShortcut },
       {
         capture: true,
-        when: (event) => !isAbodeEditorKeyEvent(event), // abode:editor (Ctrl+S saves the file there)
         context: readShortcutContext,
+        when: (event) => !isInSideChatPane(event.target) && !isAbodeEditorKeyEvent(event), // abode:editor
       },
     );
   }, [backgroundThread, handleStashShortcut, readShortcutContext]);

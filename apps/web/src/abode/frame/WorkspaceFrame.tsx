@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { observeResize } from "~/lib/observeResize";
-import { deriveWorkspaceMutationId } from "~/components/ChatView.logic";
+import { deriveWorkspaceMutationId } from "@t3tools/client-runtime/state/threads";
 import {
   useQuietThreadVisibleTurnItems,
   useThreadProjection,

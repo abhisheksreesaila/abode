@@ -214,7 +214,7 @@ export function AbodeSidebar() {
 
   // Like the other sidebars: one workspace (or Shift) starts right here, several ask first.
   const handleNewSession = (event: React.MouseEvent) => {
-    if (shouldCreateNewThreadInCurrentProject(event.shiftKey, groups.length)) {
+    if (shouldCreateNewThreadInCurrentProject(event.shiftKey, groups.length, groups.length)) {
       if (isMobile) setOpenMobile(false);
       void startNewThreadFromContext({
         activeDraftThread: newThreadContext.activeDraftThread,
