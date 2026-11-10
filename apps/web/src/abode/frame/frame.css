@@ -100,23 +100,6 @@
   color: var(--muted-foreground);
   font-size: 12.5px;
 }
-[data-abode-card-bar] {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--border);
-  overflow: hidden;
-}
-[data-abode-card-bar] > i {
-  display: block;
-  height: 100%;
-  background: var(--abode-info);
-}
-[data-abode-card][data-status="needs-you"] [data-abode-card-bar] > i {
-  background: var(--cv-warn);
-}
-[data-abode-card][data-status="done"] [data-abode-card-bar] > i {
-  background: var(--cv-ok);
-}
 
 /* Tabs: one quiet segmented bar, the selected one a filled ink pill */
 [data-abode-tabs] {
@@ -540,43 +523,6 @@
 @media (max-width: 640px) {
   [data-abode-frame-pane] {
     padding: 16px 12px 180px;
-  }
-  [data-abode-ms-source] {
-    margin-left: 0;
-    flex-basis: 100%;
-  }
-  [data-abode-ms-head] {
-    gap: 8px;
-    padding: 0 12px;
-  }
-  [data-abode-ms-bar],
-  [data-abode-ms-state] {
-    display: none;
-  }
-  [data-abode-ms-row] {
-    grid-template-columns: 20px max-content minmax(0, 1fr) auto;
-    grid-template-areas:
-      "mark title title chip"
-      "mark id who chip";
-    row-gap: 2px;
-    min-height: 52px;
-    padding: 6px 12px;
-  }
-  [data-abode-ms-mark] {
-    grid-area: mark;
-  }
-  [data-abode-ms-title] {
-    grid-area: title;
-  }
-  [data-abode-ms-tid] {
-    grid-area: id;
-  }
-  [data-abode-ms-who] {
-    grid-area: who;
-    max-width: none;
-  }
-  [data-abode-ms-chip] {
-    grid-area: chip;
   }
 }
 
