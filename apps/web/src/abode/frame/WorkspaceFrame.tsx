@@ -54,10 +54,11 @@ const NO_TYPES: ReadonlyMap<string, string> = new Map();
  */
 export function WorkspaceFrame() {
   const enabled = useCanvasStore((state) => state.enabled);
-  return enabled ? <Frame /> : null;
+  // Stock T3 keeps the frame only on Kit threads, where its tabs are the Kit itself.
+  return <Frame kitOnly={!enabled} />;
 }
 
-function Frame() {
+function Frame({ kitOnly }: { readonly kitOnly: boolean }) {
   const groups = useWorkspaceGroups();
   const target = useParams({ strict: false, select: (params) => resolveThreadRouteTarget(params) });
   const draft = useComposerDraftStore((store) =>
@@ -66,6 +67,9 @@ function Frame() {
   const threadRef = resolveActiveThreadRouteRef(target, draft);
   const shell = useThreadShell(threadRef);
   const group = workspaceOf(groups, shell ?? draft);
+  const root = group?.project.memberProjects[0];
+  const hostHome = useHostHomePath(root?.environmentId);
+  if (kitOnly && !(root && isKitProject(root.workspaceRoot, hostHome))) return null;
   // A thread that is not loaded yet, or a workspace not listed: keep the way back, nothing else.
   if (group === undefined) return <BackToCanvas />;
   return (

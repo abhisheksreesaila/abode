@@ -1,9 +1,11 @@
-import { PanelBottomIcon, PanelLeftIcon, PanelRightIcon } from "lucide-react";
+import { BoxIcon, PanelBottomIcon, PanelLeftIcon, PanelRightIcon } from "lucide-react";
 
 import { isCommandPaletteOpen } from "~/commandPaletteBus";
 import { ITEM_ICON_CLASS, type CommandPaletteActionItem } from "~/components/CommandPalette.logic";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { primaryServerKeybindingsAtom } from "~/state/server";
+import { useCanvasStore } from "../canvas/canvasStore";
+import { requestOpenKit } from "../frame/KitOpener";
 import { abodeTranscriptAction } from "../transcript/transcriptMenu";
 import {
   panelTogglesForRoute,
@@ -55,6 +57,16 @@ export function abodePanelToggleActions(input: {
       },
     };
   });
-  // The transcript mode switch rides along: one palette hook covers both.
-  return input.hasThreadView ? [...toggles, abodeTranscriptAction()] : toggles;
+  const openKit: CommandPaletteActionItem = {
+    kind: "action",
+    value: "action:abode-open-kit",
+    searchTerms: ["kit", "skills", "mcp", "plugins", "hooks", "skill updates", "prune"],
+    title: "Open Kit",
+    icon: <BoxIcon className={ITEM_ICON_CLASS} />,
+    run: async () => requestOpenKit(),
+  };
+  // The Kit and the transcript mode switch ride along: one palette hook covers them all.
+  // Calm only exists with One window on.
+  const calm = input.hasThreadView && useCanvasStore.getState().enabled;
+  return calm ? [...toggles, openKit, abodeTranscriptAction()] : [...toggles, openKit];
 }

@@ -38,7 +38,11 @@ import {
   resolveThreadRouteTarget,
 } from "~/threadRoutes";
 import { resolveProjectExpanded, useUiStateStore } from "~/uiStateStore";
+import ThreadSidebar from "~/components/Sidebar";
+import type { SidebarRouteReveal } from "~/components/sidebar/routeReveal";
+import { useCanvasStore } from "../canvas/canvasStore";
 import { SidebarFlagSync } from "../canvas/SidebarFlagSync";
+import { KitOpener } from "../frame/KitOpener";
 import { ArchivedSection } from "./ArchivedSection";
 import { CustomizationsSlot } from "./CustomizationsSlot";
 import {
@@ -65,7 +69,26 @@ const NO_DRAFTS: ReadonlyArray<string> = [];
 /** Module scope on purpose: the sidebar unmounts on Settings, and returning must still count as a move. A reload resets it. */
 let previousOpenWorkspace: OpenWorkspace | null = null;
 
+/**
+ * The sidebar slot: abode's workspace sidebar with One window on, T3's own sidebar otherwise.
+ * The Kit opener rides here because this is mounted on every route.
+ */
 export function AbodeSidebar() {
+  const abodeUi = useCanvasStore((state) => state.enabled);
+  const [routeReveal] = useState<SidebarRouteReveal>(() => ({
+    observedKey: null,
+    pendingKey: null,
+  }));
+  return (
+    <>
+      <SidebarFlagSync />
+      <KitOpener />
+      {abodeUi ? <WorkspaceSidebar /> : <ThreadSidebar routeReveal={routeReveal} />}
+    </>
+  );
+}
+
+function WorkspaceSidebar() {
   const groups = useWorkspaceGroups();
   const actions = useAbodeThreadActions();
   const router = useRouter();
@@ -238,7 +261,6 @@ export function AbodeSidebar() {
   return (
     <AbodeSidebarContext value={context}>
       <AbodeActiveRouteContext value={activeRoute}>
-        <SidebarFlagSync />
         <div data-abode="title-strip" className={isElectron ? "drag-region" : undefined}>
           <SidebarTrigger className="md:hidden" />
           <Link

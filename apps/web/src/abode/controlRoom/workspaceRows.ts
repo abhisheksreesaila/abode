@@ -1,7 +1,4 @@
-/**
- * The Control room's Workspaces table as plain data (docs/briefs/control-room.md).
- * `useControlRoomRows` gathers the inputs; nothing here touches React or stores.
- */
+/** Workspace rows as plain data (from the Control room, docs/briefs/control-room.md); no React or stores. */
 import type { WorkspaceThreadState } from "../shell/workspaceList";
 
 export type WorkspaceStatus = "needs-you" | "failed" | "running" | "done" | "idle";

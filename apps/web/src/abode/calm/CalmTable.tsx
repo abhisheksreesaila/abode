@@ -12,6 +12,7 @@ import { resolveSidebarThreadStatus } from "~/components/Sidebar.logic";
 import { deriveActivePlanState } from "~/abode/activePlan";
 import { useProject, useThreadProjection, useThreadShell } from "~/state/entities";
 
+import { useCanvasStore } from "../canvas/canvasStore";
 import { WorkspaceFrame } from "../frame/WorkspaceFrame";
 import { useTranscriptModeStore } from "../transcript/transcriptModeStore";
 import {
@@ -41,10 +42,11 @@ const ms = (value: DateTime.DateTime | null | undefined) =>
  */
 export function CalmTable(props: { readonly threadRef: ScopedThreadRef | null }) {
   const calm = useTranscriptModeStore((state) => state.mode === "calm");
+  const abodeUi = useCanvasStore((state) => state.enabled);
   return (
     <>
       <WorkspaceFrame />
-      {calm && props.threadRef !== null ? <Loaded threadRef={props.threadRef} /> : null}
+      {abodeUi && calm && props.threadRef !== null ? <Loaded threadRef={props.threadRef} /> : null}
     </>
   );
 }

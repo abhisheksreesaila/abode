@@ -10,7 +10,7 @@ export function CanvasSettingsSection() {
     <SettingsSection id="one-window" title="One window">
       <SettingsRow
         title="One window"
-        description="Replaces the Control room with one canvas: a rail of your workspaces and the selected workspace, and hides the sidebar. Early preview. Off keeps abode as it was."
+        description="abode's own layout: a rail of your workspaces, the Jam, Milestones and Design tabs, Calm and avatars. Off is T3 Code's own interface; the Kit stays in the command palette."
         control={
           <Switch
             checked={enabled}

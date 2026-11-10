@@ -8,6 +8,7 @@ import { primaryServerProvidersAtom } from "~/state/server";
 import { useThreadShell } from "~/state/entities";
 
 import { BossAvatar, HelperAvatar, type Helper } from "./cast/Characters";
+import { useCanvasStore } from "../canvas/canvasStore";
 import { useCastStore } from "./cast/castStore";
 
 function helperFor(driverKind: string | undefined): Helper {
@@ -21,7 +22,8 @@ function helperFor(driverKind: string | undefined): Helper {
  */
 export function ChatAvatars(props: { readonly threadRef: ScopedThreadRef | null }) {
   const enabled = useCastStore((state) => state.enabled);
-  if (!enabled || props.threadRef === null) return null;
+  const abodeUi = useCanvasStore((state) => state.enabled);
+  if (!abodeUi || !enabled || props.threadRef === null) return null;
   return <Avatars threadRef={props.threadRef} />;
 }
 
