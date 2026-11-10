@@ -410,6 +410,7 @@ import {
   SourceControlSignInResult,
 } from "./sourceControl.ts";
 import { VcsError } from "./vcs.ts";
+import { ABODE_RPCS, ABODE_WS_METHODS } from "./abodeRpcs.ts"; // abode: Kit
 import { Project, ProjectMutation, ProjectMutationError } from "./project.ts";
 
 export const WS_METHODS = {
@@ -423,6 +424,7 @@ export const WS_METHODS = {
   projectsEnsureScratch: "projects.ensureScratch",
   projectsCreateNew: "projects.createNew",
   projectsCreateFromThread: "projects.createFromThread",
+  ...ABODE_WS_METHODS, // abode: Kit
 
   shellOpenInEditor: "shell.openInEditor",
 
@@ -2193,6 +2195,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsProjectsCreateFromThreadRpc,
   WsProjectsWriteFileRpc,
   WsProjectsMutateRpc,
+  ...ABODE_RPCS, // abode: Kit
   WsShellOpenInEditorRpc,
   WsFilesystemBrowseRpc,
   WsFilesystemGetMetadataRpc,

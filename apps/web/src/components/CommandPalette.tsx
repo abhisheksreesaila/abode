@@ -155,6 +155,7 @@ import {
   isUnsupportedWindowsProjectPath,
   resolveProjectPathForDispatch,
 } from "@t3tools/client-runtime/state/projects";
+import { abodeKitActions } from "../abode/frame/kitPaletteActions"; // abode: Kit
 import { resolvePastedPath } from "@t3tools/shared/path";
 import {
   dispatchCommandPalette,
@@ -1669,6 +1670,8 @@ function OpenCommandPaletteDialog(props: {
       await navigate({ to: "/settings" });
     },
   });
+
+  actionItems.push(...abodeKitActions()); // abode: Kit
 
   // Every group, so an archived project's thread still opens its own settings.
   const currentProjectGroup =

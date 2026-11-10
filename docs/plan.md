@@ -1,0 +1,607 @@
+# abode plan: rebuild on upstream nightly (branch `abode-next`)
+
+<!--
+Format: one ticket per vertical slice, each independently shippable.
+Status: todo | doing | blocked (one line: what Abhishek must do) | review | done
+Commit after each passing slice: "A-00N: <what changed>". A ticket is done only after the reviewer passes it.
+Brief: docs/brief.md. Strategy and hook rules: docs/upstream-sync.md (read it first).
+The first fork's plan (F-001..F-052) is on branch `main` in docs/plan.md; its code is the reference for porting:
+read it with `git show main:<path>`. Port behavior, not diffs: upstream's APIs moved a lot since 2026-10-01.
+-->
+
+## Rules for every ticket
+
+- New code goes in `apps/web/src/abode/<area>/` (server: `apps/server/src/abode/`, contracts: `packages/contracts/src/abode*.ts`).
+- Edits to upstream files are hooks: a few lines each, marked with an `abode:` comment, and added to the hook table in `docs/upstream-sync.md`. Keep `scripts/abode/hook-report.sh` under budget.
+- Never edit orchestration, providers, persistence, projections, or existing contract fields/defaults.
+- Tests: `cd apps/web && vp test run src/abode/...` (or the server package equivalent). Typecheck the package you touched. No repo-wide checks, no dev servers.
+
+## Phase A: the engine is upstream, the skin is abode
+
+### A-001: Sync strategy and tooling
+
+- **Status:** done
+- **What:** `docs/upstream-sync.md`, `scripts/abode/sync-upstream.sh`, `scripts/abode/hook-report.sh`; branch `abode-next` from `v0.0.46-nightly.20261011.2955`.
+
+### A-002: abode theme and fonts
+
+- **Status:** review (reviewer PASS, merged. 2026-10-11: Amber palette (default), flat Azure theme, Omarchy follow via hook; fonts use upstream Typography. Needs Abhishek to look)
+- **What:**
+  - The VS Code Dark Modern palette from the first fork (`git show main:packages/shared/src/abodeTheme.ts`, tokens in `docs/design/fluent.md`) becomes a built-in theme called "abode" in upstream's theme system, with dark and light variants.
+  - abode is the default theme when the user has never picked one. A theme picked later in Settings › Appearance wins.
+  - Inter for UI and JetBrains Mono for code, bundled through `@fontsource-variable`.
+  - Density, 2px radii and other structural tweaks that a theme can't express go in `apps/web/src/abode/abode.css`, imported once from `main.tsx`.
+- **Upstream files it may touch:** `packages/shared/src/themePalettes.ts`, `apps/web/src/main.tsx`, `apps/web/package.json`, and `apps/web/src/themePalette.ts` only if the default needs a hook.
+- **Acceptance:**
+  - [ ] "abode" shows in Settings › Appearance and can be switched to and away from.
+  - [ ] A fresh profile starts on abode; an existing theme choice is kept.
+  - [ ] A test covers the default-theme rule.
+  - [ ] The hook report stays under budget.
+
+### A-003: Customizations service (server, add-only)
+
+- **Status:** done (reviewer PASS, merged; live server check pending)
+- **What:** port the first fork's Customizations service (`git show main:apps/server/src/customizations/Customizations.ts` and `main:packages/contracts/src/customizations.ts`) to `apps/server/src/abode/` and `packages/contracts/src/abodeCustomizations.ts`. It lists Claude skills, agents, MCP servers and CLAUDE.md files (user-wide and per workspace), and reads and writes them only inside `~/.claude/` and a workspace's `.claude/`, `.mcp.json` and `CLAUDE.md`. Same three RPCs (`customizations.list`, `.readFile`, `.writeFile`) and the same auth scopes.
+- **Upstream files it may touch:** `packages/contracts/src/rpc.ts`, `packages/contracts/src/index.ts`, `apps/server/src/ws.ts`, `apps/server/src/auth/RpcAuthorization.ts`.
+- **Acceptance:**
+  - [ ] The first fork's service tests pass against the V2 server.
+  - [ ] Writes outside the allowed paths are refused (tested).
+  - [ ] Contracts are add-only: no existing field, default or method changes.
+
+### A-004: Voice dictation
+
+- **Status:** review (reviewer PASS, merged; needs Abhishek with a real mic)
+- **What:** port voice from the first fork (`git show main:apps/web/src/voice/...`, tickets F-002, F-003, F-023, F-052) into `apps/web/src/abode/voice/`. Mic button in the composer and a hold-to-talk key; local Moonshine/Whisper via transformers.js in a worker; text streams into the composer and nothing is sent until Enter. Voice settings appear in Settings.
+- **Upstream files it may touch:** `apps/web/src/components/chat/ChatComposer.tsx` (one slot for the mic control), the settings panel that hosts the voice section, `apps/web/package.json`.
+- **Acceptance:**
+  - [ ] The first fork's voice logic tests pass (recording machine, PCM buffer, provisional dictation, shortcut).
+  - [ ] The composer hook is a few marked lines.
+  - [ ] Abhishek verifies with a real mic (that check stays open after the reviewer passes it).
+
+### A-005: abode shell: activity bar, workspaces sidebar, panel toggles
+
+- **Status:** review (reviewer PASS, merged; needs Abhishek in the real app, including macOS traffic lights over the logo. 2026-10-11: "Hide from sidebar" on a workspace's menu (client-only, undone from the "N hidden" row); the open session is a soft accent fill instead of an outline. Hide/show is only on the workspace menu, not the palette)
+- **What:** the VS Code agents-window layout from the first fork (F-028, F-035–F-044, F-047; `docs/design/fluent.md`, `docs/design/main-window.md`), rebuilt as abode components that read upstream's existing state and hooks:
+  - a 48px activity bar on the far left (logo, Agents, Search → command palette, Pull requests, Usage, then Settings at the bottom);
+  - one sidebar: colored, collapsible workspaces with their sessions underneath, running subagents nested under their session with a live dot, and the "needs you" amber state;
+  - per-workspace accent colors, picked from the workspace's context menu;
+  - VS Code panel toggles: Ctrl+B sidebar, Ctrl+J terminal, Ctrl+Alt+B right panel (closed by default), also reachable from the command palette.
+  - Leave a clearly marked empty slot at the bottom of the sidebar for Customizations (A-006).
+- **Upstream files it may touch:** `apps/web/src/components/AppSidebarLayout.tsx` (render the abode sidebar instead of the thread sidebar; the settings sidebar stays upstream's), plus the smallest hooks needed for the activity bar and keybindings.
+- **Acceptance:**
+  - [ ] All sessions upstream's sidebar can reach are reachable (new session, archive, rename, PR state, drafts, projectless threads).
+  - [ ] Logic (grouping, colors, subagent nesting, toggles) has focused tests.
+  - [ ] No continuously repainting animations.
+  - [ ] Abhishek checks it in the real app.
+
+### A-006: Customizations in the sidebar and right-panel editor
+
+- **Status:** review (reviewer PASS; real-app fixes 2026-10-11: works on new-thread drafts, opens symlinked skills, Ctrl+S saves, new skills show in `/` at once. Needs Abhishek to confirm. Editor is a plain textarea: no line numbers, highlighting or find yet)
+- **Depends on:** A-003, A-005
+- **What:** port F-011, F-043, F-045, F-046: a resizable Customizations section at the bottom of the abode sidebar with folders (Skills, Agents, MCP servers, Instructions), user-wide and per workspace, a + to create a new skill or agent from a template, and clicking an item opens it in an editor tab in the right panel, with save and a read-only lock.
+- **Acceptance:**
+  - [ ] Adding a skill from the + creates `~/.claude/skills/<name>/SKILL.md` (or the workspace's `.claude/skills/`), and it appears in the composer's skill list without a server restart.
+  - [ ] Abhishek checks it in the real app.
+
+### A-007: Composer and transcript polish
+
+- **Status:** doing (part 1, Simple/Detailed, reviewer PASS and merged; needs a real-app check. Parts 2 and 3 todo.)
+- **Depends on:** A-005
+- **Gap check (2026-10-11):** upstream nightly already has the context meter with compact (F-014), usage limits and the /usage page (F-015), edit from here and cite selection (F-016), Changes/Files/PR/preview tabs in the right panel (F-040, F-049). Don't port those.
+- **What, in order:**
+  1. Simple/Detailed transcript toggle (F-013), M.
+  2. Composer layout like the reference with the branch/worktree info inside the footer and colored chips for access mode, branch kind and worktree (F-022, F-039, F-027), M.
+  3. Cheap wins: visible Back button on utility pages (F-048), README tagline and starter cards on the project welcome (F-026), provider tint on the picker (F-017). Each S.
+  - Only if Abhishek still wants them: status bar (F-030), picking a Claude agent type (F-021), delights (F-034).
+
+### A-008: Switch the host to abode-next
+
+- **Status:** done (2026-10-11: host runs abode-next 2835b2afc8; dry run on a copy of the data first, all 4 projects and 5 threads carried over. Backup of the old data: `~/.abode/backups/pre-abode-next-20261011`. Still check the T3 Code phone app speaks orchestration protocol 2.)
+- **What:** `scripts/abode/host.sh update` now builds `abode-next` by default. Rollback: `host.sh rollback`, then copy the backup's `state.sqlite` back (the new build migrated the database).
+
+## Phase B: the abode chat (brief: docs/briefs/chat-revamp.md, mockups: design/chat-revamp.html)
+
+Hook plan (keeps daily upstream merges cheap): cards ride on upstream's own GitHub-alert rendering (two lines in `ChatMarkdown.tsx`); the board is one line after the chat column in `ChatView.tsx`; avatars are pure CSS on the timeline's existing `data-message-role` attributes; settings reuse the voice-settings hook line; answers use upstream's `startTurn` command. Everything else lives in `apps/web/src/abode/chat/`.
+
+### A-009: Cards in the chat
+
+- **Status:** review (reviewer PASS; GitHub alerts stay upstream's in Classic. Needs Abhishek on a real thread)
+- **What:** `> [!QUESTION]`, `> [!WARNING]`, `> [!INFO]`, `> [!TICKETS]`, `> [!DONE]` (plus GitHub's NOTE/TIP/IMPORTANT/CAUTION) render as colored cards with an icon and label, and agent text gets the calmer reading style. Parser for the board: `abode/chat/cards.ts` (tags first, guesses for untagged answers).
+- **Acceptance:**
+  - [ ] All five abode kinds render as cards in Amber, Azure and Omarchy; upstream's own alerts still render.
+  - [ ] Streaming still parses incrementally (no `extraRemarkPlugins`).
+  - [ ] Parser tests cover tags, options, tickets, code fences and guesses.
+
+### A-010: The board column
+
+- **Status:** dropped (2026-10-14: Abhishek never used the board; removed in A-015)
+- **Depends on:** A-009
+- **What:** on wide windows a column right of the chat: a header with the helper, then lanes Needs you (open questions from the latest answer, plus upstream's pending approvals/inputs linking to the composer), Watch out, Tickets, Done. Question options are buttons that send the choice as a user message (`startTurn`) and turn into a "👍 choice · on it" chip with "change". Each item jumps to its message. Hidden on narrow windows and when abode chat is off.
+- **Acceptance:**
+  - [ ] Lane building and "is this question still open" are pure and tested.
+  - [ ] An answer button sends one user message to the thread; the chip appears; nothing is sent twice.
+  - [ ] Works on a thread handed off from Claude to Codex.
+
+### A-011: The cast with moods and activity poses
+
+- **Status:** review (reviewer PASS; handed-off threads show the current helper on every row. 2026-10-14: moods and poses removed with the board (A-015); avatars stay. Needs Abhishek)
+- **Depends on:** A-010
+- **What:** Sunny (Claude) / Pip (Codex) avatars beside assistant messages and the Boss beside the user's, via CSS. The board header shows the helper's mood (asking, worried, working, done, idle, agreed) and an activity pose from the latest work item (typing for file changes, terminal for commands, magnifier for search, thought bubble for reasoning). One ~0.5s motion per new work item, no loops, off under reduced motion.
+- **Acceptance:**
+  - [ ] Mood and pose are pure functions with tests.
+  - [ ] No CSS animation runs while the agent is idle (checked in the browser).
+
+### A-012: Settings: abode chat switch, Boss builder, names
+
+- **Status:** review (reviewer PASS. Needs Abhishek)
+- **What:** in Settings › General next to Voice: an "abode chat" switch (Classic = upstream's chat untouched), the Boss builder (face, top, brows, eyes, scarf, or a photo) and names for the Boss, the Claude helper and the Codex helper. Saved per browser.
+- **Acceptance:**
+  - [ ] Turning abode chat off removes the board, cards styling and avatars.
+  - [ ] Settings survive reload; junk in storage falls back to defaults (tested).
+
+### A-013: Tell the agents about cards
+
+- **Status:** blocked (Abhishek: say "install the card instructions" to run `install-instructions.sh cards` on your real ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md; tested on scratch copies: idempotent, --remove restores)
+- **What:** `scripts/abode/chat/install-instructions.sh` appends a marked, idempotent block to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` explaining the five callouts (and removes it with `--remove`). Upstream has no custom-instructions setting, so this is the engine-free route.
+- **Acceptance:**
+  - [ ] Running it twice changes nothing; `--remove` restores the files.
+  - [ ] Abhishek agrees before it touches his global files.
+
+## Phase C: polish from using it (2026-10-14)
+
+### A-014: Breathing room in the workspaces sidebar
+
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
+- **What:** workspaces sit 16px apart (was 6px), headers are 32px and session rows 30px with 2px between them, so picking a session doesn't take focus. Spacing only, in `abode/shell/shell.css`.
+- **Acceptance:**
+  - [ ] Each workspace reads as its own group; neighboring sessions are easy to hit (Abhishek in the real app).
+
+### A-015: Drop the board; the chat gets the width
+
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
+- **What:** the board column, its lanes, moods and poses are gone. The avatars beside messages stay (`abode/chat/ChatAvatars.tsx` hands them over, as the board did). Agent answers no longer stop at 76ch, so Settings › Chat width (Wide or Full) widens the whole chat.
+- **Acceptance:**
+  - [ ] No column right of the chat; avatars still show with abode chat on.
+  - [ ] With Chat width set to Wide, answers use the full lane.
+
+### A-016: Voice: "Listening" bars instead of live text
+
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
+- **What:** while recording, the composer shows bars that follow the mic level and "Listening 0:05"; nothing is transcribed until release. The model warms up in the background when recording starts, so the one transcription after release stays quick. Bars update about 20 times a second only while recording, and hold still under reduced motion.
+- **Acceptance:**
+  - [ ] No live text appears while speaking; the transcript lands at the caret on release (Abhishek with a real mic).
+  - [ ] Level math is tested; no animation runs when not recording.
+
+### A-017: Pages open in the browser next to the chat
+
+- **Status:** review (installed 2026-10-14 in ~/.claude/CLAUDE.md; needs Abhishek to ask for an artifact in a real thread)
+- **What:** Claude was never told about T3 Code's in-app browser (upstream gives those instructions to Codex only), so pages went to the system browser in another Omarchy workspace. `install-instructions.sh browser` adds a block to `~/.claude/CLAUDE.md` telling Claude to show pages with the `t3-code` server's `preview_open` and its `url`. No engine change. If Claude ignores it, the fallback is a hook in the Claude adapter, which needs Abhishek's sign-off.
+- **Acceptance:**
+  - [ ] Asking for an artifact in an abode thread opens it in the browser panel beside that thread.
+  - [ ] Installing twice changes nothing; `--remove` restores the file (tested on scratch copies).
+
+## Phase D: calm mode (brief: docs/briefs/calm-mode.md, ADR: docs/adr/0001-subagent-type-hook.md)
+
+The card sits above the composer (where questions already open) and shows the thread's current work. Earlier turns fold into upstream's "Worked for…" row; a tap opens that turn in full.
+
+### A-018: Record the subagent type
+
+- **Status:** done (reviewer PASS; known gap: a subagent recovered after a server restart has no type until a later frame carries one)
+- **What:** optional `agentType` on `OrchestrationV2Subagent` (contracts, add-only). The Claude adapter keeps the Agent tool's `subagent_type` with the pending launch and copies it onto the subagent when `task_started` arrives. Codex leaves it empty. Marked `abode:` hooks, listed in docs/upstream-sync.md.
+- **Upstream files it may touch:** `packages/contracts/src/orchestrationV2.ts`, `apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts`.
+- **Acceptance:**
+  - [ ] A server test: an Agent call with `subagent_type: "reviewer"` produces a subagent with `agentType: "reviewer"`; without it, no field.
+  - [ ] Old payloads without the field still decode (the mobile app is unaffected).
+  - [ ] Hook report stays under budget.
+
+### A-019: Calm transcript
+
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
+- **What:** the transcript menu becomes Calm / Detailed (Calm replaces Simple, default; a stored "simple" reads as Calm). Calm shows your messages and each settled turn's "Worked for…" fold row; agent text, tool calls and thinking are hidden. Opening a fold shows that turn as Detailed. Failures and errors stay visible.
+- **Acceptance:**
+  - [ ] Row filtering is pure and tested (a turn with text, tools and a failure; a running turn; an expanded fold).
+  - [ ] Detailed is unchanged.
+
+### A-020: The calm card
+
+- **Status:** review (reviewer PASS; needs Abhishek on a real batch)
+- **Depends on:** A-018 for names (without it every subagent is 🤖 helper)
+- **What:** above the composer while a thread has a task list or subagents in its latest run: "Tickets 4 of 5" from the agent's task list, then one row per subagent type: emoji, type, finished of started, ✓ when all are done. A bright orange "Needs you" while an approval or question waits. Static: no animation. Only in Calm.
+- **Acceptance:**
+  - [ ] The card model (counts, grouping, emoji, needs-you) is pure and tested, including Codex subagents without a type.
+  - [ ] Hidden when there's nothing to show; hidden in Detailed.
+- **Known gap:** members of a multi-agent workflow have no run of their own, so a workflow counts as one row (its coordinator).
+
+### A-021: Needs you in the sidebar
+
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
+- **What:** a session waiting on you shows a bright orange "Needs you" tag on its sidebar row instead of only the small square.
+- **Acceptance:**
+  - [ ] Shows exactly while the session waits on you (an approval, a question, or a plan ready to approve); goes away when answered.
+
+### A-022: Sidebar like VS Code's agent sessions
+
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
+- **What:** Abhishek's reference (VS Code's agent sessions view): a workspace header is a folder icon in the workspace color and the name (no tinted bar, no path line; Copy path stays on its menu). A session is two lines: status square and title, then where it runs (worktree icon or folder, branch) and its age or "Needs you" tag. No guide line. Replaces A-014's 16px gaps. Diff counts (+N −M) are left out: upstream's thread shells don't carry them yet (its own sidebar has an empty seam for it).
+- **Acceptance:**
+  - [ ] Matches the reference in the real app (Abhishek).
+  - [ ] Session place logic is pure and tested.
+
+### A-023: Project chip on a new session
+
+- **Status:** review (reviewer PASS; needs Abhishek in the real app)
+- **What:** Abhishek's reference (VS Code's project chip): upstream's new-session project picker ("What should we build in [project]?") becomes a rounded chip with a folder, the name and a chevron; each project in its list shows its parent folder in grey (`~/Projects`), and "Add project" stays last. Same picker, same behaviour; only its look and the path hint change.
+- **Acceptance:**
+  - [ ] The chip opens the searchable list; picking a project switches the draft as before (Abhishek in the real app).
+  - [ ] The path hint is pure and tested.
+
+## Phase E: from using it (2026-10-15)
+
+Every ticket here stays inside `apps/web/src/abode/`: no new upstream hooks, and a trial merge with the latest nightly must stay as clean as before.
+
+### A-024: Voice that hears you
+
+- **Status:** review (reviewer PASS; needs Abhishek to dictate a long real prompt)
+- **What:** Abhishek struggled with dictation on 2026-10-14. Measured (`docs/research/voice-spike.md`): no model beats Moonshine Base within the CPU (wasm) budget, but Moonshine loops on anything past 30 s, and the whole recording went to it in one call (a 2-minute clip came back at 253% WER). Long recordings are now cut at pauses (judged against the room's noise floor, so quiet endings and noisy rooms work) into pieces of 30 s or less and transcribed in order: 2 minutes goes to about 4% WER. A developer vocabulary fixes words Moonshine mishears (worktree, websocket, pixi, SQLite, fh-saas, abode, the React hooks). Cancel stops a long transcription, and the composer shows "Transcribing 2 of 8…". The model and its download are unchanged. GPU or streaming voice is a separate decision (Nemotron spike, `docs/research/voice-nemotron.md`).
+- **Acceptance:**
+  - [x] The comparison is a script someone can rerun (`apps/web/scripts/abode/voice-bench/`), and its tables are in `docs/research/voice-spike.md`.
+  - [x] Pause segmentation is pure and tested with exact boundaries (soft tail, 10 and 15 dB room noise, no-pause cut, tiny tail).
+  - [ ] Abhishek dictates a real 1 to 3 minute prompt in the app.
+
+### A-025: Calmer sidebar chrome
+
+- **Status:** review
+- **What:** Workspaces lose their colors: the color picker leaves the workspace menu, and every folder icon uses the theme's default color (color store and hooks deleted). The activity bar loses Pull requests and Usage; both become rows in the Customizations list at the bottom of the sidebar (after Instructions) that open the same pages. The activity bar keeps Agents, Search and Settings.
+- **Acceptance:**
+  - [ ] No workspace color code is left; existing stored colors are simply ignored.
+  - [ ] Pull requests (only where supported) and Usage open from Customizations; their activity-bar buttons are gone.
+
+### A-026: "+" shows the new session under its folder
+
+- **Status:** review
+- **What:** Like VS Code: pressing + (or starting a new session any other way) puts a "New session" row under that workspace at once, selected, while the pane opens beside it. It stays a draft: no server thread until the first message. An empty draft's row stays only while it is the open one; leaving it empty removes the row.
+- **Acceptance:**
+  - [ ] The draft-row rule is pure and tested (empty and open: shown; empty and not open: gone; with text: shown).
+
+### A-027: Remove a workspace from the sidebar
+
+- **Status:** review
+- **What:** "Hide from sidebar" becomes "Remove from sidebar", and the "N hidden" row is gone. Nothing is deleted on the server, so its sessions come back with it. A removed workspace returns as soon as it becomes the open one again (picked in the new-session project chip, or added again with "Add project"), and stays back.
+- **Acceptance:**
+  - [ ] Remove and return are pure and tested; no "hidden" wording is left in the UI.
+
+### A-028: No activity bar
+
+- **Status:** review
+- **What:** Abhishek doesn't use the activity bar. It goes; the sidebar gets its width. Its jobs move to the sidebar's own header row: the "abode" mark on the left goes home (`/`, the sessions), and on the right a Search button (opens the command palette, tooltip shows its shortcut) and a Settings gear. Upstream's own sidebar toggle and Ctrl+B are how a collapsed sidebar comes back. The `ActivityBar` lines in `AppSidebarLayout.tsx` and the activity-bar width in `shellLayout.ts` go, so the upstream hook shrinks.
+- **Acceptance:**
+  - [ ] No activity bar on any route; home, search and settings reachable from the sidebar header; a collapsed sidebar can be reopened without the keyboard.
+  - [ ] `hook-report.sh` total goes down, and no new upstream lines.
+
+### A-029: Voice on the host: Nemotron streaming
+
+- **Status:** done
+- **What:** Abhishek wants VS Code's dictation. VS Code runs NVIDIA Nemotron 3.5 ASR streaming natively on the machine; the spike (`docs/research/voice-nemotron.md`) shows it from Node via `sherpa-onnx-node` (Apache-2.0): 5.4% WER (Moonshine 6.7%), 3.3% on 3-minute prompts, final text 0.13 s after you stop, RTF about 0.12 on 4 CPU threads. Do the same through the abode server:
+  - **Server** (`apps/server/src/abode/`): a voice service running Nemotron 3.5 560 ms int8 (k2-fsa's sherpa build, OpenMDW-1.1) in a worker thread with 4 threads. The model (about 453 MB) downloads on first use into T3 home with its checksum pinned, reporting progress; nothing loads until someone dictates, and it unloads after a few idle minutes.
+  - **Wire:** mic audio streams as 16 kHz PCM from the client to the host while you talk; the final text returns when you stop. Add-only `abode*` contracts and RPCs, an existing permission scope, bounded buffers and session counts.
+  - **Client** (`apps/web/src/abode/voice/`): use the host when it has voice, and Moonshine in the browser (A-024) when not. Same mic button, hold-to-talk key, listening bars, Esc and Enter. Settings › Voice shows which engine is active and the host model's download state.
+- **Acceptance:**
+  - [x] Service and session logic tested with a fake recognizer; one real-model test runs when the model is present and is skipped otherwise.
+  - [x] Final text arrives within about 1 s of stopping for a 2-minute recording on this machine: measured 161 ms (`scripts/abode/voice-latency.ts`, audio paced at speech speed in 200 ms chunks through the RPC's JSON encoding).
+  - [x] Falls back to Moonshine when the host has no voice; works from a remote browser, since the audio goes to the host (not tried from a second device).
+  - [x] `hook-report.sh` stays under 400 (398), and `vp build` passes the license check.
+  - [x] security-auditor: waived by Abhishek on 2026-10-15; the reviewer covered upload bounds, session ownership and the model download.
+  - [x] Abhishek dictates a real prompt: "now it works really well" (2026-10-16).
+
+### A-030: Host voice follow-ups
+
+- **Status:** todo
+- **What:** from A-029's review. (1) A model load that never sends `ready` blocks server shutdown and `host.sh update`: time out `ensureEngine` (about 60 s) in `VoiceRecognizerSherpa.ts` and report `unavailable`. (2) License notices list only `sherpa-onnx-linux-x64`; a macOS or Windows desktop build fails the license check until the other platform packages are listed (mind the hook budget: 391/400).
+
+### A-031: Dictation survives the screensaver
+
+- **Status:** review
+- **What:** A mic-button dictation stopped when Omarchy's idle screensaver opened: the screensaver is a fullscreen window, the browser lost focus, and the blur rule meant for hold-to-talk (a keyup never arrives) stopped every recording. Now blur stops only a dictation started by holding the key, and the page holds a screen wake lock while recording, so the screensaver and idle lock don't start while you talk.
+- **Acceptance:**
+  - [ ] A mic-button dictation keeps recording when another window takes focus; a held-key dictation still stops on blur.
+  - [ ] Talking past the idle timeout without touching anything: no screensaver, and the text arrives.
+
+## Phase F: control room (brief: docs/briefs/control-room.md, design: docs/design/control-room.md)
+
+Tables, not tiles. Data comes from what the client already has (`useWorkspaceGroups`, thread shells, `deriveWorkspaceThreadState`, environments, `server.getHostResources`, per-thread projections for task lists). One new upstream hook at most: the `/` route.
+
+### A-032: Home is the control room: workspaces table
+
+- **Status:** review
+- **What:** `/` (the abode logo) shows "Control room" instead of jumping into a draft: a Workspaces table, one row per workspace from `useWorkspaceGroups()`: name, status (Needs you / Running / Failed / Done / Idle from `deriveWorkspaceThreadState` over its sessions, needs-you first), progress (done/total over the task lists of its running and needs-you sessions, from their projections; bar plus percent), agents running (running sessions plus running subagents), machine (environment label; several when it spans), last activity. A needs-you row shows the waiting question's text when the shell or projection has it. Clicking a row opens the workspace's most relevant session (needs-you, else running, else latest) in Calm. The + button and "New session" still start drafts.
+- **Upstream files it may touch:** `apps/web/src/routes/_chat.index.tsx` (one hook: render the abode view in place of `IndexDraftLanding` when there are projects).
+- **Acceptance:**
+  - [ ] The row model (status priority, progress sums, agent counts, sort, chosen session) is pure and tested.
+  - [ ] Only running and needs-you sessions subscribe to their projections; idle rows don't.
+  - [ ] Matches the chosen design; no-projects still shows upstream's hero.
+
+### A-033: Calm is the plan table
+
+- **Status:** review
+- **What:** in Calm, the session shows no chat: a header (status, "N of M done · P%" bar, agents running by type), the orange Needs-you banner with the question and an Answer button that opens upstream's panel, then a table of the current batch's task-list items: Task, Status (Not started / In progress / Done / Needs you), Who (the subagent whose title or prompt names the task's ticket ID, by `agentType`; else "main agent"), Time (that subagent's duration when known). When the batch finishes: "N of N complete" and the model's own final assistant message of the batch in full, rendered as chat markdown. Detailed is unchanged. Replaces the A-020 card and A-019 rows in Calm.
+- **Acceptance:**
+  - [ ] The table model (rows from plan steps, ticket-ID matching to subagents, who/time, header counts, final message pick across wake runs) is pure and tested, including a Codex session without types and a session with no task list.
+  - [ ] Detailed still shows everything; switching back and forth keeps the scroll position sane.
+
+### A-034: Machines table and filter
+
+- **Status:** review
+- **Depends on:** A-032
+- **What:** under the workspaces table, a Machines table: one row per environment from `useEnvironments()`: name and route (local, Tailscale, relay), status (Online / Connecting / Offline from the connection phase), CPU and memory bars from `server.getHostResources` (polled only while the page is open, "—" when unavailable), agents running and workspaces on it. Clicking a machine filters the workspaces table; an "All machines" chip clears it.
+- **Acceptance:**
+  - [ ] The machine row model is pure and tested (offline, no resources, a workspace spanning two machines).
+  - [ ] Resource polling stops when the page is closed.
+
+## Phase B: follow-ups from the v0.1.3 sync (2026-10-25)
+
+Upstream `v0.1.3-nightly.20261025.3669` made Settings and Usage modals, added guest sharing and new test lint rules. Hook budget is 398/400: free lines by trimming or moving an existing hook rather than raising the budget.
+
+### A-035: Settings over the Control room
+
+- **Status:** done (reviewer PASS with notes; backdrop shows for any thread-less modal)
+- **What:** opening Settings (or Usage) from `/` shows the Control room behind the modal, not an empty backdrop. Upstream's `ChatRouteLayout` (`apps/web/src/routes/_chat.tsx`) only keeps a thread or draft behind the modal.
+- **Acceptance:**
+  - [ ] From `/`, Settings opens over the Control room; closing it returns to `/` with the table intact.
+  - [ ] From a thread or draft, behaviour is unchanged.
+  - [ ] Any logic deciding what stays behind the modal is tested; hook report stays at or under 400.
+
+### A-036: Settings search finds abode's settings
+
+- **Status:** done (reviewer PASS with notes; backdrop shows for any thread-less modal)
+- **What:** upstream's Settings search uses a static index; abode's chat and voice sections (`AbodeSettingsSections`) never match. Add abode's entries to the index so searching e.g. "voice", "dictation", "calm" finds and opens them.
+- **Acceptance:**
+  - [ ] Searching an abode setting's label returns it and navigates to its section.
+  - [ ] Abode's entries live in `abode/`; the upstream hook is one line. Tested.
+
+### A-037: Share with guest from the sidebar
+
+- **Status:** done (reviewer PASS after a comment trim)
+- **What:** abode's sidebar thread menu (`useAbodeThreadActions.ts`) passes `canShareWithGuest` like upstream's sidebar, so "Share with guest" appears on right-click where upstream offers it.
+- **Acceptance:**
+  - [ ] The item appears under the same conditions as upstream's header menu and opens the same share flow. No upstream file edits.
+
+### A-038: Voice benchmarks pass upstream's test lint
+
+- **Status:** done (reviewer PASS after a comment trim)
+- **What:** `apps/server/src/abode/voice/Voice.latency.test.ts` and `Voice.real.test.ts` fail `no-test-timeout-or-unreasoned-skip` / `no-wall-clock-in-tests` / `no-real-time-wait-in-tests`. Move the wall-clock latency benchmark out of `*.test.ts` into a script (e.g. `apps/server/scripts/abode/voice-latency.ts`), and make the real-model test assert on events, not timings. Don't silence the rules.
+- **Acceptance:**
+  - [ ] `vp lint apps/server/src/abode` is clean with no new disables.
+  - [ ] The benchmark still runs on demand and prints its numbers.
+
+## Phase C: v0.1.6 sync (2026-10-30)
+
+Upstream `v0.1.6-nightly.20261031.3956` (966 commits, protocol still 2): new design on by default, simpler composer, thread state at the end of the timeline, linked environments (Labs), provider fallback when out of usage, Vercel fx provider, more file previews. Hook budget 399/400.
+
+### A-039: Merge v0.1.6 into abode
+
+- **Status:** done (reviewer PASS; checked in the browser; host on 80faea1d36, DB backup in `~/.abode/backups/pre-v0.1.6-20261030`)
+- **What:** branch `sync-v0.1.6`. 21 conflicts, all hook lines. Copied into `abode/` what upstream deleted or made private (`deriveActivePlanState`, PR tooltip, operate-denied text, the preview-count setting). Gave the 24 abode effects the reason upstream's new `no-unreasoned-state-sync` rule asks for. Added the LGPL-3.0 SPDX template the voice notice needs.
+- **Acceptance:**
+  - [x] Web and server typecheck; `vp lint` on abode is clean; abode web (45 files) and server tests pass; web and server production builds pass.
+  - [x] Real app: sidebar, Control room, Calm view, composer mic, Customizations list and Settings over the Control room render on the new design (dev, copy of real data). Not exercised: speaking into the mic, Ctrl+S in the editor.
+  - [x] Reviewer passed it; merged into `abode-next`; host updated, migrations 70–75 ran.
+
+### A-040: knip passes on abode
+
+- **Status:** done (reviewer PASS; hook report treats abode-only folders docs/canvas, docs/adr, apps/web/public/abode as owned)
+- **What:** the pre-commit `knip:check` fails (it already did before the v0.1.6 sync): abode's voice scripts and `voiceWorker.ts` are entry points knip can't trace, `sherpa-onnx-node` is loaded by the worker, and upstream's sidebar files are unused on purpose (we never delete upstream files). The fix is entries in `knip.jsonc`, which is an upstream file, and the hook budget is 399/400, so first free lines from another hook.
+- **Acceptance:**
+  - [x] `vp run knip:check` passes with no new suppression of real unused code; hook report at or under 400.
+
+### A-041: Tidy abode voice effects
+
+- **Status:** todo
+- **What:** reviewer notes from A-039. `ComposerVoiceControl.tsx` resets state on `resetKey` in an effect (use `key` or reset during render; keep `cancel()` as the only effect). The latest-ref effects in `ComposerVoiceControl.tsx` and `useVoiceDictation.ts` can become `useStableCallback`. `VoiceSettingsSection.tsx` runs `useEffect(refresh, [refresh])` with an unstable function. `useHostVoice.ts:46`'s reason should say it guards setState after unmount.
+- **Acceptance:**
+  - [ ] Fewer `no-unreasoned-state-sync` disables in `abode/voice`, voice tests pass, and dictation still works with a real mic.
+
+## Phase G: One Window (brief: docs/briefs/one-window.md, spec: docs/canvas/spec.md, look: docs/canvas/prototype.html C3)
+
+Mounts only through existing abode hooks (Control room route, `AbodeSidebar`); `hook-report.sh` must not grow. No contract or engine edits. Code in `apps/web/src/abode/canvas/`, classes `cv-`.
+
+### A-042: Canvas shell behind the flag (P0)
+
+- **Status:** done (reviewer PASS; checked in the browser on seeded data: flag off = Control room unchanged, flag on = shell with 13 real workspaces)
+- **What:** an abode store flag "One Window" (Settings → abode, searchable). When on, the Control room route and the sidebar mount render the canvas: top bar (title, "N workspaces", ⊞ overview, ⚙ kit stub), collapsed rail of the real projects (initials, groups need → jam → move → quiet from live thread state, amber dot for needs-you), an empty workspace view, and the omnibox bar. Night Graphite tokens from the prototype.
+- **Acceptance:**
+  - [x] Flag off: abode looks and behaves exactly as before (checked in the browser).
+  - [x] Flag on: the rail lists the real workspaces, grouped by the tested pure `workspaceGroup()`.
+  - [x] `hook-report.sh` line count unchanged; no files changed under `packages/contracts` or `apps/server`.
+
+### A-043: Workspace header and session pills (P1)
+
+- **Status:** done (reviewer PASS; checked in the browser: landed/live pills, `+` opens a draft in that workspace; hidden workspaces restore from the rail)
+- **Depends on:** A-042
+- **What:** selecting a rail tile shows the workspace: name, `…` menu (archive = abode's existing hide), one pill per live session with mode icon, name, model dots in the model colour (a `delegate_task` pair shows parent → child from lineage), a status word only when waiting or blocked, an "N done" fold and `+` (new thread, with the focus moment).
+- **Acceptance:**
+  - [x] Pill model (dots, pair, status word) is a tested pure function over real thread shapes.
+  - [x] `+` creates a real thread in that project.
+
+### A-044: Milestones from plan.md (P1)
+
+- **Status:** done (reviewer PASS; reads all three plan formats; checked in the browser on travelos and mxframe)
+- **Depends on:** A-042
+- **What:** read the project's `docs/plan.md` through the existing filesystem read RPC; parse a `Goal:` line and `## Milestone: <name>` headings with their `### X-NNN` tickets and statuses into done / current / todo milestones. The plan block shows one row per milestone; the current one expands to its tickets (✓ ● ‖ ✕ ○). Projects without milestones show their phases as milestones; projects without a plan.md show "no plan yet".
+- **Acceptance:**
+  - [x] Parser tested on this repo's plan.md, a milestone-style plan, and a missing file.
+  - [x] Format documented in one paragraph at the top of the parser so agents can follow it.
+
+### A-045: Per-session mode and its blocks (P1)
+
+- **Status:** done (reviewer PASS; checked in the browser: answering a real pending question resolves it, Grill me switch sends one steering message and shows Ember; mode stored per device)
+- **Depends on:** A-043
+- **What:** the mode popover on each pill (Autopilot, Tell me, Grill me, Jam), stored per device. Changing it sends the thread a one-line steering message. The workspace body composes from the prototype's `compose()` rules: status sentence, interrupt card (any pending approval or user-input request, whatever the mode), Grill me card with Ember from the pending question, Tell me brief with Pip from the latest assistant summary, a Jam intro (live board waits for P6), "N calls made on its own" for Autopilot. Serious mode hides the quips.
+- **Acceptance:**
+  - [x] Changing a mode updates the pill, the omnibox tag and the drawer edge in one frame.
+  - [x] `compose()` ported as a tested pure function; blocks appear and disappear by mode.
+  - [x] Answering an interrupt or Grill me card resolves the real pending request.
+
+### A-046: Omnibox and chat drawer bound to threads (P2)
+
+- **Status:** done (reviewer PASS; checked in the browser: a typed message routed by keyword to the Docs refresh Replay session, the chip showed the target first, the drawer opened on its live reply)
+- **Depends on:** A-045
+- **What:** the omnibox routes by keywords, then open Grill me, jam, blocked or waiting, live, first; the target chip shows and pins the target; send posts to the real thread. The drawer opens above it with the header from spec 5.6 and the thread's recent messages; "open full chat" goes to the stock chat view. `/` focuses, Esc closes.
+- **Acceptance:**
+  - [x] Routing is a tested pure function: "skip docs this release" on omxcore → Docs refresh; "the token's in 1Password, run the setup script" → Publish.
+  - [x] A sent message lands in the real thread (checked in the browser with the Replay provider).
+
+### A-047: Omnibox commands (P2)
+
+- **Status:** done (reviewer PASS; put X on <mode> reuses the pill's mode change; add … to <workspace> goes to its routed session; new workspace opens the add-project palette; tour is a toast for now)
+- **Depends on:** A-046
+- **What:** "put X on grill me", "add … to <workspace>" (sent to that workspace's main thread as an instruction to update plan.md), "new workspace X, goal: …", "brief me", "tour" (`?`). Anything that touches more than one workspace shows a preview first.
+- **Acceptance:**
+  - [x] Command parsing tested; unknown text falls through to routing.
+
+### A-048: Overview (P5)
+
+- **Status:** done (reviewer PASS; checked in the browser: 13 workspaces fit 1440×900, meters + mascot, row click opens the workspace; milestones-since waits for A-049)
+- **Depends on:** A-043, A-044
+- **What:** ⊞ or `o` zooms out: hero line (need you · red · milestones since last look · sessions running), usage meters from the usage service (labelled estimates), one section per environment with its mascot (load face from `getHostResources`), rows sorted need → jam → move → quiet with mode icon, milestone bar and status word. Clicking a row zooms in. The omnibox target becomes "all workspaces".
+- **Acceptance:**
+  - [x] Every workspace on both machines fits 1440 × 900 without scrolling.
+  - [x] Resource polling runs only while the overview is open.
+
+### A-049: Since you last looked (P5)
+
+- **Status:** done (reviewer PASS; checked in the browser: after one look, a new Replay run shows as "server · feed check finished"; PR-green items skipped, the client has no per-workspace PR state)
+- **Depends on:** A-048
+- **What:** the overview's right column: milestone reached, decision waiting, red, PR green, session done, newest first, derived from thread and PR state since a per-device last-seen time. Clicking opens the workspace.
+- **Acceptance:**
+  - [x] Feed derivation tested with a last-seen time in the middle of a run.
+
+### A-050: Autopilot backend
+
+- **Status:** todo
+- **What:** carried over from the command-center brief: one upstream scheduled task per workspace with an approved brief and plan ("continue docs/plan.md under autopilot rules"; `Autopilot: off` opts out), a Claude Code deny list for irreversible commands, and a Friday 9:00 scheduled upstream sync that stops at "update host?" for Abhishek.
+- **Acceptance:**
+  - [ ] One-night dry run on abode plus one other repo; the result is read together before turning it on everywhere.
+
+### A-051: One Window at phone width
+
+- **Status:** done (reviewer PASS; checked at 390×844: list → workspace → back, no sideways overflow, omnibox inside the viewport; desktop unchanged)
+- **What:** spec 6: at phone width the canvas is a workspace list, then the workspace with a back button, same omnibox; the Kit and design sessions show a one-line desktop-only note. Today the canvas overflows sideways at 390px and the sidebar sheet sits over it (checked 2026-11-03). The flag is per device, so phones without it are unaffected.
+- **Acceptance:**
+  - [x] At 390 × 844: no sideways scroll, list → workspace → back works, omnibox usable, 48px targets.
+
+### A-052: One Window hides the sidebar
+
+- **Status:** done (reviewer PASS; checked in the browser: canvas full width with no sidebar, ⚙ opens Settings, a chat shows "← One window" and no sidebar; the sidebar shortcut still opens it by hand)
+- **What:** Abhishek (2026-11-03): "I don't need the side bar at all; the whole point is the new window." With the flag on, the left sidebar collapses (and reopens when the flag goes off); the canvas ⚙ opens Settings, the rail + adds a workspace, and chat routes get a "← One window" pill back to the canvas. No new upstream lines.
+- **Acceptance:**
+  - [x] Flag on: no sidebar on the canvas or in a chat; Settings, add workspace and back-to-canvas all reachable. Flag off: the sidebar returns.
+
+### A-053: Add a machine from the overview
+
+- **Status:** done (reviewer PASS; checked in the browser at 1440 and 390 on seeded data: the guide lists the real tailnet (ablearn, iphone172, pixel-tablet) with "No Mac on your tailnet yet", and "+ Add environment" opens the pairing dialog; script dry run on Linux; pairing a real Mac waits on the Mac; hooks 397 → 366)
+- **What:** Abhishek (2026-11-03): make adding another system (the M4 Pro Mac) obvious and front and center. The overview gets an "Add a machine" card after the machine sections, and the rail gets a matching entry. The card opens a short guide covering three steps: put the machine on the tailnet, start T3 on it with `scripts/abode/add-machine.sh`, and paste the pairing link. The guide first reads the host's tailnet (abode-owned `tailnet.status` RPC) and shows its machines: no Mac gives the Mac steps and "Check again", a Mac not yet in abode gives the pairing step, a connected Mac just says so. The guide embeds upstream's `AddEnvironmentDialog` (remote mode works in the browser); the only new wire call is the add-only `tailnet.status`. `scripts/abode/add-machine.sh` runs on the new machine (macOS or Linux). It checks Tailscale, checks for Node, starts `npx t3@<host version> serve --tailscale-serve` as a login service, then prints `t3 pair --tailscale`. Upstream lines go down: abode RPCs now register through one spread.
+- **Acceptance:**
+  - [ ] The overview and the rail both show "Add a machine". The guide opens, and pasting a pairing URL into the embedded dialog adds the environment, which then shows as its own machine section.
+  - [ ] The script is idempotent, never prints secrets other than the one-time pairing link, and runs `--dry-run` cleanly on Linux.
+  - [ ] Phone width: the card and guide fit at 390px.
+
+### A-054: One Window on by default
+
+- **Status:** done (reviewer PASS; live on the host as 2d118d655b)
+- **What:** Abhishek (2026-11-03): "it has to be default." Storage key v2, default on; an explicit off still sticks.
+
+### A-055: The rest of the prototype's screens
+
+- **Status:** done (kit, voice and shell each reviewer PASS after fixes; checked at 1440 on seeded data: workspace with journey map, drawer answering in place, new session in the window, Kit with real skills, overview; a stall from hiding upstream's sidebar toggle was found by screenshot and fixed; phone not yet checked)
+- **What:** Abhishek (2026-11-03): "build it exactly like the screens I designed", because v1 shipped only the summary. Built from docs/canvas/prototype.html (C3) and spec §5:
+  - Kit ⚙ (§5.10): Skills with sources, curator and your kit; MCP; Plugins; Hooks; Weekly merge.
+  - Voice in the omnibox (§5.5): Hex mic and voice-back.
+  - Sessions open in the chat drawer, not the old chat route (§5.6).
+  - Top bar (§5.1) and rail details (§5.2).
+  - Journey map (§5.3).
+  - Creation focus moment (§5.11).
+  - Built in three parallel worktrees (kit, voice, inwin).
+  - Not in this ticket: the design session (§5.9, partly desktop-only in T3) and the Haiku monitor (§5.8).
+- **Acceptance:**
+  - [ ] Each screen matches the prototype side by side, in screenshots at 1440 and 390.
+  - [ ] Real data only. Empty states say so; nothing is faked.
+  - [ ] Mobile app untouched: protocol 2, contracts add-only.
+
+Later, in order: P4 journey map, P3 monitor (Haiku skill), P6 design session, P7 Kit, P8 voice.
+
+## Phase H: Workspace tabs and the Kit window (briefs: docs/briefs/workspace-tabs.md, docs/briefs/kit-window.md; screens: https://claude.ai/artifact/MAxT8zMrArrRvoFEjMrcWB)
+
+The workspace frame mounts through the existing A-033 hook in `ChatView.tsx` (`CalmTable`, top of the conversation area), so Jam is T3's own timeline and composer. No new upstream hooks unless a ticket says so; `hook-report.sh` stays at or under 369. Every UI ticket is checked at 1440 and 390 on seeded data.
+
+### A-056: Subtract the parts of One Window we no longer use
+
+- **Status:** done (reviewer PASS after one fix round; checked in the browser with A-057 on seeded data: sessions open in T3 chat, nothing of the old omnibox left)
+- **What:** remove the journey map, keyword routing, the chat drawer, the mode pills and blocks, and the omnibox commands, along with their tests and CSS. Sessions open in T3's chat route. The overview, the rail, Kit and the One window switch stay (still on by default; off gives stock T3).
+- **Acceptance:**
+  - [ ] No code, CSS or test of the removed parts is left, and knip passes on abode.
+  - [ ] Opening a session from the rail or the overview lands on T3's chat for that thread.
+  - [ ] One window off: abode looks the way it did before One Window.
+
+### A-057: Workspace frame: agent strip and tabs
+
+- **Status:** done (reviewer PASS after one fix round; checked in the browser at 1440 and 390 on seeded data: one-row frame in the Amber theme, tabs remembered per workspace, the Milestones pane covers the chat while the composer stays usable, rail lists workspaces with their threads, archive icons and an Archived section; a Replay turn showed a needs-you card with the amber outline)
+- **Depends on:** A-056
+- **What:** above the timeline, through the A-033 mount: the "N agents running" pill and one card per running thread or subagent in this workspace (what it's doing, status: in progress / needs you / done, elapsed time), then the Jam · Milestones · Design tabs. Jam shows T3's timeline untouched, for one thread at a time: the header's thread picker and a click on any agent card switch Jam to that thread, Milestones belongs to the workspace (one tracker shared by all its threads); Jam and Design belong to the current thread. No nested tabs. The rail lists workspaces; clicking one opens its threads beneath it. Each thread can be archived (upstream's archive) and each workspace too (abode's hide), with an Archived list at the bottom of the rail to bring either back. The last-used tab is remembered per workspace and per device. On a phone, the cards scroll sideways and the tabs are a full-width segmented control.
+- **Acceptance:**
+  - [ ] The agent cards come from a tested pure function over real thread and subagent shapes.
+  - [ ] A needs-you card opens the pending question.
+  - [ ] Works on a draft as well as a thread (see lessons).
+
+### A-058: Milestones tab
+
+- **Status:** done (reviewer PASS after two rounds; checked in the browser at 1440 and 390 on mxframe's real plan: M1–M10 with counts, current milestone open with its tickets, 173/198 on the tab; on a draft the composer docks under the pane)
+- **Depends on:** A-057
+- **What:** the A-044 parser over the project's `docs/plan.md`: the goal line, then M1…Mn as an accordion with each ticket's ID, title, who and a status chip. It refreshes when the file changes. Statuses are the agent's (read-only). With no plan, the tab says so and offers "Ask the agent to plan", which fills the composer.
+- **Acceptance:**
+  - [ ] An edit to plan.md shows without a reload.
+  - [ ] All three plan formats A-044 reads still render.
+
+### A-059: Design tab
+
+- **Status:** done (reviewer PASS after two rounds; checked in the browser at 1440 and 390 on omxqua's real design thread: split.html and cover.html grouped under the asking messages, Pick + Send picks filled the composer with "I pick: split.html (file)" without sending; found and fixed a pane-under-Calm stacking bug and missed local preview URLs)
+- **Depends on:** A-057
+- **What:** cards for every claude.ai artifact link, Stitch link and `docs/design/*.html` found in the current thread, grouped by the message that asked for them, newest first, each marked Stitch / Claude / file and desktop / phone where known. Clicking a card previews it in T3's browser panel (a new tab where that panel isn't available). Pick boxes; "Send picks" puts "I pick: …" into the composer.
+- **Acceptance:**
+  - [ ] Link and file collection is a tested pure function over real message text.
+  - [ ] Picks reach the composer without sending on their own.
+
+### A-060: Kit in the workspace frame
+
+- **Status:** done (reviewer PASS after one fix round; checked in the browser at 1440 and 390 on seeded data: a first ⚙ open created the Kit project at ~ and a draft, Kit tabs and strip showed, the daily check ran live (4 sources, 0 changed), Skills listed 25 real skills with sources, cost and last use from real logs; the draft composer docks under the pane)
+- **Depends on:** A-057
+- **What:** Kit opens as a Kit thread in a project rooted at `~`, created on first use, with the frame on top: the strip (daily check, kit agent) and the tabs Skills · MCP · Plugins · Hooks · Updates over the existing Kit lists. Skills shows each skill's source, context cost and last use, read from the providers' own session logs where present.
+- **Acceptance:**
+  - [ ] The skills come from the real `~/.claude/skills`, `~/.agents/skills` and `~/.codex/skills`, following symlinks.
+  - [ ] Last use is a tested parser over real transcript lines; it shows "unknown" when there is no data.
+
+### A-061: Daily source check (server)
+
+- **Status:** done (reviewer PASS after one fix round; live in the browser during A-060/A-062: the daily check ran against the real repos (4 sources), the RPCs answered, Skip was recorded and remembered)
+- **What:** add-only server service in `apps/server/src/abode/`. Every day at 06:00, and on demand, it compares each source's skill folders (the GitHub repo's default branch) and the npm version for npx sources against its last snapshot, then records new, updated and removed skills with their SKILL.md descriptions. Its state lives in a file under T3 home (no migration). Exposed through add-only RPCs: list updates, decide (inherit / skip / take all).
+- **Acceptance:**
+  - [ ] The snapshot diff (new / updated / removed, and edited locally vs upstream) is tested.
+  - [ ] Network failures leave the last result in place and say "check failed" with the time.
+  - [ ] Protocol stays 2; contracts add-only.
+
+### A-062: Updates tab, badge and feed
+
+- **Status:** done (reviewer PASS after three rounds, the installer writes only inside the three skill roots, symlinked slots and outside links are refused with tests; checked in the browser at 1440 on real source data with three Matt skills made to look new: ⚙ badge 3, cards with real descriptions and costs, "Looks like grilling, which you already have", Skip dimmed the card and dropped the badge to 2, nothing written to ~/.claude/skills, overview feed "Matt Pocock added 2 skills"; Inherit was exercised by tests on a temp home only)
+- **Depends on:** A-060, A-061
+- **What:** cards grouped by source. Each new skill shows what it does, its context cost, any overlap, and Inherit / Skip (Skip is remembered). Unedited updates come as one "Take all" card, and edited skills get a diff plus "Merge in jam", which sends the diff to the Kit thread. A count badge sits on Kit in the rail, and a "Matt added 3 skills" line goes into the overview's since-you-last-looked feed.
+- **Acceptance:**
+  - [ ] Inherit installs only that skill, and Take all never touches an edited skill.
+  - [ ] Checked against a real source change (or a recorded one).
+
+### A-063: Prune by jam
+
+- **Status:** done (reviewer PASS after three rounds; checked in the browser against a scratch copy of the real skill folders: "What don't I need?" filled the composer on a new Kit draft, a replayed reply rendered the pick list (isometric, handoff · 2 copies, a greyed "not in your kit" row), Cut 2 moved them to the trash, "In trash · 2" listed them, Restore put both back at their exact paths and emptied the trash; real ~/.claude/skills untouched)
+- **Depends on:** A-060
+- **What:** asked "what don't I need?", the kit agent answers with a pick list of cuts (skill, source, reason, tokens saved) rendered as an abode chat card. "Cut N" moves the ticked skills to `~/.claude/skills/.trash`, and the context meter updates. A restore is the same move back.
+- **Acceptance:**
+  - [ ] Nothing moves without the button.
+  - [ ] Restore puts a cut skill back where it was, symlink included.

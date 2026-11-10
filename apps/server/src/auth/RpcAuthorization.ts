@@ -1,3 +1,4 @@
+import { KIT_RPC_SCOPES } from "../abode/kitRpcPolicy.ts"; // abode: Kit
 import {
   CLIENT_GUARDED_RPC_SCOPES,
   type DeviceListInput,
@@ -156,6 +157,7 @@ export const RPC_REQUIRED_SCOPES = {
   [WS_METHODS.projectsWriteFile]: AuthFilesystemWriteScope,
   [WS_METHODS.projectsEnsureScratch]: AuthOrchestrationOperateScope,
   [WS_METHODS.projectsCreateNew]: AuthOrchestrationOperateScope,
+  ...KIT_RPC_SCOPES, // abode: Kit
   [WS_METHODS.shellOpenInEditor]: AuthOrchestrationOperateScope,
   [WS_METHODS.filesystemBrowse]: AuthFilesystemReadScope,
   [WS_METHODS.filesystemGetMetadata]: AuthFilesystemReadScope,

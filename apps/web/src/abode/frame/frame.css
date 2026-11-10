@@ -1,0 +1,642 @@
+/*
+ * The Kit rows above T3's timeline on Kit threads: tabs, then the daily check and the kit agent,
+ * on the chat surface's theme tokens. Nothing here animates. They publish their height as
+ * --abode-frame-h, which the pane starts below, so the composer (z-20 sibling) is never covered.
+ */
+[data-abode-frame] {
+  --abode-info: #52a9ff;
+  position: relative;
+  z-index: 11;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* One row: the Kit tabs, the context meter on the right */
+[data-abode-frame-head] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Agent strip: three cards across, more scroll sideways */
+[data-abode-strip] {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max(220px, calc((100% - 20px) / 3));
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+[data-abode-strip]::-webkit-scrollbar {
+  display: none;
+}
+[data-abode-card] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-card]:hover {
+  background: var(--accent);
+}
+[data-abode-card][data-status="needs-you"] {
+  box-shadow: inset 0 0 0 1.5px var(--cv-warn);
+}
+[data-abode-card-top] {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+[data-abode-card-top] > b {
+  font-size: 13px;
+  font-weight: 650;
+}
+[data-abode-card-meta] {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font: 400 11px var(--font-mono);
+}
+[data-abode-card-status] {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+[data-abode-card][data-status="in-progress"] [data-abode-card-status] {
+  color: var(--abode-info);
+}
+[data-abode-card][data-status="needs-you"] [data-abode-card-status] {
+  color: var(--cv-warn);
+}
+[data-abode-card][data-status="done"] [data-abode-card-status] {
+  color: var(--cv-ok);
+}
+[data-abode-card-doing] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+[data-abode-card-bar] {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+[data-abode-card-bar] > i {
+  display: block;
+  height: 100%;
+  background: var(--abode-info);
+}
+[data-abode-card][data-status="needs-you"] [data-abode-card-bar] > i {
+  background: var(--cv-warn);
+}
+[data-abode-card][data-status="done"] [data-abode-card-bar] > i {
+  background: var(--cv-ok);
+}
+
+/* Tabs: one quiet segmented bar, the selected one a filled ink pill */
+[data-abode-tabs] {
+  display: flex;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  margin-bottom: 0;
+}
+[data-abode-tabs] > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-tabs] > button[data-selected] {
+  background: var(--foreground);
+  color: var(--background);
+}
+[data-abode-tabs] small {
+  font: 500 11px var(--font-mono);
+  opacity: 0.75;
+}
+
+/* Tab pane: covers the message list only. */
+[data-abode-frame-pane] {
+  --abode-info: #52a9ff;
+  --abode-ok: #4cc38a;
+  --abode-warn: #e9a23b;
+  --abode-review: #a78bfa;
+  position: absolute;
+  inset: var(--abode-frame-h, 0px) 0 0 0;
+  z-index: 15;
+  overflow-y: auto;
+  /* Room to scroll the last rows clear of the composer, which floats over the pane's bottom. */
+  padding: 24px 16px 200px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+/* Kit mode (A-060): the strip holds two cards, the tab row scrolls, the pane lists the kit. */
+[data-abode-strip][data-kit] {
+  grid-auto-columns: minmax(220px, 1fr);
+}
+[data-abode-card][data-status="idle"] [data-abode-card-status] {
+  color: var(--muted-foreground);
+}
+[data-abode-tabs][data-kit] {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+[data-abode-tabs][data-kit] > button {
+  flex: none;
+}
+[data-abode-frame-pane][data-kit] {
+  display: block;
+  overflow-y: auto;
+  padding: 16px;
+  color: var(--foreground);
+}
+[data-abode-kit-body] {
+  --k-05: color-mix(in srgb, var(--foreground) 5%, transparent);
+  --k-06: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --k-mono: var(--font-mono, ui-monospace, monospace);
+  --cv-ink: var(--foreground);
+  --cv-ink-2: var(--muted-foreground);
+  --cv-s1: var(--card);
+  --cv-shadow-1: none;
+  --cv-shadow-2: none;
+  --cv-s0: var(--background);
+  --cv-s2: var(--accent);
+  --cv-warn: var(--abode-warn);
+  --cv-ok: var(--abode-ok);
+  --cv-bad: #ef5350;
+  --cv-autopilot: #8b7bff;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-abode-kit-body] [data-cvk-wide] {
+  overflow: visible;
+}
+[data-abode-kit-body] [data-cvk-card] {
+  border: 1px solid var(--border);
+}
+[data-abode-kit-note] {
+  padding: 18px 6px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+/* Updates tab (A-062): cards per source; a decided card dims, nothing animates. */
+[data-abode-updates] {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+[data-abode-upd-bar] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+[data-abode-upd-source] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+[data-abode-upd-source] > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+[data-abode-upd-source] > header code {
+  margin-left: 8px;
+  color: var(--muted-foreground);
+  font: 500 11.5px var(--font-mono);
+}
+[data-abode-upd-source] > header > small {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+[data-abode-upd-avatar] {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 12px;
+}
+[data-abode-upd-card] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+}
+[data-abode-upd-card][data-edited] {
+  box-shadow: inset 0 0 0 1.5px var(--cv-warn, #f5a524);
+}
+[data-abode-upd-card][data-decided] {
+  opacity: 0.55;
+}
+[data-abode-upd-card] > header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+}
+[data-abode-upd-card] > header small {
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+[data-abode-upd-card] > p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+[data-abode-upd-name] {
+  font: 600 12.5px var(--font-mono);
+}
+[data-abode-upd-cost] {
+  margin-left: auto;
+  font: 500 11px var(--font-mono);
+  color: var(--muted-foreground);
+}
+[data-abode-upd-overlap] {
+  color: var(--cv-warn, #f5a524);
+  font-size: 11.5px;
+}
+[data-abode-upd-list] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+[data-abode-upd-list] li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+[data-abode-upd-list] small {
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+[data-abode-upd-actions] {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+[data-abode-upd-actions] button,
+[data-abode-upd-bar] button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-upd-actions] button[data-primary] {
+  background: var(--foreground);
+  color: var(--background);
+}
+[data-abode-upd-actions] button:disabled,
+[data-abode-upd-bar] button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+[data-abode-upd-outcome] {
+  align-self: flex-end;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+[data-abode-upd-error] {
+  margin: 0;
+  color: var(--cv-bad, #ef5350);
+  font-size: 12.5px;
+}
+[data-abode-upd-footer] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+@media (max-width: 640px) {
+  [data-abode-upd-actions] {
+    flex-direction: column-reverse;
+  }
+  [data-abode-upd-actions] button,
+  [data-abode-upd-bar] button {
+    width: 100%;
+    min-height: 48px;
+  }
+  [data-abode-upd-bar] button {
+    width: auto;
+    padding: 0 18px;
+  }
+  [data-abode-upd-card] > header {
+    flex-wrap: wrap;
+  }
+}
+
+/* Context per session: skills and MCP stacked in one bar, the total in mono */
+[data-abode-meter] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+[data-abode-meter] > b {
+  font: 500 12px var(--font-mono);
+  color: var(--foreground);
+}
+[data-abode-meter-bar] {
+  display: flex;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border);
+}
+[data-abode-meter-bar] > i {
+  display: block;
+  height: 100%;
+}
+[data-abode-meter-bar] > i[data-part="skills"] {
+  background: #ffd166;
+}
+[data-abode-meter-bar] > i[data-part="mcp"] {
+  background: #4dd4c6;
+}
+[data-abode-meter][data-where="pane"] {
+  display: none;
+  justify-self: start;
+}
+
+/* Skills: name and what it does, where it came from, what it costs, when it was last used */
+[data-abode-prune-ask] {
+  align-self: flex-start;
+  min-height: 36px;
+  margin-bottom: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+[data-abode-prune-ask]:disabled {
+  opacity: 0.45;
+}
+@media (max-width: 640px), (pointer: coarse) {
+  [data-abode-prune-ask] {
+    min-height: 48px;
+  }
+}
+[data-abode-skills] {
+  display: flex;
+  flex-direction: column;
+}
+[data-abode-skill] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 76px 84px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 6px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+[data-abode-skill]:hover {
+  background: var(--accent);
+}
+[data-abode-skill-name] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+[data-abode-skill-name] > b {
+  font: 600 13px var(--font-mono);
+}
+[data-abode-skill-name] > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+[data-abode-skill-cost],
+[data-abode-skill-used] {
+  font: 500 11px var(--font-mono);
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  [data-abode-tabs][data-kit] {
+    margin: 0;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  [data-abode-tabs][data-kit] > button {
+    flex: none;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+  [data-abode-tabs][data-kit] > button[data-selected] {
+    background: var(--foreground);
+  }
+  [data-abode-meter][data-where="head"] {
+    display: none;
+  }
+  [data-abode-meter][data-where="pane"] {
+    display: flex;
+  }
+  [data-abode-strip][data-kit] {
+    grid-auto-columns: 220px;
+  }
+  [data-abode-skill] {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+  }
+  [data-abode-skill-name] {
+    grid-column: 1 / -1;
+  }
+  [data-abode-skill] > :nth-child(2) {
+    justify-self: start;
+  }
+  [data-abode-skill-cost],
+  [data-abode-skill-used] {
+    text-align: left;
+  }
+}
+@media (max-width: 640px) {
+  [data-abode-frame-pane] {
+    padding: 16px 12px 180px;
+  }
+  [data-abode-ms-source] {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  [data-abode-ms-head] {
+    gap: 8px;
+    padding: 0 12px;
+  }
+  [data-abode-ms-bar],
+  [data-abode-ms-state] {
+    display: none;
+  }
+  [data-abode-ms-row] {
+    grid-template-columns: 20px max-content minmax(0, 1fr) auto;
+    grid-template-areas:
+      "mark title title chip"
+      "mark id who chip";
+    row-gap: 2px;
+    min-height: 52px;
+    padding: 6px 12px;
+  }
+  [data-abode-ms-mark] {
+    grid-area: mark;
+  }
+  [data-abode-ms-title] {
+    grid-area: title;
+  }
+  [data-abode-ms-tid] {
+    grid-area: id;
+  }
+  [data-abode-ms-who] {
+    grid-area: who;
+    max-width: none;
+  }
+  [data-abode-ms-chip] {
+    grid-area: chip;
+  }
+}
+
+/* A draft's hero puts the composer mid-area under a headline; with a pane open, dock it like a thread's. */
+[data-chat-canvas]:has([data-abode-pane-open]) > [data-chat-composer-overlay] {
+  top: auto;
+  align-items: flex-end;
+  padding-top: 6px;
+}
+[data-chat-canvas]:has([data-abode-pane-open]) [data-chat-composer-stack] {
+  background: var(--background);
+  box-shadow: 0 -16px 16px var(--background);
+}
+[data-chat-canvas]:has([data-abode-pane-open])
+  [data-chat-composer-stack]
+  > .absolute.inset-x-0.bottom-full {
+  display: none;
+}
+
+/* "In trash" under the Skills list: quiet, one row per cut skill with a way back. */
+[data-abode-trash] {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+[data-abode-trash] h4 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-abode-trash-row] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  font-size: 12px;
+}
+[data-abode-trash-row] code {
+  font: 600 12px var(--font-mono, ui-monospace, monospace);
+  color: var(--foreground);
+}
+[data-abode-trash-row] small {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 640px), (pointer: coarse) {
+  [data-abode-trash-row] {
+    min-height: 48px;
+  }
+}
+
+/* T3's thread details card floats at the canvas's top right (inline top/max-height); start it below the frame row. */
+[data-chat-canvas]:has([data-abode-frame]) > [data-thread-details-panel="inline"] {
+  top: calc(var(--abode-frame-h, 0px) + 12px) !important;
+  max-height: calc(100% - var(--abode-frame-h, 0px) - 24px) !important;
+}
+/* It describes the chat (machine, editor, branch), so it stays on Jam and leaves the panes' own controls clear. */
+[data-chat-canvas]:has([data-abode-pane-open]) > [data-thread-details-panel="inline"] {
+  visibility: hidden;
+}

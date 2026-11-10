@@ -1,3 +1,4 @@
+import { KIT_RPC_AGGREGATES } from "../abode/kitRpcPolicy.ts"; // abode: Kit
 import { ORCHESTRATION_V2_WS_METHODS, WS_METHODS, type WsRpcGroup } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -162,6 +163,7 @@ const RPC_AGGREGATES = {
   [WS_METHODS.projectsEnsureScratch]: "orchestration",
   [WS_METHODS.projectsCreateNew]: "orchestration",
   [WS_METHODS.projectsCreateFromThread]: "orchestration",
+  ...KIT_RPC_AGGREGATES, // abode: Kit
   [WS_METHODS.shellOpenInEditor]: "workspace",
   [WS_METHODS.filesystemBrowse]: "workspace",
   [WS_METHODS.filesystemGetMetadata]: "workspace",

@@ -190,6 +190,7 @@ import {
 } from "../browser/openFileInPreview";
 import { resolveLinkTarget } from "../browser/browserLinkTarget";
 import { PullRequestLinkPreview } from "./pullRequest/PullRequestLinkPreview";
+import { PruneBlock } from "~/abode/chat/prune/PruneCard"; // abode: Kit prune card
 import { MarkdownCodeBlock, SuspenseShikiCodeBlock } from "./chat/MarkdownCodeBlock";
 import { createMarkdownRenderer } from "./chat/markdownRenderer";
 import { splitMarkdownBlocks } from "./chat/markdownStreamBlocks";
@@ -1586,6 +1587,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
     }
 
     const language = extractFenceLanguage(codeBlock.className);
+    if (language === "abode-prune") return <PruneBlock>{children}</PruneBlock>; // abode: Kit prune card
     if (
       mathEnabled &&
       language === "math" &&
