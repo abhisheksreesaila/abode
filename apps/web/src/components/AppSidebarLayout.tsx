@@ -38,6 +38,7 @@ import {
   usePanelNavigationSuppression,
 } from "../panelAnimations";
 import { BackgroundThreadAnnouncer } from "./BackgroundThreadAnnouncer";
+import { KitOpener } from "../abode/frame/KitOpener"; // abode: palette "Open Kit"
 import { HistorySwipeNavigation } from "./HistorySwipeNavigation";
 import { AbodeSidebar } from "../abode/shell/AbodeSidebar"; // abode: replaces upstream's thread sidebar
 import { SidebarBrandWidthProbe } from "./sidebar/SidebarChrome";
@@ -483,6 +484,7 @@ export function AppSidebarLayout({
         ) : null}
         {children}
         <BackgroundThreadAnnouncer />
+        <KitOpener /* abode */ />
         <SidebarControl showSidebar={showSidebar} />
         {isElectron ? <HistorySwipeNavigation /> : null}
       </SidebarProvider>

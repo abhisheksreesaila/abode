@@ -1,6 +1,9 @@
 import type { KeybindingShortcut, ResolvedKeybindingsConfig } from "@t3tools/contracts";
 import { describe, expect, it, vi } from "vite-plus/test";
 
+import { storedEnabled, useCanvasStore } from "../canvas/canvasStore";
+import { abodePanelToggleActions } from "./panelToggleActions";
+
 import {
   PANEL_TOGGLES,
   panelTogglesForRoute,
@@ -131,5 +134,27 @@ describe("panelTogglesForRoute", () => {
       "terminal",
       "rightPanel",
     ]);
+  });
+});
+
+describe("abodePanelToggleActions", () => {
+  it("always offers Open Kit, and the Calm switch only with One window on", () => {
+    const values = (enabled: boolean) => {
+      useCanvasStore.setState({ enabled });
+      return abodePanelToggleActions({ hasThreadView: true }).map((item) => item.value);
+    };
+    expect(values(false)).toContain("action:abode-open-kit");
+    expect(values(false).some((value) => value.includes("transcript"))).toBe(false);
+    expect(values(true)).toContain("action:abode-open-kit");
+    expect(values(true).some((value) => value.includes("transcript"))).toBe(true);
+  });
+});
+
+describe("storedEnabled", () => {
+  it("is stock T3 unless One window was explicitly turned on", () => {
+    expect(storedEnabled(null)).toBe(false);
+    expect(storedEnabled({})).toBe(false);
+    expect(storedEnabled({ enabled: "yes" })).toBe(false);
+    expect(storedEnabled({ enabled: true })).toBe(true);
   });
 });

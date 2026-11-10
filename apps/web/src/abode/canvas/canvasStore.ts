@@ -12,6 +12,11 @@ interface CanvasStore {
   setEnabled: (enabled: boolean) => void;
 }
 
+/** Only an explicit stored "on" turns One window on; anything else is stock T3. */
+export function storedEnabled(persisted: unknown): boolean {
+  return (persisted as { enabled?: unknown } | null)?.enabled === true;
+}
+
 /** Per-device, client-only; never sent to the server. */
 export const useCanvasStore = create<CanvasStore>()(
   persist((set) => ({ enabled: false, setEnabled: (enabled) => set({ enabled }) }), {
@@ -20,10 +25,7 @@ export const useCanvasStore = create<CanvasStore>()(
     storage: createJSONStorage(() =>
       resolveStorage(typeof window !== "undefined" ? window.localStorage : undefined),
     ),
-    merge: (persisted, current) => ({
-      ...current,
-      enabled: (persisted as { enabled?: unknown } | null)?.enabled === true,
-    }),
+    merge: (persisted, current) => ({ ...current, enabled: storedEnabled(persisted) }),
     partialize: ({ enabled }) => ({ enabled }),
   }),
 );
